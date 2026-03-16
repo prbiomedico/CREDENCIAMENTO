@@ -157,20 +157,32 @@ async def create_session(request: Request, response: Response):
     body = await request.json()
     session_id = body.get("session_id")
     
+    logger.info(f"🔍 Auth session request received with session_id: {session_id[:20]}...")
+    
     if not session_id:
+        logger.error("❌ No session_id provided")
         raise HTTPException(status_code=400, detail="session_id required")
     
     # Call Emergent Auth API
-    async with httpx.AsyncClient() as client:
-        auth_response = await client.get(
-            "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
-            headers={"X-Session-ID": session_id}
-        )
-        
-        if auth_response.status_code != 200:
-            raise HTTPException(status_code=400, detail="Invalid session_id")
-        
-        auth_data = auth_response.json()
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            logger.info("🔄 Calling Emergent Auth API...")
+            auth_response = await client.get(
+                "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+                headers={"X-Session-ID": session_id}
+            )
+            
+            logger.info(f"📡 Emergent Auth API response status: {auth_response.status_code}")
+            
+            if auth_response.status_code != 200:
+                logger.error(f"❌ Invalid session_id. Response: {auth_response.text}")
+                raise HTTPException(status_code=400, detail="Invalid session_id")
+            
+            auth_data = auth_response.json()
+            logger.info(f"✅ Auth data received for email: {auth_data.get('email')}")
+    except Exception as e:
+        logger.error(f"❌ Error calling Emergent Auth API: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Auth API error: {str(e)}")
     
     # Create or update user
     user_id = f"user_{uuid.uuid4().hex[:12]}"
@@ -178,6 +190,7 @@ async def create_session(request: Request, response: Response):
     
     if existing_user:
         user_id = existing_user["user_id"]
+        logger.info(f"👤 Existing user found: {user_id}")
         await db.users.update_one(
             {"user_id": user_id},
             {"$set": {
@@ -186,6 +199,7 @@ async def create_session(request: Request, response: Response):
             }}
         )
     else:
+        logger.info(f"👤 Creating new user: {user_id}")
         user_doc = {
             "user_id": user_id,
             "email": auth_data["email"],
@@ -199,6 +213,8 @@ async def create_session(request: Request, response: Response):
     session_token = auth_data["session_token"]
     expires_at = datetime.now(timezone.utc) + timedelta(days=7)
     
+    logger.info(f"🔐 Creating session with token: {session_token[:20]}...")
+    
     session_doc = {
         "user_id": user_id,
         "session_token": session_token,
@@ -208,6 +224,7 @@ async def create_session(request: Request, response: Response):
     await db.user_sessions.insert_one(session_doc)
     
     # Set cookie
+    logger.info("🍪 Setting session cookie")
     response.set_cookie(
         key="session_token",
         value=session_token,
@@ -220,6 +237,7 @@ async def create_session(request: Request, response: Response):
     
     # Get user data
     user_doc = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+    logger.info(f"✅ Auth session created successfully for user: {user_id}")
     return User(**user_doc)
 
 
