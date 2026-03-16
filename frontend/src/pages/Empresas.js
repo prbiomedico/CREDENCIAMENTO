@@ -7,17 +7,31 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import axios from 'axios';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+const detransOptions = [
+  'AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA',
+  'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN',
+  'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
+];
+
 const Empresas = () => {
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [formData, setFormData] = useState({ name: '', cnpj: '' });
+  const [formData, setFormData] = useState({
+    name: '',
+    nome_fantasia: '',
+    cnpj: '',
+    email_comercial: '',
+    gestor_contrato: '',
+    detrans_atuacao: []
+  });
 
   useEffect(() => {
     fetchCompanies();
@@ -41,12 +55,28 @@ const Empresas = () => {
       await axios.post(`${API}/companies`, formData, { withCredentials: true });
       toast.success('Empresa cadastrada com sucesso!');
       setDialogOpen(false);
-      setFormData({ name: '', cnpj: '' });
+      setFormData({
+        name: '',
+        nome_fantasia: '',
+        cnpj: '',
+        email_comercial: '',
+        gestor_contrato: '',
+        detrans_atuacao: []
+      });
       fetchCompanies();
     } catch (error) {
       console.error('Error creating company:', error);
       toast.error('Erro ao cadastrar empresa');
     }
+  };
+
+  const handleDetranToggle = (detran) => {
+    setFormData(prev => ({
+      ...prev,
+      detrans_atuacao: prev.detrans_atuacao.includes(detran)
+        ? prev.detrans_atuacao.filter(d => d !== detran)
+        : [...prev.detrans_atuacao, detran]
+    }));
   };
 
   const getStatusBadge = (status) => {
@@ -83,34 +113,101 @@ const Empresas = () => {
                 Nova Empresa
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+            <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="font-heading text-2xl">Cadastrar Nova Empresa</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="name" className="text-zinc-300">Razão Social</Label>
+                    <Input
+                      id="name"
+                      data-testid="company-name-input"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="nome_fantasia" className="text-zinc-300">Nome Fantasia</Label>
+                    <Input
+                      id="nome_fantasia"
+                      data-testid="company-fantasia-input"
+                      value={formData.nome_fantasia}
+                      onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })}
+                      className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                      required
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="cnpj" className="text-zinc-300">CNPJ</Label>
+                    <Input
+                      id="cnpj"
+                      data-testid="company-cnpj-input"
+                      value={formData.cnpj}
+                      onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
+                      placeholder="00.000.000/0000-00"
+                      className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="email_comercial" className="text-zinc-300">Email Comercial</Label>
+                    <Input
+                      id="email_comercial"
+                      type="email"
+                      data-testid="company-email-input"
+                      value={formData.email_comercial}
+                      onChange={(e) => setFormData({ ...formData, email_comercial: e.target.value })}
+                      className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                      required
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <Label htmlFor="name" className="text-zinc-300">Nome da Empresa</Label>
+                  <Label htmlFor="gestor_contrato" className="text-zinc-300">Gestor do Contrato</Label>
                   <Input
-                    id="name"
-                    data-testid="company-name-input"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    id="gestor_contrato"
+                    data-testid="company-gestor-input"
+                    value={formData.gestor_contrato}
+                    onChange={(e) => setFormData({ ...formData, gestor_contrato: e.target.value })}
+                    placeholder="Nome completo do gestor"
                     className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
                     required
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="cnpj" className="text-zinc-300">CNPJ</Label>
-                  <Input
-                    id="cnpj"
-                    data-testid="company-cnpj-input"
-                    value={formData.cnpj}
-                    onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
-                    placeholder="00.000.000/0000-00"
-                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
-                    required
-                  />
+                  <Label className="text-zinc-300 mb-3 block">DETRANs de Atuação</Label>
+                  <div className="grid grid-cols-5 gap-3 max-h-48 overflow-y-auto p-4 bg-zinc-950 border border-zinc-800 rounded-md">
+                    {detransOptions.map((detran) => (
+                      <div key={detran} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`detran-${detran}`}
+                          checked={formData.detrans_atuacao.includes(detran)}
+                          onCheckedChange={() => handleDetranToggle(detran)}
+                          className="border-zinc-700 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                        />
+                        <label
+                          htmlFor={`detran-${detran}`}
+                          className="text-sm text-zinc-300 cursor-pointer"
+                        >
+                          {detran}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-2">
+                    Selecionados: {formData.detrans_atuacao.length > 0 ? formData.detrans_atuacao.join(', ') : 'Nenhum'}
+                  </p>
                 </div>
+
                 <Button
                   data-testid="submit-company-btn"
                   type="submit"
@@ -145,25 +242,50 @@ const Empresas = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6">
             {companies.map((company) => (
               <Card
                 key={company.company_id}
                 data-testid={`company-card-${company.company_id}`}
-                className="bg-zinc-900/50 border-zinc-800 hover:border-orange-500/30 transition-colors group"
+                className="bg-zinc-900/50 border-zinc-800 hover:border-orange-500/30 transition-colors"
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg font-semibold mb-1">{company.name}</CardTitle>
-                      <p className="text-sm font-mono text-zinc-500">{company.cnpj}</p>
+                      <div className="flex items-center gap-3 mb-2">
+                        <CardTitle className="text-xl font-semibold">{company.name}</CardTitle>
+                        {getStatusBadge(company.status)}
+                      </div>
+                      <p className="text-sm text-zinc-400 mb-1">Nome Fantasia: {company.nome_fantasia}</p>
+                      <p className="text-sm font-mono text-zinc-500">CNPJ: {company.cnpj}</p>
                     </div>
-                    {getStatusBadge(company.status)}
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-xs text-zinc-500">
-                    <p>Cadastrado em: {new Date(company.created_at).toLocaleDateString('pt-BR')}</p>
+                  <div className="grid md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-zinc-500 mb-1">Email Comercial:</p>
+                      <p className="text-zinc-300">{company.email_comercial}</p>
+                    </div>
+                    <div>
+                      <p className="text-zinc-500 mb-1">Gestor do Contrato:</p>
+                      <p className="text-zinc-300">{company.gestor_contrato}</p>
+                    </div>
+                  </div>
+                  {company.detrans_atuacao && company.detrans_atuacao.length > 0 && (
+                    <div className="mt-4">
+                      <p className="text-xs text-zinc-500 mb-2">DETRANs de Atuação:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {company.detrans_atuacao.map((detran) => (
+                          <Badge key={detran} className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-xs">
+                            DETRAN-{detran}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <div className="text-xs text-zinc-600 mt-4">
+                    Cadastrado em: {new Date(company.created_at).toLocaleDateString('pt-BR')}
                   </div>
                 </CardContent>
               </Card>

@@ -1,5 +1,5 @@
-from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File, Request, Response, Depends
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File, Request, Response, Depends, Form
+from fastapi.responses import JSONResponse, FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -14,6 +14,7 @@ import httpx
 from emergentintegrations.llm.chat import LlmChat, UserMessage, FileContentWithMimeType
 import tempfile
 import shutil
+import aiofiles
 
 
 ROOT_DIR = Path(__file__).parent
@@ -23,6 +24,10 @@ load_dotenv(ROOT_DIR / '.env')
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
+
+# Create uploads directory
+UPLOAD_DIR = ROOT_DIR / 'uploads'
+UPLOAD_DIR.mkdir(exist_ok=True)
 
 # Create the main app without a prefix
 app = FastAPI()
@@ -58,7 +63,11 @@ class Company(BaseModel):
     company_id: str = Field(default_factory=lambda: f"company_{uuid.uuid4().hex[:12]}")
     user_id: str
     name: str
+    nome_fantasia: str
     cnpj: str
+    email_comercial: EmailStr
+    gestor_contrato: str
+    detrans_atuacao: List[str] = []
     status: str = "pending"  # pending, approved, rejected
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -66,7 +75,11 @@ class Company(BaseModel):
 
 class CompanyCreate(BaseModel):
     name: str
+    nome_fantasia: str
     cnpj: str
+    email_comercial: EmailStr
+    gestor_contrato: str
+    detrans_atuacao: List[str]
 
 
 class Document(BaseModel):
@@ -74,7 +87,10 @@ class Document(BaseModel):
     document_id: str = Field(default_factory=lambda: f"doc_{uuid.uuid4().hex[:12]}")
     company_id: str
     document_type: str  # cnpj, licenca, certidao, balanco, iso_27001, iso_27301, etc
+    document_name: str  # Nome específico do documento
     file_name: str
+    file_path: str
+    file_size: int
     status: str = "pending"  # pending, approved, rejected
     notes: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -273,7 +289,11 @@ async def create_company(company_data: CompanyCreate, current_user: User = Depen
     company = Company(
         user_id=current_user.user_id,
         name=company_data.name,
-        cnpj=company_data.cnpj
+        nome_fantasia=company_data.nome_fantasia,
+        cnpj=company_data.cnpj,
+        email_comercial=company_data.email_comercial,
+        gestor_contrato=company_data.gestor_contrato,
+        detrans_atuacao=company_data.detrans_atuacao
     )
     
     doc = company.model_dump()
@@ -327,8 +347,9 @@ async def get_documents(company_id: str, current_user: User = Depends(get_curren
 
 @api_router.post("/documents/upload")
 async def upload_document(
-    company_id: str = File(...),
-    document_type: str = File(...),
+    company_id: str = Form(...),
+    document_type: str = Form(...),
+    document_name: str = Form(...),
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user)
 ):
@@ -341,18 +362,66 @@ async def upload_document(
     if not company:
         raise HTTPException(status_code=404, detail="Company not found")
     
+    # Generate unique filename
+    file_extension = Path(file.filename).suffix if file.filename else ""
+    unique_filename = f"{uuid.uuid4().hex}{file_extension}"
+    file_path = UPLOAD_DIR / unique_filename
+    
+    # Save file
+    try:
+        async with aiofiles.open(file_path, 'wb') as f:
+            content = await file.read()
+            await f.write(content)
+        
+        file_size = len(content)
+    except Exception as e:
+        logger.error(f"Error saving file: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error saving file")
+    
     # Create document record
     document = Document(
         company_id=company_id,
         document_type=document_type,
-        file_name=file.filename or "unknown"
+        document_name=document_name,
+        file_name=file.filename or "unknown",
+        file_path=str(file_path),
+        file_size=file_size
     )
     
     doc = document.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
     
     await db.documents.insert_one(doc)
+    logger.info(f"Document uploaded: {document.document_id}")
     return document
+
+
+@api_router.get("/documents/download/{document_id}")
+async def download_document(document_id: str, current_user: User = Depends(get_current_user)):
+    """Download document"""
+    # Get document
+    document = await db.documents.find_one({"document_id": document_id}, {"_id": 0})
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    # Verify user owns the company
+    company = await db.companies.find_one(
+        {"company_id": document["company_id"], "user_id": current_user.user_id},
+        {"_id": 0}
+    )
+    if not company:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    # Check if file exists
+    file_path = Path(document["file_path"])
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    
+    return FileResponse(
+        path=file_path,
+        filename=document["file_name"],
+        media_type="application/octet-stream"
+    )
 
 
 @api_router.patch("/documents/{document_id}/status")
