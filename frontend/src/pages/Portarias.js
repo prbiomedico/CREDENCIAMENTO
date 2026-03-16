@@ -176,9 +176,9 @@ const Portarias = () => {
                   {analyzing ? 'Analisando...' : 'Analisar'}
                 </Button>
                 {analysisResult && (
-                  <div className="mt-4 p-4 bg-zinc-950 border border-zinc-800 rounded-lg">
+                  <div data-testid="analysis-result" className="mt-4 p-4 bg-zinc-950 border border-zinc-800 rounded-lg">
                     <h3 className="font-semibold mb-2 text-orange-500">Resultado da Análise:</h3>
-                    <pre className="text-sm text-zinc-300 whitespace-pre-wrap">{analysisResult}</pre>
+                    <pre className="text-sm text-zinc-300 whitespace-pre-wrap font-mono">{analysisResult}</pre>
                   </div>
                 )}
               </div>
