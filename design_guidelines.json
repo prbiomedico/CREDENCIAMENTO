@@ -1,0 +1,160 @@
+{
+  "project_name": "SIGCR - Sistema Integrado de Gestão de Credenciamento de Registradoras",
+  "design_philosophy": {
+    "archetype": "The Performance Pro / Tactical Modern",
+    "vibe": "Professional, High-Precision, Authoritative, Regulatory",
+    "core_metaphor": "The Control Center (Radar scanning for compliance)",
+    "dominant_theme": "Dark Mode (Deep Obsidian & Vibrant Orange)"
+  },
+  "typography": {
+    "font_family": {
+      "heading": "Barlow Condensed, sans-serif",
+      "body": "Inter, sans-serif",
+      "mono": "JetBrains Mono, monospace"
+    },
+    "scale": {
+      "display": "text-6xl md:text-8xl font-bold tracking-tighter uppercase",
+      "h1": "text-4xl md:text-5xl font-bold tracking-tight",
+      "h2": "text-3xl font-semibold tracking-tight",
+      "h3": "text-2xl font-semibold tracking-normal",
+      "body_lg": "text-lg leading-relaxed",
+      "body_base": "text-base leading-relaxed text-zinc-400",
+      "caption": "text-sm text-zinc-500 uppercase tracking-widest"
+    },
+    "imports": [
+      "@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');"
+    ]
+  },
+  "colors": {
+    "palette": {
+      "background": "#09090b",
+      "foreground": "#fafafa",
+      "card": "#121214",
+      "card_foreground": "#fafafa",
+      "popover": "#09090b",
+      "popover_foreground": "#fafafa",
+      "primary": "#f97316",
+      "primary_foreground": "#09090b",
+      "secondary": "#27272a",
+      "secondary_foreground": "#fafafa",
+      "muted": "#18181b",
+      "muted_foreground": "#a1a1aa",
+      "accent": "#f97316",
+      "accent_foreground": "#fafafa",
+      "destructive": "#ef4444",
+      "destructive_foreground": "#fafafa",
+      "border": "#27272a",
+      "input": "#27272a",
+      "ring": "#f97316"
+    },
+    "gradients": {
+      "hero_glow": "bg-gradient-to-tr from-orange-600/20 via-orange-900/10 to-transparent",
+      "card_hover": "bg-gradient-to-br from-zinc-900 to-zinc-900/50",
+      "text_highlight": "bg-gradient-to-r from-orange-400 to-amber-600 bg-clip-text text-transparent",
+      "border_beam": "linear-gradient(to right, transparent, #f97316, transparent)"
+    }
+  },
+  "layout_strategies": {
+    "landing_page": {
+      "style": "Tracing Beam & Grid Borders",
+      "hero": {
+        "alignment": "Left-aligned content, Right-aligned interactive 3D/Graphic",
+        "features": "Large typography, orange glow accents, 'radar' scanline effects"
+      },
+      "sections": "Alternating grid layouts with generous padding (py-24)"
+    },
+    "dashboard": {
+      "style": "High Density / Bento Grid",
+      "structure": "Sidebar navigation (collapsible), Top bar for global actions, Main content area with breadcrumbs",
+      "grid_gap": "gap-4 or gap-6",
+      "card_style": "Flat, 1px border (zinc-800), no shadow by default, subtle glow on hover"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-orange-500 hover:bg-orange-600 text-white rounded-md font-medium tracking-wide shadow-[0_0_15px_-3px_rgba(249,115,22,0.4)] transition-all active:scale-95",
+      "secondary": "bg-zinc-800 hover:bg-zinc-700 text-white rounded-md border border-zinc-700",
+      "ghost": "hover:bg-orange-500/10 hover:text-orange-500 text-zinc-400"
+    },
+    "cards": {
+      "default": "bg-zinc-950/50 backdrop-blur-sm border border-zinc-800/60 rounded-lg p-6 hover:border-orange-500/30 transition-colors duration-300",
+      "interactive": "group relative overflow-hidden bg-zinc-900 border border-zinc-800 hover:border-orange-500/50 transition-all duration-300"
+    },
+    "inputs": {
+      "default": "bg-zinc-950 border-zinc-800 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 placeholder:text-zinc-600 rounded-md h-10"
+    },
+    "status_badges": {
+      "success": "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 px-2 py-0.5 rounded text-xs font-mono uppercase",
+      "warning": "bg-amber-500/10 text-amber-500 border border-amber-500/20 px-2 py-0.5 rounded text-xs font-mono uppercase",
+      "error": "bg-red-500/10 text-red-500 border border-red-500/20 px-2 py-0.5 rounded text-xs font-mono uppercase",
+      "neutral": "bg-zinc-800 text-zinc-400 border border-zinc-700 px-2 py-0.5 rounded text-xs font-mono uppercase"
+    }
+  },
+  "visual_enhancers": {
+    "textures": {
+      "noise": "bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20",
+      "grid_pattern": "bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"
+    },
+    "effects": {
+      "glass": "backdrop-blur-xl bg-black/40 border border-white/10",
+      "glow": "shadow-[0_0_50px_-12px_rgba(249,115,22,0.5)]"
+    }
+  },
+  "image_urls": {
+    "hero_abstract": {
+      "url": "https://images.unsplash.com/photo-1696087225391-eb97abf5ba20?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "alt": "Digital workspace data analysis",
+      "usage": "Hero section background or feature graphic"
+    },
+    "about_team": {
+      "url": "https://images.unsplash.com/photo-1558788833-5189550e2f16?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "alt": "Modern office detail",
+      "usage": "About us or Team section"
+    },
+    "meeting_context": {
+      "url": "https://images.unsplash.com/photo-1660901714052-ba6957feba6d?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "alt": "Meeting room professional",
+      "usage": "Careers or Corporate section"
+    },
+    "tech_desk": {
+      "url": "https://images.unsplash.com/photo-1720969835740-49346b3fb9ca?crop=entropy&cs=srgb&fm=jpg&q=85",
+      "alt": "Computer desk setup",
+      "usage": "Features or Technical Requirements section"
+    }
+  },
+  "component_paths": {
+    "button": "@/components/ui/button",
+    "card": "@/components/ui/card",
+    "input": "@/components/ui/input",
+    "table": "@/components/ui/table",
+    "dialog": "@/components/ui/dialog",
+    "sheet": "@/components/ui/sheet",
+    "chart": "@/components/ui/chart",
+    "badge": "@/components/ui/badge",
+    "separator": "@/components/ui/separator",
+    "toast": "@/components/ui/sonner"
+  },
+  "instructions_to_main_agent": [
+    "1. IMPORT FONTS: Add the Google Fonts import to '/app/frontend/src/index.css' at the very top.",
+    "2. CONFIGURE TAILWIND: Update '/app/frontend/tailwind.config.js' to include the 'Barlow Condensed' and 'JetBrains Mono' font families.",
+    "3. DEFINE COLORS: Update CSS variables in '/app/frontend/src/index.css' to match the provided Zinc/Orange palette. Ensure '.dark' class variables are set as the DEFAULT since this is a dark-mode first app.",
+    "4. REMOVE DEFAULT STYLES: Clear out '/app/frontend/src/App.css' to remove React logo animations and default centering.",
+    "5. USE SHADCN: Heavily utilize the existing shadcn components in 'components/ui'. Customize their borders to be 'border-zinc-800' and backgrounds to be 'bg-zinc-950'.",
+    "6. LANDING PAGE: Build a 'Hero' section with the 'grid_pattern' background and a large 'text-highlight' headline. Use the 'hero_abstract' image with a low opacity overlay.",
+    "7. DASHBOARD: Create a layout with a fixed sidebar (w-64) and a scrollable main area. Use 'bg-zinc-950' for the main area and 'bg-black/40' (glass) for the sidebar.",
+    "8. SEARCH UI: The 'Portaria Search' is the core feature. Make the search bar huge (h-14) and central, like Google or a command palette.",
+    "9. DATA DISPLAY: Use dense tables for results. Use 'JetBrains Mono' for data cells (dates, IDs, protocol numbers)."
+  ],
+  "UNIVERSAL_GUIDELINES_FOR_MAIN_AGENT": [
+    "You tend to converge toward generic outputs. Avoid this.",
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur).",
+    "You MUST NOT apply universal transition (transition: all).",
+    "You MUST NOT center align the app container.",
+    "Always use modern button styles (pill-shaped or sharp) with interaction animations.",
+    "Every interaction needs micro-animations - hover states, transitions.",
+    "Use 2-3x more spacing than feels comfortable.",
+    "Subtle grain textures and noise overlays separate good from extraordinary."
+  ]
+}
