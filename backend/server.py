@@ -65,8 +65,11 @@ class Company(BaseModel):
     name: str
     nome_fantasia: str
     cnpj: str
+    endereco: str
     email_comercial: EmailStr
+    whatsapp: str
     gestor_contrato: str
+    logo_url: Optional[str] = None
     detrans_atuacao: List[str] = []
     status: str = "pending"  # pending, approved, rejected
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -77,7 +80,9 @@ class CompanyCreate(BaseModel):
     name: str
     nome_fantasia: str
     cnpj: str
+    endereco: str
     email_comercial: EmailStr
+    whatsapp: str
     gestor_contrato: str
     detrans_atuacao: List[str]
 
@@ -123,6 +128,53 @@ class PortariaCreate(BaseModel):
 
 class AnalyzeRequest(BaseModel):
     text: str
+
+
+class EstadoCredenciamento(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    estado_id: str = Field(default_factory=lambda: f"estado_{uuid.uuid4().hex[:12]}")
+    estado_sigla: str  # SP, RJ, MG, etc
+    estado_nome: str  # São Paulo, Rio de Janeiro, etc
+    portaria_vigente: Optional[str] = None
+    portaria_file_path: Optional[str] = None
+    empresas_credenciadas: List[str] = []  # List of company_ids
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class CredenciamentoDetalhes(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    credenciamento_id: str = Field(default_factory=lambda: f"cred_{uuid.uuid4().hex[:12]}")
+    company_id: str
+    estado_sigla: str
+    extrato_contrato: str
+    validade: datetime
+    valor_total_registro: float
+    valor_detran: float
+    valor_registradora: float
+    termo_credenciamento_path: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class SystemUser(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    system_user_id: str = Field(default_factory=lambda: f"sysuser_{uuid.uuid4().hex[:12]}")
+    name: str
+    cpf: str
+    company_id: Optional[str] = None
+    email: EmailStr
+    contato: str
+    nivel_acesso: str  # GESTOR or OPERACIONAL
+    ativo: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class SystemUserCreate(BaseModel):
+    name: str
+    cpf: str
+    company_id: Optional[str] = None
+    email: EmailStr
+    contato: str
+    nivel_acesso: str
 
 
 # ============ Auth Helper ============
@@ -291,7 +343,9 @@ async def create_company(company_data: CompanyCreate, current_user: User = Depen
         name=company_data.name,
         nome_fantasia=company_data.nome_fantasia,
         cnpj=company_data.cnpj,
+        endereco=company_data.endereco,
         email_comercial=company_data.email_comercial,
+        whatsapp=company_data.whatsapp,
         gestor_contrato=company_data.gestor_contrato,
         detrans_atuacao=company_data.detrans_atuacao
     )
@@ -326,6 +380,57 @@ async def update_company_status(company_id: str, status: str, current_user: User
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Company not found")
     return {"message": "Status updated"}
+
+
+@api_router.post("/companies/{company_id}/upload-logo")
+async def upload_company_logo(
+    company_id: str,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user)
+):
+    """Upload company logo"""
+    # Verify company belongs to user
+    company = await db.companies.find_one(
+        {"company_id": company_id, "user_id": current_user.user_id},
+        {"_id": 0}
+    )
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    # Generate unique filename
+    file_extension = Path(file.filename).suffix if file.filename else ".png"
+    unique_filename = f"logo_{company_id}{file_extension}"
+    file_path = UPLOAD_DIR / unique_filename
+    
+    # Save file
+    try:
+        async with aiofiles.open(file_path, 'wb') as f:
+            content = await file.read()
+            await f.write(content)
+    except Exception as e:
+        logger.error(f"Error saving logo: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error saving logo")
+    
+    # Update company with logo URL
+    logo_url = f"/api/companies/{company_id}/logo"
+    await db.companies.update_one(
+        {"company_id": company_id},
+        {"$set": {"logo_url": logo_url, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    
+    return {"logo_url": logo_url}
+
+
+@api_router.get("/companies/{company_id}/logo")
+async def get_company_logo(company_id: str):
+    """Get company logo"""
+    # Find logo file
+    for ext in ['.png', '.jpg', '.jpeg', '.gif']:
+        file_path = UPLOAD_DIR / f"logo_{company_id}{ext}"
+        if file_path.exists():
+            return FileResponse(path=file_path, media_type=f"image/{ext[1:]}")
+    
+    raise HTTPException(status_code=404, detail="Logo not found")
 
 
 # ============ Document Routes ============
@@ -511,6 +616,116 @@ async def search_portarias(q: str, current_user: User = Depends(get_current_user
         {"_id": 0}
     ).to_list(100)
     return portarias
+
+
+# ============ Estados/Credenciamento Routes ============
+
+@api_router.get("/estados")
+async def get_estados(current_user: User = Depends(get_current_user)):
+    """Get all estados with credenciamento info"""
+    estados_brasil = [
+        {"sigla": "AC", "nome": "Acre"},
+        {"sigla": "AL", "nome": "Alagoas"},
+        {"sigla": "AP", "nome": "Amapá"},
+        {"sigla": "AM", "nome": "Amazonas"},
+        {"sigla": "BA", "nome": "Bahia"},
+        {"sigla": "CE", "nome": "Ceará"},
+        {"sigla": "DF", "nome": "Distrito Federal"},
+        {"sigla": "ES", "nome": "Espírito Santo"},
+        {"sigla": "GO", "nome": "Goiás"},
+        {"sigla": "MA", "nome": "Maranhão"},
+        {"sigla": "MT", "nome": "Mato Grosso"},
+        {"sigla": "MS", "nome": "Mato Grosso do Sul"},
+        {"sigla": "MG", "nome": "Minas Gerais"},
+        {"sigla": "PA", "nome": "Pará"},
+        {"sigla": "PB", "nome": "Paraíba"},
+        {"sigla": "PR", "nome": "Paraná"},
+        {"sigla": "PE", "nome": "Pernambuco"},
+        {"sigla": "PI", "nome": "Piauí"},
+        {"sigla": "RJ", "nome": "Rio de Janeiro"},
+        {"sigla": "RN", "nome": "Rio Grande do Norte"},
+        {"sigla": "RS", "nome": "Rio Grande do Sul"},
+        {"sigla": "RO", "nome": "Rondônia"},
+        {"sigla": "RR", "nome": "Roraima"},
+        {"sigla": "SC", "nome": "Santa Catarina"},
+        {"sigla": "SP", "nome": "São Paulo"},
+        {"sigla": "SE", "nome": "Sergipe"},
+        {"sigla": "TO", "nome": "Tocantins"}
+    ]
+    
+    # Get credenciamento count for each state
+    for estado in estados_brasil:
+        count = await db.credenciamentos.count_documents({"estado_sigla": estado["sigla"]})
+        estado["empresas_credenciadas_count"] = count
+    
+    return estados_brasil
+
+
+@api_router.get("/estados/{sigla}")
+async def get_estado_detalhes(sigla: str, current_user: User = Depends(get_current_user)):
+    """Get detailed info for a specific state"""
+    # Get all credenciamentos for this state
+    credenciamentos = await db.credenciamentos.find({"estado_sigla": sigla}, {"_id": 0}).to_list(100)
+    
+    # Get company details for each credenciamento
+    empresas = []
+    for cred in credenciamentos:
+        company = await db.companies.find_one({"company_id": cred["company_id"]}, {"_id": 0})
+        if company:
+            empresas.append({
+                "company_id": company["company_id"],
+                "name": company["name"],
+                "nome_fantasia": company["nome_fantasia"],
+                "credenciamento": cred
+            })
+    
+    return {
+        "estado_sigla": sigla,
+        "empresas_credenciadas": empresas,
+        "total_empresas": len(empresas)
+    }
+
+
+# ============ System Users Routes ============
+
+@api_router.get("/system-users")
+async def get_system_users(current_user: User = Depends(get_current_user)):
+    """Get all system users"""
+    users = await db.system_users.find({}, {"_id": 0}).to_list(100)
+    return users
+
+
+@api_router.post("/system-users")
+async def create_system_user(user_data: SystemUserCreate, current_user: User = Depends(get_current_user)):
+    """Create new system user"""
+    system_user = SystemUser(**user_data.model_dump())
+    
+    doc = system_user.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    
+    await db.system_users.insert_one(doc)
+    return system_user
+
+
+@api_router.delete("/system-users/{system_user_id}")
+async def delete_system_user(system_user_id: str, current_user: User = Depends(get_current_user)):
+    """Delete system user"""
+    result = await db.system_users.delete_one({"system_user_id": system_user_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User deleted"}
+
+
+@api_router.patch("/system-users/{system_user_id}")
+async def update_system_user(system_user_id: str, updates: dict, current_user: User = Depends(get_current_user)):
+    """Update system user"""
+    result = await db.system_users.update_one(
+        {"system_user_id": system_user_id},
+        {"$set": updates}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="User not found")
+    return {"message": "User updated"}
 
 
 # ============ Dashboard Stats ============
