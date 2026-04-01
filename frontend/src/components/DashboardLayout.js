@@ -34,10 +34,10 @@ const DashboardLayout = ({ children }) => {
         <div className="h-full flex flex-col">
           {/* Logo */}
           <div className="p-6 border-b border-zinc-800">
-            <div className="flex items-center gap-2">
+            <Link to="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <Shield className="h-7 w-7 text-orange-500" />
               <span className="text-xl font-heading font-bold tracking-tight">SIGCR</span>
-            </div>
+            </Link>
           </div>
 
           {/* Navigation */}
