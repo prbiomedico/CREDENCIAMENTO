@@ -1,6 +1,4 @@
-import { clsx } from "clsx";
-import { twMerge } from "tailwind-merge"
-
-export function cn(...inputs) {
-  return twMerge(clsx(inputs));
+// Utilitario cn para combinar classNames (alternativa ao clsx sem dependencia extra)
+export function cn(...classes) {
+  return classes.filter(Boolean).join(' ');
 }

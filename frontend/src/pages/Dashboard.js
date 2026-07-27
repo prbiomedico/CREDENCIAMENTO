@@ -1,175 +1,144 @@
+import GradientMenu from '../components/ui/gradient-menu';
+import { MapaNacional } from '../components/ui/interactive-map';
+import VaporizeTextCycle from '../components/ui/vapour-text-effect';
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { Building2, FileCheck, Clock, TrendingUp, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Building2, FileText, Search, TrendingUp, Shield, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { useApi } from '../hooks/useApi';
 import { toast } from 'sonner';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
-
 const Dashboard = () => {
-  const navigate = useNavigate();
-  const [stats, setStats] = useState({
-    total_companies: 0,
-    pending_companies: 0,
-    approved_companies: 0,
-    total_portarias: 0,
-  });
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { user, initialized } = useAuth();
+  const api = useApi();
 
   useEffect(() => {
+    if (!initialized || !user) return;
     fetchStats();
-  }, []);
+  }, [initialized, user]);
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get(`${API}/stats`, { withCredentials: true });
-      setStats(response.data);
-    } catch (error) {
-      console.error('Error fetching stats:', error);
-      toast.error('Erro ao carregar estatísticas');
-    } finally {
-      setLoading(false);
-    }
+      const data = await api.get('/stats');
+      setStats(data);
+    } catch {
+      // Stats podem não existir ainda
+      setStats({
+        total_companies: 0,
+        total_documents: 0,
+        pending_validations: 0,
+        active_portarias: 0,
+        compliance_verde: 0,
+        compliance_amarelo: 0,
+        compliance_vermelho: 0,
+      });
+    } finally { setLoading(false); }
   };
 
-  const statCards = [
-    {
-      title: 'Total de Empresas',
-      value: stats.total_companies,
-      icon: Building2,
-      color: 'text-orange-500',
-      bgColor: 'bg-orange-500/10',
-    },
-    {
-      title: 'Pendentes',
-      value: stats.pending_companies,
-      icon: Clock,
-      color: 'text-amber-500',
-      bgColor: 'bg-amber-500/10',
-    },
-    {
-      title: 'Aprovadas',
-      value: stats.approved_companies,
-      icon: FileCheck,
-      color: 'text-emerald-500',
-      bgColor: 'bg-emerald-500/10',
-    },
-    {
-      title: 'Portarias',
-      value: stats.total_portarias,
-      icon: TrendingUp,
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-500/10',
-    },
+  const SEMAFORO = [
+    { label: 'Conformes', value: stats?.compliance_verde || 0, color: 'emerald', icon: CheckCircle },
+    { label: 'Atenção', value: stats?.compliance_amarelo || 0, color: 'orange', icon: Clock },
+    { label: 'Crítico', value: stats?.compliance_vermelho || 0, color: 'red', icon: AlertCircle },
+  ];
+
+  const CARDS = [
+    { label: 'Empresas', value: stats?.total_companies || 0, icon: Building2, color: 'blue' },
+    { label: 'Documentos', value: stats?.total_documents || 0, icon: FileText, color: 'orange' },
+    { label: 'Pendências', value: stats?.pending_validations || 0, icon: Clock, color: 'yellow' },
+    { label: 'Portarias', value: stats?.active_portarias || 0, icon: Search, color: 'emerald' },
   ];
 
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8" data-testid="dashboard-page">
-        {/* Header */}
+      <div className="p-6 lg:p-8">
         <div className="mb-8">
-          <h1 className="text-4xl font-heading font-bold tracking-tight mb-2">Dashboard</h1>
-          <p className="text-zinc-400">Visão geral do sistema de credenciamento</p>
+          <h1 className="text-3xl font-heading font-bold tracking-tight">
+            Olá, {user?.name?.split(' ')[0]} 👋
+          </h1>
+          <p className="text-zinc-500 text-sm mt-1">Bem-vindo ao sigcr SIGCR — {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+      {/* VaporizeText Hero  21st.dev */}
+      <div style={{ width: "100%", height: "80px", position: "relative", marginBottom: "8px" }}>
+        <VaporizeTextCycle
+          texts={["Credenciamento", "Compliance", "SIGCR"]}
+          font={{ fontFamily: "Inter, sans-serif", fontSize: "36px", fontWeight: 700 }}
+          color="rgb(249, 115, 22)"
+          spread={4}
+          density={6}
+          animation={{ vaporizeDuration: 2.5, fadeInDuration: 0.8, waitDuration: 1 }}
+          direction="left-to-right"
+          alignment="left"
+          tag="h2"
+        />
+      </div>
+      <div style={{ marginTop:"16px", marginBottom:"8px" }}>
+        <GradientMenu currentPath={window.location.pathname} onNavigate={(p) => window.location.href=p} />
+      </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {statCards.map((stat, idx) => (
-            <Card
-              key={idx}
-              data-testid={`stat-card-${idx}`}
-              className="bg-zinc-900/50 border-zinc-800 hover:border-orange-500/30 transition-colors"
-            >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className={`p-3 rounded-lg ${stat.bgColor}`}>
-                    <stat.icon className={`h-6 w-6 ${stat.color}`} />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm text-zinc-400 mb-1">{stat.title}</p>
-                  <p className="text-3xl font-bold font-mono">
-                    {loading ? '...' : stat.value}
-                  </p>
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <>
+            {/* Cards principais */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {CARDS.map(({ label, value, icon: Icon, color }) => (
+                <Card key={label} className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-colors">
+                  <CardContent className="p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider">{label}</p>
+                      <div className={`w-8 h-8 rounded-lg bg-${color}-500/10 flex items-center justify-center`}>
+                        <Icon className={`h-4 w-4 text-${color}-400`} />
+                      </div>
+                    </div>
+                    <p className={`text-3xl font-bold font-mono text-${color}-400`}>{value}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* Semáforo de Compliance */}
+            <Card className="bg-zinc-900/50 border-zinc-800 mb-8">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-heading flex items-center gap-2">
+                  <Shield className="h-4 w-4 text-orange-500" />
+                  Semáforo de Compliance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4">
+                  {SEMAFORO.map(({ label, value, color, icon: Icon }) => (
+                    <div key={label} className={`p-4 rounded-xl bg-${color}-500/10 border border-${color}-500/20 text-center`}>
+                      <Icon className={`h-6 w-6 text-${color}-400 mx-auto mb-2`} />
+                      <p className={`text-2xl font-bold font-mono text-${color}-400`}>{value}</p>
+                      <p className="text-xs text-zinc-500 mt-1">{label}</p>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
-          ))}
-        </div>
 
-        {/* Quick Actions */}
-        <Card className="bg-zinc-900/50 border-zinc-800 mb-8">
-          <CardHeader>
-            <CardTitle className="text-xl font-heading">Ações Rápidas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Button
-                data-testid="quick-action-new-company"
-                onClick={() => navigate('/empresas')}
-                className="bg-orange-500 hover:bg-orange-600 text-white h-14 justify-start button-shadow"
-              >
-                <Plus className="h-5 w-5 mr-2" />
-                Nova Empresa
-              </Button>
-              <Button
-                data-testid="quick-action-search-portarias"
-                onClick={() => navigate('/portarias')}
-                variant="outline"
-                className="bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-white h-14 justify-start"
-              >
-                <Building2 className="h-5 w-5 mr-2" />
-                Buscar Portarias
-              </Button>
-              <Button
-                data-testid="quick-action-view-documents"
-                onClick={() => navigate('/documentos')}
-                variant="outline"
-                className="bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-white h-14 justify-start"
-              >
-                <FileCheck className="h-5 w-5 mr-2" />
-                Gerenciar Documentos
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Info Section */}
-        <Card className="bg-zinc-900/50 border-zinc-800">
-          <CardHeader>
-            <CardTitle className="text-xl font-heading">Sobre o SIGCR</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4 text-zinc-400">
-              <p>
-                O Sistema Integrado de Gestão de Credenciamento de Registradoras oferece ferramentas
-                completas para gerenciar todo o processo de credenciamento conforme a Resolução CONTRAN.
-              </p>
-              <div className="grid md:grid-cols-2 gap-6 mt-6">
-                <div>
-                  <h3 className="text-white font-semibold mb-2">Requisitos Jurídicos</h3>
-                  <ul className="space-y-1 text-sm">
-                    <li>• CNPJ e documentos legais</li>
-                    <li>• Certidões fiscais</li>
-                    <li>• Alvará de funcionamento</li>
-                  </ul>
+            {/* Info do perfil */}
+            <Card className="bg-zinc-900/50 border-zinc-800">
+              <CardContent className="p-5">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center text-lg font-bold text-orange-400">
+                    {user?.name?.[0]?.toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-white">{user?.name}</p>
+                    <p className="text-sm text-zinc-500">{user?.email}</p>
+                    <p className="text-xs font-mono text-orange-400 mt-0.5 uppercase">{user?.perfil}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-white font-semibold mb-2">Requisitos Técnicos</h3>
-                  <ul className="space-y-1 text-sm">
-                    <li>• ISO 27001 e ISO 27301</li>
-                    <li>• Política de segurança</li>
-                    <li>• Plano de recuperação</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
     </DashboardLayout>
   );

@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -29,6 +30,7 @@ const documentTypes = [
 ];
 
 const Documentos = () => {
+  const { user, initialized, keycloak, getToken } = useAuth();
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState('');
   const [documents, setDocuments] = useState([]);
@@ -41,9 +43,7 @@ const Documentos = () => {
     file: null
   });
 
-  useEffect(() => {
-    fetchCompanies();
-  }, []);
+  useEffect(() => { if (!initialized || !user) return; fetchCompanies(); }, [initialized, user]);
 
   useEffect(() => {
     if (selectedCompany) {
@@ -52,6 +52,7 @@ const Documentos = () => {
   }, [selectedCompany]);
 
   const fetchCompanies = async () => {
+    try { await getToken(); } catch {}
     try {
       const response = await axios.get(`${API}/companies`, { withCredentials: true });
       setCompanies(response.data);

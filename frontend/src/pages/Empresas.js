@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -21,6 +22,7 @@ const detransOptions = [
 ];
 
 const Empresas = () => {
+  const { user, initialized, keycloak } = useAuth();
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -30,14 +32,29 @@ const Empresas = () => {
     cnpj: '',
     email_comercial: '',
     gestor_contrato: '',
+    endereco: '',
+    whatsapp: '',
     detrans_atuacao: []
   });
 
-  useEffect(() => {
-    fetchCompanies();
-  }, []);
+  useEffect(() => { if (!initialized || !user) return; fetchCompanies(); }, [initialized, user]);
+
+
+  const [showEditModal, setShowEditModal] = React.useState(false);
+  const [editingCompany, setEditingCompany] = React.useState(null);
+
+  const handleDelete = async (companyId) => {
+    if (!window.confirm('Confirma exclusao desta empresa?')) return;
+    try { await getToken(); } catch {}
+    try {
+      await axios.delete(`${API}/companies/${companyId}`, { withCredentials: true });
+      toast.success('Empresa excluida!');
+      fetchCompanies();
+    } catch { toast.error('Erro ao excluir'); }
+  };
 
   const fetchCompanies = async () => {
+    try { await getToken(); } catch {}
     try {
       const response = await axios.get(`${API}/companies`, { withCredentials: true });
       setCompanies(response.data);
@@ -184,7 +201,23 @@ const Empresas = () => {
                 </div>
 
                 <div>
-                  <Label className="text-zinc-300 mb-3 block">DETRANs de Atuação</Label>
+                  <Label className="text-zinc-300 mb-1 block">Endereço</Label>
+              <Input type="text" placeholder="Endereço" value={formData.endereco} onChange={(e)=>setFormData({...formData,endereco:e.target.value})} className="bg-zinc-800 border-zinc-700" />
+            </div>
+            <div>
+              <Label className="text-zinc-300 mb-1 block">WhatsApp</Label>
+              <Input type="text" placeholder="(99) 99999-9999" value={formData.whatsapp} onChange={(e)=>setFormData({...formData,whatsapp:e.target.value})} className="bg-zinc-800 border-zinc-700" />
+            </div>
+            <div className="col-span-2">
+              <Label className="text-zinc-300 mb-1 block">Endereço</Label>
+              <Input type="text" placeholder="Endereço" value={formData.endereco} onChange={(e)=>setFormData({...formData,endereco:e.target.value})} className="bg-zinc-800 border-zinc-700" />
+            </div>
+            <div>
+              <Label className="text-zinc-300 mb-1 block">WhatsApp</Label>
+              <Input type="text" placeholder="(99) 99999-9999" value={formData.whatsapp} onChange={(e)=>setFormData({...formData,whatsapp:e.target.value})} className="bg-zinc-800 border-zinc-700" />
+            </div>
+            <div className="col-span-2">
+              <Label className="text-zinc-300 mb-3 block">DETRANs de Atuação</Label>
                   <div className="grid grid-cols-5 gap-3 max-h-48 overflow-y-auto p-4 bg-zinc-950 border border-zinc-800 rounded-md">
                     {detransOptions.map((detran) => (
                       <div key={detran} className="flex items-center space-x-2">
@@ -239,7 +272,11 @@ const Empresas = () => {
                 <Plus className="h-5 w-5 mr-2" />
                 Cadastrar Primeira Empresa
               </Button>
-            </CardContent>
+                        <div className="flex gap-2 mt-3">
+              <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800" onClick={()=>{setEditingCompany(company);setShowEditModal(true);}}>Editar</Button>
+              <Button size="sm" className="bg-red-900/30 text-red-400 border border-red-800" onClick={()=>handleDelete(company.company_id)}>Excluir</Button>
+            </div>
+</CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-6">
@@ -286,6 +323,12 @@ const Empresas = () => {
                   )}
                   <div className="text-xs text-zinc-600 mt-4">
                     Cadastrado em: {new Date(company.created_at).toLocaleDateString('pt-BR')}
+                </div>
+                <div className="flex gap-2 mt-3">
+                  <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800" onClick={()=>{setEditingCompany(company);setShowEditModal(true);}}>Editar</Button>
+                  <Button size="sm" className="bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900" onClick={()=>handleDelete(company.id)}>Excluir</Button>
+                </div>
+                <div style={{display:'none'}}>
                   </div>
                 </CardContent>
               </Card>

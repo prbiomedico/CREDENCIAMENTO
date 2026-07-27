@@ -1,0 +1,15 @@
+:root {
+  --pf-v5-global--primary-color--100: #f97316;
+  --pf-v5-global--link--Color: #f97316;
+}
+body {
+  background: linear-gradient(135deg, #18181b 0%, #2d1810 100%) !important;
+}
+.pf-v5-c-button.pf-m-primary, button[type="submit"] {
+  background-color: #f97316 !important;
+  border-color: #f97316 !important;
+}
+.pf-v5-c-button.pf-m-primary:hover, button[type="submit"]:hover {
+  background-color: #ea580c !important;
+}
+a { color: #f97316 !important; }
