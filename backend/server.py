@@ -3,7 +3,9 @@ from fastapi.responses import JSONResponse, FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo.errors import DuplicateKeyError
 import os
+import json
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
@@ -36,6 +38,13 @@ api_router = APIRouter(prefix="/api")
 
 # LLM API Key
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
+# Módulo de vencimento de documentos com OCR (Bloco 1, Lei 14.133) — extração
+# via LLM local (Ollama/Llama, container próprio na sigcr-net). Se o Ollama
+# não estiver acessível por qualquer motivo, o campo vencimento simplesmente
+# fica vazio esperando preenchimento manual (mesmo padrão de indisponibilidade
+# de /portarias/analyze) — nunca derruba o upload.
+OLLAMA_URL = os.environ.get('OLLAMA_URL', 'http://sigcr-ollama:11434')
+OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'llama3.2:3b')
 
 # Keycloak config (used across auth + admin routes)
 KEYCLOAK_URL = os.environ.get("KEYCLOAK_URL", "https://auth.sigcr.com.br")
@@ -47,6 +56,98 @@ KEYCLOAK_ADMIN_PASS = os.environ.get("KEYCLOAK_ADMIN_PASSWORD", "")
 # Cache JWKS global
 _jwks_cache = None
 _jwks_cache_time = None
+
+# UFs válidas — usado por validação de estado_sigla em documentos, portarias e estados
+UF_VALIDAS = {
+    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA",
+    "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
+}
+
+UF_NOMES = {
+    "AC": "Acre", "AL": "Alagoas", "AP": "Amapá", "AM": "Amazonas", "BA": "Bahia",
+    "CE": "Ceará", "DF": "Distrito Federal", "ES": "Espírito Santo", "GO": "Goiás",
+    "MA": "Maranhão", "MT": "Mato Grosso", "MS": "Mato Grosso do Sul", "MG": "Minas Gerais",
+    "PA": "Pará", "PB": "Paraíba", "PR": "Paraná", "PE": "Pernambuco", "PI": "Piauí",
+    "RJ": "Rio de Janeiro", "RN": "Rio Grande do Norte", "RS": "Rio Grande do Sul",
+    "RO": "Rondônia", "RR": "Roraima", "SC": "Santa Catarina", "SP": "São Paulo",
+    "SE": "Sergipe", "TO": "Tocantins",
+}
+
+MAX_PORTARIA_PDF_SIZE = 20 * 1024 * 1024  # 20MB
+
+
+# ============ Checklist CONTRAN 807 (Registradora) ============
+# Catálogo fixo — os itens em si não mudam por empresa, só o status de envio
+# (derivado de db.documents via Document.checklist_item_id, não duplicado
+# numa coleção própria). item_id é estável de propósito: nunca gerado via
+# uuid, pra não perder o vínculo com documentos já enviados a cada restart.
+
+CHECKLIST_CONTRAN_807_BLOCOS = {
+    1: "Habilitação Jurídica e Regularidade Fiscal e Trabalhista",
+    2: "Qualificação Econômico-Financeira",
+    3: "Qualificação Técnica e de Pessoal",
+    4: "Infraestrutura, Segurança e Tecnologia",
+    5: "Segurança da Informação e LGPD",
+    6: "Declaratórias Gerais",
+}
+
+CHECKLIST_CONTRAN_807 = [
+    # Bloco 1
+    {"item_id": "b1_ato_constitutivo", "bloco": 1, "nome": "Ato Constitutivo",
+     "descricao": "Contrato social + alterações/consolidação; S/A: ata de eleição da diretoria; sociedade civil: ato constitutivo + prova da diretoria atual."},
+    {"item_id": "b1_cnpj", "bloco": 1, "nome": "Inscrição no CNPJ", "descricao": None},
+    {"item_id": "b1_inscricao_estadual_municipal", "bloco": 1, "nome": "Inscrição Estadual/Municipal", "descricao": None},
+    {"item_id": "b1_certidao_negativa_falencia", "bloco": 1, "nome": "Certidão Negativa de Falência e Recuperação",
+     "descricao": "Do distribuidor da sede, emitida com até 30 dias de antecedência."},
+    {"item_id": "b1_certidoes_regularidade_fiscal", "bloco": 1, "nome": "Certidões de Regularidade Fiscal",
+     "descricao": "Tributos e dívida ativa: Municipal, Estadual e Federal."},
+    {"item_id": "b1_fgts", "bloco": 1, "nome": "Certidão de Regularidade do FGTS", "descricao": None},
+    {"item_id": "b1_cndt", "bloco": 1, "nome": "CNDT — Certidão Negativa de Débitos Trabalhistas",
+     "descricao": "Ou certidão positiva com efeito de negativa."},
+    # Bloco 2
+    {"item_id": "b2_balanco_patrimonial", "bloco": 2, "nome": "Balanço Patrimonial",
+     "descricao": "Último exercício social, na forma da lei — balancetes provisórios não são aceitos."},
+    {"item_id": "b2_patrimonio_liquido_minimo", "bloco": 2, "nome": "Comprovação de Patrimônio Líquido Mínimo",
+     "descricao": "Mínimo de R$ 5.000.000,00, atualizado por IPCA."},
+    # Bloco 3
+    {"item_id": "b3_declaracao_estrutura_equipe", "bloco": 3, "nome": "Declaração de Estrutura e Equipe",
+     "descricao": "Instalações, hardware/software e equipe qualificada."},
+    {"item_id": "b3_certificacao_cissp", "bloco": 3, "nome": "Profissional de TI com Certificação CISSP", "descricao": None},
+    {"item_id": "b3_certificacao_itil", "bloco": 3, "nome": "Profissional de TI com Certificação ITIL", "descricao": None},
+    {"item_id": "b3_certificacao_cobit", "bloco": 3, "nome": "Profissional de TI com Certificação COBIT", "descricao": None},
+    {"item_id": "b3_capacidade_operacional", "bloco": 3, "nome": "Capacidade Operacional Comprovada",
+     "descricao": "Mínimo de 60.000 contratos registrados nos últimos 12 meses."},
+    {"item_id": "b3_atestado_capacidade_dados_pessoais", "bloco": 3, "nome": "Atestado de Capacidade Técnica em Dados Pessoais",
+     "descricao": "Dispensável mediante certificação ISO 27701."},
+    # Bloco 4
+    {"item_id": "b4_datacenter_disponibilidade", "bloco": 4, "nome": "Comprovação de Datacenter",
+     "descricao": "Disponibilidade mensal mínima de 99,0%."},
+    {"item_id": "b4_certificacao_tier_iii", "bloco": 4, "nome": "Certificação Tier III",
+     "descricao": "Próprio ou terceirizado, com termo de responsabilidade solidária de 5 anos."},
+    {"item_id": "b4_link_dedicado", "bloco": 4, "nome": "Declaração de Link Dedicado Exclusivo", "descricao": None},
+    {"item_id": "b4_pentest", "bloco": 4, "nome": "Laudo de Pentest Atualizado",
+     "descricao": "Últimos 12 meses, metodologia black/grey/white-box."},
+    {"item_id": "b4_ia_pln", "bloco": 4, "nome": "Comprovação de Recursos de IA/PLN",
+     "descricao": "Busca semântica em contratos."},
+    {"item_id": "b4_suporte_tecnico", "bloco": 4, "nome": "Declaração de Suporte Técnico Multicanal", "descricao": None},
+    # Bloco 5
+    {"item_id": "b5_iso_27001", "bloco": 5, "nome": "Certificação ISO/IEC 27001", "descricao": None},
+    {"item_id": "b5_iso_27701", "bloco": 5, "nome": "Certificação ISO/IEC 27701", "descricao": None},
+    {"item_id": "b5_conformidade_lgpd", "bloco": 5, "nome": "Laudo/Certidão de Conformidade LGPD", "descricao": None},
+    # Bloco 6 — assinadas pelo representante legal
+    {"item_id": "b6_requerimento_inicial", "bloco": 6, "nome": "Requerimento Inicial", "descricao": "Com firma reconhecida."},
+    {"item_id": "b6_inexistencia_relacao_vedada", "bloco": 6, "nome": "Declaração de Inexistência de Relação Comercial Vedada",
+     "descricao": "Empresas impedidas pelo CONTRAN."},
+    {"item_id": "b6_aceite_conformidade_edital", "bloco": 6, "nome": "Aceite de Conformidade com o Edital/Portaria", "descricao": None},
+    {"item_id": "b6_declaracao_infraestrutura", "bloco": 6, "nome": "Declaração de Infraestrutura", "descricao": None},
+    {"item_id": "b6_declaracao_idoneidade", "bloco": 6, "nome": "Declaração de Idoneidade", "descricao": None},
+    {"item_id": "b6_incompatibilidade_atividades", "bloco": 6, "nome": "Declaração de Incompatibilidade de Atividades",
+     "descricao": "Não presta serviço de anotação de gravame."},
+    {"item_id": "b6_termo_representacao_local", "bloco": 6, "nome": "Termo de Representação Local",
+     "descricao": "Filial/preposto na circunscrição do órgão."},
+]
+
+CHECKLIST_CONTRAN_807_IDS = {item["item_id"] for item in CHECKLIST_CONTRAN_807}
 
 
 # ============ Models ============
@@ -61,6 +162,10 @@ class User(BaseModel):
     roles: List[str] = []
     detran_uf: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    # Fase 1 (autorização por status de conta): None para perfis internos
+    # (sigcr_admin/detran/detran_admin) que não têm companies nem contas_pf.
+    tipo_conta: Optional[str] = None       # "empresa" | "pessoa_fisica" | None
+    account_status: Optional[str] = None   # espelha companies.status ou contas_pf.status
 
 
 class UserSession(BaseModel):
@@ -69,6 +174,15 @@ class UserSession(BaseModel):
     session_token: str
     expires_at: datetime
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class Responsavel(BaseModel):
+    """Pessoa física responsável por uma empresa (Financeira/Registradora/DETRAN).
+    Introduzido na Fase 0 do cadastro público — Optional em Company até as fases
+    de cadastro (3/4) passarem a preenchê-lo; empresas existentes ficam sem isso."""
+    nome: str
+    cpf: str
+    documento_foto_path: str
 
 
 class Company(BaseModel):
@@ -84,7 +198,48 @@ class Company(BaseModel):
     gestor_contrato: str
     logo_url: Optional[str] = None
     detrans_atuacao: List[str] = []
-    status: str = "pending"  # pending, approved, rejected
+    tipo_empresa: str = "registradora"  # registradora, financeira, detran
+    # NOTA (Fase 0): default deliberadamente mantido em "pending" (vocabulário antigo) —
+    # POST /companies (rota existente, inalterada nesta fase) ainda cria empresas assim.
+    # A troca do default para o vocabulário novo (pendente_aprovacao/aprovado_acesso_limitado/
+    # ativo_contrato_assinado/rejeitado) e a atualização de quem lê esse default acontece na
+    # Fase 1, junto com a camada de autorização por status — trocar aqui sem isso quebraria
+    # silenciosamente as contagens de /stats pra empresas novas criadas entre as duas fases.
+    status: str = "pending"  # legado: pending/approved/rejected. Migrados: pendente_aprovacao/aprovado_acesso_limitado/ativo_contrato_assinado/rejeitado
+    responsavel: Optional[Responsavel] = None
+    contrato_social_path: Optional[str] = None
+    aprovado_por: Optional[str] = None
+    aprovado_em: Optional[str] = None
+    historico_rejeicoes: List[dict] = []  # Fase 2: cada rejeição vira uma entrada aqui, nunca sobrescrita — permite reenvio pelo mesmo usuário após correção
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    deleted_at: Optional[str] = None
+    deleted_by: Optional[str] = None
+
+
+class ContaPF(BaseModel):
+    """Conta de pessoa física avulsa (Fase 5) — sem vínculo com nenhuma empresa.
+    Sem endpoints ainda nesta fase; só a definição de schema + coleção vazia."""
+    model_config = ConfigDict(extra="ignore")
+    conta_pf_id: str = Field(default_factory=lambda: f"pf_{uuid.uuid4().hex[:12]}")
+    user_id: str
+    cpf: str
+    nome: str
+    documento_foto_path: str
+    status: str = "pendente_pagamento"  # pendente_pagamento, ativa, inadimplente, cancelada
+    stripe_customer_id: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class Assinatura(BaseModel):
+    """Assinatura Stripe recorrente de uma ContaPF (Fase 5). Sem endpoints ainda."""
+    model_config = ConfigDict(extra="ignore")
+    assinatura_id: str = Field(default_factory=lambda: f"assinatura_{uuid.uuid4().hex[:12]}")
+    conta_pf_id: str
+    stripe_subscription_id: str
+    plano: str  # mensal, anual
+    status: str = "incomplete"  # active, past_due, canceled, incomplete (espelha Stripe)
+    current_period_end: Optional[datetime] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -100,6 +255,17 @@ class CompanyCreate(BaseModel):
     detrans_atuacao: List[str]
 
 
+class CompanyUpdate(BaseModel):
+    name: Optional[str] = None
+    nome_fantasia: Optional[str] = None
+    cnpj: Optional[str] = None
+    endereco: Optional[str] = None
+    email_comercial: Optional[EmailStr] = None
+    whatsapp: Optional[str] = None
+    gestor_contrato: Optional[str] = None
+    detrans_atuacao: Optional[List[str]] = None
+
+
 class Document(BaseModel):
     model_config = ConfigDict(extra="ignore")
     document_id: str = Field(default_factory=lambda: f"doc_{uuid.uuid4().hex[:12]}")
@@ -111,7 +277,12 @@ class Document(BaseModel):
     file_size: int
     status: str = "pending"  # pending, approved, rejected
     notes: Optional[str] = None
+    vencimento: Optional[str] = None  # ISO 8601 (YYYY-MM-DD) — sugerido por OCR ou preenchido manualmente
+    vencimento_fonte: Optional[str] = None  # "ocr" | "manual" | None
+    checklist_item_id: Optional[str] = None  # vincula a um item de CHECKLIST_CONTRAN_807 — obrigatório em uploads novos (ver upload_document); Optional aqui só pra não quebrar a leitura de documentos anteriores à migração
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    deleted_at: Optional[str] = None
+    deleted_by: Optional[str] = None
 
 
 class DocumentUpload(BaseModel):
@@ -122,12 +293,25 @@ class DocumentUpload(BaseModel):
 class Portaria(BaseModel):
     model_config = ConfigDict(extra="ignore")
     portaria_id: str = Field(default_factory=lambda: f"port_{uuid.uuid4().hex[:12]}")
+    # Campos legados — mantidos como estão, usados pelas rotas antigas (GET/POST /portarias, /search)
     title: str
     content: str
     source: str  # DOU, DODF, etc
     date: datetime
     detran: Optional[str] = None
     summary: Optional[str] = None
+    # Campos novos — canônicos para o módulo "Estado > UF"
+    numero: Optional[str] = None
+    orgao_emissor: Optional[str] = None
+    estado_sigla: Optional[str] = None  # validado contra UF_VALIDAS quando presente
+    status: str = "vigente"  # vigente, revogada
+    link_pdf: Optional[str] = None  # path de arquivo enviado via /portarias/upload OU URL externa
+    origem: str = "manual"  # manual, querido_diario
+    querido_diario_url: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[str] = None
+    deleted_by: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -137,6 +321,27 @@ class PortariaCreate(BaseModel):
     source: str
     date: datetime
     detran: Optional[str] = None
+    numero: Optional[str] = None
+    orgao_emissor: Optional[str] = None
+    estado_sigla: Optional[str] = None
+    status: str = "vigente"
+    link_pdf: Optional[str] = None
+    origem: str = "manual"
+    querido_diario_url: Optional[str] = None
+    summary: Optional[str] = None
+
+
+class PortariaUpdate(BaseModel):
+    title: Optional[str] = None
+    content: Optional[str] = None
+    source: Optional[str] = None
+    date: Optional[datetime] = None
+    detran: Optional[str] = None
+    numero: Optional[str] = None
+    orgao_emissor: Optional[str] = None
+    status: Optional[str] = None
+    link_pdf: Optional[str] = None
+    summary: Optional[str] = None
 
 
 class AnalyzeRequest(BaseModel):
@@ -150,8 +355,24 @@ class EstadoCredenciamento(BaseModel):
     estado_nome: str  # São Paulo, Rio de Janeiro, etc
     portaria_vigente: Optional[str] = None
     portaria_file_path: Optional[str] = None
-    empresas_credenciadas: List[str] = []  # List of company_ids
+    empresas_credenciadas: List[str] = []  # legado, congelado — fonte real é db.credenciamentos
+    observacoes: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[str] = None
+    deleted_by: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class EstadoCredenciamentoCreate(BaseModel):
+    estado_sigla: str
+    observacoes: Optional[str] = None
+
+
+class EstadoCredenciamentoUpdate(BaseModel):
+    observacoes: Optional[str] = None
+    portaria_vigente: Optional[str] = None
+    portaria_file_path: Optional[str] = None
 
 
 class CredenciamentoDetalhes(BaseModel):
@@ -160,13 +381,38 @@ class CredenciamentoDetalhes(BaseModel):
     company_id: str
     estado_sigla: str
     extrato_contrato: str
-    status: str = "ativo"  # ativo, sem_efeito, pendente
+    status: str = "ativo"  # ativo, sem_efeito, pendente — estado de NEGÓCIO, distinto do soft delete
     validade: Optional[datetime] = None
     valor_total_registro: Optional[float] = None
     valor_detran: Optional[float] = None
     valor_registradora: Optional[float] = None
     termo_credenciamento_path: Optional[str] = None
+    created_by: Optional[str] = None
+    updated_at: Optional[datetime] = None
+    deleted_at: Optional[str] = None
+    deleted_by: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class CredenciamentoDetalhesCreate(BaseModel):
+    company_id: str
+    extrato_contrato: str
+    status: str = "ativo"
+    validade: Optional[datetime] = None
+    valor_total_registro: Optional[float] = None
+    valor_detran: Optional[float] = None
+    valor_registradora: Optional[float] = None
+    termo_credenciamento_path: Optional[str] = None
+
+
+class CredenciamentoDetalhesUpdate(BaseModel):
+    extrato_contrato: Optional[str] = None
+    status: Optional[str] = None
+    validade: Optional[datetime] = None
+    valor_total_registro: Optional[float] = None
+    valor_detran: Optional[float] = None
+    valor_registradora: Optional[float] = None
+    termo_credenciamento_path: Optional[str] = None
 
 
 class SystemUser(BaseModel):
@@ -192,6 +438,68 @@ class SystemUserCreate(BaseModel):
 
 
 # ============ Auth Helper ============
+
+async def _anexar_status_conta(user: User) -> User:
+    """Fase 1: anexa tipo_conta/account_status a partir de companies/contas_pf.
+
+    Um user_id pode ser dono de mais de uma company (fluxo antigo de
+    'Nova Empresa' em Empresas.js) — nesse caso, usa a política mais permissiva
+    (se QUALQUER company do usuário está ativo_contrato_assinado, considera
+    acesso total; senão aprovado_acesso_limitado se alguma estiver nesse
+    estágio; senão pendente_aprovacao). Evita restringir de forma errada um
+    usuário que já tem pelo menos uma empresa liberada.
+
+    Perfis internos (sigcr_admin/detran/detran_admin) tipicamente não têm
+    nenhum documento em companies/contas_pf e ficam com tipo_conta=None,
+    o que _tem_acesso_total trata como acesso total (não são contas de
+    cliente, não fazem sentido gatear por esse mecanismo)."""
+    companies = await db.companies.find(
+        {"user_id": user.user_id, "deleted_at": None}, {"_id": 0, "status": 1}
+    ).to_list(100)
+    if companies:
+        user.tipo_conta = "empresa"
+        statuses = {c.get("status") for c in companies}
+        if "ativo_contrato_assinado" in statuses:
+            user.account_status = "ativo_contrato_assinado"
+        elif "aprovado_acesso_limitado" in statuses:
+            user.account_status = "aprovado_acesso_limitado"
+        elif statuses == {"rejeitado"}:
+            user.account_status = "rejeitado"
+        else:
+            user.account_status = "pendente_aprovacao"
+        return user
+
+    conta_pf = await db.contas_pf.find_one({"user_id": user.user_id}, {"_id": 0, "status": 1})
+    if conta_pf:
+        user.tipo_conta = "pessoa_fisica"
+        user.account_status = conta_pf.get("status")
+    return user
+
+
+def _tem_acesso_total(user: User) -> bool:
+    """Usado por require_acesso_total (ex: candidatar-se a edital). True pra
+    perfis internos (tipo_conta None) e pra contas com status liberado —
+    inclui PF avulsa com assinatura ativa aqui porque, na prática, ela nunca
+    chega a chamar POST /solicitacoes (não tem company_id pra vincular);
+    o que de fato restringe o que uma PF avulsa VÊ é _ve_editais_completo."""
+    if user.tipo_conta == "empresa":
+        return user.account_status == "ativo_contrato_assinado"
+    if user.tipo_conta == "pessoa_fisica":
+        return user.account_status == "ativa"
+    return True
+
+
+def _ve_editais_completo(user: User) -> bool:
+    """Só empresa com contrato assinado vê o edital completo (e pode se
+    candidatar). PF avulsa NUNCA vê completo, mesmo com assinatura ativa —
+    por especificação, o acesso dela é só acompanhamento/preview, nunca
+    candidatura (não é vinculada a nenhuma empresa/credenciamento)."""
+    if user.tipo_conta == "empresa":
+        return user.account_status == "ativo_contrato_assinado"
+    if user.tipo_conta == "pessoa_fisica":
+        return False
+    return True
+
 
 async def get_current_user(request: Request) -> User:
     """Valida token JWT do Keycloak ou session_token legado"""
@@ -257,25 +565,28 @@ async def get_current_user(request: Request) -> User:
             name = payload.get("name", payload.get("preferred_username", ""))
             detran_uf = payload.get("detran_uf")
 
-            # Upsert usuário no MongoDB
-            existing = await db.users.find_one({"user_id": user_id}, {"_id": 0})
-            if not existing:
-                await db.users.insert_one({
-                    "user_id": user_id,
-                    "email": email,
-                    "name": name,
-                    "picture": payload.get("picture"),
-                    "perfil": perfil,
-                    "detran_uf": detran_uf,
-                    "created_at": datetime.now(timezone.utc).isoformat()
-                })
-            else:
-                await db.users.update_one(
-                    {"user_id": user_id},
-                    {"$set": {"name": name, "perfil": perfil}}
-                )
+            # Upsert atômico — find_one + insert_one separados (versão antiga)
+            # tinha uma corrida real: duas requisições concorrentes no primeiro
+            # login do mesmo usuário podiam ambas ver "não existe" e ambas
+            # inserirem, gerando dois documentos com o mesmo user_id (achado
+            # em produção: administrador@sigcr.com.br duplicado). update_one
+            # com upsert=True é atômico no Mongo — só um dos dois vira insert.
+            await db.users.update_one(
+                {"user_id": user_id},
+                {
+                    "$set": {"name": name, "perfil": perfil},
+                    "$setOnInsert": {
+                        "user_id": user_id,
+                        "email": email,
+                        "picture": payload.get("picture"),
+                        "detran_uf": detran_uf,
+                        "created_at": datetime.now(timezone.utc).isoformat(),
+                    },
+                },
+                upsert=True,
+            )
 
-            return User(
+            return await _anexar_status_conta(User(
                 user_id=user_id,
                 email=email,
                 name=name,
@@ -283,7 +594,7 @@ async def get_current_user(request: Request) -> User:
                 perfil=perfil,
                 roles=sigcr_roles,
                 detran_uf=detran_uf,
-            )
+            ))
     except Exception as e:
         logger.warning(f"JWT Keycloak inválido: {e}")
 
@@ -304,7 +615,190 @@ async def get_current_user(request: Request) -> User:
     if not user_doc:
         raise HTTPException(status_code=401, detail="Usuário não encontrado")
 
-    return User(**user_doc)
+    return await _anexar_status_conta(User(**user_doc))
+
+
+async def require_acesso_total(current_user: User = Depends(get_current_user)) -> User:
+    """Dependency pra rotas que só fazem sentido com acesso total liberado
+    (ex: candidatar-se a edital). Não usar pra rotas onde a resposta deve só
+    variar de conteúdo (ex: GET /editais) — nesses casos, usar _tem_acesso_total
+    diretamente e devolver uma versão reduzida em vez de bloquear com 403."""
+    if not _tem_acesso_total(current_user):
+        detail = (
+            "Acesso liberado apenas após contrato assinado"
+            if current_user.tipo_conta == "empresa"
+            else "Assinatura inativa"
+        )
+        raise HTTPException(status_code=403, detail=detail)
+    return current_user
+
+
+def require_perfil(*perfis_permitidos: str):
+    """Dependency factory pra rotas exclusivas de um ou mais perfis (ex:
+    Depends(require_perfil("detran", "detran_admin"))). sigcr_admin sempre
+    passa, espelhando o bypass de superusuário do frontend. Não usar em rotas
+    cujo controle de acesso já é mais fino que "perfil bate/não bate" (ex:
+    escopo por UF/categoria) — nesses casos as checagens dedicadas
+    (_checar_permissao_escrita_estado, etc.) continuam sendo a fonte de verdade."""
+    async def checker(current_user: User = Depends(get_current_user)) -> User:
+        if current_user.perfil == "sigcr_admin" or current_user.perfil in perfis_permitidos:
+            return current_user
+        raise HTTPException(
+            status_code=403,
+            detail=f"Acesso restrito ao(s) perfil(is): {', '.join(perfis_permitidos)}"
+        )
+    return checker
+
+
+# ============ Modo "ver como" (sigcr_admin) ============
+# Permite ao sigcr_admin navegar/agir vendo o sistema como uma empresa
+# específica ou como o DETRAN de uma UF específica, sem trocar de login.
+# Dois mecanismos distintos, pela forma como cada endpoint já era escrito:
+#
+# 1. get_effective_scope — pra endpoints que HOJE não recebem nenhum
+#    identificador de empresa/UF (ex: GET /companies, GET /stats) e inferem
+#    tudo do JWT. Aceita query params opcionais view_as_company_id/
+#    view_as_detran_uf que só sigcr_admin pode usar (outros perfis levam 403
+#    explícito, nunca ignora silenciosamente — pedido explícito, evita
+#    mascarar uma tentativa de escalada de privilégio como no-op).
+#
+# 2. _autorizar_acesso_empresa / _autorizar_acesso_esteira — pra endpoints
+#    que JÁ recebem um id explícito no path (ex: GET /companies/{company_id})
+#    e hoje travam com um filtro extra de user_id==dono. Aqui não precisa de
+#    query param novo: o id no path já diz qual empresa/esteira; o que faltava
+#    era liberar sigcr_admin do filtro de dono.
+#
+# Em ambos os casos, `current_user` no EffectiveScope retornado é sempre a
+# identidade REAL (pra auditoria/created_by) — só effective_user_id/
+# effective_company_id/effective_detran_uf mudam quando há "ver como" ativo.
+
+class EffectiveScope(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    current_user: User
+    effective_user_id: str
+    effective_company_id: Optional[str] = None
+    effective_detran_uf: Optional[str] = None
+    effective_perfil: str
+    viewing_as: Optional[dict] = None  # {"tipo": "empresa"|"detran", "id": str, "nome": str}
+
+    @property
+    def is_viewing_as(self) -> bool:
+        return self.viewing_as is not None
+
+
+async def get_effective_scope(
+    view_as_company_id: Optional[str] = None,
+    view_as_detran_uf: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+) -> EffectiveScope:
+    if (view_as_company_id or view_as_detran_uf) and current_user.perfil != "sigcr_admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Parâmetros de visualização (view_as_company_id/view_as_detran_uf) são restritos a sigcr_admin"
+        )
+    if view_as_company_id and view_as_detran_uf:
+        raise HTTPException(status_code=400, detail="Escolha visualizar por empresa OU por DETRAN, não os dois")
+
+    if view_as_company_id:
+        company = await db.companies.find_one(
+            {"company_id": view_as_company_id, "deleted_at": None}, {"_id": 0}
+        )
+        if not company:
+            raise HTTPException(status_code=404, detail="Empresa não encontrada")
+        dono = await db.users.find_one({"user_id": company["user_id"]}, {"_id": 0})
+        return EffectiveScope(
+            current_user=current_user,
+            effective_user_id=company["user_id"],
+            effective_company_id=view_as_company_id,
+            effective_detran_uf=None,
+            effective_perfil=(dono or {}).get("perfil", "registradora"),
+            viewing_as={
+                "tipo": "empresa",
+                "id": view_as_company_id,
+                "nome": company.get("nome_fantasia") or company.get("name"),
+            },
+        )
+
+    if view_as_detran_uf:
+        uf = view_as_detran_uf.upper()
+        if uf not in UF_VALIDAS:
+            raise HTTPException(status_code=400, detail="UF inválida")
+        return EffectiveScope(
+            current_user=current_user,
+            effective_user_id=current_user.user_id,
+            effective_company_id=None,
+            effective_detran_uf=uf,
+            effective_perfil="detran_admin",
+            viewing_as={"tipo": "detran", "id": uf, "nome": UF_NOMES.get(uf, uf)},
+        )
+
+    return EffectiveScope(
+        current_user=current_user,
+        effective_user_id=current_user.user_id,
+        effective_company_id=None,
+        effective_detran_uf=current_user.detran_uf,
+        effective_perfil=current_user.perfil,
+        viewing_as=None,
+    )
+
+
+async def _autorizar_acesso_empresa(company_id: str, current_user: User, *, exigir_nao_deletada: bool = True) -> EffectiveScope:
+    """Autoriza acesso a UMA empresa já identificada explicitamente na rota
+    (path/form). Dono sempre passa; sigcr_admin sempre passa (com viewing_as
+    setado, pra auditoria); qualquer outro perfil leva 403."""
+    query = {"company_id": company_id}
+    if exigir_nao_deletada:
+        query["deleted_at"] = None
+    company = await db.companies.find_one(query, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+
+    if company["user_id"] == current_user.user_id:
+        return EffectiveScope(
+            current_user=current_user,
+            effective_user_id=current_user.user_id,
+            effective_company_id=company_id,
+            effective_detran_uf=current_user.detran_uf,
+            effective_perfil=current_user.perfil,
+            viewing_as=None,
+        )
+    if current_user.perfil == "sigcr_admin":
+        return EffectiveScope(
+            current_user=current_user,
+            effective_user_id=company["user_id"],
+            effective_company_id=company_id,
+            effective_detran_uf=current_user.detran_uf,
+            effective_perfil=current_user.perfil,
+            viewing_as={
+                "tipo": "empresa",
+                "id": company_id,
+                "nome": company.get("nome_fantasia") or company.get("name"),
+            },
+        )
+    raise HTTPException(status_code=403, detail="Acesso negado — empresa não pertence a este usuário")
+
+
+async def _autorizar_acesso_esteira(esteira_id: str, current_user: User) -> tuple:
+    """Mesmo padrão de _autorizar_acesso_empresa, mas pra esteiras — que são
+    escopadas só por user_id (não têm company_id). Retorna (esteira_doc, scope)."""
+    esteira = await db.esteiras.find_one({"esteira_id": esteira_id}, {"_id": 0})
+    if not esteira:
+        raise HTTPException(status_code=404, detail="Esteira não encontrada")
+
+    if esteira["user_id"] == current_user.user_id:
+        scope = EffectiveScope(
+            current_user=current_user, effective_user_id=current_user.user_id,
+            effective_detran_uf=current_user.detran_uf, effective_perfil=current_user.perfil, viewing_as=None,
+        )
+        return esteira, scope
+    if current_user.perfil == "sigcr_admin":
+        scope = EffectiveScope(
+            current_user=current_user, effective_user_id=esteira["user_id"],
+            effective_detran_uf=current_user.detran_uf, effective_perfil=current_user.perfil,
+            viewing_as={"tipo": "usuario", "id": esteira["user_id"], "nome": esteira.get("registradora")},
+        )
+        return esteira, scope
+    raise HTTPException(status_code=403, detail="Esteira não encontrada")
 
 
 # ============ Auth Routes ============
@@ -419,9 +913,16 @@ async def logout(request: Request, response: Response):
 # ============ Company Routes ============
 
 @api_router.get("/companies", response_model=List[Company])
-async def get_companies(current_user: User = Depends(get_current_user)):
-    """Get all companies for current user"""
-    companies = await db.companies.find({"user_id": current_user.user_id}, {"_id": 0}).to_list(1000)
+async def get_companies(scope: EffectiveScope = Depends(get_effective_scope)):
+    """Empresas do usuário logado. sigcr_admin sem "ver como" ativo vê todas
+    (mesmo padrão de GET /solicitacoes e /eventos — alimenta o seletor "ver
+    como" no frontend); com view_as_company_id, vê só a(s) empresa(s) do dono
+    daquela empresa (mimetiza exatamente o que o dono veria)."""
+    if scope.current_user.perfil == "sigcr_admin" and not scope.is_viewing_as:
+        query = {"deleted_at": None}
+    else:
+        query = {"user_id": scope.effective_user_id, "deleted_at": None}
+    companies = await db.companies.find(query, {"_id": 0}).to_list(1000)
     return companies
 
 
@@ -444,27 +945,68 @@ async def create_company(company_data: CompanyCreate, current_user: User = Depen
     doc['created_at'] = doc['created_at'].isoformat()
     doc['updated_at'] = doc['updated_at'].isoformat()
 
-    await db.companies.insert_one(doc)
+    try:
+        await db.companies.insert_one(doc)
+    except DuplicateKeyError:
+        raise HTTPException(status_code=409, detail="CNPJ já cadastrado")
     return company
 
 
 @api_router.get("/companies/{company_id}", response_model=Company)
 async def get_company(company_id: str, current_user: User = Depends(get_current_user)):
-    """Get company by ID"""
-    company = await db.companies.find_one(
-        {"company_id": company_id, "user_id": current_user.user_id},
-        {"_id": 0}
-    )
-    if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
+    """Get company by ID (dono ou sigcr_admin em modo 'ver como')"""
+    await _autorizar_acesso_empresa(company_id, current_user)
+    company = await db.companies.find_one({"company_id": company_id, "deleted_at": None}, {"_id": 0})
     return Company(**company)
 
 
+@api_router.patch("/companies/{company_id}", response_model=Company)
+async def update_company(company_id: str, updates: CompanyUpdate, current_user: User = Depends(get_current_user)):
+    """Update company fields (dono ou sigcr_admin em modo 'ver como')"""
+    scope = await _autorizar_acesso_empresa(company_id, current_user)
+    company = await db.companies.find_one({"company_id": company_id, "deleted_at": None}, {"_id": 0})
+
+    campos = {k: v for k, v in updates.model_dump().items() if v is not None}
+    if not campos:
+        return Company(**company)
+    antes = {k: company.get(k) for k in campos}
+    campos["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    try:
+        await db.companies.update_one({"company_id": company_id}, {"$set": campos})
+    except DuplicateKeyError:
+        raise HTTPException(status_code=409, detail="CNPJ já cadastrado por outra empresa")
+    await registrar_auditoria(current_user, "atualizar_empresa", "company", company_id, {
+        "antes": antes, "depois": {k: v for k, v in campos.items() if k != "updated_at"}
+    }, atuando_como_empresa=scope.viewing_as["id"] if scope.viewing_as else None)
+    updated = await db.companies.find_one({"company_id": company_id}, {"_id": 0})
+    return Company(**updated)
+
+
+@api_router.delete("/companies/{company_id}")
+async def delete_company(company_id: str, current_user: User = Depends(get_current_user)):
+    """Soft-delete a company (dono ou sigcr_admin em modo 'ver como')"""
+    scope = await _autorizar_acesso_empresa(company_id, current_user)
+    company = await db.companies.find_one({"company_id": company_id, "deleted_at": None}, {"_id": 0})
+
+    await db.companies.update_one(
+        {"company_id": company_id},
+        {"$set": {"deleted_at": datetime.now(timezone.utc).isoformat(), "deleted_by": current_user.user_id}}
+    )
+    await registrar_auditoria(current_user, "remover_empresa", "company", company_id, {},
+                               atuando_como_empresa=scope.viewing_as["id"] if scope.viewing_as else None)
+    return {"message": "Empresa removida"}
+
+
 @api_router.patch("/companies/{company_id}/status")
-async def update_company_status(company_id: str, status: str, current_user: User = Depends(get_current_user)):
-    """Update company status"""
+async def update_company_status(company_id: str, status: str, current_user: User = Depends(require_perfil("sigcr_admin"))):
+    """Restrito a sigcr_admin — antes desta correção (Fase 2), não havia checagem de
+    perfil aqui e matchava por user_id, permitindo que o próprio dono da empresa
+    se auto-promovesse pra qualquer status (ex: ativo_contrato_assinado) sem
+    passar pelo fluxo de aprovação. Não usado por nenhum ponto do frontend hoje —
+    /admin/cadastros/{id}/aprovar e /rejeitar são o fluxo real de transição de status."""
     result = await db.companies.update_one(
-        {"company_id": company_id, "user_id": current_user.user_id},
+        {"company_id": company_id},
         {"$set": {"status": status, "updated_at": datetime.now(timezone.utc).isoformat()}}
     )
     if result.matched_count == 0:
@@ -478,14 +1020,8 @@ async def upload_company_logo(
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user)
 ):
-    """Upload company logo"""
-    # Verify company belongs to user
-    company = await db.companies.find_one(
-        {"company_id": company_id, "user_id": current_user.user_id},
-        {"_id": 0}
-    )
-    if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
+    """Upload company logo (dono ou sigcr_admin em modo 'ver como')"""
+    scope = await _autorizar_acesso_empresa(company_id, current_user, exigir_nao_deletada=False)
 
     # Generate unique filename
     file_extension = Path(file.filename).suffix if file.filename else ".png"
@@ -507,6 +1043,8 @@ async def upload_company_logo(
         {"company_id": company_id},
         {"$set": {"logo_url": logo_url, "updated_at": datetime.now(timezone.utc).isoformat()}}
     )
+    await registrar_auditoria(current_user, "upload_logo_empresa", "company", company_id, {},
+                               atuando_como_empresa=scope.viewing_as["id"] if scope.viewing_as else None)
 
     return {"logo_url": logo_url}
 
@@ -523,20 +1061,145 @@ async def get_company_logo(company_id: str):
     raise HTTPException(status_code=404, detail="Logo not found")
 
 
+# ============ Módulo de vencimento de documentos (OCR + IA) ============
+# Cobre tanto documentos internos (documentos_gov) quanto certidões de
+# fornecedores/Registradora/Financeira (documents) — Bloco 1, Lei 14.133.
+# Pipeline no upload: 1) texto nativo do PDF, 2) OCR via Tesseract se não
+# houver texto suficiente (documento escaneado/foto), 3) API da Anthropic
+# pra extrair tipo de documento + data de vencimento em JSON estruturado.
+# Qualquer falha em qualquer etapa degrada silenciosamente pra
+# vencimento=None/vencimento_fonte=None — nunca derruba o upload; o campo
+# fica esperando preenchimento manual.
+
+def _extrair_texto_pdf_nativo(file_path: Path) -> str:
+    """Camada de texto nativa do PDF, se existir (não roda OCR)."""
+    try:
+        from pypdf import PdfReader
+        reader = PdfReader(str(file_path))
+        return "\n".join((page.extract_text() or "") for page in reader.pages).strip()
+    except Exception as e:
+        logger.warning(f"Falha ao extrair texto nativo do PDF {file_path}: {e}")
+        return ""
+
+
+def _extrair_texto_ocr(file_path: Path, content_type: Optional[str]) -> str:
+    """OCR via Tesseract — documento escaneado (PDF sem texto nativo) ou
+    foto/imagem. PDFs são rasterizados página a página via pdf2image
+    (requer poppler-utils instalado no sistema)."""
+    try:
+        import pytesseract
+        from PIL import Image
+
+        if content_type == "application/pdf":
+            from pdf2image import convert_from_path
+            paginas = convert_from_path(str(file_path))
+            return "\n".join(pytesseract.image_to_string(p, lang="por") for p in paginas).strip()
+        else:
+            return pytesseract.image_to_string(Image.open(file_path), lang="por").strip()
+    except Exception as e:
+        logger.warning(f"Falha no OCR de {file_path}: {e}")
+        return ""
+
+
+def _normalizar_data_vencimento(data_str: Optional[str]) -> Optional[str]:
+    """Modelos locais menores (Llama 3.2 3B) nem sempre respeitam o formato
+    YYYY-MM-DD pedido no prompt — é comum devolver DD/MM/YYYY (padrão
+    brasileiro) mesmo com instrução explícita. Tenta os formatos mais comuns
+    antes de descartar a data."""
+    if not data_str:
+        return None
+    for fmt in (None, "%d/%m/%Y", "%d-%m-%Y", "%Y/%m/%d"):
+        try:
+            if fmt is None:
+                datetime.fromisoformat(data_str)
+                return data_str
+            return datetime.strptime(data_str, fmt).date().isoformat()
+        except ValueError:
+            continue
+    return None
+
+
+async def _extrair_tipo_e_vencimento_llm(texto: str) -> Optional[dict]:
+    """Envia o texto extraído (nativo ou OCR) pro Llama local via Ollama
+    (container sigcr-ollama, mesma rede Docker) pedindo JSON estruturado com
+    tipo de documento + data de vencimento. Retorna None — e o vencimento
+    fica em branco pra preenchimento manual — quando não há texto suficiente,
+    quando o Ollama está fora do ar, ou se a chamada falhar por qualquer
+    motivo (timeout, JSON inválido, etc.) — nunca derruba o upload."""
+    if not texto or len(texto.strip()) < 10:
+        return None
+    try:
+        prompt = (
+            "Texto extraído de um documento de credenciamento/certidão brasileiro. "
+            "Identifique o tipo de documento e a data de vencimento/validade, se houver. "
+            "Responda só com o JSON pedido, sem nenhum texto antes ou depois.\n\n" + texto[:4000]
+        )
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            resp = await client.post(f"{OLLAMA_URL}/api/generate", json={
+                "model": OLLAMA_MODEL,
+                "prompt": prompt,
+                "stream": False,
+                # Descarrega o modelo da memória logo após a resposta — o pico
+                # de RAM durante a inferência chega perto do limite total do
+                # VPS (2 vCPUs / 7,8GB, compartilhado com outros containers),
+                # então não vale manter ~2GB de modelo ocioso em memória entre
+                # uploads (que são esporádicos, não um fluxo constante).
+                "keep_alive": 0,
+                "format": {
+                    "type": "object",
+                    "properties": {
+                        "tipo_documento": {"type": ["string", "null"]},
+                        "data_vencimento": {
+                            "type": ["string", "null"],
+                            "description": "Data de vencimento/validade no formato YYYY-MM-DD, ou null se não encontrada",
+                        },
+                    },
+                    "required": ["tipo_documento", "data_vencimento"],
+                },
+            })
+            resp.raise_for_status()
+            texto_resposta = resp.json().get("response")
+        if not texto_resposta:
+            return None
+        dados = json.loads(texto_resposta)
+        data_str = _normalizar_data_vencimento(dados.get("data_vencimento"))
+        return {"tipo_documento": dados.get("tipo_documento"), "data_vencimento": data_str}
+    except Exception as e:
+        logger.warning(f"Falha na extração de vencimento via LLM local (Ollama): {e}")
+        return None
+
+
+async def _pipeline_extracao_vencimento(file_path: Path, content_type: Optional[str]) -> dict:
+    """Roda o pipeline completo e devolve {"vencimento", "vencimento_fonte"}
+    prontos pra gravar no documento. Nunca levanta exceção."""
+    texto = ""
+    try:
+        if content_type == "application/pdf":
+            texto = _extrair_texto_pdf_nativo(file_path)
+            if len(texto) < 20:
+                texto = _extrair_texto_ocr(file_path, content_type)
+        elif content_type in ("image/jpeg", "image/png", "image/jpg"):
+            texto = _extrair_texto_ocr(file_path, content_type)
+    except Exception as e:
+        logger.warning(f"Pipeline de extração de vencimento falhou pra {file_path}: {e}")
+        texto = ""
+
+    resultado = await _extrair_tipo_e_vencimento_llm(texto)
+    if resultado and resultado.get("data_vencimento"):
+        return {"vencimento": resultado["data_vencimento"], "vencimento_fonte": "ocr"}
+    return {"vencimento": None, "vencimento_fonte": None}
+
+
 # ============ Document Routes ============
 
 @api_router.get("/documents/{company_id}", response_model=List[Document])
 async def get_documents(company_id: str, current_user: User = Depends(get_current_user)):
-    """Get all documents for a company"""
-    # Verify company belongs to user
-    company = await db.companies.find_one(
-        {"company_id": company_id, "user_id": current_user.user_id},
-        {"_id": 0}
-    )
-    if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
+    """Get all documents for a company (dono ou sigcr_admin em modo 'ver como')"""
+    await _autorizar_acesso_empresa(company_id, current_user, exigir_nao_deletada=False)
 
-    documents = await db.documents.find({"company_id": company_id}, {"_id": 0}).to_list(1000)
+    documents = await db.documents.find(
+        {"company_id": company_id, "deleted_at": None}, {"_id": 0}
+    ).to_list(1000)
     return documents
 
 
@@ -545,17 +1208,20 @@ async def upload_document(
     company_id: str = Form(...),
     document_type: str = Form(...),
     document_name: str = Form(...),
+    checklist_item_id: Optional[str] = Form(None),
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user)
 ):
-    """Upload document for company"""
-    # Verify company belongs to user
-    company = await db.companies.find_one(
-        {"company_id": company_id, "user_id": current_user.user_id},
-        {"_id": 0}
-    )
-    if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
+    """Upload document for company (dono ou sigcr_admin em modo 'ver como').
+    checklist_item_id é obrigatório desde a unificação da aba Documentos com
+    o Checklist CONTRAN 807 — todo documento novo precisa estar vinculado a
+    um dos 31 itens do catálogo fixo. Validação manual (em vez de
+    Form(...) obrigatório) pra garantir 400 tanto na ausência quanto num
+    valor inválido, e não o 422 padrão do FastAPI pra Form ausente."""
+    scope = await _autorizar_acesso_empresa(company_id, current_user, exigir_nao_deletada=False)
+
+    if not checklist_item_id or checklist_item_id not in CHECKLIST_CONTRAN_807_IDS:
+        raise HTTPException(status_code=400, detail="checklist_item_id é obrigatório e precisa ser um item válido do checklist CONTRAN 807")
 
     # Generate unique filename
     file_extension = Path(file.filename).suffix if file.filename else ""
@@ -573,6 +1239,8 @@ async def upload_document(
         logger.error(f"Error saving file: {str(e)}")
         raise HTTPException(status_code=500, detail="Error saving file")
 
+    extracao = await _pipeline_extracao_vencimento(file_path, file.content_type)
+
     # Create document record
     document = Document(
         company_id=company_id,
@@ -580,7 +1248,10 @@ async def upload_document(
         document_name=document_name,
         file_name=file.filename or "unknown",
         file_path=str(file_path),
-        file_size=file_size
+        file_size=file_size,
+        vencimento=extracao["vencimento"],
+        vencimento_fonte=extracao["vencimento_fonte"],
+        checklist_item_id=checklist_item_id,
     )
 
     doc = document.model_dump()
@@ -588,23 +1259,23 @@ async def upload_document(
 
     await db.documents.insert_one(doc)
     logger.info(f"Document uploaded: {document.document_id}")
+    await registrar_auditoria(current_user, "upload_documento_empresa", "document", document.document_id, {
+        "company_id": company_id, "document_type": document_type, "checklist_item_id": checklist_item_id
+    }, atuando_como_empresa=scope.viewing_as["id"] if scope.viewing_as else None)
     return document
 
 
 @api_router.get("/documents/download/{document_id}")
 async def download_document(document_id: str, current_user: User = Depends(get_current_user)):
-    """Download document"""
+    """Download document (dono ou sigcr_admin em modo 'ver como')"""
     # Get document
     document = await db.documents.find_one({"document_id": document_id}, {"_id": 0})
     if not document:
         raise HTTPException(status_code=404, detail="Document not found")
 
-    # Verify user owns the company
-    company = await db.companies.find_one(
-        {"company_id": document["company_id"], "user_id": current_user.user_id},
-        {"_id": 0}
-    )
-    if not company:
+    try:
+        await _autorizar_acesso_empresa(document["company_id"], current_user, exigir_nao_deletada=False)
+    except HTTPException:
         raise HTTPException(status_code=403, detail="Access denied")
 
     # Check if file exists
@@ -624,9 +1295,11 @@ async def update_document_status(
     document_id: str,
     status: str,
     notes: Optional[str] = None,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(require_perfil("sigcr_admin"))
 ):
-    """Update document status"""
+    """Aprova/rejeita um documento de empresa. Restrito a sigcr_admin — mesma
+    classe de gap do PATCH /companies/{id}/status: não tinha nenhuma checagem
+    de perfil nem de dono, e nenhum ponto do frontend chama esta rota hoje."""
     update_data = {"status": status}
     if notes:
         update_data["notes"] = notes
@@ -640,25 +1313,235 @@ async def update_document_status(
     return {"message": "Status updated"}
 
 
+@api_router.delete("/documents/{document_id}")
+async def delete_document(document_id: str, current_user: User = Depends(get_current_user)):
+    """Soft-delete de um documento de empresa (dono da empresa ou sigcr_admin
+    em modo 'ver como') — mesmo padrão de delete_company/portarias/estados:
+    marca deleted_at/deleted_by em vez de apagar o registro, e GET
+    /documents/{company_id} já filtra por deleted_at: None."""
+    document = await db.documents.find_one({"document_id": document_id, "deleted_at": None}, {"_id": 0})
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    try:
+        scope = await _autorizar_acesso_empresa(document["company_id"], current_user, exigir_nao_deletada=False)
+    except HTTPException:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    await db.documents.update_one(
+        {"document_id": document_id},
+        {"$set": {"deleted_at": datetime.now(timezone.utc).isoformat(), "deleted_by": current_user.user_id}}
+    )
+    await registrar_auditoria(current_user, "remover_documento_empresa", "document", document_id, {
+        "company_id": document["company_id"], "document_type": document.get("document_type")
+    }, atuando_como_empresa=scope.viewing_as["id"] if scope.viewing_as else None)
+    return {"message": "Documento removido"}
+
+
+@api_router.get("/checklist-contran")
+async def get_checklist_contran(
+    company_id: Optional[str] = None,
+    scope: EffectiveScope = Depends(get_effective_scope),
+):
+    """Checklist fixo da Resolução CONTRAN 807 (31 itens em 6 blocos) com o
+    status de envio da empresa do usuário logado — ou da empresa selecionada
+    no "ver como" (via view_as_company_id) ou explicitamente via ?company_id=.
+    Status por item é derivado do documento mais recente (não-removido) com
+    aquele checklist_item_id: sem documento -> pendente; status do documento
+    approved/rejected/pending -> aprovado/rejeitado/enviado. Não existe uma
+    coleção própria de status — a fonte de verdade é sempre db.documents,
+    pra nunca dessincronizar do fluxo de aprovação que já existe."""
+    if company_id:
+        await _autorizar_acesso_empresa(company_id, scope.current_user, exigir_nao_deletada=False)
+        target_company_id = company_id
+    else:
+        empresas = await db.companies.find(
+            {"user_id": scope.effective_user_id, "deleted_at": None}, {"_id": 0, "company_id": 1}
+        ).sort("created_at", 1).to_list(1)
+        if not empresas:
+            raise HTTPException(status_code=404, detail="Nenhuma empresa encontrada pra montar o checklist")
+        target_company_id = empresas[0]["company_id"]
+
+    docs = await db.documents.find(
+        {"company_id": target_company_id, "checklist_item_id": {"$ne": None}, "deleted_at": None},
+        {"_id": 0},
+    ).sort("created_at", -1).to_list(1000)
+
+    # Mantém só o documento mais recente por item (já ordenado desc acima)
+    doc_por_item = {}
+    for doc in docs:
+        if doc["checklist_item_id"] not in doc_por_item:
+            doc_por_item[doc["checklist_item_id"]] = doc
+
+    status_por_document_status = {"pending": "enviado", "approved": "aprovado", "rejected": "rejeitado"}
+
+    blocos = {n: {"numero": n, "nome": nome, "itens": []} for n, nome in CHECKLIST_CONTRAN_807_BLOCOS.items()}
+    resumo = {"total": 0, "pendentes": 0, "enviados": 0, "aprovados": 0, "rejeitados": 0}
+
+    for item in CHECKLIST_CONTRAN_807:
+        doc = doc_por_item.get(item["item_id"])
+        status = status_por_document_status.get(doc["status"], "pendente") if doc else "pendente"
+        blocos[item["bloco"]]["itens"].append({
+            "item_id": item["item_id"],
+            "nome": item["nome"],
+            "descricao": item["descricao"],
+            "obrigatorio": True,
+            "status": status,
+            "documento": {
+                "document_id": doc["document_id"],
+                "document_name": doc["document_name"],
+                "file_name": doc["file_name"],
+                "file_size": doc["file_size"],
+                "document_type": doc["document_type"],
+                "status": doc["status"],
+                "vencimento": doc.get("vencimento"),
+                "vencimento_fonte": doc.get("vencimento_fonte"),
+                "created_at": doc["created_at"],
+            } if doc else None,
+        })
+        resumo["total"] += 1
+        chave_resumo = {"pendente": "pendentes", "enviado": "enviados", "aprovado": "aprovados", "rejeitado": "rejeitados"}[status]
+        resumo[chave_resumo] += 1
+
+    return {
+        "company_id": target_company_id,
+        "blocos": [blocos[n] for n in sorted(blocos)],
+        "resumo": resumo,
+    }
+
+
+# ============ Controle de acesso por estado ============
+# Usado por Portarias, Estados/Credenciamentos e (via delegação) pelo módulo de Documentos.
+
+def _perfil_pode_ver_estado(user: User, estado_sigla: Optional[str]) -> bool:
+    """sigcr_admin vê qualquer estado; detran/detran_admin só o próprio (via detran_uf);
+    registradora/financeira não têm acesso a este domínio."""
+    if user.perfil == "sigcr_admin":
+        return True
+    if user.perfil in ("detran", "detran_admin"):
+        return bool(user.detran_uf) and estado_sigla == user.detran_uf
+    return False
+
+
+async def _checar_permissao_escrita_estado(user: User, estado_sigla: str):
+    """sigcr_admin sempre pode; detran_admin só no próprio estado (detran_uf)."""
+    if user.perfil == "sigcr_admin":
+        return
+    if user.perfil == "detran_admin":
+        if not user.detran_uf or estado_sigla != user.detran_uf:
+            raise HTTPException(status_code=403, detail="detran_admin só pode gerenciar dados do próprio estado")
+        return
+    raise HTTPException(status_code=403, detail="Perfil sem permissão para gerenciar dados deste estado")
+
+
 # ============ Portaria Routes ============
 
 @api_router.get("/portarias", response_model=List[Portaria])
-async def get_portarias(current_user: User = Depends(get_current_user)):
-    """Get all portarias"""
-    portarias = await db.portarias.find({}, {"_id": 0}).sort("date", -1).to_list(1000)
+async def get_portarias(
+    estado_sigla: Optional[str] = None,
+    incluir_removidos: bool = False,
+    current_user: User = Depends(get_current_user),
+):
+    """Get all portarias. Sem estado_sigla: comportamento legado (aberto a qualquer perfil,
+    usado pela tela genérica /portarias). Com estado_sigla: aplica controle de acesso por estado."""
+    query = {}
+    if estado_sigla:
+        estado_sigla = estado_sigla.upper()
+        if estado_sigla not in UF_VALIDAS:
+            raise HTTPException(status_code=400, detail="UF inválida")
+        if not _perfil_pode_ver_estado(current_user, estado_sigla):
+            raise HTTPException(status_code=403, detail="Perfil sem acesso às portarias deste estado")
+        query["estado_sigla"] = estado_sigla
+    if not incluir_removidos:
+        query["deleted_at"] = None
+    portarias = await db.portarias.find(query, {"_id": 0}).sort("date", -1).to_list(1000)
     return portarias
 
 
 @api_router.post("/portarias", response_model=Portaria)
 async def create_portaria(portaria_data: PortariaCreate, current_user: User = Depends(get_current_user)):
-    """Create new portaria"""
-    portaria = Portaria(**portaria_data.model_dump())
+    """Create new portaria (sem arquivo — link externo, ex. promoção de sugestão do Querido Diário)."""
+    dados = portaria_data.model_dump()
+    if dados.get("estado_sigla"):
+        dados["estado_sigla"] = dados["estado_sigla"].upper()
+        if dados["estado_sigla"] not in UF_VALIDAS:
+            raise HTTPException(status_code=400, detail="UF inválida")
+        await _checar_permissao_escrita_estado(current_user, dados["estado_sigla"])
+        if not dados.get("detran"):
+            dados["detran"] = dados["estado_sigla"]
+
+    portaria = Portaria(**dados, created_by=current_user.user_id)
 
     doc = portaria.model_dump()
     doc['date'] = doc['date'].isoformat()
     doc['created_at'] = doc['created_at'].isoformat()
 
     await db.portarias.insert_one(doc)
+    await registrar_auditoria(current_user, "criar_portaria", "portaria", portaria.portaria_id, {
+        "estado_sigla": portaria.estado_sigla, "origem": portaria.origem
+    })
+    return portaria
+
+
+@api_router.post("/portarias/upload", response_model=Portaria)
+async def upload_portaria(
+    title: str = Form(...),
+    content: str = Form(...),
+    source: str = Form(...),
+    date: str = Form(...),
+    detran: Optional[str] = Form(None),
+    numero: Optional[str] = Form(None),
+    orgao_emissor: Optional[str] = Form(None),
+    estado_sigla: Optional[str] = Form(None),
+    status: str = Form("vigente"),
+    summary: Optional[str] = Form(None),
+    origem: str = Form("manual"),
+    querido_diario_url: Optional[str] = Form(None),
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    """Cria portaria anexando um PDF real, reaproveitando o mecanismo de upload dos documentos."""
+    if estado_sigla:
+        estado_sigla = estado_sigla.upper()
+        if estado_sigla not in UF_VALIDAS:
+            raise HTTPException(status_code=400, detail="UF inválida")
+        await _checar_permissao_escrita_estado(current_user, estado_sigla)
+        if not detran:
+            detran = estado_sigla
+
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Apenas arquivos PDF são aceitos para portarias")
+
+    conteudo = await file.read()
+    if not conteudo:
+        raise HTTPException(status_code=400, detail="Arquivo vazio")
+    if len(conteudo) > MAX_PORTARIA_PDF_SIZE:
+        raise HTTPException(status_code=400, detail="Arquivo excede o limite de 20MB")
+
+    try:
+        data_parsed = datetime.fromisoformat(date)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Data inválida (use ISO 8601)")
+
+    portarias_dir = UPLOAD_DIR / "portarias"
+    portarias_dir.mkdir(exist_ok=True)
+    file_path = portarias_dir / f"{uuid.uuid4().hex}.pdf"
+    async with aiofiles.open(file_path, "wb") as f:
+        await f.write(conteudo)
+
+    portaria = Portaria(
+        title=title, content=content, source=source, date=data_parsed, detran=detran,
+        numero=numero, orgao_emissor=orgao_emissor, estado_sigla=estado_sigla, status=status,
+        summary=summary, origem=origem, querido_diario_url=querido_diario_url,
+        link_pdf=str(file_path), created_by=current_user.user_id,
+    )
+    doc = portaria.model_dump()
+    doc['date'] = doc['date'].isoformat()
+    doc['created_at'] = doc['created_at'].isoformat()
+    await db.portarias.insert_one(doc)
+    await registrar_auditoria(current_user, "upload_portaria", "portaria", portaria.portaria_id, {
+        "estado_sigla": portaria.estado_sigla, "origem": portaria.origem
+    })
     return portaria
 
 
@@ -683,6 +1566,10 @@ async def search_portarias(q: str, current_user: User = Depends(get_current_user
 
 
 # =========== Querido Diario Integration ===========
+# IMPORTANTE: precisa vir ANTES das rotas com {portaria_id} abaixo — caso contrário
+# "/portarias/queridodiario" seria casado como portaria_id="queridodiario" pelo FastAPI
+# (rotas literais devem sempre ser registradas antes de rotas com parâmetro dinâmico
+# no mesmo prefixo e método).
 
 @api_router.get("/portarias/queridodiario")
 async def buscar_portarias_queridodiario(
@@ -723,57 +1610,118 @@ async def buscar_portarias_queridodiario(
         raise HTTPException(status_code=502, detail=f"Erro ao consultar Querido Diario: {str(e)}")
 
 
+@api_router.get("/portarias/{portaria_id}", response_model=Portaria)
+async def get_portaria(portaria_id: str, current_user: User = Depends(get_current_user)):
+    """Detalhe de uma portaria (permite ver mesmo se removida — mesma convenção de GET /documentos/{id})."""
+    portaria = await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
+    if not portaria:
+        raise HTTPException(status_code=404, detail="Portaria não encontrada")
+    if portaria.get("estado_sigla") and not _perfil_pode_ver_estado(current_user, portaria["estado_sigla"]):
+        raise HTTPException(status_code=403, detail="Perfil sem acesso a esta portaria")
+    return portaria
+
+
+@api_router.get("/portarias/{portaria_id}/pdf")
+async def download_portaria_pdf(portaria_id: str, current_user: User = Depends(get_current_user)):
+    portaria = await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
+    if not portaria:
+        raise HTTPException(status_code=404, detail="Portaria não encontrada")
+    if portaria.get("estado_sigla") and not _perfil_pode_ver_estado(current_user, portaria["estado_sigla"]):
+        raise HTTPException(status_code=403, detail="Perfil sem acesso a esta portaria")
+    if not portaria.get("link_pdf") or not Path(portaria["link_pdf"]).exists():
+        raise HTTPException(status_code=404, detail="Nenhum PDF anexado a esta portaria")
+    await registrar_auditoria(current_user, "download_portaria_pdf", "portaria", portaria_id, {
+        "estado_sigla": portaria.get("estado_sigla")
+    })
+    return FileResponse(
+        portaria["link_pdf"], media_type="application/pdf",
+        filename=f"portaria_{portaria.get('numero') or portaria_id}.pdf"
+    )
+
+
+@api_router.patch("/portarias/{portaria_id}", response_model=Portaria)
+async def atualizar_portaria(portaria_id: str, updates: PortariaUpdate, current_user: User = Depends(get_current_user)):
+    portaria = await db.portarias.find_one({"portaria_id": portaria_id, "deleted_at": None}, {"_id": 0})
+    if not portaria:
+        raise HTTPException(status_code=404, detail="Portaria não encontrada ou removida")
+    if portaria.get("estado_sigla"):
+        await _checar_permissao_escrita_estado(current_user, portaria["estado_sigla"])
+
+    campos = {k: v for k, v in updates.model_dump().items() if v is not None}
+    if not campos:
+        return portaria
+    if isinstance(campos.get("date"), datetime):
+        campos["date"] = campos["date"].isoformat()
+    antes = {k: portaria.get(k) for k in campos}
+    campos["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    await db.portarias.update_one({"portaria_id": portaria_id}, {"$set": campos})
+    await registrar_auditoria(current_user, "atualizar_portaria", "portaria", portaria_id, {
+        "estado_sigla": portaria.get("estado_sigla"), "antes": antes,
+        "depois": {k: v for k, v in campos.items() if k != "updated_at"}
+    })
+    return await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
+
+
+@api_router.delete("/portarias/{portaria_id}")
+async def remover_portaria(portaria_id: str, current_user: User = Depends(get_current_user)):
+    portaria = await db.portarias.find_one({"portaria_id": portaria_id, "deleted_at": None}, {"_id": 0})
+    if not portaria:
+        raise HTTPException(status_code=404, detail="Portaria não encontrada ou já removida")
+    if portaria.get("estado_sigla"):
+        await _checar_permissao_escrita_estado(current_user, portaria["estado_sigla"])
+
+    await db.portarias.update_one(
+        {"portaria_id": portaria_id},
+        {"$set": {"deleted_at": datetime.now(timezone.utc).isoformat(), "deleted_by": current_user.user_id}}
+    )
+    await registrar_auditoria(current_user, "remover_portaria", "portaria", portaria_id, {
+        "estado_sigla": portaria.get("estado_sigla")
+    })
+    return {"message": "Portaria removida"}
+
 
 # ============ Estados/Credenciamento Routes ============
+# db.estados só ganha um documento quando um estado é efetivamente ATIVADO para
+# acompanhamento de credenciamento — o catálogo estático das 27 UFs (UF_NOMES) sempre
+# aparece em GET /estados independente disso, mas "criar"/"editar"/"dar baixa" só fazem
+# sentido em cima de um estado ativado.
 
 @api_router.get("/estados")
 async def get_estados(current_user: User = Depends(get_current_user)):
-    """Get all estados with credenciamento info"""
-    estados_brasil = [
-        {"sigla": "AC", "nome": "Acre"},
-        {"sigla": "AL", "nome": "Alagoas"},
-        {"sigla": "AP", "nome": "Amapá"},
-        {"sigla": "AM", "nome": "Amazonas"},
-        {"sigla": "BA", "nome": "Bahia"},
-        {"sigla": "CE", "nome": "Ceará"},
-        {"sigla": "DF", "nome": "Distrito Federal"},
-        {"sigla": "ES", "nome": "Espírito Santo"},
-        {"sigla": "GO", "nome": "Goiás"},
-        {"sigla": "MA", "nome": "Maranhão"},
-        {"sigla": "MT", "nome": "Mato Grosso"},
-        {"sigla": "MS", "nome": "Mato Grosso do Sul"},
-        {"sigla": "MG", "nome": "Minas Gerais"},
-        {"sigla": "PA", "nome": "Pará"},
-        {"sigla": "PB", "nome": "Paraíba"},
-        {"sigla": "PR", "nome": "Paraná"},
-        {"sigla": "PE", "nome": "Pernambuco"},
-        {"sigla": "PI", "nome": "Piauí"},
-        {"sigla": "RJ", "nome": "Rio de Janeiro"},
-        {"sigla": "RN", "nome": "Rio Grande do Norte"},
-        {"sigla": "RS", "nome": "Rio Grande do Sul"},
-        {"sigla": "RO", "nome": "Rondônia"},
-        {"sigla": "RR", "nome": "Roraima"},
-        {"sigla": "SC", "nome": "Santa Catarina"},
-        {"sigla": "SP", "nome": "São Paulo"},
-        {"sigla": "SE", "nome": "Sergipe"},
-        {"sigla": "TO", "nome": "Tocantins"}
-    ]
+    """Lista as 27 UFs (catálogo estático) com merge dos estados já ativados em db.estados
+    e contagem de credenciamentos ativos por UF."""
+    ativados = await db.estados.find({"deleted_at": None}, {"_id": 0}).to_list(30)
+    ativados_por_sigla = {e["estado_sigla"]: e for e in ativados}
 
-    # Get credenciamento count for each state
-    for estado in estados_brasil:
-        count = await db.credenciamentos.count_documents({"estado_sigla": estado["sigla"]})
-        estado["empresas_credenciadas_count"] = count
-
+    estados_brasil = []
+    for sigla, nome in UF_NOMES.items():
+        count = await db.credenciamentos.count_documents({"estado_sigla": sigla, "deleted_at": None})
+        ativado = ativados_por_sigla.get(sigla)
+        estados_brasil.append({
+            "sigla": sigla,
+            "nome": nome,
+            "configurado": ativado is not None,
+            "estado_id": ativado.get("estado_id") if ativado else None,
+            "portaria_vigente": ativado.get("portaria_vigente") if ativado else None,
+            "empresas_credenciadas_count": count,
+        })
+    estados_brasil.sort(key=lambda e: e["nome"])
     return estados_brasil
 
 
 @api_router.get("/estados/{sigla}")
 async def get_estado_detalhes(sigla: str, current_user: User = Depends(get_current_user)):
-    """Get detailed info for a specific state"""
-    # Get all credenciamentos for this state
-    credenciamentos = await db.credenciamentos.find({"estado_sigla": sigla}, {"_id": 0}).to_list(100)
+    """Detalhe de um estado: dados de acompanhamento (se ativado) + credenciamentos ativos + portarias vigentes."""
+    sigla = sigla.upper()
+    if sigla not in UF_VALIDAS:
+        raise HTTPException(status_code=400, detail="UF inválida")
+    if not _perfil_pode_ver_estado(current_user, sigla):
+        raise HTTPException(status_code=403, detail="Perfil sem acesso a este estado")
 
-    # Get company details for each credenciamento
+    estado = await db.estados.find_one({"estado_sigla": sigla}, {"_id": 0})
+
+    credenciamentos = await db.credenciamentos.find({"estado_sigla": sigla, "deleted_at": None}, {"_id": 0}).to_list(100)
     empresas = []
     for cred in credenciamentos:
         company = await db.companies.find_one({"company_id": cred["company_id"]}, {"_id": 0})
@@ -785,24 +1733,228 @@ async def get_estado_detalhes(sigla: str, current_user: User = Depends(get_curre
                 "credenciamento": cred
             })
 
+    total_portarias_vigentes = await db.portarias.count_documents({
+        "estado_sigla": sigla, "status": "vigente", "deleted_at": None
+    })
+
     return {
         "estado_sigla": sigla,
+        "estado_nome": UF_NOMES[sigla],
+        "configurado": estado is not None,
+        "estado": estado,
         "empresas_credenciadas": empresas,
-        "total_empresas": len(empresas)
+        "total_empresas": len(empresas),
+        "total_portarias_vigentes": total_portarias_vigentes,
     }
+
+
+@api_router.post("/estados", response_model=EstadoCredenciamento)
+async def ativar_estado(dados: EstadoCredenciamentoCreate, current_user: User = Depends(get_current_user)):
+    """Ativa uma UF para acompanhamento de credenciamento (ou reativa se estava com baixa dada)."""
+    sigla = dados.estado_sigla.upper()
+    if sigla not in UF_VALIDAS:
+        raise HTTPException(status_code=400, detail="UF inválida")
+    await _checar_permissao_escrita_estado(current_user, sigla)
+
+    existente = await db.estados.find_one({"estado_sigla": sigla}, {"_id": 0})
+    if existente and not existente.get("deleted_at"):
+        raise HTTPException(status_code=400, detail="Este estado já está ativado")
+    if existente and existente.get("deleted_at"):
+        await db.estados.update_one(
+            {"estado_sigla": sigla},
+            {"$set": {"deleted_at": None, "deleted_by": None, "observacoes": dados.observacoes,
+                       "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        await registrar_auditoria(current_user, "reativar_estado", "estado", existente["estado_id"], {"estado_sigla": sigla})
+        return await db.estados.find_one({"estado_sigla": sigla}, {"_id": 0})
+
+    estado = EstadoCredenciamento(estado_sigla=sigla, estado_nome=UF_NOMES[sigla],
+                                   observacoes=dados.observacoes, created_by=current_user.user_id)
+    doc = estado.model_dump()
+    doc["created_at"] = doc["created_at"].isoformat()
+    await db.estados.insert_one(doc)
+    await registrar_auditoria(current_user, "ativar_estado", "estado", estado.estado_id, {"estado_sigla": sigla})
+    return estado
+
+
+@api_router.patch("/estados/{sigla}", response_model=EstadoCredenciamento)
+async def atualizar_estado(sigla: str, updates: EstadoCredenciamentoUpdate, current_user: User = Depends(get_current_user)):
+    sigla = sigla.upper()
+    if sigla not in UF_VALIDAS:
+        raise HTTPException(status_code=400, detail="UF inválida")
+    estado = await db.estados.find_one({"estado_sigla": sigla, "deleted_at": None}, {"_id": 0})
+    if not estado:
+        raise HTTPException(status_code=404, detail="Estado não está ativado (ou foi removido)")
+    await _checar_permissao_escrita_estado(current_user, sigla)
+
+    campos = {k: v for k, v in updates.model_dump().items() if v is not None}
+    if not campos:
+        return estado
+    antes = {k: estado.get(k) for k in campos}
+    campos["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    await db.estados.update_one({"estado_sigla": sigla}, {"$set": campos})
+    await registrar_auditoria(current_user, "atualizar_estado", "estado", estado["estado_id"], {
+        "estado_sigla": sigla, "antes": antes, "depois": {k: v for k, v in campos.items() if k != "updated_at"}
+    })
+    return await db.estados.find_one({"estado_sigla": sigla}, {"_id": 0})
+
+
+@api_router.delete("/estados/{sigla}")
+async def dar_baixa_estado(sigla: str, current_user: User = Depends(get_current_user)):
+    """Soft delete do registro de acompanhamento do estado — não cascateia para
+    portarias/credenciamentos/documentos já vinculados a essa UF."""
+    sigla = sigla.upper()
+    if sigla not in UF_VALIDAS:
+        raise HTTPException(status_code=400, detail="UF inválida")
+    estado = await db.estados.find_one({"estado_sigla": sigla, "deleted_at": None}, {"_id": 0})
+    if not estado:
+        raise HTTPException(status_code=404, detail="Estado não está ativado (ou já removido)")
+    await _checar_permissao_escrita_estado(current_user, sigla)
+
+    await db.estados.update_one(
+        {"estado_sigla": sigla},
+        {"$set": {"deleted_at": datetime.now(timezone.utc).isoformat(), "deleted_by": current_user.user_id}}
+    )
+    await registrar_auditoria(current_user, "dar_baixa_estado", "estado", estado["estado_id"], {"estado_sigla": sigla})
+    return {"message": "Estado removido do acompanhamento"}
+
+
+@api_router.post("/estados/{sigla}/reativar", response_model=EstadoCredenciamento)
+async def reativar_estado(sigla: str, current_user: User = Depends(get_current_user)):
+    sigla = sigla.upper()
+    if sigla not in UF_VALIDAS:
+        raise HTTPException(status_code=400, detail="UF inválida")
+    estado = await db.estados.find_one({"estado_sigla": sigla}, {"_id": 0})
+    if not estado or not estado.get("deleted_at"):
+        raise HTTPException(status_code=404, detail="Estado não está com baixa dada")
+    await _checar_permissao_escrita_estado(current_user, sigla)
+
+    await db.estados.update_one({"estado_sigla": sigla}, {"$set": {"deleted_at": None, "deleted_by": None}})
+    await registrar_auditoria(current_user, "reativar_estado", "estado", estado["estado_id"], {"estado_sigla": sigla})
+    return await db.estados.find_one({"estado_sigla": sigla}, {"_id": 0})
+
+
+# ============ Credenciamentos (empresa x estado) Routes ============
+
+@api_router.get("/estados/{sigla}/credenciamentos")
+async def listar_credenciamentos_estado(
+    sigla: str, incluir_removidos: bool = False, current_user: User = Depends(get_current_user)
+):
+    sigla = sigla.upper()
+    if sigla not in UF_VALIDAS:
+        raise HTTPException(status_code=400, detail="UF inválida")
+    if not _perfil_pode_ver_estado(current_user, sigla):
+        raise HTTPException(status_code=403, detail="Perfil sem acesso a este estado")
+
+    query = {"estado_sigla": sigla}
+    if not incluir_removidos:
+        query["deleted_at"] = None
+    credenciamentos = await db.credenciamentos.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
+    return credenciamentos
+
+
+@api_router.post("/estados/{sigla}/credenciamentos", response_model=CredenciamentoDetalhes)
+async def criar_credenciamento(sigla: str, dados: CredenciamentoDetalhesCreate, current_user: User = Depends(get_current_user)):
+    sigla = sigla.upper()
+    if sigla not in UF_VALIDAS:
+        raise HTTPException(status_code=400, detail="UF inválida")
+    await _checar_permissao_escrita_estado(current_user, sigla)
+
+    company = await db.companies.find_one({"company_id": dados.company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=400, detail="Empresa (company_id) não encontrada")
+
+    credenciamento = CredenciamentoDetalhes(estado_sigla=sigla, created_by=current_user.user_id, **dados.model_dump())
+    doc = credenciamento.model_dump()
+    doc["created_at"] = doc["created_at"].isoformat()
+    if doc.get("validade"):
+        doc["validade"] = doc["validade"].isoformat()
+    await db.credenciamentos.insert_one(doc)
+    await registrar_auditoria(current_user, "criar_credenciamento", "credenciamento", credenciamento.credenciamento_id, {
+        "estado_sigla": sigla, "company_id": dados.company_id
+    })
+    return credenciamento
+
+
+@api_router.patch("/credenciamentos/{credenciamento_id}", response_model=CredenciamentoDetalhes)
+async def atualizar_credenciamento(credenciamento_id: str, updates: CredenciamentoDetalhesUpdate, current_user: User = Depends(get_current_user)):
+    credenciamento = await db.credenciamentos.find_one({"credenciamento_id": credenciamento_id, "deleted_at": None}, {"_id": 0})
+    if not credenciamento:
+        raise HTTPException(status_code=404, detail="Credenciamento não encontrado ou removido")
+    await _checar_permissao_escrita_estado(current_user, credenciamento["estado_sigla"])
+
+    campos = {k: v for k, v in updates.model_dump().items() if v is not None}
+    if not campos:
+        return credenciamento
+    if isinstance(campos.get("validade"), datetime):
+        campos["validade"] = campos["validade"].isoformat()
+    antes = {k: credenciamento.get(k) for k in campos}
+    campos["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    await db.credenciamentos.update_one({"credenciamento_id": credenciamento_id}, {"$set": campos})
+    await registrar_auditoria(current_user, "atualizar_credenciamento", "credenciamento", credenciamento_id, {
+        "estado_sigla": credenciamento["estado_sigla"], "antes": antes,
+        "depois": {k: v for k, v in campos.items() if k != "updated_at"}
+    })
+    return await db.credenciamentos.find_one({"credenciamento_id": credenciamento_id}, {"_id": 0})
+
+
+@api_router.delete("/credenciamentos/{credenciamento_id}")
+async def dar_baixa_credenciamento(credenciamento_id: str, current_user: User = Depends(get_current_user)):
+    credenciamento = await db.credenciamentos.find_one({"credenciamento_id": credenciamento_id, "deleted_at": None}, {"_id": 0})
+    if not credenciamento:
+        raise HTTPException(status_code=404, detail="Credenciamento não encontrado ou já removido")
+    await _checar_permissao_escrita_estado(current_user, credenciamento["estado_sigla"])
+
+    await db.credenciamentos.update_one(
+        {"credenciamento_id": credenciamento_id},
+        {"$set": {"deleted_at": datetime.now(timezone.utc).isoformat(), "deleted_by": current_user.user_id}}
+    )
+    await registrar_auditoria(current_user, "dar_baixa_credenciamento", "credenciamento", credenciamento_id, {
+        "estado_sigla": credenciamento["estado_sigla"]
+    })
+    return {"message": "Credenciamento removido"}
+
+
+# ============ Modo "ver como" — opções pro seletor (sigcr_admin) ============
+
+@api_router.get("/admin/view-as-options")
+async def listar_opcoes_ver_como(current_user: User = Depends(require_perfil("sigcr_admin"))):
+    """Lista as opções disponíveis pro seletor 'ver como' do sigcr_admin:
+    hoje, só empresas ativas (não deletadas). GET /companies já retorna todas
+    as empresas pra sigcr_admin sem 'ver como' ativo (mesmo dado) — esta rota
+    existe separada porque devolve no formato que o seletor consome direto.
+
+    O eixo DETRAN (view_as_detran_uf) foi tirado daqui de propósito — as
+    telas do lado DETRAN ainda são mock, então oferecer "ver como DETRAN-UF"
+    no seletor não levava a nada útil, só confundia. O mecanismo em si
+    continua implementado (get_effective_scope aceita view_as_detran_uf
+    normalmente, GET /documentos e /documentos/vencimento-resumo já
+    respeitam) — só não é oferecido aqui. Reativar quando as telas reais do
+    DETRAN existirem: basta devolver a chave "detrans" de novo (ver histórico
+    do git pra recuperar a linha exata)."""
+    companies = await db.companies.find(
+        {"deleted_at": None}, {"_id": 0, "company_id": 1, "name": 1, "nome_fantasia": 1}
+    ).sort("nome_fantasia", 1).to_list(1000)
+    empresas = [
+        {"id": c["company_id"], "nome": c.get("nome_fantasia") or c.get("name")}
+        for c in companies
+    ]
+    return {"empresas": empresas, "detrans": []}
 
 
 # ============ System Users Routes ============
 
 @api_router.get("/system-users")
-async def get_system_users(current_user: User = Depends(get_current_user)):
+async def get_system_users(current_user: User = Depends(require_perfil("sigcr_admin"))):
     """Get all system users"""
     users = await db.system_users.find({}, {"_id": 0}).to_list(100)
     return users
 
 
 @api_router.post("/system-users")
-async def create_system_user(user_data: SystemUserCreate, current_user: User = Depends(get_current_user)):
+async def create_system_user(user_data: SystemUserCreate, current_user: User = Depends(require_perfil("sigcr_admin"))):
     """Create new system user"""
     system_user = SystemUser(**user_data.model_dump())
 
@@ -814,7 +1966,7 @@ async def create_system_user(user_data: SystemUserCreate, current_user: User = D
 
 
 @api_router.delete("/system-users/{system_user_id}")
-async def delete_system_user(system_user_id: str, current_user: User = Depends(get_current_user)):
+async def delete_system_user(system_user_id: str, current_user: User = Depends(require_perfil("sigcr_admin"))):
     """Delete system user"""
     result = await db.system_users.delete_one({"system_user_id": system_user_id})
     if result.deleted_count == 0:
@@ -823,7 +1975,7 @@ async def delete_system_user(system_user_id: str, current_user: User = Depends(g
 
 
 @api_router.patch("/system-users/{system_user_id}")
-async def update_system_user(system_user_id: str, updates: dict, current_user: User = Depends(get_current_user)):
+async def update_system_user(system_user_id: str, updates: dict, current_user: User = Depends(require_perfil("sigcr_admin"))):
     """Update system user"""
     result = await db.system_users.update_one(
         {"system_user_id": system_user_id},
@@ -837,18 +1989,63 @@ async def update_system_user(system_user_id: str, updates: dict, current_user: U
 # ============ Dashboard Stats ============
 
 @api_router.get("/stats")
-async def get_stats(current_user: User = Depends(get_current_user)):
-    """Get dashboard statistics"""
-    total_companies = await db.companies.count_documents({"user_id": current_user.user_id})
-    pending_companies = await db.companies.count_documents({"user_id": current_user.user_id, "status": "pending"})
-    approved_companies = await db.companies.count_documents({"user_id": current_user.user_id, "status": "approved"})
-    total_portarias = await db.portarias.count_documents({})
+async def get_stats(scope: EffectiveScope = Depends(get_effective_scope)):
+    """Get dashboard statistics. sigcr_admin sem 'ver como' ativo vê
+    estatísticas agregadas de toda a plataforma; com view_as_company_id, vê
+    exatamente o que o dono daquela empresa veria."""
+    if scope.current_user.perfil == "sigcr_admin" and not scope.is_viewing_as:
+        filtro_empresa = {}
+    else:
+        filtro_empresa = {"user_id": scope.effective_user_id}
+
+    total_companies = await db.companies.count_documents({**filtro_empresa, "deleted_at": None})
+    # Aceita vocabulário antigo e o novo (pós-migração Fase 0) durante a transição —
+    # ver nota no default de Company.status.
+    pending_companies = await db.companies.count_documents(
+        {**filtro_empresa, "status": {"$in": ["pending", "pendente_aprovacao"]}, "deleted_at": None}
+    )
+    approved_companies = await db.companies.count_documents(
+        {**filtro_empresa, "status": {"$in": ["approved", "ativo_contrato_assinado"]}, "deleted_at": None}
+    )
+    total_portarias = await db.portarias.count_documents({"deleted_at": None})
+    active_portarias = await db.portarias.count_documents({"status": "vigente", "deleted_at": None})
+
+    companies = await db.companies.find(
+        {**filtro_empresa, "deleted_at": None}, {"_id": 0, "company_id": 1}
+    ).to_list(1000)
+
+    total_documents = 0
+    pending_validations = 0
+    compliance_verde = compliance_amarelo = compliance_vermelho = 0
+    for company in companies:
+        docs = await db.documents.find({"company_id": company["company_id"]}, {"_id": 0}).to_list(100)
+        total_documents += len(docs)
+        pending_validations += len([d for d in docs if d.get("status") == "pending"])
+        vencidos = vencendo = 0
+        for doc in docs:
+            status = calcular_status_documento(doc)
+            if status == "vencido":
+                vencidos += 1
+            elif status == "vencendo":
+                vencendo += 1
+        if vencidos > 0:
+            compliance_vermelho += 1
+        elif vencendo > 0:
+            compliance_amarelo += 1
+        else:
+            compliance_verde += 1
 
     return {
         "total_companies": total_companies,
         "pending_companies": pending_companies,
         "approved_companies": approved_companies,
-        "total_portarias": total_portarias
+        "total_portarias": total_portarias,
+        "total_documents": total_documents,
+        "pending_validations": pending_validations,
+        "active_portarias": active_portarias,
+        "compliance_verde": compliance_verde,
+        "compliance_amarelo": compliance_amarelo,
+        "compliance_vermelho": compliance_vermelho,
     }
 
 
@@ -888,9 +2085,7 @@ def _extract_perfil(roles: list) -> str:
 
 
 @api_router.get("/admin/usuarios")
-async def listar_usuarios(current_user: User = Depends(get_current_user)):
-    if current_user.perfil != "sigcr_admin":
-        raise HTTPException(status_code=403, detail="Acesso restrito ao administrador SIGCR")
+async def listar_usuarios(current_user: User = Depends(require_perfil("sigcr_admin"))):
     import httpx
     token = await get_kc_admin_token()
     headers = {"Authorization": f"Bearer {token}"}
@@ -938,9 +2133,7 @@ class NovoUsuarioPayload(BaseModel):
 
 
 @api_router.post("/admin/usuarios")
-async def criar_usuario(payload: NovoUsuarioPayload, current_user: User = Depends(get_current_user)):
-    if current_user.perfil != "sigcr_admin":
-        raise HTTPException(status_code=403, detail="Acesso restrito ao administrador SIGCR")
+async def criar_usuario(payload: NovoUsuarioPayload, current_user: User = Depends(require_perfil("sigcr_admin"))):
     # Hierarquia LGPD — cada perfil só pode criar abaixo do seu nível
     CRIACAO_PERMITIDA = {
         "sigcr_admin":   ["registradora", "detran", "detran_admin", "financeira", "sigcr_admin"],
@@ -1007,9 +2200,7 @@ async def criar_usuario(payload: NovoUsuarioPayload, current_user: User = Depend
 
 
 @api_router.delete("/admin/usuarios/{user_id}")
-async def deletar_usuario(user_id: str, current_user: User = Depends(get_current_user)):
-    if current_user.perfil != "sigcr_admin":
-        raise HTTPException(status_code=403, detail="Acesso restrito ao administrador SIGCR")
+async def deletar_usuario(user_id: str, current_user: User = Depends(require_perfil("sigcr_admin"))):
     import httpx
     token = await get_kc_admin_token()
     headers = {"Authorization": f"Bearer {token}"}
@@ -1023,6 +2214,117 @@ async def deletar_usuario(user_id: str, current_user: User = Depends(get_current
         r.raise_for_status()
     return {"message": "Usuário removido com sucesso"}
 
+
+# ============ FASE 2: APROVAÇÃO DE CADASTROS PENDENTES ============
+
+TIPO_EMPRESA_LABELS = {"registradora": "Registradora", "financeira": "Financeira", "detran": "DETRAN"}
+
+
+class RejeitarCadastroPayload(BaseModel):
+    motivo: Optional[str] = None
+
+
+@api_router.get("/admin/cadastros-pendentes")
+async def listar_cadastros_pendentes(current_user: User = Depends(require_perfil("sigcr_admin"))):
+    """Lista companies aguardando aprovação, com dados da empresa + responsável PF vinculado."""
+    companies = await db.companies.find(
+        {"status": "pendente_aprovacao", "deleted_at": None}, {"_id": 0}
+    ).sort("created_at", 1).to_list(1000)
+
+    user_ids = list({c["user_id"] for c in companies})
+    usuarios = await db.users.find(
+        {"user_id": {"$in": user_ids}}, {"_id": 0, "user_id": 1, "email": 1, "name": 1}
+    ).to_list(1000) if user_ids else []
+    usuarios_por_id = {u["user_id"]: u for u in usuarios}
+
+    resultado = []
+    for c in companies:
+        conta = usuarios_por_id.get(c["user_id"], {})
+        resultado.append({
+            "company_id": c["company_id"],
+            "name": c["name"],
+            "nome_fantasia": c["nome_fantasia"],
+            "cnpj": c["cnpj"],
+            "tipo_empresa": c.get("tipo_empresa", "registradora"),
+            "tipo_empresa_label": TIPO_EMPRESA_LABELS.get(c.get("tipo_empresa"), c.get("tipo_empresa")),
+            "email_comercial": c.get("email_comercial"),
+            "whatsapp": c.get("whatsapp"),
+            "responsavel": c.get("responsavel"),
+            "responsavel_email_conta": conta.get("email"),
+            "historico_rejeicoes": c.get("historico_rejeicoes", []),
+            "created_at": c["created_at"],
+        })
+    return resultado
+
+
+@api_router.post("/admin/cadastros/{company_id}/aprovar")
+async def aprovar_cadastro(company_id: str, current_user: User = Depends(require_perfil("sigcr_admin"))):
+    company = await db.companies.find_one({"company_id": company_id, "deleted_at": None}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Cadastro não encontrado")
+    if company.get("status") != "pendente_aprovacao":
+        raise HTTPException(status_code=409, detail="Cadastro não está pendente de aprovação")
+
+    agora = datetime.now(timezone.utc).isoformat()
+    await db.companies.update_one(
+        {"company_id": company_id},
+        {"$set": {
+            "status": "aprovado_acesso_limitado",
+            "aprovado_por": current_user.user_id,
+            "aprovado_em": agora,
+            "updated_at": agora,
+        }}
+    )
+    await criar_notificacao(
+        company["user_id"], "cadastro_aprovado",
+        "Cadastro aprovado",
+        f"O cadastro de {company['nome_fantasia']} foi aprovado. Acesso liberado ao sistema.",
+        {"company_id": company_id}
+    )
+    await registrar_auditoria(current_user, "aprovar_cadastro", "company", company_id, {
+        "status_anterior": company.get("status"), "status_novo": "aprovado_acesso_limitado"
+    })
+    return {"message": "Cadastro aprovado com sucesso"}
+
+
+@api_router.post("/admin/cadastros/{company_id}/rejeitar")
+async def rejeitar_cadastro(
+    company_id: str,
+    payload: RejeitarCadastroPayload,
+    current_user: User = Depends(require_perfil("sigcr_admin"))
+):
+    company = await db.companies.find_one({"company_id": company_id, "deleted_at": None}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Cadastro não encontrado")
+    if company.get("status") != "pendente_aprovacao":
+        raise HTTPException(status_code=409, detail="Cadastro não está pendente de aprovação")
+
+    agora = datetime.now(timezone.utc).isoformat()
+    entrada_historico = {
+        "motivo": payload.motivo,
+        "rejeitado_por": current_user.user_id,
+        "rejeitado_em": agora,
+    }
+    await db.companies.update_one(
+        {"company_id": company_id},
+        {
+            "$set": {"status": "rejeitado", "updated_at": agora},
+            "$push": {"historico_rejeicoes": entrada_historico},
+        }
+    )
+    await criar_notificacao(
+        company["user_id"], "cadastro_rejeitado",
+        "Cadastro rejeitado",
+        f"O cadastro de {company['nome_fantasia']} foi rejeitado."
+        + (f" Motivo: {payload.motivo}" if payload.motivo else " Corrija os dados e reenvie."),
+        {"company_id": company_id, "motivo": payload.motivo}
+    )
+    await registrar_auditoria(current_user, "rejeitar_cadastro", "company", company_id, {
+        "status_anterior": company.get("status"), "motivo": payload.motivo
+    })
+    return {"message": "Cadastro rejeitado"}
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -1030,6 +2332,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def no_store_api_responses(request: Request, call_next):
+    """API não deve ser cacheada pelo navegador — evita respostas antigas/parciais
+    grudarem no cliente entre deploys, já que nenhuma rota aqui é destinada a cache."""
+    response = await call_next(request)
+    response.headers["Cache-Control"] = "no-store"
+    return response
 
 # Configure logging
 logging.basicConfig(
@@ -1067,56 +2378,6 @@ def calcular_status_documento(doc: dict) -> str:
             return "valido"        # 🟢 Verde
     except:
         return "sem_vencimento"
-
-
-class EffectiveScope(BaseModel):
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    current_user: User
-    effective_user_id: str
-    effective_company_id: Optional[str] = None
-    effective_detran_uf: Optional[str] = None
-    effective_perfil: str
-    viewing_as: Optional[dict] = None  # {"tipo": "empresa"|"detran", "id": str, "nome": str}
-
-    @property
-    def is_viewing_as(self) -> bool:
-        return self.viewing_as is not None
-
-
-async def _autorizar_acesso_empresa(company_id: str, current_user: User, *, exigir_nao_deletada: bool = True) -> EffectiveScope:
-    """Autoriza acesso a UMA empresa já identificada explicitamente na rota
-    (path/form). Dono sempre passa; sigcr_admin sempre passa (com viewing_as
-    setado, pra auditoria); qualquer outro perfil leva 403."""
-    query = {"company_id": company_id}
-    if exigir_nao_deletada:
-        query["deleted_at"] = None
-    company = await db.companies.find_one(query, {"_id": 0})
-    if not company:
-        raise HTTPException(status_code=404, detail="Empresa não encontrada")
-
-    if company["user_id"] == current_user.user_id:
-        return EffectiveScope(
-            current_user=current_user,
-            effective_user_id=current_user.user_id,
-            effective_company_id=company_id,
-            effective_detran_uf=current_user.detran_uf,
-            effective_perfil=current_user.perfil,
-            viewing_as=None,
-        )
-    if current_user.perfil == "sigcr_admin":
-        return EffectiveScope(
-            current_user=current_user,
-            effective_user_id=company["user_id"],
-            effective_company_id=company_id,
-            effective_detran_uf=current_user.detran_uf,
-            effective_perfil=current_user.perfil,
-            viewing_as={
-                "tipo": "empresa",
-                "id": company_id,
-                "nome": company.get("nome_fantasia") or company.get("name"),
-            },
-        )
-    raise HTTPException(status_code=403, detail="Acesso negado — empresa não pertence a este usuário")
 
 
 @api_router.get("/compliance/{company_id}")
@@ -1164,9 +2425,15 @@ async def get_compliance(company_id: str, current_user: User = Depends(get_curre
 
 
 @api_router.get("/compliance-geral")
-async def get_compliance_geral(current_user: User = Depends(get_current_user)):
-    """Visão geral de compliance de todas as empresas do usuário"""
-    companies = await db.companies.find({"user_id": current_user.user_id}, {"_id": 0}).to_list(100)
+async def get_compliance_geral(scope: EffectiveScope = Depends(get_effective_scope)):
+    """Visão geral de compliance de todas as empresas do usuário. sigcr_admin
+    sem 'ver como' ativo vê todas as empresas da plataforma; com
+    view_as_company_id, vê só as do dono daquela empresa."""
+    if scope.current_user.perfil == "sigcr_admin" and not scope.is_viewing_as:
+        query = {}
+    else:
+        query = {"user_id": scope.effective_user_id}
+    companies = await db.companies.find(query, {"_id": 0}).to_list(100)
     resultado = []
     for company in companies:
         docs = await db.documents.find({"company_id": company["company_id"]}, {"_id": 0}).to_list(100)
@@ -1195,12 +2462,14 @@ async def get_compliance_geral(current_user: User = Depends(get_current_user)):
 
 @api_router.patch("/documents/{document_id}/vencimento")
 async def set_vencimento(document_id: str, request: Request, current_user: User = Depends(get_current_user)):
-    """Define data de vencimento de um documento"""
+    """Define data de vencimento de um documento manualmente — marca
+    vencimento_fonte="manual" mesmo se uma sugestão de OCR já existia,
+    porque a edição do usuário sempre prevalece."""
     body = await request.json()
     vencimento = body.get("vencimento")
     result = await db.documents.update_one(
         {"document_id": document_id},
-        {"$set": {"vencimento": vencimento}}
+        {"$set": {"vencimento": vencimento, "vencimento_fonte": "manual" if vencimento else None}}
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Documento não encontrado")
@@ -1228,9 +2497,16 @@ async def registrar_auditoria(
     entidade: str,
     entidade_id: str,
     detalhes: dict = None,
-    ip: str = None
+    ip: str = None,
+    atuando_como_empresa: Optional[str] = None,
+    atuando_como_detran: Optional[str] = None,
 ):
-    """Registra ação no log de auditoria imutável"""
+    """Registra ação no log de auditoria imutável. `user` é sempre a
+    identidade REAL de quem fez a ação (nunca a empresa/DETRAN impersonado) —
+    atuando_como_empresa/atuando_como_detran deixam explícito, quando um
+    sigcr_admin agiu em modo "ver como", em nome de quem a ação foi feita.
+    Sem isso, uma ação de escrita feita em modo "ver como" ficaria
+    indistinguível de uma ação normal do admin na própria conta."""
     log = {
         "log_id": f"log_{uuid.uuid4().hex[:12]}",
         "user_id": user.user_id,
@@ -1241,6 +2517,8 @@ async def registrar_auditoria(
         "entidade_id": entidade_id,
         "detalhes": detalhes or {},
         "ip": ip,
+        "atuando_como_empresa": atuando_como_empresa,
+        "atuando_como_detran": atuando_como_detran,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.auditoria.insert_one(log)
@@ -1253,9 +2531,14 @@ async def get_auditoria(
     limit: int = 100,
     current_user: User = Depends(get_current_user)
 ):
-    """Retorna log de auditoria — admin vê tudo, outros veem o seu"""
+    """Retorna log de auditoria — sigcr_admin vê tudo; detran_admin vê só o próprio estado
+    (via detalhes.estado_sigla); demais perfis veem só as próprias ações."""
     query = {}
-    if current_user.perfil not in ["sigcr_admin", "detran_admin"]:
+    if current_user.perfil == "detran_admin":
+        if not current_user.detran_uf:
+            raise HTTPException(status_code=403, detail="Usuário detran_admin sem UF configurada")
+        query["detalhes.estado_sigla"] = current_user.detran_uf
+    elif current_user.perfil != "sigcr_admin":
         query["user_id"] = current_user.user_id
     if entidade:
         query["entidade"] = entidade
@@ -1283,10 +2566,26 @@ async def get_auditoria_entidade(
 @api_router.get("/editais")
 async def get_editais(current_user: User = Depends(get_current_user)):
     editais = await db.editais.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
-    return editais
+    if _ve_editais_completo(current_user):
+        return editais
+    # Fase 1: empresa sem contrato assinado, ou PF avulsa (mesmo com assinatura
+    # ativa — ela nunca vê completo, ver _ve_editais_completo), vê só um resumo:
+    # sem descrição completa nem documentos exigidos, e sem poder chamar
+    # POST /solicitacoes (bloqueado à parte, em require_acesso_total).
+    return [
+        {
+            "edital_id": e.get("edital_id"),
+            "titulo": e.get("titulo"),
+            "uf": e.get("uf"),
+            "status": e.get("status"),
+            "data_encerramento": e.get("data_encerramento"),
+            "preview": True,
+        }
+        for e in editais
+    ]
 
 @api_router.post("/editais")
-async def create_edital(request: Request, current_user: User = Depends(get_current_user)):
+async def create_edital(request: Request, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
     body = await request.json()
     edital = {
         "edital_id": f"edital_{uuid.uuid4().hex[:12]}",
@@ -1296,12 +2595,103 @@ async def create_edital(request: Request, current_user: User = Depends(get_curre
         "status": "aberto",
         "data_encerramento": body.get("data_encerramento"),
         "documentos_obrigatorios": body.get("documentos_obrigatorios", []),
+        # Área de Transparência: anexos e termo de adesão pra exibição pública.
+        # Sem endpoint de upload dedicado ainda — path precisa vir de um arquivo já
+        # salvo em UPLOAD_DIR (ex: via /portarias/upload) e referenciado aqui.
+        "anexos": body.get("anexos", []),  # [{"nome": str, "path": str}]
+        "termo_adesao_path": body.get("termo_adesao_path"),
         "criado_por": current_user.user_id,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.editais.insert_one(edital)
+    edital.pop("_id", None)  # insert_one adiciona _id (ObjectId) de volta no dict por efeito colateral
     await registrar_auditoria(current_user, "criar_edital", "edital", edital["edital_id"], {"titulo": edital["titulo"]})
     return edital
+
+
+# ============ ÁREA PÚBLICA DE TRANSPARÊNCIA (sem autenticação) ============
+# Expõe só o edital vigente por UF + anexos/termo de adesão para download.
+# Nunca deve retornar dados de companies/solicitações/usuários — só o que já é
+# público por natureza (o próprio edital, publicado pelo DETRAN).
+
+def _resolver_path_seguro(path_str: str) -> Optional[Path]:
+    """Garante que um path armazenado em anexos/termo_adesao_path resolve pra
+    dentro de UPLOAD_DIR antes de servir via FileResponse — evita que um valor
+    malicioso gravado em `anexos`/`termo_adesao_path` (ex: '../../etc/passwd')
+    vaze arquivos arbitrários do servidor pela rota pública."""
+    try:
+        resolved = Path(path_str).resolve()
+        upload_dir_resolved = UPLOAD_DIR.resolve()
+        if upload_dir_resolved not in resolved.parents and resolved != upload_dir_resolved:
+            return None
+        if not resolved.exists() or not resolved.is_file():
+            return None
+        return resolved
+    except Exception:
+        return None
+
+
+@api_router.get("/public/editais/{uf}")
+async def get_editais_publicos_por_uf(uf: str):
+    """Edital(is) vigente(s) de um estado — rota pública, sem autenticação.
+    Retorna só os campos abaixo, explicitamente: nada de criado_por (user_id
+    interno), company_id, solicitacao_id ou qualquer outro dado de empresas/
+    solicitações passa perto desta rota."""
+    uf = uf.upper()
+    if uf not in UF_VALIDAS:
+        raise HTTPException(status_code=400, detail="UF inválida")
+
+    editais = await db.editais.find(
+        {"uf": uf, "status": "aberto"}, {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+
+    resultado = []
+    for e in editais:
+        anexos_publicos = [
+            {"nome": a.get("nome", "Anexo"), "download_url": f"/api/public/editais/{e['edital_id']}/anexos/{i}"}
+            for i, a in enumerate(e.get("anexos", []))
+            if _resolver_path_seguro(a.get("path", "")) is not None
+        ]
+        resultado.append({
+            "edital_id": e["edital_id"],
+            "titulo": e.get("titulo"),
+            "descricao": e.get("descricao"),
+            "uf": e.get("uf"),
+            "status": e.get("status"),
+            "data_encerramento": e.get("data_encerramento"),
+            "documentos_obrigatorios": e.get("documentos_obrigatorios", []),
+            "anexos": anexos_publicos,
+            "termo_adesao_download_url": (
+                f"/api/public/editais/{e['edital_id']}/termo-adesao"
+                if _resolver_path_seguro(e.get("termo_adesao_path") or "") is not None else None
+            ),
+        })
+    return {"uf": uf, "uf_nome": UF_NOMES.get(uf, uf), "editais": resultado}
+
+
+@api_router.get("/public/editais/{edital_id}/anexos/{indice}")
+async def download_anexo_publico(edital_id: str, indice: int):
+    edital = await db.editais.find_one({"edital_id": edital_id}, {"_id": 0})
+    if not edital or edital.get("status") != "aberto":
+        raise HTTPException(status_code=404, detail="Anexo não encontrado")
+    anexos = edital.get("anexos", [])
+    if indice < 0 or indice >= len(anexos):
+        raise HTTPException(status_code=404, detail="Anexo não encontrado")
+    caminho = _resolver_path_seguro(anexos[indice].get("path", ""))
+    if not caminho:
+        raise HTTPException(status_code=404, detail="Anexo não encontrado")
+    return FileResponse(caminho, filename=anexos[indice].get("nome", f"anexo_{indice}"))
+
+
+@api_router.get("/public/editais/{edital_id}/termo-adesao")
+async def download_termo_adesao_publico(edital_id: str):
+    edital = await db.editais.find_one({"edital_id": edital_id}, {"_id": 0})
+    if not edital or edital.get("status") != "aberto":
+        raise HTTPException(status_code=404, detail="Termo de adesão não encontrado")
+    caminho = _resolver_path_seguro(edital.get("termo_adesao_path") or "")
+    if not caminho:
+        raise HTTPException(status_code=404, detail="Termo de adesão não encontrado")
+    return FileResponse(caminho, filename=f"termo_adesao_{edital_id}.pdf")
 
 
 # ============ SOLICITAÇÕES ============
@@ -1316,7 +2706,7 @@ async def get_solicitacoes(current_user: User = Depends(get_current_user)):
     return solicitacoes
 
 @api_router.post("/solicitacoes")
-async def create_solicitacao(request: Request, current_user: User = Depends(get_current_user)):
+async def create_solicitacao(request: Request, current_user: User = Depends(require_acesso_total)):
     body = await request.json()
     sol = {
         "solicitacao_id": f"sol_{uuid.uuid4().hex[:12]}",
@@ -1331,6 +2721,7 @@ async def create_solicitacao(request: Request, current_user: User = Depends(get_
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.solicitacoes.insert_one(sol)
+    sol.pop("_id", None)  # insert_one adiciona _id (ObjectId) de volta no dict por efeito colateral
     await registrar_auditoria(current_user, "criar_solicitacao", "solicitacao", sol["solicitacao_id"])
     return sol
 
@@ -1398,6 +2789,7 @@ async def criar_notificacao(user_id: str, tipo: str, titulo: str, mensagem: str,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.notificacoes.insert_one(notif)
+    notif.pop("_id", None)  # insert_one adiciona _id (ObjectId) de volta no dict por efeito colateral
     return notif
 
 
@@ -1529,7 +2921,7 @@ async def get_templates(current_user: User = Depends(get_current_user)):
 
 
 @api_router.post("/eventos")
-async def criar_evento(request: Request, current_user: User = Depends(get_current_user)):
+async def criar_evento(request: Request, current_user: User = Depends(require_perfil("detran", "detran_admin"))):
     body = await request.json()
     template_key = body.get("template", "credenciamento")
     template = TEMPLATES_EVENTO.get(template_key, TEMPLATES_EVENTO["credenciamento"])
@@ -1576,6 +2968,7 @@ async def criar_evento(request: Request, current_user: User = Depends(get_curren
     }
 
     await db.eventos.insert_one(evento)
+    evento.pop("_id", None)  # insert_one adiciona _id (ObjectId) de volta no dict por efeito colateral
     await registrar_auditoria(current_user, "criar_evento", "evento", evento_id, {
         "titulo": evento["titulo"], "template": template_key
     })
@@ -1611,7 +3004,7 @@ async def get_evento(evento_id: str, current_user: User = Depends(get_current_us
 
 
 @api_router.patch("/eventos/{evento_id}/publicar")
-async def publicar_evento(evento_id: str, current_user: User = Depends(get_current_user)):
+async def publicar_evento(evento_id: str, current_user: User = Depends(require_perfil("detran", "detran_admin"))):
     evento = await db.eventos.find_one({"evento_id": evento_id}, {"_id": 0})
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
@@ -1634,7 +3027,7 @@ async def publicar_evento(evento_id: str, current_user: User = Depends(get_curre
 
 
 @api_router.patch("/eventos/{evento_id}")
-async def atualizar_evento(evento_id: str, request: Request, current_user: User = Depends(get_current_user)):
+async def atualizar_evento(evento_id: str, request: Request, current_user: User = Depends(require_perfil("detran", "detran_admin"))):
     body = await request.json()
     await db.eventos.update_one({"evento_id": evento_id}, {"$set": body})
     await registrar_auditoria(current_user, "atualizar_evento", "evento", evento_id)
@@ -1642,7 +3035,7 @@ async def atualizar_evento(evento_id: str, request: Request, current_user: User 
 
 
 @api_router.delete("/eventos/{evento_id}")
-async def deletar_evento(evento_id: str, current_user: User = Depends(get_current_user)):
+async def deletar_evento(evento_id: str, current_user: User = Depends(require_perfil("detran", "detran_admin"))):
     result = await db.eventos.delete_one({"evento_id": evento_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
@@ -1690,39 +3083,43 @@ class Esteira(BaseModel):
 
 
 @api_router.get("/esteiras")
-async def listar_esteiras(current_user: User = Depends(get_current_user)):
-    """Lista todas as esteiras do usuário"""
-    esteiras = await db.esteiras.find(
-        {"user_id": current_user.user_id}, {"_id": 0}
-    ).sort("created_at", -1).to_list(200)
+async def listar_esteiras(scope: EffectiveScope = Depends(get_effective_scope)):
+    """Lista todas as esteiras do usuário. Esteiras não têm conceito de
+    empresa (só user_id) — sigcr_admin sem 'ver como' ativo vê todas; com
+    view_as_company_id, vê as do dono daquela empresa. view_as_detran_uf não
+    se aplica aqui (esteiras não são escopadas por UF hoje)."""
+    if scope.current_user.perfil == "sigcr_admin" and not scope.is_viewing_as:
+        query = {}
+    else:
+        query = {"user_id": scope.effective_user_id}
+    esteiras = await db.esteiras.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
     return esteiras
 
 
 @api_router.post("/esteiras")
-async def criar_esteira(data: EsteiraCreate, current_user: User = Depends(get_current_user)):
-    """Cria nova esteira de credenciamento"""
+async def criar_esteira(data: EsteiraCreate, scope: EffectiveScope = Depends(get_effective_scope)):
+    """Cria nova esteira de credenciamento. Em modo 'ver como', a esteira é
+    criada em nome da empresa/usuário selecionado, não do admin."""
     esteira = Esteira(
-        user_id=current_user.user_id,
+        user_id=scope.effective_user_id,
         registradora=data.registradora,
         cnpj=data.cnpj,
         detran=data.detran,
-        responsavel=data.responsavel or current_user.email,
+        responsavel=data.responsavel or scope.current_user.email,
     )
     doc = esteira.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
     doc['updated_at'] = doc['updated_at'].isoformat()
     await db.esteiras.insert_one(doc)
+    await registrar_auditoria(scope.current_user, "criar_esteira", "esteira", esteira.esteira_id, {},
+                               atuando_como_empresa=scope.viewing_as["id"] if scope.viewing_as else None)
     return esteira
 
 
 @api_router.get("/esteiras/{esteira_id}")
 async def get_esteira(esteira_id: str, current_user: User = Depends(get_current_user)):
-    """Retorna uma esteira pelo ID"""
-    esteira = await db.esteiras.find_one(
-        {"esteira_id": esteira_id, "user_id": current_user.user_id}, {"_id": 0}
-    )
-    if not esteira:
-        raise HTTPException(status_code=404, detail="Esteira não encontrada")
+    """Retorna uma esteira pelo ID (dono ou sigcr_admin em modo 'ver como')"""
+    esteira, _ = await _autorizar_acesso_esteira(esteira_id, current_user)
     return esteira
 
 
@@ -1733,12 +3130,8 @@ async def atualizar_evento_esteira(
     evento: EsteiraEvento,
     current_user: User = Depends(get_current_user)
 ):
-    """Atualiza um evento (etapa) dentro da esteira"""
-    esteira = await db.esteiras.find_one(
-        {"esteira_id": esteira_id, "user_id": current_user.user_id}, {"_id": 0}
-    )
-    if not esteira:
-        raise HTTPException(status_code=404, detail="Esteira não encontrada")
+    """Atualiza um evento (etapa) dentro da esteira (dono ou sigcr_admin em modo 'ver como')"""
+    esteira, scope = await _autorizar_acesso_esteira(esteira_id, current_user)
 
     eventos = esteira.get("eventos", [])
     atualizado = False
@@ -1755,17 +3148,20 @@ async def atualizar_evento_esteira(
         {"esteira_id": esteira_id},
         {"$set": {"eventos": eventos, "updated_at": datetime.now(timezone.utc).isoformat()}}
     )
+    await registrar_auditoria(current_user, "atualizar_evento_esteira", "esteira", esteira_id, {"etapa_id": etapa_id},
+                               atuando_como_empresa=scope.viewing_as["id"] if scope.viewing_as else None)
     return {"message": "Evento atualizado com sucesso", "esteira_id": esteira_id, "etapa_id": etapa_id}
 
 
 @api_router.delete("/esteiras/{esteira_id}")
 async def deletar_esteira(esteira_id: str, current_user: User = Depends(get_current_user)):
-    """Remove uma esteira"""
-    result = await db.esteiras.delete_one(
-        {"esteira_id": esteira_id, "user_id": current_user.user_id}
-    )
+    """Remove uma esteira (dono ou sigcr_admin em modo 'ver como')"""
+    _, scope = await _autorizar_acesso_esteira(esteira_id, current_user)
+    result = await db.esteiras.delete_one({"esteira_id": esteira_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Esteira não encontrada")
+    await registrar_auditoria(current_user, "remover_esteira", "esteira", esteira_id, {},
+                               atuando_como_empresa=scope.viewing_as["id"] if scope.viewing_as else None)
     return {"message": "Esteira removida com sucesso"}
 
 
@@ -1786,10 +3182,7 @@ DOC_CATEGORIAS = [
 # Categorias internas da HD Registros — nunca expostas a DETRAN/registradora/financeira
 CATEGORIAS_INTERNAS_HD = {"societario_juridico", "atividade_raci"}
 
-UF_VALIDAS = {
-    "AC", "AL", "AP", "AM", "BA", "CE", "DF", "ES", "GO", "MA", "MT", "MS", "MG", "PA",
-    "PB", "PR", "PE", "PI", "RJ", "RN", "RS", "RO", "RR", "SC", "SP", "SE", "TO",
-}
+# UF_VALIDAS agora está centralizada perto do topo do arquivo (usada por documentos, portarias e estados)
 
 ALLOWED_MIME_POR_CATEGORIA = {
     "pedido_credenciamento": {"application/pdf"},
@@ -1844,7 +3237,7 @@ ATIVIDADES_RACI_SEED = [
     {"numero": 4, "nome": "Estudar requisitos do edital", "raci": {"DIR": "I", "CRE": "R", "JUR": "C", "FIN": "C", "COM": "C", "SEG": "C", "TEC": "C"}},
     {"numero": 5, "nome": "Elaborar parecer de viabilidade", "raci": {"DIR": "A", "CRE": "R", "JUR": "C", "FIN": "C", "COM": "C", "SEG": "C", "TEC": "C"}},
     {"numero": 6, "nome": "Aprovação para participação", "raci": {"DIR": "A", "CRE": "I", "JUR": "I", "FIN": "I", "RH": "I", "COM": "I", "SEG": "I", "TEC": "I"}},
-    {"numero": 7, "nome": "Elaborar cronograma", "raci": {"DIR": "I", "CRE": "R", "COM": "C"}},
+    {"numero": 7, "nome": "Elaborar cronograma", "raci": {"DIR": "I", "CRE": "R", "OPE": "C"}},
     {"numero": 8, "nome": "Solicitar documentação às áreas", "raci": {"DIR": "I", "CRE": "R"}},
     {"numero": 9, "nome": "Disponibilizar documentos jurídicos", "raci": {"DIR": "I", "CRE": "C", "JUR": "R"}},
     {"numero": 10, "nome": "Disponibilizar documentos financeiros", "raci": {"DIR": "I", "CRE": "C", "FIN": "R"}},
@@ -1916,6 +3309,8 @@ class Documento(BaseModel):
     uploaded_by_nome: str
     uploaded_by_email: str
     notes: Optional[str] = None
+    vencimento: Optional[str] = None  # ISO 8601 (YYYY-MM-DD) — sugerido por OCR ou preenchido manualmente
+    vencimento_fonte: Optional[str] = None  # "ocr" | "manual" | None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     deleted_at: Optional[str] = None
     deleted_by: Optional[str] = None
@@ -1925,25 +3320,30 @@ class DocumentoUpdate(BaseModel):
     nome: Optional[str] = None
     tipo: Optional[str] = None
     notes: Optional[str] = None
+    vencimento: Optional[str] = None
 
 
 def _pode_ver_documento(user: User, doc: dict) -> bool:
     """Hierarquia LGPD de privilégio mínimo: sigcr_admin vê tudo; DETRAN só
     enxerga documentos não-internos do próprio estado; registradora e
     financeira não têm acesso a este módulo (é o dossiê de credenciamento
-    da própria HD Registros, não das empresas clientes da plataforma)."""
+    da própria HD Registros, não das empresas clientes da plataforma).
+    Delega a checagem de escopo por estado para _perfil_pode_ver_estado
+    (compartilhada com Estados/Credenciamentos/Portarias), só adicionando
+    por cima a regra específica de categoria interna."""
     if user.perfil == "sigcr_admin":
         return True
     if doc["categoria"] in CATEGORIAS_INTERNAS_HD:
         return False
-    if user.perfil in ("detran", "detran_admin"):
-        return bool(user.detran_uf) and doc.get("estado_sigla") == user.detran_uf
-    return False
+    return _perfil_pode_ver_estado(user, doc.get("estado_sigla"))
 
 
 async def _checar_permissao_escrita(user: User, categoria: str, estado_sigla: Optional[str]):
     """Quem pode criar/editar/remover documentos: sigcr_admin sempre;
-    detran_admin somente para categorias não-internas do próprio estado."""
+    detran_admin somente para categorias não-internas do próprio estado.
+    Mantida com a lógica/mensagens originais (não delega para
+    _checar_permissao_escrita_estado) para não alterar o texto das exceções
+    já em uso pelo frontend."""
     if user.perfil == "sigcr_admin":
         return
     if user.perfil == "detran_admin":
@@ -1975,9 +3375,7 @@ async def get_atividade_raci(numero: int, current_user: User = Depends(get_curre
 
 
 @api_router.patch("/atividades-raci/{numero}")
-async def atualizar_atividade_raci(numero: int, request: Request, current_user: User = Depends(get_current_user)):
-    if current_user.perfil != "sigcr_admin":
-        raise HTTPException(status_code=403, detail="Apenas sigcr_admin pode editar a matriz RACI")
+async def atualizar_atividade_raci(numero: int, request: Request, current_user: User = Depends(require_perfil("sigcr_admin"))):
     body = await request.json()
     campos = {k: v for k, v in body.items() if k in ("nome", "raci", "fase") and v is not None}
     if not campos:
@@ -2057,6 +3455,8 @@ async def upload_documento(
     async with aiofiles.open(file_path, "wb") as f:
         await f.write(content)
 
+    extracao = await _pipeline_extracao_vencimento(file_path, file.content_type)
+
     documento = Documento(
         categoria=categoria,
         tipo=tipo,
@@ -2073,6 +3473,8 @@ async def upload_documento(
         uploaded_by_nome=current_user.name,
         uploaded_by_email=current_user.email,
         notes=notes,
+        vencimento=extracao["vencimento"],
+        vencimento_fonte=extracao["vencimento_fonte"],
     )
 
     doc = documento.model_dump()
@@ -2091,8 +3493,11 @@ async def listar_documentos(
     atividade_raci_numero: Optional[int] = None,
     tipo: Optional[str] = None,
     incluir_removidos: bool = False,
-    current_user: User = Depends(get_current_user),
+    scope: EffectiveScope = Depends(get_effective_scope),
 ):
+    """Lista documentos internos de credenciamento. Perfil/UF efetivos vêm do
+    scope — se sigcr_admin estiver em modo 'ver como DETRAN X', vê exatamente
+    o que um detran_admin de X veria (não o bypass total de admin)."""
     query = {}
     if categoria:
         if categoria not in DOC_CATEGORIAS:
@@ -2107,21 +3512,95 @@ async def listar_documentos(
     if not incluir_removidos:
         query["deleted_at"] = None
 
-    if current_user.perfil == "sigcr_admin":
+    if scope.effective_perfil == "sigcr_admin":
         pass
-    elif current_user.perfil in ("detran", "detran_admin"):
-        if not current_user.detran_uf:
+    elif scope.effective_perfil in ("detran", "detran_admin"):
+        if not scope.effective_detran_uf:
             raise HTTPException(status_code=403, detail="Usuário DETRAN sem UF configurada")
         if categoria and categoria in CATEGORIAS_INTERNAS_HD:
             raise HTTPException(status_code=403, detail="Perfil sem acesso a esta categoria")
         if not categoria:
             query["categoria"] = {"$in": list(set(DOC_CATEGORIAS) - CATEGORIAS_INTERNAS_HD)}
-        query["estado_sigla"] = current_user.detran_uf
+        query["estado_sigla"] = scope.effective_detran_uf
     else:
         raise HTTPException(status_code=403, detail="Perfil sem acesso ao módulo de documentos")
 
     documentos = await db.documentos_gov.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
     return documentos
+
+
+# IMPORTANTE: precisa vir ANTES de "/documentos/{documento_id}" abaixo — rotas
+# literais têm que ser registradas antes de rotas com parâmetro dinâmico no
+# mesmo prefixo, senão FastAPI casa "vencimento-resumo" como documento_id e
+# essa rota nunca é alcançada (mesmo cuidado já documentado em /portarias).
+@api_router.get("/documentos/vencimento-resumo")
+async def resumo_vencimento_documentos(scope: EffectiveScope = Depends(get_effective_scope)):
+    """Agrega documentos vencendo (até 30 dias) e vencidos das duas frentes
+    cobertas pelo módulo de vencimento: certidões de fornecedores/Registradora/
+    Financeira (db.documents, escopadas pelas empresas do usuário) e
+    documentos internos de credenciamento (db.documentos_gov, mesmo escopo de
+    acesso de GET /documentos). Usado pelo card "Documentos vencendo" do
+    Dashboard. sigcr_admin sem 'ver como' ativo vê tudo (mesmo padrão de
+    GET /documentos); com view_as ativo, vê exatamente o que aquela
+    empresa/DETRAN veria."""
+    vencendo = []
+    vencidos = []
+
+    if scope.current_user.perfil == "sigcr_admin" and not scope.is_viewing_as:
+        filtro_empresa = {}
+    else:
+        filtro_empresa = {"user_id": scope.effective_user_id}
+    companies = await db.companies.find(
+        {**filtro_empresa, "deleted_at": None},
+        {"_id": 0, "company_id": 1, "nome_fantasia": 1, "name": 1},
+    ).to_list(100)
+    for company in companies:
+        docs = await db.documents.find(
+            {"company_id": company["company_id"], "deleted_at": None}, {"_id": 0}
+        ).to_list(200)
+        for doc in docs:
+            status = calcular_status_documento(doc)
+            if status not in ("vencendo", "vencido"):
+                continue
+            item = {
+                "origem": "empresa",
+                "id": doc["document_id"],
+                "nome": doc["document_name"],
+                "tipo": doc["document_type"],
+                "vencimento": doc.get("vencimento"),
+                "empresa_nome": company.get("nome_fantasia") or company.get("name"),
+            }
+            (vencendo if status == "vencendo" else vencidos).append(item)
+
+    query = {"deleted_at": None}
+    if scope.effective_perfil == "sigcr_admin":
+        pass
+    elif scope.effective_perfil in ("detran", "detran_admin"):
+        if not scope.effective_detran_uf:
+            query = None
+        else:
+            query["categoria"] = {"$in": list(set(DOC_CATEGORIAS) - CATEGORIAS_INTERNAS_HD)}
+            query["estado_sigla"] = scope.effective_detran_uf
+    else:
+        query = None  # registradora/financeira não têm acesso ao dossiê interno
+
+    if query is not None:
+        docs_internos = await db.documentos_gov.find(query, {"_id": 0}).to_list(500)
+        for doc in docs_internos:
+            status = calcular_status_documento(doc)
+            if status not in ("vencendo", "vencido"):
+                continue
+            item = {
+                "origem": "interno",
+                "id": doc["documento_id"],
+                "nome": doc["nome"],
+                "tipo": doc["tipo"],
+                "vencimento": doc.get("vencimento"),
+                "categoria": doc.get("categoria"),
+            }
+            (vencendo if status == "vencendo" else vencidos).append(item)
+
+    return {"vencendo": vencendo, "vencidos": vencidos}
 
 
 @api_router.get("/documentos/{documento_id}")
@@ -2144,7 +3623,9 @@ async def download_documento(documento_id: str, current_user: User = Depends(get
     file_path = Path(doc["file_path"])
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="Arquivo não encontrado no armazenamento")
-    await registrar_auditoria(current_user, "download_documento", "documento_gov", documento_id)
+    await registrar_auditoria(current_user, "download_documento", "documento_gov", documento_id, {
+        "estado_sigla": doc.get("estado_sigla")
+    })
     return FileResponse(path=file_path, filename=doc["file_name"], media_type=doc.get("content_type") or "application/octet-stream")
 
 
@@ -2183,9 +3664,13 @@ async def atualizar_documento(documento_id: str, updates: DocumentoUpdate, curre
     campos = {k: v for k, v in updates.model_dump().items() if v is not None}
     if not campos:
         return doc
+    if "vencimento" in campos:
+        campos["vencimento_fonte"] = "manual"
 
     await db.documentos_gov.update_one({"documento_id": documento_id}, {"$set": campos})
-    await registrar_auditoria(current_user, "atualizar_documento", "documento_gov", documento_id, campos)
+    await registrar_auditoria(current_user, "atualizar_documento", "documento_gov", documento_id, {
+        **campos, "estado_sigla": doc.get("estado_sigla")
+    })
     return await db.documentos_gov.find_one({"documento_id": documento_id}, {"_id": 0})
 
 
@@ -2200,7 +3685,9 @@ async def remover_documento(documento_id: str, current_user: User = Depends(get_
         {"documento_id": documento_id},
         {"$set": {"deleted_at": datetime.now(timezone.utc).isoformat(), "deleted_by": current_user.user_id}}
     )
-    await registrar_auditoria(current_user, "remover_documento", "documento_gov", documento_id)
+    await registrar_auditoria(current_user, "remover_documento", "documento_gov", documento_id, {
+        "estado_sigla": doc.get("estado_sigla")
+    })
     return {"message": "Documento removido"}
 
 
