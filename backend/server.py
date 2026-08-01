@@ -1069,9 +1069,64 @@ def calcular_status_documento(doc: dict) -> str:
         return "sem_vencimento"
 
 
+class EffectiveScope(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    current_user: User
+    effective_user_id: str
+    effective_company_id: Optional[str] = None
+    effective_detran_uf: Optional[str] = None
+    effective_perfil: str
+    viewing_as: Optional[dict] = None  # {"tipo": "empresa"|"detran", "id": str, "nome": str}
+
+    @property
+    def is_viewing_as(self) -> bool:
+        return self.viewing_as is not None
+
+
+async def _autorizar_acesso_empresa(company_id: str, current_user: User, *, exigir_nao_deletada: bool = True) -> EffectiveScope:
+    """Autoriza acesso a UMA empresa já identificada explicitamente na rota
+    (path/form). Dono sempre passa; sigcr_admin sempre passa (com viewing_as
+    setado, pra auditoria); qualquer outro perfil leva 403."""
+    query = {"company_id": company_id}
+    if exigir_nao_deletada:
+        query["deleted_at"] = None
+    company = await db.companies.find_one(query, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+
+    if company["user_id"] == current_user.user_id:
+        return EffectiveScope(
+            current_user=current_user,
+            effective_user_id=current_user.user_id,
+            effective_company_id=company_id,
+            effective_detran_uf=current_user.detran_uf,
+            effective_perfil=current_user.perfil,
+            viewing_as=None,
+        )
+    if current_user.perfil == "sigcr_admin":
+        return EffectiveScope(
+            current_user=current_user,
+            effective_user_id=company["user_id"],
+            effective_company_id=company_id,
+            effective_detran_uf=current_user.detran_uf,
+            effective_perfil=current_user.perfil,
+            viewing_as={
+                "tipo": "empresa",
+                "id": company_id,
+                "nome": company.get("nome_fantasia") or company.get("name"),
+            },
+        )
+    raise HTTPException(status_code=403, detail="Acesso negado — empresa não pertence a este usuário")
+
+
 @api_router.get("/compliance/{company_id}")
 async def get_compliance(company_id: str, current_user: User = Depends(get_current_user)):
-    """Retorna status de compliance da empresa com semáforo"""
+    """Retorna status de compliance da empresa com semáforo (dono ou
+    sigcr_admin em modo 'ver como'). Achado incidental durante o trabalho do
+    seletor 'ver como': esta rota não tinha NENHUMA checagem de ownership —
+    qualquer usuário autenticado podia consultar compliance de qualquer
+    empresa trocando o company_id na URL. Corrigido aqui de graça."""
+    await _autorizar_acesso_empresa(company_id, current_user, exigir_nao_deletada=False)
     docs = await db.documents.find({"company_id": company_id}, {"_id": 0}).to_list(100)
 
     certidoes_criticas = ["cnpj", "certidao_fiscal", "certidao_fgts", "certidao_trabalhista"]
