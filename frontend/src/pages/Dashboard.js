@@ -3,7 +3,7 @@ import { MapaNacional } from '../components/ui/interactive-map';
 import VaporizeTextCycle from '../components/ui/vapour-text-effect';
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { Building2, FileText, Search, TrendingUp, Shield, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Building2, FileText, Search, TrendingUp, Shield, CheckCircle, Clock, AlertCircle, CalendarClock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '../contexts/AuthContext';
 import { useApi } from '../hooks/useApi';
@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 const Dashboard = () => {
   const [stats, setStats] = useState(null);
+  const [vencimentoResumo, setVencimentoResumo] = useState({ vencendo: [], vencidos: [] });
   const [loading, setLoading] = useState(true);
   const { user, initialized } = useAuth();
   const api = useApi();
@@ -18,6 +19,7 @@ const Dashboard = () => {
   useEffect(() => {
     if (!initialized || !user) return;
     fetchStats();
+    fetchVencimentoResumo();
   }, [initialized, user]);
 
   const fetchStats = async () => {
@@ -36,6 +38,18 @@ const Dashboard = () => {
         compliance_vermelho: 0,
       });
     } finally { setLoading(false); }
+  };
+
+  const fetchVencimentoResumo = async () => {
+    try {
+      const data = await api.get('/documentos/vencimento-resumo');
+      setVencimentoResumo({
+        vencendo: Array.isArray(data?.vencendo) ? data.vencendo : [],
+        vencidos: Array.isArray(data?.vencidos) ? data.vencidos : [],
+      });
+    } catch {
+      setVencimentoResumo({ vencendo: [], vencidos: [] });
+    }
   };
 
   const SEMAFORO = [
@@ -121,6 +135,58 @@ const Dashboard = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Documentos vencendo (30 dias) + vencidos */}
+            {(vencimentoResumo.vencendo.length > 0 || vencimentoResumo.vencidos.length > 0) && (
+              <Card className="bg-zinc-900/50 border-zinc-800 mb-8">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-heading flex items-center gap-2">
+                    <CalendarClock className="h-4 w-4 text-amber-400" />
+                    Documentos Vencendo
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
+                      <p className="text-2xl font-bold font-mono text-amber-400">{vencimentoResumo.vencendo.length}</p>
+                      <p className="text-xs text-zinc-500 mt-1">Vencendo em até 30 dias</p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
+                      <p className="text-2xl font-bold font-mono text-red-400">{vencimentoResumo.vencidos.length}</p>
+                      <p className="text-xs text-zinc-500 mt-1">Já vencidos</p>
+                    </div>
+                  </div>
+
+                  {vencimentoResumo.vencidos.length > 0 && (
+                    <div>
+                      <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider mb-2">Vencidos</p>
+                      <div className="space-y-1.5">
+                        {vencimentoResumo.vencidos.map((item) => (
+                          <div key={`${item.origem}-${item.id}`} className="flex items-center justify-between text-sm p-2 rounded-lg bg-red-500/5 border border-red-500/10">
+                            <span className="text-zinc-300">{item.nome}</span>
+                            <span className="text-red-400 font-mono text-xs">{new Date(item.vencimento).toLocaleDateString('pt-BR')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {vencimentoResumo.vencendo.length > 0 && (
+                    <div>
+                      <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider mb-2">Vencendo em breve</p>
+                      <div className="space-y-1.5">
+                        {vencimentoResumo.vencendo.map((item) => (
+                          <div key={`${item.origem}-${item.id}`} className="flex items-center justify-between text-sm p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
+                            <span className="text-zinc-300">{item.nome}</span>
+                            <span className="text-amber-400 font-mono text-xs">{new Date(item.vencimento).toLocaleDateString('pt-BR')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Info do perfil */}
             <Card className="bg-zinc-900/50 border-zinc-800">
