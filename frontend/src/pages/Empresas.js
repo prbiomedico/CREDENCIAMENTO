@@ -12,7 +12,7 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
 
 const detransOptions = [
@@ -22,9 +22,10 @@ const detransOptions = [
 ];
 
 const Empresas = () => {
-  const { user, initialized, keycloak } = useAuth();
+  const { user, initialized, keycloak, getToken } = useAuth();
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sessaoExpirada, setSessaoExpirada] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -42,6 +43,53 @@ const Empresas = () => {
 
   const [showEditModal, setShowEditModal] = React.useState(false);
   const [editingCompany, setEditingCompany] = React.useState(null);
+  const [editFormData, setEditFormData] = React.useState({
+    name: '',
+    nome_fantasia: '',
+    cnpj: '',
+    email_comercial: '',
+    gestor_contrato: '',
+    endereco: '',
+    whatsapp: '',
+    detrans_atuacao: []
+  });
+
+  useEffect(() => {
+    if (!editingCompany) return;
+    setEditFormData({
+      name: editingCompany.name || '',
+      nome_fantasia: editingCompany.nome_fantasia || '',
+      cnpj: editingCompany.cnpj || '',
+      email_comercial: editingCompany.email_comercial || '',
+      gestor_contrato: editingCompany.gestor_contrato || '',
+      endereco: editingCompany.endereco || '',
+      whatsapp: editingCompany.whatsapp || '',
+      detrans_atuacao: editingCompany.detrans_atuacao || []
+    });
+  }, [editingCompany]);
+
+  const handleEditDetranToggle = (detran) => {
+    setEditFormData(prev => ({
+      ...prev,
+      detrans_atuacao: prev.detrans_atuacao.includes(detran)
+        ? prev.detrans_atuacao.filter(d => d !== detran)
+        : [...prev.detrans_atuacao, detran]
+    }));
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.patch(`${API}/companies/${editingCompany.company_id}`, editFormData, { withCredentials: true });
+      toast.success('Empresa atualizada com sucesso!');
+      setShowEditModal(false);
+      setEditingCompany(null);
+      fetchCompanies();
+    } catch (error) {
+      console.error('Error updating company:', error);
+      toast.error('Erro ao atualizar empresa');
+    }
+  };
 
   const handleDelete = async (companyId) => {
     if (!window.confirm('Confirma exclusao desta empresa?')) return;
@@ -57,10 +105,16 @@ const Empresas = () => {
     try { await getToken(); } catch {}
     try {
       const response = await axios.get(`${API}/companies`, { withCredentials: true });
-      setCompanies(response.data);
+      setCompanies(Array.isArray(response.data) ? response.data : []);
+      setSessaoExpirada(false);
     } catch (error) {
       console.error('Error fetching companies:', error);
-      toast.error('Erro ao carregar empresas');
+      if (error?.response?.status === 401) {
+        setSessaoExpirada(true);
+        toast.error('Sessão expirada — recarregue a página');
+      } else {
+        toast.error('Erro ao carregar empresas');
+      }
     } finally {
       setLoading(false);
     }
@@ -83,7 +137,11 @@ const Empresas = () => {
       fetchCompanies();
     } catch (error) {
       console.error('Error creating company:', error);
-      toast.error('Erro ao cadastrar empresa');
+      if (error?.response?.status === 401) {
+        toast.error('Sessão expirada — recarregue a página e tente de novo');
+      } else {
+        toast.error('Erro ao cadastrar empresa');
+      }
     }
   };
 
@@ -200,24 +258,31 @@ const Empresas = () => {
                   />
                 </div>
 
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="endereco" className="text-zinc-300">Endereço</Label>
+                    <Input
+                      id="endereco"
+                      value={formData.endereco}
+                      onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
+                      placeholder="Endereço"
+                      className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="whatsapp" className="text-zinc-300">WhatsApp</Label>
+                    <Input
+                      id="whatsapp"
+                      value={formData.whatsapp}
+                      onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
+                      placeholder="(99) 99999-9999"
+                      className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <Label className="text-zinc-300 mb-1 block">Endereço</Label>
-              <Input type="text" placeholder="Endereço" value={formData.endereco} onChange={(e)=>setFormData({...formData,endereco:e.target.value})} className="bg-zinc-800 border-zinc-700" />
-            </div>
-            <div>
-              <Label className="text-zinc-300 mb-1 block">WhatsApp</Label>
-              <Input type="text" placeholder="(99) 99999-9999" value={formData.whatsapp} onChange={(e)=>setFormData({...formData,whatsapp:e.target.value})} className="bg-zinc-800 border-zinc-700" />
-            </div>
-            <div className="col-span-2">
-              <Label className="text-zinc-300 mb-1 block">Endereço</Label>
-              <Input type="text" placeholder="Endereço" value={formData.endereco} onChange={(e)=>setFormData({...formData,endereco:e.target.value})} className="bg-zinc-800 border-zinc-700" />
-            </div>
-            <div>
-              <Label className="text-zinc-300 mb-1 block">WhatsApp</Label>
-              <Input type="text" placeholder="(99) 99999-9999" value={formData.whatsapp} onChange={(e)=>setFormData({...formData,whatsapp:e.target.value})} className="bg-zinc-800 border-zinc-700" />
-            </div>
-            <div className="col-span-2">
-              <Label className="text-zinc-300 mb-3 block">DETRANs de Atuação</Label>
+                  <Label className="text-zinc-300 mb-3 block">DETRANs de Atuação</Label>
                   <div className="grid grid-cols-5 gap-3 max-h-48 overflow-y-auto p-4 bg-zinc-950 border border-zinc-800 rounded-md">
                     {detransOptions.map((detran) => (
                       <div key={detran} className="flex items-center space-x-2">
@@ -253,12 +318,154 @@ const Empresas = () => {
           </Dialog>
         </div>
 
+        {/* Edit Company Modal */}
+        <Dialog open={showEditModal} onOpenChange={(open) => { setShowEditModal(open); if (!open) setEditingCompany(null); }}>
+          <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="font-heading text-2xl">Editar Empresa</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleEditSubmit} className="space-y-4 mt-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-name" className="text-zinc-300">Razão Social</Label>
+                  <Input
+                    id="edit-name"
+                    data-testid="edit-company-name-input"
+                    value={editFormData.name}
+                    onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
+                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-nome_fantasia" className="text-zinc-300">Nome Fantasia</Label>
+                  <Input
+                    id="edit-nome_fantasia"
+                    data-testid="edit-company-fantasia-input"
+                    value={editFormData.nome_fantasia}
+                    onChange={(e) => setEditFormData({ ...editFormData, nome_fantasia: e.target.value })}
+                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-cnpj" className="text-zinc-300">CNPJ</Label>
+                  <Input
+                    id="edit-cnpj"
+                    data-testid="edit-company-cnpj-input"
+                    value={editFormData.cnpj}
+                    onChange={(e) => setEditFormData({ ...editFormData, cnpj: e.target.value })}
+                    placeholder="00.000.000/0000-00"
+                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-email_comercial" className="text-zinc-300">Email Comercial</Label>
+                  <Input
+                    id="edit-email_comercial"
+                    type="email"
+                    data-testid="edit-company-email-input"
+                    value={editFormData.email_comercial}
+                    onChange={(e) => setEditFormData({ ...editFormData, email_comercial: e.target.value })}
+                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-gestor_contrato" className="text-zinc-300">Gestor do Contrato</Label>
+                <Input
+                  id="edit-gestor_contrato"
+                  data-testid="edit-company-gestor-input"
+                  value={editFormData.gestor_contrato}
+                  onChange={(e) => setEditFormData({ ...editFormData, gestor_contrato: e.target.value })}
+                  placeholder="Nome completo do gestor"
+                  className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                  required
+                />
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-endereco" className="text-zinc-300">Endereço</Label>
+                  <Input
+                    id="edit-endereco"
+                    value={editFormData.endereco}
+                    onChange={(e) => setEditFormData({ ...editFormData, endereco: e.target.value })}
+                    placeholder="Endereço"
+                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-whatsapp" className="text-zinc-300">WhatsApp</Label>
+                  <Input
+                    id="edit-whatsapp"
+                    value={editFormData.whatsapp}
+                    onChange={(e) => setEditFormData({ ...editFormData, whatsapp: e.target.value })}
+                    placeholder="(99) 99999-9999"
+                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-zinc-300 mb-3 block">DETRANs de Atuação</Label>
+                <div className="grid grid-cols-5 gap-3 max-h-48 overflow-y-auto p-4 bg-zinc-950 border border-zinc-800 rounded-md">
+                  {detransOptions.map((detran) => (
+                    <div key={detran} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`edit-detran-${detran}`}
+                        checked={editFormData.detrans_atuacao.includes(detran)}
+                        onCheckedChange={() => handleEditDetranToggle(detran)}
+                        className="border-zinc-700 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                      />
+                      <label
+                        htmlFor={`edit-detran-${detran}`}
+                        className="text-sm text-zinc-300 cursor-pointer"
+                      >
+                        {detran}
+                      </label>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-zinc-500 mt-2">
+                  Selecionados: {editFormData.detrans_atuacao.length > 0 ? editFormData.detrans_atuacao.join(', ') : 'Nenhum'}
+                </p>
+              </div>
+
+              <Button
+                data-testid="submit-edit-company-btn"
+                type="submit"
+                className="w-full bg-orange-500 hover:bg-orange-600 text-white button-shadow"
+              >
+                Salvar Alterações
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+
         {/* Companies List */}
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
             <p className="text-zinc-400">Carregando empresas...</p>
           </div>
+        ) : sessaoExpirada ? (
+          <Card className="bg-amber-950/20 border-amber-900/50">
+            <CardContent className="p-12 text-center">
+              <Building2 className="h-16 w-16 text-amber-700 mx-auto mb-4" />
+              <p className="text-amber-400 mb-4">Sessão expirada</p>
+              <p className="text-sm text-zinc-500 mb-4">Não foi possível confirmar sua autenticação — isso não significa que você não tem empresas cadastradas.</p>
+              <Button onClick={() => window.location.reload()} className="bg-orange-500 hover:bg-orange-600 text-white">
+                Recarregar página
+              </Button>
+            </CardContent>
+          </Card>
         ) : companies.length === 0 ? (
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardContent className="p-12 text-center">
@@ -272,11 +479,7 @@ const Empresas = () => {
                 <Plus className="h-5 w-5 mr-2" />
                 Cadastrar Primeira Empresa
               </Button>
-                        <div className="flex gap-2 mt-3">
-              <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800" onClick={()=>{setEditingCompany(company);setShowEditModal(true);}}>Editar</Button>
-              <Button size="sm" className="bg-red-900/30 text-red-400 border border-red-800" onClick={()=>handleDelete(company.company_id)}>Excluir</Button>
-            </div>
-</CardContent>
+            </CardContent>
           </Card>
         ) : (
           <div className="grid grid-cols-1 gap-6">
@@ -326,7 +529,7 @@ const Empresas = () => {
                 </div>
                 <div className="flex gap-2 mt-3">
                   <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800" onClick={()=>{setEditingCompany(company);setShowEditModal(true);}}>Editar</Button>
-                  <Button size="sm" className="bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900" onClick={()=>handleDelete(company.id)}>Excluir</Button>
+                  <Button size="sm" className="bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900" onClick={()=>handleDelete(company.company_id)}>Excluir</Button>
                 </div>
                 <div style={{display:'none'}}>
                   </div>
