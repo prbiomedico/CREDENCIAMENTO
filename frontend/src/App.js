@@ -1,8 +1,9 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { Toaster } from '@/components/ui/sonner';
-import ProtectedRoute from './components/ProtectedRoute';
+import RotaProtegida from './components/RotaProtegida';
+import ErrorBoundary from './components/ErrorBoundary';
 import Landing from './pages/Landing';
 import Planos from './pages/Planos';
 import Checkout from './pages/Checkout';
@@ -27,41 +28,64 @@ import AnaliseDocumental from './pages/AnaliseDocumental';
 import POC from './pages/POC';
 import Homologacao from './pages/Homologacao';
 import DocumentosGov from './pages/DocumentosGov';
+import Estados from './pages/Estados';
+import EstadoDetalhe from './pages/EstadoDetalhe';
+import Transparencia from './pages/Transparencia';
 import '@/App.css';
+
+// Cada rota recebe seu próprio ErrorBoundary (não um único global): um crash
+// numa tela não deve afetar as outras, e navegar pra outra rota — mesmo que
+// seja a mesma Route com um :param diferente, daí o key por pathname — deve
+// sempre partir de um estado limpo, sem carregar o crash da tela anterior.
+function RouteBoundary({ children }) {
+  const location = useLocation();
+  return <ErrorBoundary key={location.pathname}>{children}</ErrorBoundary>;
+}
+
+function AppRoutes() {
+  const b = (el) => <RouteBoundary>{el}</RouteBoundary>;
+  return (
+    <Routes>
+        <Route path="/" element={b(<Landing />)} />
+        <Route path="/dashboard" element={b(<RotaProtegida><Dashboard /></RotaProtegida>)} />
+        <Route path="/empresas" element={b(<RotaProtegida perfilPermitido="registradora"><Empresas /></RotaProtegida>)} />
+        <Route path="/portarias" element={b(<RotaProtegida perfilPermitido={["registradora", "detran", "detran_admin"]}><Portarias /></RotaProtegida>)} />
+        <Route path="/planos" element={b(<Planos />)} />
+        <Route path="/transparencia" element={b(<Transparencia />)} />
+        <Route path="/transparencia/:uf" element={b(<Transparencia />)} />
+          <Route path="/checkout" element={b(<Checkout />)} />
+          <Route path="/pagamento/aguardando" element={b(<PagamentoAguardando />)} />
+          <Route path="/app-mobile" element={b(<AppMobile />)} />
+          <Route path="/documentos/upload" element={b(<UploadDocumentos />)} />
+          <Route path="/mapa-nacional" element={b(<MapaNacional />)} />
+          <Route path="/documentos" element={b(<RotaProtegida perfilPermitido="registradora"><Documentos /></RotaProtegida>)} />
+          <Route path="/credenciamento/documentos" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><DocumentosGov /></RotaProtegida>)} />
+          <Route path="/estados" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><Estados /></RotaProtegida>)} />
+          <Route path="/estados/:sigla" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><EstadoDetalhe /></RotaProtegida>)} />
+        <Route path="/mapa" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><MapaNacional /></RotaProtegida>)} />
+        <Route path="/editais" element={b(<RotaProtegida perfilPermitido={["registradora", "detran", "detran_admin"]}><Editais /></RotaProtegida>)} />
+        <Route path="/solicitacoes" element={b(<RotaProtegida perfilPermitido={["registradora", "detran", "detran_admin"]}><Solicitacoes /></RotaProtegida>)} />
+        <Route path="/painel-detran" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><PainelDetran /></RotaProtegida>)} />
+        <Route path="/detran/analise" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><AnaliseDocumental /></RotaProtegida>)} />
+        <Route path="/detran/poc" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><POC /></RotaProtegida>)} />
+        <Route path="/detran/homologacao" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><Homologacao /></RotaProtegida>)} />
+        <Route path="/notificacoes" element={b(<RotaProtegida><Notificacoes /></RotaProtegida>)} />
+        <Route path="/criar-evento" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><CriarEvento /></RotaProtegida>)} />
+      <Route path="/esteiras" element={b(<RotaProtegida><Esteiras /></RotaProtegida>)} />
+      <Route path="/solicitacoes/:id" element={b(<RotaProtegida perfilPermitido={["registradora", "detran", "detran_admin"]}><SolicitacaoDetalhe /></RotaProtegida>)} />
+      <Route path="/usuarios" element={b(<RotaProtegida perfilPermitido="sigcr_admin"><GestaoUsuarios /></RotaProtegida>)} />
+      <Route path="/configuracoes" element={b(<RotaProtegida perfilPermitido="sigcr_admin"><GestaoUsuarios /></RotaProtegida>)} />
+      <Route path="*" element={<Navigate to="/dashboard" replace />} />
+    </Routes>
+  );
+}
 
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/empresas" element={<ProtectedRoute><Empresas /></ProtectedRoute>} />
-          <Route path="/portarias" element={<ProtectedRoute><Portarias /></ProtectedRoute>} />
-          <Route path="/planos" element={<Planos />} />
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/pagamento/aguardando" element={<PagamentoAguardando />} />
-            <Route path="/app-mobile" element={<AppMobile />} />
-            <Route path="/documentos/upload" element={<UploadDocumentos />} />
-            <Route path="/mapa-nacional" element={<MapaNacional />} />
-            <Route path="/documentos" element={<ProtectedRoute><Documentos /></ProtectedRoute>} />
-            <Route path="/credenciamento/documentos" element={<ProtectedRoute><DocumentosGov /></ProtectedRoute>} />
-          <Route path="/mapa" element={<ProtectedRoute><MapaNacional /></ProtectedRoute>} />
-          <Route path="/editais" element={<ProtectedRoute><Editais /></ProtectedRoute>} />
-          <Route path="/solicitacoes" element={<ProtectedRoute><Solicitacoes /></ProtectedRoute>} />
-          <Route path="/painel-detran" element={<ProtectedRoute><PainelDetran /></ProtectedRoute>} />
-          <Route path="/detran/analise" element={<ProtectedRoute><AnaliseDocumental /></ProtectedRoute>} />
-          <Route path="/detran/poc" element={<ProtectedRoute><POC /></ProtectedRoute>} />
-          <Route path="/detran/homologacao" element={<ProtectedRoute><Homologacao /></ProtectedRoute>} />
-          <Route path="/notificacoes" element={<ProtectedRoute><Notificacoes /></ProtectedRoute>} />
-          <Route path="/criar-evento" element={<ProtectedRoute><CriarEvento /></ProtectedRoute>} />
-        <Route path="/esteiras" element={<ProtectedRoute><Esteiras /></ProtectedRoute>} />
-        <Route path="/solicitacoes/:id" element={<ProtectedRoute><SolicitacaoDetalhe /></ProtectedRoute>} />
-        <Route path="/usuarios" element={<ProtectedRoute><GestaoUsuarios /></ProtectedRoute>} />
-        <Route path="/configuracoes" element={<ProtectedRoute><GestaoUsuarios /></ProtectedRoute>} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      <CookieBanner />
+        <AppRoutes />
+        <CookieBanner />
         <Toaster position="top-right" />
       </AuthProvider>
     </BrowserRouter>

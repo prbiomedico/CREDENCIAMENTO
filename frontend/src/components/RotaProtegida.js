@@ -1,8 +1,15 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Shield } from 'lucide-react';
 
-const ProtectedRoute = ({ children }) => {
+/**
+ * Envolve uma rota exigindo login e, opcionalmente, um perfil específico.
+ * `perfilPermitido` aceita uma string ou array de perfis (registradora, detran,
+ * detran_admin, financeira, sigcr_admin). Omitido = qualquer usuário logado.
+ * sigcr_admin sempre passa (superusuário), espelhando a regra do backend.
+ */
+const RotaProtegida = ({ perfilPermitido, children }) => {
   const { user, loading, initialized, login } = useAuth();
 
   if (!initialized || loading) {
@@ -28,7 +35,17 @@ const ProtectedRoute = ({ children }) => {
     );
   }
 
+  const permitidos = Array.isArray(perfilPermitido)
+    ? perfilPermitido
+    : perfilPermitido ? [perfilPermitido] : null;
+
+  const temPermissao = !permitidos || user.perfil === 'sigcr_admin' || permitidos.includes(user.perfil);
+
+  if (!temPermissao) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return children;
 };
 
-export default ProtectedRoute;
+export default RotaProtegida;
