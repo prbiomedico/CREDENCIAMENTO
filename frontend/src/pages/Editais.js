@@ -10,7 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
 const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 
@@ -34,7 +34,7 @@ const Editais = () => {
     try { await getToken(); } catch {}
     try {
       const res = await axios.get(`${API}/editais`);
-      setEditais(res.data);
+      setEditais(Array.isArray(res.data) ? res.data : []);
     } catch { toast.error('Erro ao carregar editais'); }
     finally { setLoading(false); }
   };

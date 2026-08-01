@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import axios from "axios";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
 
 const ETAPAS = [
@@ -153,8 +153,9 @@ export default function Esteiras() {
     setLoading(true); setErro(null);
     try {
       const res = await axios.get(`${API}/esteiras`, { headers: { Authorization: `Bearer ${token}` } });
-      setEsteiras(res.data);
-      if (res.data.length && !selectedId) setSelectedId(res.data[0].esteira_id);
+      const esteiras = Array.isArray(res.data) ? res.data : [];
+      setEsteiras(esteiras);
+      if (esteiras.length && !selectedId) setSelectedId(esteiras[0].esteira_id);
     } catch (e) { console.error(e); setErro("Erro ao carregar esteiras."); }
     finally { setLoading(false); }
   }, [token]);

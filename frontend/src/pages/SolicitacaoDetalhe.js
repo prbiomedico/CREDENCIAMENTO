@@ -145,7 +145,7 @@ export default function SolicitacaoDetalhe() {
     </DashboardLayout>
   );
 
-  const docsObrigatorios = solicitacao.documentos_obrigatorios || [];
+  const docsObrigatorios = Array.isArray(solicitacao.documentos_obrigatorios) ? solicitacao.documentos_obrigatorios : [];
 
   return (
     <DashboardLayout>

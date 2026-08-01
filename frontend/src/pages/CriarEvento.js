@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
 const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 const STEPS = ['Template','Detalhes','Documentos','Timeline','Revisar'];
@@ -139,7 +139,7 @@ const CriarEvento = () => {
           <div className="space-y-5">
             <p className="text-zinc-400 text-sm">Selecione os documentos obrigatrios para este evento.</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {tmpl?.documentos_padrao.map(doc => {
+              {(Array.isArray(tmpl?.documentos_padrao) ? tmpl.documentos_padrao : []).map(doc => {
                 const on = form.documentos_obrigatorios.includes(doc);
                 return <button key={doc} onClick={() => toggleDoc(doc)} className={`flex items-center gap-2 p-3 rounded-xl border text-xs text-left transition-all font-mono ${on ? 'bg-orange-500/15 border-orange-500/40 text-orange-300' : 'bg-zinc-900/50 border-zinc-800 text-zinc-400 hover:border-zinc-700'}`}><div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${on ? 'bg-orange-500 border-orange-500' : 'border-zinc-600'}`}>{on && <Check className="h-3 w-3 text-white" />}</div>{doc}</button>;
               })}

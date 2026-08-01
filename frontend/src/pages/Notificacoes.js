@@ -7,7 +7,7 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
 
 const TIPO_CONFIG = {
@@ -30,7 +30,7 @@ const Notificacoes = () => {
     try { await getToken(); } catch {}
     try {
       const res = await axios.get(`${API}/notificacoes`);
-      setNotifs(res.data);
+      setNotifs(Array.isArray(res.data) ? res.data : []);
     } catch { toast.error('Erro ao carregar notificações'); }
     finally { setLoading(false); }
   };

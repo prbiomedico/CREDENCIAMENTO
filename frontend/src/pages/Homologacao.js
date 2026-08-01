@@ -127,7 +127,7 @@ const Homologacao = () => {
     const carregar = async () => {
       try {
         const resp = await apiCall('/api/processos?status=homologacao,homologado,reprovado');
-        setProcessos(resp?.processos || []);
+        setProcessos(Array.isArray(resp?.processos) ? resp.processos : []);
       } catch {
         setProcessos([]);
       } finally {

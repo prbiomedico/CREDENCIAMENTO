@@ -30,7 +30,7 @@ const Solicitacoes = () => {
   const fetchSolicitacoes = async () => {
     try {
       const data = await api.get('/solicitacoes');
-      setSolicitacoes(data);
+      setSolicitacoes(Array.isArray(data) ? data : []);
     } catch { toast.error('Erro ao carregar solicitações'); }
     finally { setLoading(false); }
   };

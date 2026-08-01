@@ -135,7 +135,7 @@ const AnaliseDocumental = () => {
     const carregar = async () => {
       try {
         const resp = await apiCall('/api/processos?status=em_analise');
-        setProcessos(resp?.processos || []);
+        setProcessos(Array.isArray(resp?.processos) ? resp.processos : []);
       } catch {
         setProcessos([]);
       } finally {

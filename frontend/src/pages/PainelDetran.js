@@ -78,8 +78,8 @@ const PainelDetran = () => {
           apiCall('/api/processos'),
           apiCall('/api/portarias'),
         ]);
-        setProcessos(pResp?.processos || []);
-        setPortarias(portResp?.portarias || []);
+        setProcessos(Array.isArray(pResp?.processos) ? pResp.processos : []);
+        setPortarias(Array.isArray(portResp?.portarias) ? portResp.portarias : []);
       } catch (e) {
         setProcessos([]);
         setPortarias([]);
