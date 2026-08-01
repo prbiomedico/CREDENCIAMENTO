@@ -6,12 +6,16 @@ import DashboardLayout from '../components/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
+import { Textarea } from '../components/ui/textarea';
 import {
   UserCog, Plus, Search, Shield, Building2, Landmark,
-  CreditCard, Trash2, RefreshCw, ChevronDown, Check, X, Eye, EyeOff
+  CreditCard, Trash2, RefreshCw, ChevronDown, Check, X, Eye, EyeOff,
+  ClipboardList, ThumbsUp, ThumbsDown
 } from 'lucide-react';
 
-const API = process.env.REACT_APP_API_URL || 'https://api.sigcr.com.br';
+const API = `${process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br'}/api`;
 
 const PERFIS = {
   sigcr_admin:       { label: 'Admin SIGCR',    color: 'bg-orange-500/20 text-orange-400 border-orange-500/30',   icon: Shield },
@@ -40,6 +44,8 @@ const ROLES_POR_PERFIL = {
 
 const EMPTY_FORM = { username: '', email: '', firstName: '', lastName: '', password: '', role: 'registradora', uf: '', enabled: true };
 
+const TIPO_EMPRESA_LABELS = { registradora: 'Registradora', financeira: 'Financeira', detran: 'DETRAN' };
+
 export default function GestaoUsuarios() {
   const { user, initialized } = useAuth();
   const { toast } = useToast();
@@ -53,6 +59,12 @@ export default function GestaoUsuarios() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [deletando, setDeletando] = useState(null);
 
+  const [cadastrosPendentes, setCadastrosPendentes] = useState([]);
+  const [loadingCadastros, setLoadingCadastros] = useState(true);
+  const [processando, setProcessando] = useState(null);
+  const [rejeicaoAlvo, setRejeicaoAlvo] = useState(null);
+  const [motivoRejeicao, setMotivoRejeicao] = useState('');
+
   // Roles que este usurio pode criar  baseado na hierarquia LGPD
   const perfilAtual = user?.perfil || user?.roles?.[0] || 'financeira';
   const rolesPermitidas = ROLES_POR_PERFIL[perfilAtual] || [];
@@ -63,17 +75,60 @@ export default function GestaoUsuarios() {
   useEffect(() => {
     if (!initialized || !user) return;
     fetchUsuarios();
+    fetchCadastrosPendentes();
   }, [initialized, user]);
 
   const fetchUsuarios = async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API}/admin/usuarios`, { withCredentials: true });
-      setUsuarios(res.data || []);
+      setUsuarios(Array.isArray(res.data) ? res.data : []);
     } catch {
       toast({ title: 'Erro ao carregar usurios', variant: 'destructive' });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCadastrosPendentes = async () => {
+    setLoadingCadastros(true);
+    try {
+      const res = await axios.get(`${API}/admin/cadastros-pendentes`, { withCredentials: true });
+      setCadastrosPendentes(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      toast({ title: 'Erro ao carregar cadastros pendentes', variant: 'destructive' });
+    } finally {
+      setLoadingCadastros(false);
+    }
+  };
+
+  const handleAprovar = async (cadastro) => {
+    setProcessando(cadastro.company_id);
+    try {
+      await axios.post(`${API}/admin/cadastros/${cadastro.company_id}/aprovar`, {}, { withCredentials: true });
+      toast({ title: 'Cadastro aprovado', description: cadastro.nome_fantasia });
+      await fetchCadastrosPendentes();
+    } catch (e) {
+      toast({ title: 'Erro ao aprovar', description: e.response?.data?.detail || 'Tente novamente', variant: 'destructive' });
+    } finally {
+      setProcessando(null);
+    }
+  };
+
+  const handleRejeitar = async () => {
+    if (!rejeicaoAlvo) return;
+    setProcessando(rejeicaoAlvo.company_id);
+    try {
+      await axios.post(`${API}/admin/cadastros/${rejeicaoAlvo.company_id}/rejeitar`,
+        { motivo: motivoRejeicao || null }, { withCredentials: true });
+      toast({ title: 'Cadastro rejeitado', description: rejeicaoAlvo.nome_fantasia });
+      setRejeicaoAlvo(null);
+      setMotivoRejeicao('');
+      await fetchCadastrosPendentes();
+    } catch (e) {
+      toast({ title: 'Erro ao rejeitar', description: e.response?.data?.detail || 'Tente novamente', variant: 'destructive' });
+    } finally {
+      setProcessando(null);
     }
   };
 
@@ -128,16 +183,33 @@ export default function GestaoUsuarios() {
               <p className="text-zinc-500 text-sm">Controle de acesso baseado na hierarquia LGPD</p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={fetchUsuarios}
-              className="border-zinc-700 text-zinc-400 hover:text-white">
-              <RefreshCw className="h-4 w-4 mr-2" /> Atualizar
-            </Button>
-            <Button onClick={() => setShowForm(!showForm)}
-              className="bg-orange-500 hover:bg-orange-600 text-white">
-              <Plus className="h-4 w-4 mr-2" /> Novo Usurio
-            </Button>
-          </div>
+        </div>
+
+        <Tabs defaultValue="usuarios" className="w-full">
+          <TabsList className="bg-zinc-900 border border-zinc-800">
+            <TabsTrigger value="usuarios" className="data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400">
+              <UserCog className="h-4 w-4 mr-2" /> Usuários
+            </TabsTrigger>
+            <TabsTrigger value="pendentes" className="data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400">
+              <ClipboardList className="h-4 w-4 mr-2" /> Cadastros Pendentes
+              {cadastrosPendentes.length > 0 && (
+                <Badge className="ml-2 bg-orange-500 text-white border-0 h-5 min-w-5 px-1.5 flex items-center justify-center text-[11px]">
+                  {cadastrosPendentes.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="usuarios" className="space-y-6 mt-4">
+        <div className="flex items-center justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={fetchUsuarios}
+            className="border-zinc-700 text-zinc-400 hover:text-white">
+            <RefreshCw className="h-4 w-4 mr-2" /> Atualizar
+          </Button>
+          <Button onClick={() => setShowForm(!showForm)}
+            className="bg-orange-500 hover:bg-orange-600 text-white">
+            <Plus className="h-4 w-4 mr-2" /> Novo Usurio
+          </Button>
         </div>
 
         {/* Hierarquia visual */}
@@ -334,6 +406,130 @@ export default function GestaoUsuarios() {
         )}
 
         <p className="text-center text-zinc-600 text-xs font-mono">{usuariosFiltrados.length} usurio(s)</p>
+          </TabsContent>
+
+          <TabsContent value="pendentes" className="space-y-6 mt-4">
+            <div className="flex items-center justify-end">
+              <Button variant="outline" size="sm" onClick={fetchCadastrosPendentes}
+                className="border-zinc-700 text-zinc-400 hover:text-white">
+                <RefreshCw className="h-4 w-4 mr-2" /> Atualizar
+              </Button>
+            </div>
+
+            {loadingCadastros ? (
+              <div className="flex justify-center py-12">
+                <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : cadastrosPendentes.length === 0 ? (
+              <Card className="bg-zinc-900/50 border-zinc-800">
+                <CardContent className="p-12 text-center">
+                  <ClipboardList className="h-12 w-12 text-zinc-700 mx-auto mb-3" />
+                  <p className="text-zinc-400">Nenhum cadastro pendente</p>
+                  <p className="text-zinc-600 text-sm mt-1">Novos cadastros de empresas aparecerão aqui para aprovação</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="bg-zinc-900/50 border-zinc-800">
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="border-zinc-800 hover:bg-transparent">
+                        <TableHead className="text-zinc-400">Empresa</TableHead>
+                        <TableHead className="text-zinc-400">CNPJ</TableHead>
+                        <TableHead className="text-zinc-400">Tipo</TableHead>
+                        <TableHead className="text-zinc-400">Responsável</TableHead>
+                        <TableHead className="text-zinc-400">Data do Cadastro</TableHead>
+                        <TableHead className="text-zinc-400 text-right">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {cadastrosPendentes.map(c => (
+                        <TableRow key={c.company_id} className="border-zinc-800">
+                          <TableCell className="text-white">
+                            <div className="font-semibold">{c.nome_fantasia}</div>
+                            <div className="text-xs text-zinc-500">{c.name}</div>
+                            {c.historico_rejeicoes?.length > 0 && (
+                              <Badge className="mt-1 bg-red-900/30 text-red-400 border-red-800 text-[10px]">
+                                Reenviado após {c.historico_rejeicoes.length}x rejeição
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-zinc-400 font-mono text-sm">{c.cnpj}</TableCell>
+                          <TableCell>
+                            <Badge className="bg-zinc-800 text-zinc-300 border-zinc-700 text-xs">
+                              {c.tipo_empresa_label || c.tipo_empresa}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-zinc-300 text-sm">
+                            <div>{c.responsavel?.nome || '—'}</div>
+                            <div className="text-xs text-zinc-500">{c.responsavel_email_conta || c.email_comercial}</div>
+                          </TableCell>
+                          <TableCell className="text-zinc-400 text-sm">
+                            {c.created_at ? new Date(c.created_at).toLocaleDateString('pt-BR') : '—'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button size="sm" disabled={processando === c.company_id} onClick={() => handleAprovar(c)}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 px-3 text-xs">
+                                <ThumbsUp className="h-3.5 w-3.5 mr-1.5" /> Aprovar
+                              </Button>
+                              <Button size="sm" variant="outline" disabled={processando === c.company_id}
+                                onClick={() => { setRejeicaoAlvo(c); setMotivoRejeicao(''); }}
+                                className="border-red-800 text-red-400 hover:bg-red-950 h-8 px-3 text-xs">
+                                <ThumbsDown className="h-3.5 w-3.5 mr-1.5" /> Rejeitar
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            <p className="text-center text-zinc-600 text-xs font-mono">{cadastrosPendentes.length} cadastro(s) pendente(s)</p>
+          </TabsContent>
+        </Tabs>
+
+        {/* Modal de rejeição */}
+        {rejeicaoAlvo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/70" onClick={() => setRejeicaoAlvo(null)} />
+            <Card className="relative z-10 w-full max-w-md border-zinc-700 bg-zinc-900">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-semibold text-white flex items-center gap-2">
+                  <ThumbsDown className="h-4 w-4 text-red-400" /> Rejeitar cadastro
+                </CardTitle>
+                <p className="text-xs text-zinc-500">{rejeicaoAlvo.nome_fantasia} — {rejeicaoAlvo.cnpj}</p>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <label className="text-xs text-zinc-400 font-mono mb-1 block">Motivo (opcional)</label>
+                  <Textarea
+                    value={motivoRejeicao}
+                    onChange={e => setMotivoRejeicao(e.target.value)}
+                    placeholder="Ex: documento ilegível, CNPJ divergente do contrato social..."
+                    className="bg-zinc-800 border-zinc-700 text-white placeholder-zinc-600 text-sm min-h-[90px]"
+                  />
+                  <p className="text-[11px] text-zinc-600 mt-1">O responsável poderá corrigir os dados e reenviar o cadastro.</p>
+                </div>
+                <div className="flex gap-2 justify-end pt-1">
+                  <Button variant="outline" onClick={() => setRejeicaoAlvo(null)}
+                    className="border-zinc-700 text-zinc-400">
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleRejeitar} disabled={processando === rejeicaoAlvo.company_id}
+                    className="bg-red-600 hover:bg-red-700 text-white">
+                    {processando === rejeicaoAlvo.company_id
+                      ? <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />Rejeitando...</>
+                      : <><ThumbsDown className="h-4 w-4 mr-2" />Confirmar Rejeição</>}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
