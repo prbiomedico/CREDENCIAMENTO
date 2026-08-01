@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import axios from 'axios';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
 
 // Perfis disponveis com suas configs visuais
@@ -53,6 +53,7 @@ const NAV_DETRAN = [
   { path: '/criar-evento',  icon: Plus,            label: 'Criar Evento' },
   { path: '/editais',       icon: Folder,          label: 'Editais' },
   { path: '/mapa',          icon: Map,             label: 'Mapa Nacional' },
+  { path: '/estados',       icon: Landmark,        label: 'Estados' },
   { path: '/portarias',     icon: Search,          label: 'Portarias' },
   { path: '/credenciamento/documentos', icon: Archive, label: 'Dossiê Credenciamento' },
   { path: '/notificacoes',  icon: Bell,            label: 'Notificações' },
@@ -67,6 +68,7 @@ const NAV_FINANCEIRA = [
 
 const NAV_ADMIN_EXTRA = [
   { path: '/credenciamento/documentos', icon: Archive, label: 'Dossiê Credenciamento' },
+  { path: '/estados',       icon: Landmark,        label: 'Estados' },
   { path: '/usuarios',      icon: UserCog,         label: 'Gestão de Usuários' },
   { path: '/configuracoes', icon: Settings,        label: 'Configurações' },
 ];
@@ -129,7 +131,8 @@ const DashboardLayout = ({ children }) => {
   const fetchNotifCount = async () => {
     try {
       const res = await axios.get(`${API}/notificacoes`, { withCredentials: true });
-      setNotifCount(res.data.filter(n => !n.lida).length);
+      const notifs = Array.isArray(res.data) ? res.data : [];
+      setNotifCount(notifs.filter(n => !n.lida).length);
     } catch {}
   };
 
@@ -284,7 +287,8 @@ const DashboardLayout = ({ children }) => {
   );
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex">
+    <div className="min-h-screen bg-zinc-950 text-white flex flex-col">
+      <div className="flex-1 flex min-h-0">
       {/* Sidebar desktop */}
       <aside className="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-black/60 backdrop-blur-xl border-r border-zinc-800 transform transition-transform duration-300 lg:translate-x-0 lg:flex flex-col hidden">
         <SidebarContent />
@@ -324,6 +328,7 @@ const DashboardLayout = ({ children }) => {
           </div>
         </header>
         <main className="flex-1 overflow-auto">{children}</main>
+      </div>
       </div>
     </div>
   );
