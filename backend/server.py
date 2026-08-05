@@ -9,7 +9,7 @@ import json
 import logging
 from pathlib import Path
 from pydantic import BaseModel, Field, ConfigDict, EmailStr
-from typing import List, Optional
+from typing import List, Optional, Literal
 import uuid
 from datetime import datetime, timezone, timedelta
 import httpx
@@ -280,6 +280,9 @@ class Document(BaseModel):
     vencimento: Optional[str] = None  # ISO 8601 (YYYY-MM-DD) — sugerido por OCR ou preenchido manualmente
     vencimento_fonte: Optional[str] = None  # "ocr" | "manual" | None
     checklist_item_id: Optional[str] = None  # vincula a um item de CHECKLIST_CONTRAN_807 — obrigatório em uploads novos (ver upload_document); Optional aqui só pra não quebrar a leitura de documentos anteriores à migração
+    submissao_id: Optional[str] = None  # vincula a um item de checklist de uma Submissao (fluxo de credenciamento por portaria) — paralelo a checklist_item_id, não usado pelo fluxo CONTRAN 807/Edital 003
+    numero_documento: Optional[str] = None
+    data_emissao: Optional[str] = None  # ISO 8601 (YYYY-MM-DD)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     deleted_at: Optional[str] = None
     deleted_by: Optional[str] = None
@@ -288,6 +291,16 @@ class Document(BaseModel):
 class DocumentUpload(BaseModel):
     company_id: str
     document_type: str
+
+
+class PortariaChecklistItem(BaseModel):
+    """Item do checklist de exigências gerado pelo cadastro de uma portaria —
+    fluxo de credenciamento por portaria (Passo A), paralelo ao checklist fixo
+    de cadastro-base (CHECKLIST_CONTRAN_807), que não é alterado por isto."""
+    item_id: str = Field(default_factory=lambda: f"pci_{uuid.uuid4().hex[:8]}")
+    nome: str
+    descricao: Optional[str] = None
+    perfil_alvo: Literal["registradora", "financeira"]
 
 
 class Portaria(BaseModel):
@@ -308,6 +321,9 @@ class Portaria(BaseModel):
     link_pdf: Optional[str] = None  # path de arquivo enviado via /portarias/upload OU URL externa
     origem: str = "manual"  # manual, querido_diario
     querido_diario_url: Optional[str] = None
+    tipo: Optional[str] = None  # credenciamento, descredenciamento, renovacao, alteracao, outro
+    empresas_referenciadas: List[str] = []  # company_ids credenciados/afetados por esta portaria
+    checklist_itens: List[PortariaChecklistItem] = []  # checklist de exigências desta portaria, por perfil (fluxo de credenciamento)
     created_by: Optional[str] = None
     updated_at: Optional[datetime] = None
     deleted_at: Optional[str] = None
@@ -329,6 +345,9 @@ class PortariaCreate(BaseModel):
     origem: str = "manual"
     querido_diario_url: Optional[str] = None
     summary: Optional[str] = None
+    tipo: Optional[str] = None
+    empresas_referenciadas: List[str] = []
+    checklist_itens: List[PortariaChecklistItem] = []
 
 
 class PortariaUpdate(BaseModel):
@@ -342,6 +361,9 @@ class PortariaUpdate(BaseModel):
     status: Optional[str] = None
     link_pdf: Optional[str] = None
     summary: Optional[str] = None
+    tipo: Optional[str] = None
+    empresas_referenciadas: Optional[List[str]] = None
+    checklist_itens: Optional[List[PortariaChecklistItem]] = None
 
 
 class AnalyzeRequest(BaseModel):
@@ -413,6 +435,49 @@ class CredenciamentoDetalhesUpdate(BaseModel):
     valor_detran: Optional[float] = None
     valor_registradora: Optional[float] = None
     termo_credenciamento_path: Optional[str] = None
+
+
+class SubmissaoItem(BaseModel):
+    """Snapshot de um item do checklist da portaria no momento em que a
+    submissão é criada — não referencia a Portaria ao vivo, pra uma edição
+    posterior do checklist da portaria não mudar o formato de uma submissão
+    já em andamento."""
+    item_id: str
+    nome: str
+    descricao: Optional[str] = None
+    perfil_alvo: Literal["registradora", "financeira"]
+    status: Literal["pendente", "enviado", "conforme", "inconforme"] = "pendente"
+    document_id: Optional[str] = None
+    justificativa: Optional[str] = None  # obrigatória quando status == inconforme
+    historico: List[dict] = []  # append-only: análises anteriores deste item (mesmo padrão de historico_rejeicoes)
+    analisado_por: Optional[str] = None
+    analisado_em: Optional[str] = None
+
+
+class Submissao(BaseModel):
+    """Processo de credenciamento de UMA empresa em resposta a UMA portaria —
+    fluxo Rascunho -> Submetido -> Em Análise -> Em Diligência -> Homologado."""
+    model_config = ConfigDict(extra="ignore")
+    submissao_id: str = Field(default_factory=lambda: f"subm_{uuid.uuid4().hex[:12]}")
+    portaria_id: str
+    estado_sigla: str
+    company_id: str
+    perfil_empresa: Literal["registradora", "financeira"]
+    status: Literal["rascunho", "submetido", "em_analise", "em_diligencia", "homologado"] = "rascunho"
+    itens: List[SubmissaoItem] = []
+    submetido_em: Optional[str] = None
+    analisado_em: Optional[str] = None
+    homologado_em: Optional[str] = None
+    homologado_por: Optional[str] = None
+    created_by: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    deleted_at: Optional[str] = None
+    deleted_by: Optional[str] = None
+
+
+class SubmissaoItemAnalise(BaseModel):
+    status: Literal["conforme", "inconforme"]
+    justificativa: Optional[str] = None
 
 
 class SystemUser(BaseModel):
@@ -1424,14 +1489,29 @@ def _perfil_pode_ver_estado(user: User, estado_sigla: Optional[str]) -> bool:
 
 
 async def _checar_permissao_escrita_estado(user: User, estado_sigla: str):
-    """sigcr_admin sempre pode; detran_admin só no próprio estado (detran_uf)."""
+    """sigcr_admin sempre pode; detran/detran_admin só no próprio estado (detran_uf).
+    'detran' foi incluído aqui junto de 'detran_admin' (antes só este último
+    passava) pra viabilizar o fluxo de credenciamento por portaria, que exige
+    que o perfil 'Administrador DETRAN' simples publique portaria/analise
+    submissões na própria UF — mesmo escopo que detran_admin já tinha, nada
+    mais amplo."""
     if user.perfil == "sigcr_admin":
         return
-    if user.perfil == "detran_admin":
+    if user.perfil in ("detran", "detran_admin"):
         if not user.detran_uf or estado_sigla != user.detran_uf:
-            raise HTTPException(status_code=403, detail="detran_admin só pode gerenciar dados do próprio estado")
+            raise HTTPException(status_code=403, detail="Perfil sem permissão para gerenciar dados deste estado (fora da própria UF)")
         return
     raise HTTPException(status_code=403, detail="Perfil sem permissão para gerenciar dados deste estado")
+
+
+async def _empresa_do_usuario(user: User) -> Optional[dict]:
+    """Empresa (registradora/financeira) dona da conta do usuário logado —
+    None pra perfis internos (sigcr_admin/detran/detran_admin), que não têm
+    company própria. Usado pelo fluxo de credenciamento por portaria pra
+    escopar visibilidade/escrita à própria empresa."""
+    if user.perfil not in ("registradora", "financeira"):
+        return None
+    return await db.companies.find_one({"user_id": user.user_id, "deleted_at": None}, {"_id": 0})
 
 
 # ============ Portaria Routes ============
@@ -1459,7 +1539,7 @@ async def get_portarias(
 
 
 @api_router.post("/portarias", response_model=Portaria)
-async def create_portaria(portaria_data: PortariaCreate, current_user: User = Depends(get_current_user)):
+async def create_portaria(portaria_data: PortariaCreate, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
     """Create new portaria (sem arquivo — link externo, ex. promoção de sugestão do Querido Diário)."""
     dados = portaria_data.model_dump()
     if dados.get("estado_sigla"):
@@ -1497,8 +1577,11 @@ async def upload_portaria(
     summary: Optional[str] = Form(None),
     origem: str = Form("manual"),
     querido_diario_url: Optional[str] = Form(None),
+    tipo: Optional[str] = Form(None),
+    empresas_referenciadas: Optional[str] = Form(None),  # JSON-encoded list de company_ids (multipart não suporta array nativo)
+    checklist_itens: Optional[str] = Form(None),  # JSON-encoded list de PortariaChecklistItem (mesmo motivo)
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin")),
 ):
     """Cria portaria anexando um PDF real, reaproveitando o mecanismo de upload dos documentos."""
     if estado_sigla:
@@ -1508,6 +1591,22 @@ async def upload_portaria(
         await _checar_permissao_escrita_estado(current_user, estado_sigla)
         if not detran:
             detran = estado_sigla
+
+    empresas_lista = []
+    if empresas_referenciadas:
+        try:
+            empresas_lista = json.loads(empresas_referenciadas)
+            if not isinstance(empresas_lista, list) or not all(isinstance(x, str) for x in empresas_lista):
+                raise ValueError
+        except (json.JSONDecodeError, ValueError):
+            raise HTTPException(status_code=400, detail="empresas_referenciadas deve ser uma lista JSON de company_id")
+
+    checklist_lista = []
+    if checklist_itens:
+        try:
+            checklist_lista = [PortariaChecklistItem(**item) for item in json.loads(checklist_itens)]
+        except (json.JSONDecodeError, TypeError, ValueError) as e:
+            raise HTTPException(status_code=400, detail=f"checklist_itens inválido: {e}")
 
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Apenas arquivos PDF são aceitos para portarias")
@@ -1533,6 +1632,7 @@ async def upload_portaria(
         title=title, content=content, source=source, date=data_parsed, detran=detran,
         numero=numero, orgao_emissor=orgao_emissor, estado_sigla=estado_sigla, status=status,
         summary=summary, origem=origem, querido_diario_url=querido_diario_url,
+        tipo=tipo, empresas_referenciadas=empresas_lista, checklist_itens=checklist_lista,
         link_pdf=str(file_path), created_by=current_user.user_id,
     )
     doc = portaria.model_dump()
@@ -1612,12 +1712,25 @@ async def buscar_portarias_queridodiario(
 
 @api_router.get("/portarias/{portaria_id}", response_model=Portaria)
 async def get_portaria(portaria_id: str, current_user: User = Depends(get_current_user)):
-    """Detalhe de uma portaria (permite ver mesmo se removida — mesma convenção de GET /documentos/{id})."""
+    """Detalhe de uma portaria (permite ver mesmo se removida — mesma convenção de GET /documentos/{id}).
+    Além de sigcr_admin/detran/detran_admin (via _perfil_pode_ver_estado), uma
+    empresa registradora/financeira também enxerga a portaria de uma UF em que
+    ela mesma atua (detrans_atuacao) — necessário pro fluxo de credenciamento
+    por portaria (Passo B: a empresa precisa ver o checklist publicado). Nesse
+    caso o checklist devolvido é filtrado só pros itens do perfil da empresa."""
     portaria = await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
     if not portaria:
         raise HTTPException(status_code=404, detail="Portaria não encontrada")
-    if portaria.get("estado_sigla") and not _perfil_pode_ver_estado(current_user, portaria["estado_sigla"]):
-        raise HTTPException(status_code=403, detail="Perfil sem acesso a esta portaria")
+    if portaria.get("estado_sigla"):
+        empresa = await _empresa_do_usuario(current_user)
+        empresa_atua = bool(empresa) and portaria["estado_sigla"] in (empresa.get("detrans_atuacao") or [])
+        if not _perfil_pode_ver_estado(current_user, portaria["estado_sigla"]) and not empresa_atua:
+            raise HTTPException(status_code=403, detail="Perfil sem acesso a esta portaria")
+        if empresa:
+            tipo_empresa = empresa.get("tipo_empresa", "registradora")
+            portaria["checklist_itens"] = [
+                i for i in (portaria.get("checklist_itens") or []) if i.get("perfil_alvo") == tipo_empresa
+            ]
     return portaria
 
 
@@ -1915,6 +2028,421 @@ async def dar_baixa_credenciamento(credenciamento_id: str, current_user: User = 
         "estado_sigla": credenciamento["estado_sigla"]
     })
     return {"message": "Credenciamento removido"}
+
+
+# ============ Submissões (credenciamento por portaria) Routes ============
+# Fluxo: DETRAN publica portaria com checklist_itens (Passo A, ver Portaria
+# routes acima) -> empresa cria uma Submissao pra aquela portaria e sobe
+# documentos item a item (Passo B) -> DETRAN analisa cada item, marcando
+# conforme/inconforme com justificativa obrigatória (Passo C) -> ciclo de
+# diligência permite reenvio dos itens inconformes até homologação (Passo D).
+# Processo paralelo ao checklist fixo de cadastro-base (CONTRAN 807/Edital
+# 003) — não o altera, só reaproveita a coleção db.documents pros arquivos.
+
+async def _notificar_detran_uf(estado_sigla: str, tipo: str, titulo: str, mensagem: str, dados: dict = None):
+    """Notifica todos os usuários detran/detran_admin da UF — usado quando uma
+    empresa submete/reenvia, já que uma submissão não tem um usuário DETRAN
+    individual dono, só um escopo de UF."""
+    usuarios = await db.users.find(
+        {"perfil": {"$in": ["detran", "detran_admin"]}, "detran_uf": estado_sigla}, {"_id": 0, "user_id": 1}
+    ).to_list(50)
+    for u in usuarios:
+        await criar_notificacao(u["user_id"], tipo, titulo, mensagem, dados)
+
+
+async def _autorizar_acesso_submissao(submissao: dict, current_user: User):
+    """Dono da empresa da submissão, ou DETRAN/admin com acesso à UF dela."""
+    empresa = await _empresa_do_usuario(current_user)
+    if empresa and empresa["company_id"] == submissao["company_id"]:
+        return
+    if _perfil_pode_ver_estado(current_user, submissao["estado_sigla"]):
+        return
+    raise HTTPException(status_code=403, detail="Sem acesso a esta submissão")
+
+
+@api_router.get("/submissoes")
+async def listar_submissoes(
+    estado_sigla: Optional[str] = None,
+    status: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+):
+    """Registradora/financeira: só as próprias submissões (por company_id).
+    DETRAN/detran_admin/sigcr_admin: escopado por estado_sigla (obrigatório,
+    e restrito à própria UF pra detran/detran_admin via _perfil_pode_ver_estado)."""
+    query = {"deleted_at": None}
+    empresa = await _empresa_do_usuario(current_user)
+    if empresa:
+        query["company_id"] = empresa["company_id"]
+    else:
+        if not estado_sigla:
+            raise HTTPException(status_code=400, detail="estado_sigla é obrigatório para este perfil")
+        estado_sigla = estado_sigla.upper()
+        if estado_sigla not in UF_VALIDAS:
+            raise HTTPException(status_code=400, detail="UF inválida")
+        if not _perfil_pode_ver_estado(current_user, estado_sigla):
+            raise HTTPException(status_code=403, detail="Perfil sem acesso a este estado")
+        query["estado_sigla"] = estado_sigla
+    if status:
+        query["status"] = status
+    return await db.submissoes.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+
+
+@api_router.get("/submissoes/{submissao_id}")
+async def get_submissao(submissao_id: str, current_user: User = Depends(get_current_user)):
+    submissao = await db.submissoes.find_one({"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0})
+    if not submissao:
+        raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    await _autorizar_acesso_submissao(submissao, current_user)
+    return submissao
+
+
+@api_router.post("/submissoes", response_model=Submissao)
+async def criar_submissao(portaria_id: str = Form(...), current_user: User = Depends(get_current_user)):
+    """Get-or-create idempotente: se a empresa já tem uma submissão (não
+    removida) pra esta portaria, devolve ela em vez de criar duplicata."""
+    empresa = await _empresa_do_usuario(current_user)
+    if not empresa:
+        raise HTTPException(status_code=403, detail="Apenas registradora/financeira podem criar uma submissão")
+
+    portaria = await db.portarias.find_one({"portaria_id": portaria_id, "deleted_at": None}, {"_id": 0})
+    if not portaria:
+        raise HTTPException(status_code=404, detail="Portaria não encontrada")
+    estado_sigla = portaria.get("estado_sigla")
+    if not estado_sigla or estado_sigla not in (empresa.get("detrans_atuacao") or []):
+        raise HTTPException(status_code=403, detail="Empresa não atua na UF desta portaria")
+
+    tipo_empresa = empresa.get("tipo_empresa", "registradora")
+    itens_portaria = [i for i in (portaria.get("checklist_itens") or []) if i.get("perfil_alvo") == tipo_empresa]
+    if not itens_portaria:
+        raise HTTPException(status_code=400, detail="Esta portaria não define checklist para o perfil da sua empresa")
+
+    existente = await db.submissoes.find_one({
+        "portaria_id": portaria_id, "company_id": empresa["company_id"], "deleted_at": None
+    }, {"_id": 0})
+    if existente:
+        return existente
+
+    submissao = Submissao(
+        portaria_id=portaria_id,
+        estado_sigla=estado_sigla,
+        company_id=empresa["company_id"],
+        perfil_empresa=tipo_empresa,
+        itens=[
+            SubmissaoItem(item_id=i["item_id"], nome=i["nome"], descricao=i.get("descricao"), perfil_alvo=tipo_empresa)
+            for i in itens_portaria
+        ],
+        created_by=current_user.user_id,
+    )
+    doc = submissao.model_dump()
+    doc["created_at"] = doc["created_at"].isoformat()
+    await db.submissoes.insert_one(doc)
+    await registrar_auditoria(current_user, "criar_submissao", "submissao", submissao.submissao_id, {
+        "portaria_id": portaria_id, "estado_sigla": estado_sigla
+    })
+    return submissao
+
+
+@api_router.post("/submissoes/{submissao_id}/itens/{item_id}/upload")
+async def upload_item_submissao(
+    submissao_id: str,
+    item_id: str,
+    numero_documento: str = Form(...),
+    data_emissao: str = Form(...),
+    data_validade: Optional[str] = Form(None),
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    """Upload de um documento pra um item do checklist (Passo B) — e também o
+    mecanismo de reenvio durante a diligência (Passo D): reenviar um item
+    inconforme volta ele pra 'enviado' e arquiva a justificativa anterior."""
+    empresa = await _empresa_do_usuario(current_user)
+    submissao = await db.submissoes.find_one({"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0})
+    if not submissao:
+        raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    if not empresa or empresa["company_id"] != submissao["company_id"]:
+        raise HTTPException(status_code=403, detail="Sem acesso a esta submissão")
+    if submissao["status"] not in ("rascunho", "em_diligencia"):
+        raise HTTPException(status_code=400, detail="Submissão não aceita novos envios neste status")
+
+    itens = submissao["itens"]
+    item = next((i for i in itens if i["item_id"] == item_id), None)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item não encontrado nesta submissão")
+    if submissao["status"] == "em_diligencia" and item["status"] != "inconforme":
+        raise HTTPException(status_code=400, detail="Apenas itens marcados inconforme podem ser reenviados em diligência")
+
+    try:
+        data_emissao_parsed = datetime.fromisoformat(data_emissao).date().isoformat()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="data_emissao inválida (use ISO 8601, AAAA-MM-DD)")
+    data_validade_parsed = None
+    if data_validade:
+        try:
+            data_validade_parsed = datetime.fromisoformat(data_validade).date().isoformat()
+        except ValueError:
+            raise HTTPException(status_code=400, detail="data_validade inválida (use ISO 8601, AAAA-MM-DD)")
+
+    file_extension = Path(file.filename).suffix if file.filename else ""
+    unique_filename = f"{uuid.uuid4().hex}{file_extension}"
+    file_path = UPLOAD_DIR / unique_filename
+    try:
+        async with aiofiles.open(file_path, "wb") as f:
+            conteudo = await file.read()
+            await f.write(conteudo)
+    except Exception:
+        logger.error("Error saving submissao file")
+        raise HTTPException(status_code=500, detail="Erro ao salvar arquivo")
+
+    document = Document(
+        company_id=submissao["company_id"],
+        document_type="submissao_checklist",
+        document_name=item["nome"],
+        file_name=file.filename or "unknown",
+        file_path=str(file_path),
+        file_size=len(conteudo),
+        numero_documento=numero_documento,
+        data_emissao=data_emissao_parsed,
+        vencimento=data_validade_parsed,
+        vencimento_fonte="manual" if data_validade_parsed else None,
+        submissao_id=submissao_id,
+    )
+    doc_dict = document.model_dump()
+    doc_dict["created_at"] = doc_dict["created_at"].isoformat()
+    await db.documents.insert_one(doc_dict)
+
+    historico_entry = None
+    if item["status"] == "inconforme":
+        historico_entry = {
+            "status": "inconforme", "justificativa": item.get("justificativa"),
+            "registrado_por": item.get("analisado_por"), "registrado_em": item.get("analisado_em"),
+        }
+    for i in itens:
+        if i["item_id"] == item_id:
+            i["status"] = "enviado"
+            i["document_id"] = document.document_id
+            i["justificativa"] = None
+            i["analisado_por"] = None
+            i["analisado_em"] = None
+            if historico_entry:
+                i.setdefault("historico", []).append(historico_entry)
+
+    update_fields = {"itens": itens}
+    volta_analise = submissao["status"] == "em_diligencia" and all(i["status"] != "inconforme" for i in itens)
+    if volta_analise:
+        update_fields["status"] = "em_analise"
+
+    await db.submissoes.update_one({"submissao_id": submissao_id}, {"$set": update_fields})
+    await registrar_auditoria(current_user, "upload_item_submissao", "submissao", submissao_id, {
+        "item_id": item_id, "document_id": document.document_id
+    })
+    if volta_analise:
+        await _notificar_detran_uf(
+            submissao["estado_sigla"], "submissao_recebida", "Submissão atualizada",
+            f"Itens reenviados na submissão {submissao_id} — pronta para nova análise.", {"submissao_id": submissao_id}
+        )
+    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+
+
+@api_router.post("/submissoes/{submissao_id}/submeter")
+async def submeter_submissao(submissao_id: str, current_user: User = Depends(get_current_user)):
+    empresa = await _empresa_do_usuario(current_user)
+    submissao = await db.submissoes.find_one({"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0})
+    if not submissao:
+        raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    if not empresa or empresa["company_id"] != submissao["company_id"]:
+        raise HTTPException(status_code=403, detail="Sem acesso a esta submissão")
+    if submissao["status"] != "rascunho":
+        raise HTTPException(status_code=400, detail="Só é possível submeter uma submissão em rascunho")
+    pendentes = [i["nome"] for i in submissao["itens"] if i["status"] != "enviado"]
+    if pendentes:
+        raise HTTPException(status_code=400, detail=f"Itens pendentes de envio: {', '.join(pendentes)}")
+
+    agora = datetime.now(timezone.utc).isoformat()
+    await db.submissoes.update_one({"submissao_id": submissao_id}, {"$set": {"status": "submetido", "submetido_em": agora}})
+    await registrar_auditoria(current_user, "submeter_submissao", "submissao", submissao_id, {"estado_sigla": submissao["estado_sigla"]})
+    await _notificar_detran_uf(
+        submissao["estado_sigla"], "submissao_recebida", "Nova submissão de credenciamento",
+        f"Uma empresa enviou uma submissão para análise (portaria {submissao['portaria_id']}).",
+        {"submissao_id": submissao_id}
+    )
+    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+
+
+@api_router.patch("/submissoes/{submissao_id}/itens/{item_id}")
+async def analisar_item_submissao(
+    submissao_id: str, item_id: str, analise: SubmissaoItemAnalise,
+    current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin")),
+):
+    """Passo C: DETRAN marca um item CONFORME ou INCONFORME. INCONFORME exige
+    justificativa (obrigatória — Passo C do briefing) e move a submissão pra
+    em_diligencia, notificando a empresa."""
+    submissao = await db.submissoes.find_one({"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0})
+    if not submissao:
+        raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    await _checar_permissao_escrita_estado(current_user, submissao["estado_sigla"])
+    if submissao["status"] not in ("submetido", "em_analise"):
+        raise HTTPException(status_code=400, detail="Submissão não está em análise")
+    if analise.status == "inconforme" and not (analise.justificativa and analise.justificativa.strip()):
+        raise HTTPException(status_code=400, detail="Justificativa é obrigatória para marcar um item como inconforme")
+
+    itens = submissao["itens"]
+    item = next((i for i in itens if i["item_id"] == item_id), None)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item não encontrado")
+    if item["status"] != "enviado":
+        raise HTTPException(status_code=400, detail="Só é possível analisar itens com status 'enviado'")
+
+    agora = datetime.now(timezone.utc).isoformat()
+    for i in itens:
+        if i["item_id"] == item_id:
+            i["status"] = analise.status
+            i["justificativa"] = analise.justificativa if analise.status == "inconforme" else None
+            i["analisado_por"] = current_user.user_id
+            i["analisado_em"] = agora
+
+    update_fields = {"itens": itens}
+    if submissao["status"] == "submetido":
+        update_fields["analisado_em"] = agora
+    update_fields["status"] = "em_diligencia" if analise.status == "inconforme" else "em_analise"
+
+    await db.submissoes.update_one({"submissao_id": submissao_id}, {"$set": update_fields})
+    await registrar_auditoria(current_user, "analisar_item_submissao", "submissao", submissao_id, {
+        "item_id": item_id, "status": analise.status, "justificativa": analise.justificativa
+    })
+    if analise.status == "inconforme":
+        empresa_doc = await db.companies.find_one({"company_id": submissao["company_id"]}, {"_id": 0, "user_id": 1})
+        if empresa_doc:
+            await criar_notificacao(
+                empresa_doc["user_id"], "checklist_inconforme", "Pendência no credenciamento",
+                f"O item \"{item['nome']}\" foi marcado como inconforme: {analise.justificativa}",
+                {"submissao_id": submissao_id, "item_id": item_id}
+            )
+    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+
+
+@api_router.post("/submissoes/{submissao_id}/homologar")
+async def homologar_submissao(
+    submissao_id: str, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))
+):
+    """Passo D: exige todos os itens conformes. Cria/atualiza o
+    CredenciamentoDetalhes da empresa nesta UF pra status=ativo — liga o
+    resultado do processo ao módulo Estado/UF já existente."""
+    submissao = await db.submissoes.find_one({"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0})
+    if not submissao:
+        raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    await _checar_permissao_escrita_estado(current_user, submissao["estado_sigla"])
+    if submissao["status"] == "homologado":
+        raise HTTPException(status_code=400, detail="Submissão já homologada")
+    if not submissao["itens"] or any(i["status"] != "conforme" for i in submissao["itens"]):
+        raise HTTPException(status_code=400, detail="Todos os itens precisam estar conformes para homologar")
+
+    agora = datetime.now(timezone.utc).isoformat()
+    await db.submissoes.update_one({"submissao_id": submissao_id}, {"$set": {
+        "status": "homologado", "homologado_em": agora, "homologado_por": current_user.user_id
+    }})
+    await registrar_auditoria(current_user, "homologar_submissao", "submissao", submissao_id, {"estado_sigla": submissao["estado_sigla"]})
+
+    credenciamento_existente = await db.credenciamentos.find_one(
+        {"company_id": submissao["company_id"], "estado_sigla": submissao["estado_sigla"], "deleted_at": None}, {"_id": 0}
+    )
+    if credenciamento_existente:
+        await db.credenciamentos.update_one(
+            {"credenciamento_id": credenciamento_existente["credenciamento_id"]},
+            {"$set": {"status": "ativo", "updated_at": agora}}
+        )
+    else:
+        portaria = await db.portarias.find_one({"portaria_id": submissao["portaria_id"]}, {"_id": 0})
+        extrato = f"Credenciamento homologado via portaria {submissao['portaria_id']}"
+        if portaria and portaria.get("numero"):
+            extrato += f" (nº {portaria['numero']})"
+        credenciamento = CredenciamentoDetalhes(
+            company_id=submissao["company_id"], estado_sigla=submissao["estado_sigla"],
+            extrato_contrato=extrato, status="ativo", created_by=current_user.user_id,
+        )
+        cred_doc = credenciamento.model_dump()
+        cred_doc["created_at"] = cred_doc["created_at"].isoformat()
+        await db.credenciamentos.insert_one(cred_doc)
+
+    empresa_doc = await db.companies.find_one({"company_id": submissao["company_id"]}, {"_id": 0, "user_id": 1})
+    if empresa_doc:
+        await criar_notificacao(
+            empresa_doc["user_id"], "submissao_homologada", "Credenciamento homologado",
+            "Sua submissão foi homologada. O comprovante já está disponível para download.",
+            {"submissao_id": submissao_id}
+        )
+    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+
+
+def _gerar_comprovante_pdf(submissao: dict, company: dict, portaria: dict) -> bytes:
+    """Gera o comprovante de conformidade sob demanda (não persiste em disco —
+    conteúdo é 100% determinístico a partir de Submissao+Company+Portaria, e
+    assim não depende do bind mount de uploads, ver incidente 2026-08-02)."""
+    import io
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import cm
+    from reportlab.pdfgen import canvas
+
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=A4)
+    largura, altura = A4
+    y = altura - 3 * cm
+
+    c.setFont("Helvetica-Bold", 16)
+    c.drawCentredString(largura / 2, y, "Comprovante de Conformidade")
+    y -= 1 * cm
+    c.setFont("Helvetica", 10)
+    c.drawCentredString(largura / 2, y, "SIGCR — Sistema de Gestão de Credenciamento")
+    y -= 1.5 * cm
+
+    linhas = [
+        f"Empresa: {company.get('name', '—')} ({company.get('nome_fantasia', '—')})",
+        f"CNPJ: {company.get('cnpj', '—')}",
+        f"UF: {submissao.get('estado_sigla', '—')}",
+        f"Portaria: {portaria.get('numero') or portaria.get('title', '—')}",
+        f"Processo (submissão): {submissao.get('submissao_id', '—')}",
+        f"Data de homologação: {submissao.get('homologado_em', '—')}",
+        f"Total de itens conformes: {len(submissao.get('itens', []))}",
+    ]
+    c.setFont("Helvetica", 11)
+    for linha in linhas:
+        c.drawString(2.5 * cm, y, linha)
+        y -= 0.8 * cm
+
+    y -= 0.5 * cm
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(2.5 * cm, y, "Itens do checklist analisados:")
+    y -= 0.8 * cm
+    c.setFont("Helvetica", 9)
+    for item in submissao.get("itens", []):
+        if y < 3 * cm:
+            c.showPage()
+            y = altura - 3 * cm
+            c.setFont("Helvetica", 9)
+        c.drawString(2.8 * cm, y, f"- {item.get('nome', '—')}: {item.get('status', '—').upper()}")
+        y -= 0.6 * cm
+
+    c.showPage()
+    c.save()
+    return buffer.getvalue()
+
+
+@api_router.get("/submissoes/{submissao_id}/comprovante")
+async def baixar_comprovante(submissao_id: str, current_user: User = Depends(get_current_user)):
+    submissao = await db.submissoes.find_one({"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0})
+    if not submissao:
+        raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    await _autorizar_acesso_submissao(submissao, current_user)
+    if submissao["status"] != "homologado":
+        raise HTTPException(status_code=400, detail="Comprovante disponível apenas após homologação")
+
+    company = await db.companies.find_one({"company_id": submissao["company_id"]}, {"_id": 0})
+    portaria = await db.portarias.find_one({"portaria_id": submissao["portaria_id"]}, {"_id": 0})
+    pdf_bytes = _gerar_comprovante_pdf(submissao, company or {}, portaria or {})
+    await registrar_auditoria(current_user, "download_comprovante", "submissao", submissao_id, {})
+    return Response(
+        content=pdf_bytes, media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="comprovante_{submissao_id}.pdf"'}
+    )
 
 
 # ============ Modo "ver como" — opções pro seletor (sigcr_admin) ============

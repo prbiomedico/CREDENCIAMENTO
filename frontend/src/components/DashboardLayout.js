@@ -3,7 +3,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {LayoutDashboard, Building2, FileText, Search, LogOut, Shield,
   Menu, X, Map, Folder, Bell, ChevronRight, Zap, Plus,
-  ChevronDown, Users, Landmark, CreditCard, Settings, UserCog, Home, Archive} from 'lucide-react';
+  ChevronDown, Users, Landmark, CreditCard, Settings, UserCog, Home, Archive,
+  ListChecks} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import axios from 'axios';
@@ -44,6 +45,7 @@ const NAV_REGISTRADORA = [
   { path: '/empresas',      icon: Building2,       label: 'Empresa' },
   { path: '/documentos',    icon: FileText,        label: 'Documentos' },
   { path: '/portarias',     icon: Search,          label: 'Portarias' },
+  { path: '/credenciamento-portaria', icon: ListChecks, label: 'Credenciamento por Portaria' },
   { path: '/notificacoes',  icon: Bell,            label: 'Notificações' },
 ];
 
@@ -56,6 +58,7 @@ const NAV_DETRAN = [
   { path: '/estados',       icon: Landmark,        label: 'Estados' },
   { path: '/portarias',     icon: Search,          label: 'Portarias' },
   { path: '/credenciamento/documentos', icon: Archive, label: 'Dossiê Credenciamento' },
+  { path: '/detran/conferencia', icon: ListChecks, label: 'Painel de Conferência' },
   { path: '/notificacoes',  icon: Bell,            label: 'Notificações' },
 ];
 
@@ -63,12 +66,14 @@ const NAV_FINANCEIRA = [
   { path: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
   { path: '/contratos',     icon: FileText,        label: 'Meus Contratos' },
   { path: '/gravames',      icon: CreditCard,      label: 'Gravames' },
+  { path: '/credenciamento-portaria', icon: ListChecks, label: 'Credenciamento por Portaria' },
   { path: '/notificacoes',  icon: Bell,            label: 'Notificações' },
 ];
 
 const NAV_ADMIN_EXTRA = [
   { path: '/credenciamento/documentos', icon: Archive, label: 'Dossiê Credenciamento' },
   { path: '/estados',       icon: Landmark,        label: 'Estados' },
+  { path: '/detran/conferencia', icon: ListChecks, label: 'Painel de Conferência' },
   { path: '/usuarios',      icon: UserCog,         label: 'Gestão de Usuários' },
   { path: '/configuracoes', icon: Settings,        label: 'Configurações' },
 ];

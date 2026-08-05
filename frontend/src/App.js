@@ -31,6 +31,8 @@ import DocumentosGov from './pages/DocumentosGov';
 import Estados from './pages/Estados';
 import EstadoDetalhe from './pages/EstadoDetalhe';
 import Transparencia from './pages/Transparencia';
+import MinhasSubmissoes from './pages/MinhasSubmissoes';
+import PainelConferencia from './pages/PainelConferencia';
 import '@/App.css';
 
 // Cada rota recebe seu próprio ErrorBoundary (não um único global): um crash
@@ -59,6 +61,8 @@ function AppRoutes() {
           <Route path="/documentos/upload" element={b(<UploadDocumentos />)} />
           <Route path="/mapa-nacional" element={b(<MapaNacional />)} />
           <Route path="/documentos" element={b(<RotaProtegida perfilPermitido="registradora"><Documentos /></RotaProtegida>)} />
+          <Route path="/credenciamento-portaria" element={b(<RotaProtegida perfilPermitido={["registradora", "financeira"]}><MinhasSubmissoes /></RotaProtegida>)} />
+          <Route path="/detran/conferencia" element={b(<RotaProtegida perfilPermitido={["sigcr_admin", "detran", "detran_admin"]}><PainelConferencia /></RotaProtegida>)} />
           <Route path="/credenciamento/documentos" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><DocumentosGov /></RotaProtegida>)} />
           <Route path="/estados" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><Estados /></RotaProtegida>)} />
           <Route path="/estados/:sigla" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><EstadoDetalhe /></RotaProtegida>)} />

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { Bell, CheckCheck, Folder, TrendingUp, FileText, CheckCircle } from 'lucide-react';
+import { Bell, CheckCheck, Folder, TrendingUp, FileText, CheckCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import axios from 'axios';
@@ -16,6 +16,9 @@ const TIPO_CONFIG = {
   documento_validado: { icon: FileText, color: 'emerald', label: 'Documento' },
   portaria_publicada: { icon: CheckCircle, color: 'emerald', label: 'Portaria' },
   nova_solicitacao: { icon: TrendingUp, color: 'blue', label: 'Nova Solicitação' },
+  submissao_recebida: { icon: FileText, color: 'blue', label: 'Submissão de Credenciamento' },
+  checklist_inconforme: { icon: AlertTriangle, color: 'orange', label: 'Pendência no Credenciamento' },
+  submissao_homologada: { icon: CheckCircle, color: 'emerald', label: 'Credenciamento Homologado' },
 };
 
 const Notificacoes = () => {

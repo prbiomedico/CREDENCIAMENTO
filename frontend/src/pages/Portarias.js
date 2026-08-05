@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { Search, Plus, FileText, Calendar, ExternalLink, Sparkles, Loader2 } from 'lucide-react';
+import { Search, Plus, FileText, Calendar, ExternalLink, Sparkles, Loader2, X, ListChecks } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -17,6 +17,14 @@ import QueridoDiarioBusca from '../components/QueridoDiarioBusca';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
 
+const TIPOS_PORTARIA = [
+  { value: 'credenciamento', label: 'Credenciamento' },
+  { value: 'descredenciamento', label: 'Descredenciamento' },
+  { value: 'renovacao', label: 'Renovação' },
+  { value: 'alteracao', label: 'Alteração' },
+  { value: 'outro', label: 'Outro' },
+];
+
 const emptyFormData = () => ({
   title: '',
   content: '',
@@ -31,10 +39,17 @@ const emptyFormData = () => ({
   origem: 'manual',
   querido_diario_url: '',
   summary: '',
+  tipo: '',
 });
 
 const Portarias = () => {
   const { user, initialized, keycloak } = useAuth();
+
+  // Cadastro de portaria é restrito a sigcr_admin/detran/detran_admin — a
+  // registradora só pode visualizar (ex: pra saber se está credenciada em
+  // algum estado), nunca cadastrar. Espelha o require_perfil do backend em
+  // POST /portarias e /portarias/upload.
+  const podeCadastrar = ['sigcr_admin', 'detran', 'detran_admin'].includes(user?.perfil);
 
   // ── Portarias internas ──
   const [portarias, setPortarias] = useState([]);
@@ -49,6 +64,28 @@ const Portarias = () => {
   const [anexarArquivo, setAnexarArquivo] = useState(false);
   const [arquivoPdf, setArquivoPdf] = useState(null);
   const [salvando, setSalvando] = useState(false);
+  const [companies, setCompanies] = useState([]);
+  const [empresasSelecionadas, setEmpresasSelecionadas] = useState([]);
+
+  // ── Checklist de exigências (fluxo de credenciamento por portaria) ──
+  const [checklistItens, setChecklistItens] = useState([]);
+  const [novoItemNome, setNovoItemNome] = useState('');
+  const [novoItemDescricao, setNovoItemDescricao] = useState('');
+  const [novoItemPerfil, setNovoItemPerfil] = useState('registradora');
+
+  const adicionarItemChecklist = () => {
+    if (!novoItemNome.trim()) { toast.error('Informe o nome do item do checklist'); return; }
+    setChecklistItens((prev) => [
+      ...prev,
+      { nome: novoItemNome.trim(), descricao: novoItemDescricao.trim() || null, perfil_alvo: novoItemPerfil },
+    ]);
+    setNovoItemNome('');
+    setNovoItemDescricao('');
+  };
+
+  const removerItemChecklist = (index) => {
+    setChecklistItens((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const getToken = async () => {
     if (keycloak && keycloak.token) {
@@ -58,9 +95,30 @@ const Portarias = () => {
     }
   };
 
+  const fetchCompanies = async () => {
+    try {
+      // Portarias referenciam empresas credenciadas (registradora) — financeira
+      // não participa desse fluxo, independente do badge/perfil ativo do usuário.
+      const response = await axios.get(`${API}/companies`, {
+        withCredentials: true,
+        params: { tipo_empresa: 'registradora' },
+      });
+      setCompanies(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('Erro ao carregar empresas:', error);
+    }
+  };
+
+  const toggleEmpresaReferenciada = (companyId) => {
+    setEmpresasSelecionadas((prev) =>
+      prev.includes(companyId) ? prev.filter((id) => id !== companyId) : [...prev, companyId]
+    );
+  };
+
   useEffect(() => {
     if (!initialized || !user) return;
     fetchPortarias();
+    fetchCompanies();
   }, [initialized, user]);
 
   const fetchPortarias = async () => {
@@ -114,6 +172,11 @@ const Portarias = () => {
     setFormData(emptyFormData());
     setAnexarArquivo(false);
     setArquivoPdf(null);
+    setEmpresasSelecionadas([]);
+    setChecklistItens([]);
+    setNovoItemNome('');
+    setNovoItemDescricao('');
+    setNovoItemPerfil('registradora');
   };
 
   const handleSubmit = async (e) => {
@@ -138,13 +201,18 @@ const Portarias = () => {
         if (formData.summary) fd.append('summary', formData.summary);
         fd.append('origem', formData.origem);
         if (formData.querido_diario_url) fd.append('querido_diario_url', formData.querido_diario_url);
+        if (formData.tipo) fd.append('tipo', formData.tipo);
+        if (empresasSelecionadas.length > 0) fd.append('empresas_referenciadas', JSON.stringify(empresasSelecionadas));
+        if (checklistItens.length > 0) fd.append('checklist_itens', JSON.stringify(checklistItens));
         fd.append('file', arquivoPdf);
         await axios.post(`${API}/portarias/upload`, fd, {
           withCredentials: true,
           headers: { 'Content-Type': 'multipart/form-data' },
         });
       } else {
-        await axios.post(`${API}/portarias`, formData, { withCredentials: true });
+        await axios.post(`${API}/portarias`, {
+          ...formData, empresas_referenciadas: empresasSelecionadas, checklist_itens: checklistItens,
+        }, { withCredentials: true });
       }
       toast.success('Portaria cadastrada com sucesso!');
       setDialogOpen(false);
@@ -177,9 +245,11 @@ const Portarias = () => {
       origem: 'querido_diario',
       querido_diario_url: item.url || '',
       summary: textoLimpo,
+      tipo: '',
     });
     setAnexarArquivo(false);
     setArquivoPdf(null);
+    setEmpresasSelecionadas([]);
     setDialogOpen(true);
     toast.info('Revise os dados e confirme o cadastro da portaria.');
   };
@@ -257,6 +327,7 @@ const Portarias = () => {
               </DialogContent>
             </Dialog>
 
+            {podeCadastrar && (
             <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetFormData(); }}>
               <DialogTrigger asChild>
                 <Button className="bg-orange-500 hover:bg-orange-600 text-white gap-2">
@@ -317,13 +388,117 @@ const Portarias = () => {
                       </Select>
                     </div>
                   </div>
-                  <div>
-                    <Label className="text-zinc-300">Data</Label>
-                    <Input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-zinc-300">Data</Label>
+                      <Input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+                    </div>
+                    <div>
+                      <Label className="text-zinc-300">Tipo</Label>
+                      <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
+                        <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
+                          {TIPOS_PORTARIA.map((t) => (
+                            <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <div>
                     <Label className="text-zinc-300">Conteúdo</Label>
                     <Textarea value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1 min-h-[100px]" />
+                  </div>
+                  <div>
+                    <Label className="text-zinc-300">Empresa(s) credenciada(s) referenciada(s)</Label>
+                    <div className="mt-1 bg-zinc-800 border border-zinc-700 rounded-lg max-h-40 overflow-y-auto p-2 space-y-1">
+                      {companies.length === 0 ? (
+                        <p className="text-xs text-zinc-500 px-1 py-1">Nenhuma empresa disponível</p>
+                      ) : (
+                        companies.map((c) => (
+                          <label key={c.company_id} className="flex items-center gap-2 px-1 py-1 text-sm text-zinc-300 hover:bg-zinc-700/50 rounded cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={empresasSelecionadas.includes(c.company_id)}
+                              onChange={() => toggleEmpresaReferenciada(c.company_id)}
+                              className="rounded border-zinc-600"
+                            />
+                            {c.nome_fantasia || c.name}
+                          </label>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-zinc-800 pt-4">
+                    <Label className="text-zinc-300 flex items-center gap-2 mb-2">
+                      <ListChecks className="h-4 w-4 text-orange-400" />
+                      Checklist de exigências (credenciamento)
+                    </Label>
+                    <p className="text-xs text-zinc-500 mb-3">
+                      Itens que a Registradora e/ou as Financeiras vão precisar enviar em resposta a esta portaria.
+                    </p>
+
+                    {checklistItens.length > 0 && (
+                      <div className="space-y-2 mb-3">
+                        {checklistItens.map((item, index) => (
+                          <div key={index} className="flex items-start gap-2 bg-zinc-800/60 border border-zinc-700 rounded-lg px-3 py-2">
+                            <Badge className={item.perfil_alvo === 'registradora'
+                              ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 text-xs shrink-0'
+                              : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-xs shrink-0'}>
+                              {item.perfil_alvo === 'registradora' ? 'Registradora' : 'Financeira'}
+                            </Badge>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-zinc-200 truncate">{item.nome}</p>
+                              {item.descricao && <p className="text-xs text-zinc-500 truncate">{item.descricao}</p>}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removerItemChecklist(index)}
+                              className="text-zinc-500 hover:text-red-400 shrink-0"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
+                      <div>
+                        <Label className="text-zinc-400 text-xs">Nome do item</Label>
+                        <Input
+                          value={novoItemNome}
+                          onChange={(e) => setNovoItemNome(e.target.value)}
+                          placeholder="Ex: Certidão Negativa Federal"
+                          className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-zinc-400 text-xs">Perfil</Label>
+                        <Select value={novoItemPerfil} onValueChange={setNovoItemPerfil}>
+                          <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
+                            <SelectItem value="registradora">Registradora</SelectItem>
+                            <SelectItem value="financeira">Financeira</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button type="button" onClick={adicionarItemChecklist} className="bg-zinc-700 hover:bg-zinc-600 text-white gap-1 shrink-0">
+                        <Plus className="h-4 w-4" />
+                        Item
+                      </Button>
+                    </div>
+                    <Input
+                      value={novoItemDescricao}
+                      onChange={(e) => setNovoItemDescricao(e.target.value)}
+                      placeholder="Descrição (opcional)"
+                      className="bg-zinc-800 border-zinc-700 text-white mt-2"
+                    />
                   </div>
 
                   <div className="border-t border-zinc-800 pt-4">
@@ -362,6 +537,7 @@ const Portarias = () => {
                 </form>
               </DialogContent>
             </Dialog>
+            )}
           </div>
         </div>
 
@@ -394,11 +570,17 @@ const Portarias = () => {
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <FileText className="h-12 w-12 text-zinc-700 mb-4" />
               <p className="text-zinc-400 font-medium mb-1">Nenhuma portaria cadastrada</p>
-              <p className="text-zinc-600 text-sm mb-4">Cadastre portarias ou use o Querido Diário abaixo</p>
-              <Button onClick={() => setDialogOpen(true)} className="bg-orange-500 hover:bg-orange-600 text-white gap-2">
-                <Plus className="h-4 w-4" />
-                Cadastrar Primeira Portaria
-              </Button>
+              {podeCadastrar ? (
+                <>
+                  <p className="text-zinc-600 text-sm mb-4">Cadastre portarias ou use o Querido Diário abaixo</p>
+                  <Button onClick={() => setDialogOpen(true)} className="bg-orange-500 hover:bg-orange-600 text-white gap-2">
+                    <Plus className="h-4 w-4" />
+                    Cadastrar Primeira Portaria
+                  </Button>
+                </>
+              ) : (
+                <p className="text-zinc-600 text-sm">Use o Querido Diário abaixo para consultar Diários Oficiais</p>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -425,6 +607,16 @@ const Portarias = () => {
                         {portaria.orgao_emissor && (
                           <Badge className="bg-zinc-700/50 text-zinc-300 border-zinc-600 font-mono text-xs">
                             {portaria.orgao_emissor}
+                          </Badge>
+                        )}
+                        {portaria.tipo && (
+                          <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 font-mono text-xs">
+                            {TIPOS_PORTARIA.find((t) => t.value === portaria.tipo)?.label || portaria.tipo}
+                          </Badge>
+                        )}
+                        {Array.isArray(portaria.empresas_referenciadas) && portaria.empresas_referenciadas.length > 0 && (
+                          <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 font-mono text-xs">
+                            {portaria.empresas_referenciadas.length} empresa(s) referenciada(s)
                           </Badge>
                         )}
                         {portaria.status && (
@@ -462,7 +654,7 @@ const Portarias = () => {
 
         {/* ── SEÇÃO: QUERIDO DIÁRIO ── */}
         <div className="border-t border-zinc-800 pt-8">
-          <QueridoDiarioBusca onPromover={handlePromover} />
+          <QueridoDiarioBusca onPromover={podeCadastrar ? handlePromover : undefined} />
         </div>
       </div>
     </DashboardLayout>
