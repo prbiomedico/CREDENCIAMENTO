@@ -200,6 +200,12 @@ class Company(BaseModel):
     logo_url: Optional[str] = None
     detrans_atuacao: List[str] = []
     tipo_empresa: str = "registradora"  # registradora, financeira, detran
+    # Fase A: vínculo 1:N — uma registradora tem várias financeiras; só
+    # preenchido quando tipo_empresa == "financeira". Validado contra uma
+    # registradora ativa de verdade tanto na criação quanto numa atualização
+    # posterior — o campo em si aceita qualquer string pra não travar leitura
+    # de dados migrados/legados que não passaram por essa validação.
+    registradora_id: Optional[str] = None
     # NOTA (Fase 0): default deliberadamente mantido em "pending" (vocabulário antigo) —
     # POST /companies (rota existente, inalterada nesta fase) ainda cria empresas assim.
     # A troca do default para o vocabulário novo (pendente_aprovacao/aprovado_acesso_limitado/
@@ -254,6 +260,8 @@ class CompanyCreate(BaseModel):
     whatsapp: str
     gestor_contrato: str
     detrans_atuacao: List[str]
+    tipo_empresa: str = "registradora"  # registradora, financeira — "detran" fica de fora do autocadastro, só admin cria
+    registradora_id: Optional[str] = None  # obrigatório e validado quando tipo_empresa == "financeira"
 
 
 class CompanyUpdate(BaseModel):
@@ -265,6 +273,10 @@ class CompanyUpdate(BaseModel):
     whatsapp: Optional[str] = None
     gestor_contrato: Optional[str] = None
     detrans_atuacao: Optional[List[str]] = None
+    # Só se aplica a uma company que já é tipo_empresa=="financeira" (definido
+    # na criação, não muda por aqui) — permite corrigir/setar o vínculo depois
+    # sem precisar recriar a empresa. Validado em update_company.
+    registradora_id: Optional[str] = None
 
 
 class Document(BaseModel):
@@ -979,22 +991,60 @@ async def logout(request: Request, response: Response):
 # ============ Company Routes ============
 
 @api_router.get("/companies", response_model=List[Company])
-async def get_companies(scope: EffectiveScope = Depends(get_effective_scope)):
+async def get_companies(tipo_empresa: Optional[str] = None, scope: EffectiveScope = Depends(get_effective_scope)):
     """Empresas do usuário logado. sigcr_admin sem "ver como" ativo vê todas
     (mesmo padrão de GET /solicitacoes e /eventos — alimenta o seletor "ver
     como" no frontend); com view_as_company_id, vê só a(s) empresa(s) do dono
-    daquela empresa (mimetiza exatamente o que o dono veria)."""
+    daquela empresa (mimetiza exatamente o que o dono veria). tipo_empresa
+    opcional filtra por segmento (registradora/financeira) — usado pelo seletor
+    de vínculo (Empresas.js) e pelo seletor de empresa solicitante (fila de
+    registro de contrato).
+
+    Caso especial: perfil financeira pedindo tipo_empresa=registradora não é
+    escopado por ownership (nunca seria dono de uma registradora) — precisa
+    ver as registradoras ativas disponíveis pra poder se vincular a uma, tanto
+    no cadastro quanto pra corrigir o vínculo depois. Exposição equivalente à
+    de GET /public/registradoras (mesmos 2 campos-alvo), só que atrás de
+    login em vez de público — não é uma ampliação de risco, é o mesmo dado
+    exigindo mais, não menos, pra ver."""
     if scope.current_user.perfil == "sigcr_admin" and not scope.is_viewing_as:
         query = {"deleted_at": None}
+    elif scope.current_user.perfil == "financeira" and tipo_empresa == "registradora":
+        query = {"tipo_empresa": "registradora", "status": "ativo_contrato_assinado", "deleted_at": None}
+        companies = await db.companies.find(query, {"_id": 0}).to_list(1000)
+        return companies
     else:
         query = {"user_id": scope.effective_user_id, "deleted_at": None}
+    if tipo_empresa:
+        query["tipo_empresa"] = tipo_empresa
     companies = await db.companies.find(query, {"_id": 0}).to_list(1000)
     return companies
+
+
+async def _validar_tipo_e_vinculo_empresa(tipo_empresa: str, registradora_id: Optional[str]) -> None:
+    """Regras da Fase A pro par (tipo_empresa, registradora_id), compartilhadas
+    entre POST /companies (admin) e PATCH /companies/{id} (correção posterior
+    do vínculo)."""
+    if tipo_empresa not in ("registradora", "financeira"):
+        raise HTTPException(status_code=400, detail="tipo_empresa deve ser 'registradora' ou 'financeira'")
+    if tipo_empresa == "financeira":
+        if not registradora_id:
+            raise HTTPException(status_code=400, detail="registradora_id é obrigatório para tipo_empresa='financeira'")
+        registradora = await db.companies.find_one(
+            {"company_id": registradora_id, "tipo_empresa": "registradora", "deleted_at": None}, {"_id": 0}
+        )
+        if not registradora:
+            raise HTTPException(status_code=404, detail="Registradora não encontrada")
+        if registradora.get("status") != "ativo_contrato_assinado":
+            raise HTTPException(status_code=400, detail="Só é possível vincular a uma registradora com contrato ativo")
+    elif registradora_id:
+        raise HTTPException(status_code=400, detail="registradora_id só se aplica a tipo_empresa='financeira'")
 
 
 @api_router.post("/companies", response_model=Company)
 async def create_company(company_data: CompanyCreate, current_user: User = Depends(get_current_user)):
     """Create new company"""
+    await _validar_tipo_e_vinculo_empresa(company_data.tipo_empresa, company_data.registradora_id)
     company = Company(
         user_id=current_user.user_id,
         name=company_data.name,
@@ -1004,7 +1054,9 @@ async def create_company(company_data: CompanyCreate, current_user: User = Depen
         email_comercial=company_data.email_comercial,
         whatsapp=company_data.whatsapp,
         gestor_contrato=company_data.gestor_contrato,
-        detrans_atuacao=company_data.detrans_atuacao
+        detrans_atuacao=company_data.detrans_atuacao,
+        tipo_empresa=company_data.tipo_empresa,
+        registradora_id=company_data.registradora_id,
     )
 
     doc = company.model_dump()
@@ -1035,6 +1087,10 @@ async def update_company(company_id: str, updates: CompanyUpdate, current_user: 
     campos = {k: v for k, v in updates.model_dump().items() if v is not None}
     if not campos:
         return Company(**company)
+    if "registradora_id" in campos:
+        # tipo_empresa é definido só na criação (não está em CompanyUpdate) —
+        # aqui só corrige/seta o vínculo de uma empresa que já é financeira.
+        await _validar_tipo_e_vinculo_empresa(company.get("tipo_empresa"), campos["registradora_id"])
     antes = {k: company.get(k) for k in campos}
     campos["updated_at"] = datetime.now(timezone.utc).isoformat()
 
@@ -3431,6 +3487,270 @@ async def atualizar_status_solicitacao(solicitacao_id: str, request: Request, cu
     )
     await registrar_auditoria(current_user, f"status_{status}", "solicitacao", solicitacao_id, {"observacoes": obs})
     return {"message": f"Status atualizado para {status}"}
+
+
+# ============ SOLICITAÇÕES DE REGISTRO DE CONTRATO (Fase B do HUB) ============
+# Fila exclusiva Financeira -> Registradora vinculada (Company.registradora_id),
+# pro registro de contrato de financiamento com alienação/reserva de domínio
+# junto ao DETRAN. Dados do contrato seguem o Art. 3º da Resolução CONTRAN
+# 320/2009. Sem Pydantic model dedicado — mesmo padrão de db.solicitacoes
+# (sol dict simples), única coleção nova desta fase é db.solicitacoes_registro.
+#
+# Status pendente -> concluido/rejeitado, decididos pela registradora vinculada
+# (PATCH .../concluir exige comprovante do DETRAN; PATCH .../rejeitar segue o
+# mesmo padrão de historico_rejeicoes do cadastro de empresas). "em_processamento"
+# está no vocabulário de status pro caso a registradora precise sinalizar que já
+# está tratando a solicitação, mas nenhuma rota o define hoje — não foi pedido
+# um endpoint de transição pra esse estado; fica como valor válido, não como
+# um degrau obrigatório do fluxo.
+
+class RejeitarSolicitacaoRegistroPayload(BaseModel):
+    motivo: Optional[str] = None
+
+
+def _solicitacao_registro_dir() -> Path:
+    d = UPLOAD_DIR / "solicitacoes_registro"
+    d.mkdir(exist_ok=True)
+    return d
+
+
+async def _salvar_pdf_solicitacao_registro(file: UploadFile, campo: str) -> str:
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail=f"Apenas arquivos PDF são aceitos para {campo}")
+    conteudo = await file.read()
+    if not conteudo:
+        raise HTTPException(status_code=400, detail="Arquivo vazio")
+    if len(conteudo) > MAX_PORTARIA_PDF_SIZE:
+        raise HTTPException(status_code=400, detail="Arquivo excede o limite de 20MB")
+    file_path = _solicitacao_registro_dir() / f"{uuid.uuid4().hex}.pdf"
+    async with aiofiles.open(file_path, "wb") as f:
+        await f.write(conteudo)
+    return str(file_path)
+
+
+async def _autorizar_registradora_da_solicitacao_registro(sol: dict, current_user: User) -> None:
+    """Confere que current_user é dono de UMA das (possivelmente várias)
+    companies tipo_empresa=registradora cujo company_id é o registradora_id
+    gravado na solicitação. sigcr_admin sempre passa."""
+    if current_user.perfil == "sigcr_admin":
+        return
+    minha = await db.companies.find_one({
+        "company_id": sol["registradora_id"], "user_id": current_user.user_id,
+        "tipo_empresa": "registradora", "deleted_at": None,
+    })
+    if not minha:
+        raise HTTPException(status_code=403, detail="Esta solicitação não pertence à sua registradora")
+
+
+@api_router.post("/solicitacoes-registro")
+async def criar_solicitacao_registro(
+    company_id: str = Form(...),
+    credor_nome: str = Form(...),
+    credor_documento: str = Form(...),
+    credor_endereco: str = Form(...),
+    credor_telefone: str = Form(...),
+    devedor_nome: str = Form(...),
+    devedor_documento: str = Form(...),
+    devedor_endereco: str = Form(...),
+    devedor_telefone: str = Form(...),
+    valor_total_divida: float = Form(...),
+    local_pagamento: str = Form(...),
+    data_pagamento: str = Form(...),
+    taxa_juros: str = Form(...),
+    veiculo_placa: str = Form(...),
+    veiculo_chassi: str = Form(...),
+    veiculo_marca_modelo: str = Form(...),
+    veiculo_ano: str = Form(...),
+    contrato: UploadFile = File(...),
+    current_user: User = Depends(require_perfil("financeira")),
+):
+    """Financeira abre uma solicitação de registro de contrato junto à
+    registradora à qual está vinculada (Company.registradora_id, hoje sempre
+    a HD). company_id precisa ser uma financeira do próprio usuário."""
+    company = await db.companies.find_one({"company_id": company_id, "deleted_at": None}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+    if company.get("tipo_empresa") != "financeira":
+        raise HTTPException(status_code=400, detail="company_id deve ser de uma empresa do tipo financeira")
+    if current_user.perfil != "sigcr_admin" and company["user_id"] != current_user.user_id:
+        raise HTTPException(status_code=403, detail="Esta empresa não pertence ao usuário atual")
+    registradora_id = company.get("registradora_id")
+    if not registradora_id:
+        raise HTTPException(status_code=400, detail="Financeira sem registradora vinculada — não é possível solicitar registro")
+
+    try:
+        data_pagamento_parsed = datetime.fromisoformat(data_pagamento)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="data_pagamento inválida (use ISO 8601)")
+
+    contrato_pdf_path = await _salvar_pdf_solicitacao_registro(contrato, "o contrato")
+
+    agora = datetime.now(timezone.utc).isoformat()
+    sol = {
+        "solicitacao_registro_id": f"solreg_{uuid.uuid4().hex[:12]}",
+        "company_id": company_id,
+        "registradora_id": registradora_id,
+        "user_id": current_user.user_id,
+        "credor_nome": credor_nome, "credor_documento": credor_documento,
+        "credor_endereco": credor_endereco, "credor_telefone": credor_telefone,
+        "devedor_nome": devedor_nome, "devedor_documento": devedor_documento,
+        "devedor_endereco": devedor_endereco, "devedor_telefone": devedor_telefone,
+        "valor_total_divida": valor_total_divida,
+        "local_pagamento": local_pagamento,
+        "data_pagamento": data_pagamento_parsed.isoformat(),
+        "taxa_juros": taxa_juros,
+        "veiculo_placa": veiculo_placa, "veiculo_chassi": veiculo_chassi,
+        "veiculo_marca_modelo": veiculo_marca_modelo, "veiculo_ano": veiculo_ano,
+        "contrato_pdf_path": contrato_pdf_path,
+        "status": "pendente",
+        "comprovante_pdf_path": None,
+        "numero_registro_detran": None,
+        "concluido_por": None,
+        "concluido_em": None,
+        "historico_rejeicoes": [],
+        "created_at": agora,
+        "updated_at": agora,
+    }
+    await db.solicitacoes_registro.insert_one(sol)
+    sol.pop("_id", None)  # insert_one adiciona _id (ObjectId) de volta no dict por efeito colateral
+
+    registradora = await db.companies.find_one({"company_id": registradora_id}, {"_id": 0})
+    if registradora:
+        await criar_notificacao(
+            registradora["user_id"], "solicitacao_registro_nova",
+            "Nova solicitação de registro de contrato",
+            f"{company.get('nome_fantasia') or company.get('name')} enviou uma nova solicitação de registro de contrato.",
+            {"solicitacao_registro_id": sol["solicitacao_registro_id"]}
+        )
+    await registrar_auditoria(current_user, "criar_solicitacao_registro", "solicitacao_registro", sol["solicitacao_registro_id"], {
+        "company_id": company_id, "registradora_id": registradora_id
+    })
+    return sol
+
+
+@api_router.get("/solicitacoes-registro")
+async def listar_solicitacoes_registro(current_user: User = Depends(require_perfil("financeira", "registradora"))):
+    """Financeira vê as próprias (todas as financeiras que possui); registradora
+    vê as recebidas das financeiras vinculadas a ela (todas as registradoras que
+    possui); sigcr_admin vê tudo."""
+    if current_user.perfil == "sigcr_admin":
+        query = {}
+    elif current_user.perfil == "financeira":
+        minhas = await db.companies.find(
+            {"user_id": current_user.user_id, "tipo_empresa": "financeira", "deleted_at": None},
+            {"_id": 0, "company_id": 1}
+        ).to_list(100)
+        query = {"company_id": {"$in": [c["company_id"] for c in minhas]}}
+    else:  # registradora
+        minhas = await db.companies.find(
+            {"user_id": current_user.user_id, "tipo_empresa": "registradora", "deleted_at": None},
+            {"_id": 0, "company_id": 1}
+        ).to_list(100)
+        query = {"registradora_id": {"$in": [c["company_id"] for c in minhas]}}
+    return await db.solicitacoes_registro.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+
+
+@api_router.get("/solicitacoes-registro/{solicitacao_registro_id}/contrato")
+async def baixar_contrato_solicitacao_registro(solicitacao_registro_id: str, current_user: User = Depends(get_current_user)):
+    sol = await db.solicitacoes_registro.find_one({"solicitacao_registro_id": solicitacao_registro_id}, {"_id": 0})
+    if not sol:
+        raise HTTPException(status_code=404, detail="Solicitação não encontrada")
+    if current_user.perfil != "sigcr_admin" and current_user.user_id != sol["user_id"]:
+        await _autorizar_registradora_da_solicitacao_registro(sol, current_user)
+    file_path = Path(sol["contrato_pdf_path"])
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Arquivo não encontrado no armazenamento")
+    return FileResponse(path=file_path, filename=f"contrato_{solicitacao_registro_id}.pdf", media_type="application/pdf")
+
+
+@api_router.get("/solicitacoes-registro/{solicitacao_registro_id}/comprovante")
+async def baixar_comprovante_solicitacao_registro(solicitacao_registro_id: str, current_user: User = Depends(get_current_user)):
+    sol = await db.solicitacoes_registro.find_one({"solicitacao_registro_id": solicitacao_registro_id}, {"_id": 0})
+    if not sol:
+        raise HTTPException(status_code=404, detail="Solicitação não encontrada")
+    if current_user.perfil != "sigcr_admin" and current_user.user_id != sol["user_id"]:
+        await _autorizar_registradora_da_solicitacao_registro(sol, current_user)
+    if not sol.get("comprovante_pdf_path"):
+        raise HTTPException(status_code=404, detail="Solicitação ainda não tem comprovante (não foi concluída)")
+    file_path = Path(sol["comprovante_pdf_path"])
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Arquivo não encontrado no armazenamento")
+    return FileResponse(path=file_path, filename=f"comprovante_{solicitacao_registro_id}.pdf", media_type="application/pdf")
+
+
+@api_router.patch("/solicitacoes-registro/{solicitacao_registro_id}/concluir")
+async def concluir_solicitacao_registro(
+    solicitacao_registro_id: str,
+    numero_registro_detran: str = Form(...),
+    comprovante: UploadFile = File(...),
+    current_user: User = Depends(require_perfil("registradora")),
+):
+    sol = await db.solicitacoes_registro.find_one({"solicitacao_registro_id": solicitacao_registro_id}, {"_id": 0})
+    if not sol:
+        raise HTTPException(status_code=404, detail="Solicitação não encontrada")
+    await _autorizar_registradora_da_solicitacao_registro(sol, current_user)
+    if sol["status"] in ("concluido", "rejeitado"):
+        raise HTTPException(status_code=409, detail="Solicitação já foi concluída ou rejeitada")
+
+    comprovante_pdf_path = await _salvar_pdf_solicitacao_registro(comprovante, "o comprovante")
+
+    agora = datetime.now(timezone.utc).isoformat()
+    await db.solicitacoes_registro.update_one(
+        {"solicitacao_registro_id": solicitacao_registro_id},
+        {"$set": {
+            "status": "concluido",
+            "comprovante_pdf_path": comprovante_pdf_path,
+            "numero_registro_detran": numero_registro_detran,
+            "concluido_por": current_user.user_id,
+            "concluido_em": agora,
+            "updated_at": agora,
+        }}
+    )
+    await criar_notificacao(
+        sol["user_id"], "solicitacao_registro_concluida",
+        "Registro de contrato concluído",
+        f"Sua solicitação de registro de contrato foi concluída. Número de registro DETRAN: {numero_registro_detran}.",
+        {"solicitacao_registro_id": solicitacao_registro_id}
+    )
+    await registrar_auditoria(current_user, "concluir_solicitacao_registro", "solicitacao_registro", solicitacao_registro_id, {
+        "numero_registro_detran": numero_registro_detran
+    })
+    return {"message": "Solicitação concluída"}
+
+
+@api_router.patch("/solicitacoes-registro/{solicitacao_registro_id}/rejeitar")
+async def rejeitar_solicitacao_registro(
+    solicitacao_registro_id: str,
+    payload: RejeitarSolicitacaoRegistroPayload,
+    current_user: User = Depends(require_perfil("registradora")),
+):
+    sol = await db.solicitacoes_registro.find_one({"solicitacao_registro_id": solicitacao_registro_id}, {"_id": 0})
+    if not sol:
+        raise HTTPException(status_code=404, detail="Solicitação não encontrada")
+    await _autorizar_registradora_da_solicitacao_registro(sol, current_user)
+    if sol["status"] in ("concluido", "rejeitado"):
+        raise HTTPException(status_code=409, detail="Solicitação já foi concluída ou rejeitada")
+
+    agora = datetime.now(timezone.utc).isoformat()
+    entrada_historico = {"motivo": payload.motivo, "rejeitado_por": current_user.user_id, "rejeitado_em": agora}
+    await db.solicitacoes_registro.update_one(
+        {"solicitacao_registro_id": solicitacao_registro_id},
+        {
+            "$set": {"status": "rejeitado", "updated_at": agora},
+            "$push": {"historico_rejeicoes": entrada_historico},
+        }
+    )
+    await criar_notificacao(
+        sol["user_id"], "solicitacao_registro_rejeitada",
+        "Solicitação de registro de contrato rejeitada",
+        "Sua solicitação de registro de contrato foi rejeitada."
+        + (f" Motivo: {payload.motivo}" if payload.motivo else ""),
+        {"solicitacao_registro_id": solicitacao_registro_id, "motivo": payload.motivo}
+    )
+    await registrar_auditoria(current_user, "rejeitar_solicitacao_registro", "solicitacao_registro", solicitacao_registro_id, {
+        "motivo": payload.motivo
+    })
+    return {"message": "Solicitação rejeitada"}
 
 
 # ============ NOTIFICAÇÕES ============
