@@ -1382,4 +1382,39 @@ Frontend: `GestaoEditais.js` + rotas/nav (`App.js`, `DashboardLayout.js`) extra�
 
 Técnica de isolamento consolidada (reutilizável pras próximas 2 fatias): `git stash` nos arquivos tracked não relacionados + `mv` temporário dos arquivos untracked não relacionados pra fora de `frontend/`, edição cirúrgica de `App.js`/`DashboardLayout.js` removendo só as linhas das rotas ainda não prontas, build de teste isolado primeiro (confirma no bundle o que deveria/não deveria estar lá), só depois `deploy.sh`/`deploy-frontend.sh` reais, depois `git stash pop` + `mv` de volta.
 
+### Fatia 2 — Fila de Registro de Contrato — 🧪 TESTADA, deploy NÃO executado (aguardando decisão, 2026-08-12)
+
+Backend (`POST/GET /solicitacoes-registro`, `.../contrato`, `.../comprovante`, `.../concluir`, `.../rejeitar`) extraído isoladamente (mesma técnica das fatias 0/1) e testado em devtest com dados semeados (2 registradoras, 2 financeiras vinculadas uma a cada, 1 financeira sem vínculo) simulando o payload real do frontend (multipart `FormData` pro create/concluir, JSON pro rejeitar — não `httpx` com parâmetros à mão, exatamente pra não repetir o tipo de teste que deixou passar o bug do 422 antes). 27 cenários, todos OK:
+
+- Financeira cria solicitação (multipart completo, replica `SolicitacaoRegistro.js`) ✅
+- Financeira sem `registradora_id` tenta criar → 400 ✅
+- Financeira tenta usar `company_id` de outra financeira → 403 ✅
+- **Escopo (o foco pedido)**: Registradora A vê só a própria (1); Registradora B vê 0; Financeira 2 vê 0 da Financeira 1; acesso direto por ID (contrato/concluir) também bloqueado pra Registradora B → 403, não só a listagem ✅
+- Upload de contrato pela Financeira → salva no bind mount (`solicitacoes_registro/`), confirmado por fora do container ✅
+- Registradora conclui com upload de comprovante (multipart, replica `FilaRegistros.js`) → status muda, notificação criada, tentativa de concluir de novo → 409 ✅
+- Download do contrato (pela financeira dona e pela registradora certa) e do comprovante (após concluído) — conteúdo binário conferido byte a byte nos dois ✅
+- Fluxo de rejeição (JSON `{motivo}`, replica `FilaRegistros.js`) → status + `historico_rejeicoes` corretos, registradora errada tentando rejeitar → 403 ✅
+- Upload não-PDF rejeitado (400), sem auth em qualquer rota (401), ID inexistente (404), `sigcr_admin` vê tudo ✅
+
+Frontend (`SolicitacaoRegistro.js` + `FilaRegistros.js` + rotas/nav) isolado do que ainda não vai (Cadastro Público, Portaria Pública) do mesmo jeito que a fatia 1 — build limpo, bundle confirmado com `fila-registros`/`registro-contrato`/`solicitacoes-registro` presentes e `CadastroPublico`/`PortariaPublica` ausentes.
+
+**Regressão rápida em prod** (Editais, Portarias, Registradoras, Companies, site): tudo 200/401 como esperado, sem toque nenhum ainda — baseline confirmada saudável antes de qualquer deploy desta fatia.
+
+#### 🔴 Achado que muda a decisão de deploy: a fatia funciona, mas ninguém consegue alcançá-la em produção hoje
+
+`POST /solicitacoes-registro` só funciona se `company.registradora_id` estiver preenchido. Esse campo:
+
+- **Não existe no modelo `Company` rodando em produção agora** (só existe na versão do lote pendente, ainda não deployada).
+- **Não tem NENHUM caminho pra ser preenchido em produção hoje** — nem o cadastro público (`POST /public/cadastro`, Fatia 3, ainda não deployada) nem o formulário admin de criar empresa (`Empresas.js`, tela que existe e está no ar, mas **não foi alterada pelo lote** pra expor `tipo_empresa`/`registradora_id` — só o backend `POST /companies` foi, sem UI pra usar).
+- **Confirmado direto no Mongo de produção: zero empresas `tipo_empresa=financeira` existem hoje.** Não é uma lacuna teórica — não tem um usuário real no sistema hoje que consiga bater nessa tela e conseguir usar.
+
+Ou seja: dá pra deployar a Fila de Registros agora com segurança (testada, não quebra nada, não é código morto perigoso) — mas ficaria uma funcionalidade completa e correta que **nenhum usuário real consegue alcançar**, porque não existe hoje nenhuma forma de uma financeira nascer vinculada a uma registradora.
+
+**Três caminhos, pedindo decisão**:
+1. **Deployar a Fila de Registros mesmo assim** (correta, testada, pronta pro dia em que alguém conseguir vincular uma financeira) e resolver o vínculo depois, junto com a Fatia 3.
+2. **Puxar pra frente só a parte de baixo risco da Fatia 3** — o modelo (`Company.registradora_id`) + `POST /companies` admin (já autenticado, sigcr_admin-only, sem risco de superfície pública nova) + um pequeno ajuste em `Empresas.js` pra expor `tipo_empresa`/vínculo no formulário admin de criar empresa — deixando de fora só a parte realmente arriscada da Fatia 3 (`POST /public/cadastro`, sem autenticação, provisionamento Keycloak). Isso destrava a Fila de Registros de verdade sem adiantar o risco maior.
+3. **Inverter a ordem**: fazer a Fatia 3 completa antes da Fatia 2.
+
+Sem decidir por conta própria — é uma mudança no fatiamento combinado, não só "achei um bug e corrigi" como nas fatias anteriores.
+
 
