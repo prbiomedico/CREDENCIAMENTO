@@ -229,3 +229,1082 @@ cp /opt/sigcr/frontend/.env.production /tmp/sigcr-build-<ts>/frontend/.env.produ
 O fallback do item acima (1) é uma segunda camada de proteção, não substitui
 esse passo — variáveis que não têm fallback hardcoded (nenhuma hoje, mas
 podem existir no futuro) continuariam quebrando silenciosamente sem ele.
+
+## 7. Incidente do bind mount de uploads — perda silenciosa de documentos (descoberto 2026-08-02)
+
+**O que aconteceu:** `backend/uploads/` (onde ficam os PDFs enviados por
+usuários) nunca foi um volume Docker de verdade — o `Dockerfile` faz
+`COPY . .`, que só "assa" na imagem o que já estiver na pasta do host **no
+momento do build**. Em algum rebuild de 2026-08-01 (não identificado com
+certeza — o `.bash_history` já tinha rotacionado passado da janela, e o log
+do `dockerd` não registra os argumentos do `docker run`, só eventos
+internos), um bind mount de `backend/uploads:/app/uploads` foi aplicado
+manualmente numa recriação do container e depois **perdido numa recriação
+seguinte** que não incluiu a flag `-v` — provavelmente um `docker run`
+digitado de memória. A partir daí, todo upload passou a existir só na
+camada gravável do container, sem sobreviver a um rebuild.
+
+**Evidência:** dos 7 documentos vinculados à HD Registros, os 4 enviados em
+2026-07-30 (antes de qualquer mount) perderam o arquivo físico de vez; os 3
+enviados em 2026-08-01 entre 11h24 e 11h48 sobreviveram porque foram
+gravados direto no host via o mount — que caiu pouco depois (evidenciado
+pelo horário do próximo rebuild registrado no `dockerd`, ~11h50). Os 4
+perdidos foram recuperados no banco (registro reativado, mesmos metadados)
+mas **não há como recuperar o arquivo em si** — não existe backup dele em
+lugar nenhum.
+
+**Correção aplicada (2026-08-02):** `backend/deploy.sh` — script único e
+obrigatório pra todo rebuild/restart do backend, que sempre inclui
+`-v backend/uploads:/app/uploads` e **verifica depois que o mount pegou**,
+falhando com erro explícito se não pegou (em vez de deixar passar em
+silêncio, que foi exatamente a causa raiz aqui). Documentado em
+`README.md` como o único jeito certo de fazer deploy do backend.
+
+**Testado em devtest antes de aplicar em produção:** upload de um documento
+com o mount ativo → rebuild completo da imagem → recriação do container com
+o mesmo mount → arquivo confirmado intacto no container novo (via
+`docker exec ... test -f`) → documento continua baixável pela API
+normalmente. Esse teste (upload → rebuild → sobrevivência do arquivo) passa
+a ser parte do checklist padrão sempre que algo relacionado a upload/volume
+for mexido num deploy de backend.
+
+**Ainda pendente:** aplicar o mount no container de produção (precisa de um
+stop/rm/run, então é uma ação de deploy — aguardando aprovação separada,
+não incluída neste registro).
+
+## 8. Deploy do credenciamento por portaria + integração Criar Evento/Portaria (2026-08-08) — ✅ CONCLUÍDO
+
+Depois de uma revisão de segurança (30 checks, 2 vazamentos de rascunho de
+portaria encontrados e corrigidos — rascunhos do wizard `criado_via='wizard'`
+sem `publicado_at` não podiam vazar pra fora de DETRAN/admin), deploy em
+produção do fluxo de credenciamento por portaria (DETRAN/Registradora/
+Financeira) + fusão Evento↔Portaria. Backend: tag de rollback
+`sigcr-backend:pre-deploy-rollback-20260808-0107`. Frontend: release
+`releases/20260808-0109-evento-portaria-integracao` (hash
+`main.b32d1bde.js`). Health check pós-deploy OK nos dois lados (`/api/`
+200, `/api/stats`+`/api/portarias` 401 sem token, `/api/portarias/publico/
+token-invalido` 404, `/` e `/criar-evento` 200). Gap conhecido, não
+bloqueante: `GET /stats` tem lacuna de perfil (só afeta número exibido no
+dashboard, não vaza dado sensível) — registrado como débito técnico, não
+corrigido ainda.
+
+## 9. Remoção da timeline calculada do wizard "Criar Evento" (2026-08-08) — ✅ CONCLUÍDO (deploy 2026-08-09)
+
+**Motivo (decisão de produto do Pedro):** o Passo 4 (Timeline) do wizard
+pré-preenchia uma lista de etapas com prazos fixos por template (ex.
+credenciamento: "Publicação +0d, Impugnação +5d, ... Homologação +70d") —
+uma tabela inventada, sem nenhuma relação com como o DETRAN realmente
+distribui prazos entre etapas. Pedro decidiu remover essa mecânica
+inteiramente e simplificar pra só abertura/encerramento como prazo simples.
+
+**Decisão tomada (recomendação apresentada e aprovada antes de implementar):**
+removido o Passo 4 inteiramente em vez de mantê-lo simplificado — sem a
+lista de etapas, não sobrava nenhum conteúdo próprio pro passo (as datas de
+abertura/encerramento já são coletadas no Passo 2/Detalhes), então um passo
+extra só pra "confirmar" 2 datas já digitadas seria clique sem informação
+nova. Wizard passa de 5 pra 4 passos: Template/Detalhes/Documentos/Revisar.
+
+**Mudanças:**
+- `frontend/src/pages/CriarEvento.js`: `STEPS` sem "Timeline"; removido o
+  passo inteiro de edição de etapas (`updateTimeline`, botão "Adicionar
+  Etapa", inputs de `etapa`/`dias_corridos`); removido o pré-preenchimento
+  de `timeline` a partir de `timeline_padrao` (seleção de template e
+  deep-link do Querido Diário); card de Revisar troca "Timeline (N etapas)"
+  por uma linha simples "Prazo: {abertura} até {encerramento}"; payload de
+  `POST /portarias` não envia mais `timeline`.
+- `frontend/src/pages/PortariaPublica.js`: card "Cronograma" (lista de
+  etapas) trocado por um card "Prazo" simples com as duas datas, só
+  aparece se pelo menos uma delas existir.
+- `backend/server.py`: removido o cálculo de `timeline_calculada` em
+  `POST /portarias` (datas por etapa a partir de `dias_corridos`); `GET
+  /portarias/publico/{token}` passa a devolver `data_abertura`/
+  `data_encerramento` em vez de `timeline`; removida a tabela
+  `timeline_padrao` de dentro dos 4 templates em `TEMPLATES_EVENTO`; campo
+  `timeline: List[dict] = []` mantido no modelo `Portaria`/`PortariaCreate`
+  (não removido do schema — mais simples, portarias antigas que já tinham
+  o array salvo continuam válidas, só ninguém mais popula).
+- Removido também `POST /eventos` (endpoint legado do módulo "Evento" antes
+  da fusão com Portaria, confirmado morto — grep no frontend inteiro não
+  achou nenhuma tela chamando ele, só `GET /eventos/templates` é usado, que
+  continua existindo). **Não removido** (fora de escopo desta mudança, mas
+  também confirmado morto): `GET /eventos`, `GET /eventos/{id}`, `GET
+  /eventos/publico/{token}`, `PATCH /eventos/{id}`, `PATCH /eventos/{id}/
+  publicar`, `DELETE /eventos/{id}` — candidatos a uma limpeza futura, sem
+  nenhuma tela os chamando hoje.
+
+**Testado em devtest (`sigcr-backend-devtest`, imagem
+`sigcr-backend:devtest-evento-timeline`, rebuildado com o código de hoje):**
+1. `POST /portarias` com `template`+`data_abertura`+`data_encerramento`
+   (fluxo do wizard) → `timeline` volta `[]`, sem nenhuma etapa inventada.
+2. `PATCH /portarias/{id}/publicar` → publica normalmente.
+3. `GET /portarias/publico/{token}` → devolve `data_abertura`/
+   `data_encerramento` corretos, sem campo `timeline`.
+4. `GET /portarias/publico/token-invalido` → 404 (sem vazar nada).
+5. `GET /eventos/templates` → confirma `timeline_padrao` sumiu dos 4
+   templates, resto intacto.
+6. `POST /eventos` → 405 (rota `/eventos` ainda existe por causa do `GET`,
+   método `POST` não está mais registrado — confirma a remoção).
+7. Portaria manual (`criado_via='manual'`, sem `data_abertura`/
+   `data_encerramento`) → endpoint público devolve os dois campos `null`,
+   o que faz o card de Prazo do frontend ficar oculto corretamente (mesma
+   lógica condicional que já existia pro Cronograma antigo).
+8. Build de produção do frontend (`CI=false npm run build`) compilou limpo
+   com as duas mudanças — só os warnings de eslint pré-existentes de outras
+   páginas, nada novo.
+
+**Não testado (sem ferramenta de browser neste ambiente):** clique real no
+wizard (navegação Passo 2 → Revisar sem passar pelo Timeline, botões
+Voltar/Revisar/Publicar) e a renderização visual do card de Prazo na página
+pública. Recomendado antes de considerar o deploy 100% fechado.
+
+**Status:** implementado e testado em devtest, aguardando o relatório ser
+lido e o deploy ser autorizado (Pedro pediu pra ser chamado antes do deploy
+nesta rodada especificamente, mesmo com autonomia total valendo daqui pra
+frente).
+
+**Deploy 2026-08-09 (autorizado pelo usuário: "pode seguir com a timeline (4
+passos) que já estava combinado") — ✅ CONCLUÍDO.**
+
+**Problema encontrado antes de deployar:** o working tree em `/opt/sigcr`
+tinha esse trabalho (item 9 + a integração Evento↔Portaria do item 8, ambos
+ainda não commitados) misturado, no mesmo diff, com um lote bem maior e
+**não testado/não aprovado**: página pública de auto-cadastro
+(`CadastroPublico.js`, rota `/cadastro`), fila de registro de contrato
+(`FilaRegistros.js`/`SolicitacaoRegistro.js`, rotas `/fila-registros` e
+`/registro-contrato`), gestão de editais (`GestaoEditais.js`, rota
+`/gestao-editais`), um novo `PerfilAtivoContext` (seletor de perfil ativo
+multi-empresa) já integrado em `DashboardLayout.js`, e reescritas grandes
+não relacionadas em `ChecklistContran.js`, `Dashboard.js`, `Editais.js`,
+`EstadoDetalhe.js`, `MapaNacional.js`, `Checkout.js`, `Planos.js` e vários
+componentes de UI da landing page (`globe-hero`, `gradient-menu`,
+`interactive-map`, `vapour-text-effect`, `ai-loader`, `cookie-banner`,
+`index.css`, `tailwind.config.js`). Nada disso tinha passado por teste em
+devtest nesta leva — deployar o working tree inteiro como estava teria
+jogado um lote inteiro de feature não validada em produção.
+
+**Como foi isolado:** confirmado por diff que `backend/server.py` no disco
+é **byte-idêntico** ao que já tinha sido testado na imagem devtest
+`sigcr-backend:devtest-evento-timeline` (nenhum código do lote pendente
+chegou a tocar o backend) — deploy de backend feito direto via
+`backend/deploy.sh` sem nenhuma alteração. Pro frontend, os timestamps de
+modificação no disco confirmaram que 22 arquivos (todo o lote pendente,
+incluindo `DashboardLayout.js`) não eram tocados desde 2026-08-05 19:54
+(uma reconciliação de stash anterior, não relacionada), enquanto
+`Portarias.js`/`App.js`/`CriarEvento.js` tinham edições de 2026-08-07/08 —
+ou seja, misturavam mudanças aprovadas (evento-portaria + timeline) com
+mudanças do lote de 2026-08-05 no mesmo arquivo. Reconstruído à mão num
+`git worktree` isolado a partir do commit `8211a7d` (HEAD): copiados
+integralmente `Portarias.js`, `CriarEvento.js`, `PortariaPublica.js` (novo)
+e `ChecklistCatalogoPicker.js` (novo) — nenhum tem qualquer referência a
+`PerfilAtivo`/`CadastroPublico`/`FilaRegistros`/`GestaoEditais`/
+`SolicitacaoRegistro` (confirmado via grep); `App.js` reconstruído partindo
+do HEAD com só duas linhas adicionadas (import + rota
+`/portarias/publico/:token` → `PortariaPublica`), confirmado via diff que
+nada mais do lote pendente entrou. **O resto do working tree em
+`/opt/sigcr` não foi tocado** — o lote pendente (cadastro público, fila de
+registros, gestão de editais, seletor de perfil ativo, redesign da landing)
+continua intacto, uncommitted, aguardando uma rodada própria de teste em
+devtest antes de qualquer deploy futuro.
+
+**Build:** `npm ci --legacy-peer-deps && CI=false npm run build` no
+worktree isolado — compilou limpo (só os warnings de eslint pré-existentes
+de sempre). Confirmado via grep no bundle final: zero ocorrência de
+`gestao-editais`/`fila-registros`/`registro-contrato`, `portarias/publico`
+presente.
+
+**Deploy:** backend — tag de rollback
+`sigcr-backend:pre-deploy-rollback-20260809-1508`, rebuild via
+`deploy.sh`, mount de uploads confirmado ativo. Frontend — release
+`releases/20260809-1509-timeline-removal` (hash `main.269e23aa.js`), swap
+atômico do symlink `current`.
+
+**Health check pós-deploy:** `/api/` 200; `/api/stats`, `/api/portarias`,
+`/api/eventos`, `/api/companies`, `/api/system-users` 401 sem token;
+`POST /api/eventos` 405 (removido, confirmado); `GET /api/eventos/templates`
+segue existindo (401 sem token); `GET /api/portarias/publico/token-invalido`
+404. Front: `sigcr.com.br` serve o hash novo, `Cache-Control: no-cache` em
+`index.html` e `immutable` em `/static/`, rotas `/`, `/portarias`,
+`/criar-evento`, `/planos` todas 200. `docker logs sigcr-backend` mostrou
+tráfego real de usuário logo após o restart sem nenhum 500 — sinal de que
+não houve regressão perceptível na janela imediata pós-deploy.
+
+**Ainda não testado (sem ferramenta de browser neste ambiente):** clique
+real no wizard e a renderização visual do card "Prazo" na página pública —
+recomendado que o Pedro/usuário confirme visualmente quando puder.
+
+## 10. Autonomia total reconfirmada (2026-08-09)
+
+O usuário reconfirmou nesta data a autonomia total concedida em 2026-08-08
+(ver histórico de memória `feedback-sigcr-autonomia-total`): decisão de
+implementação e deploy em produção são minhas daqui pra frente, sem esperar
+aprovação passo a passo, respeitando a única regra fixa (nunca apagar dado
+real; portaria publicada sempre revoga, nunca deleta) e os hábitos já
+provados (devtest antes de prod, `deploy.sh` com rollback automático,
+health check pós-deploy, corrigir problema de segurança real na hora). O
+item 9 acima foi o primeiro deploy executado sob essa reconfirmação. A
+partir daqui, vou seguindo em frente com o próximo item de maior valor
+(candidatos abertos: as 4 telas DETRAN não-funcionais por
+`apiCall`/`useApi` quebrado — `PainelDetran.js`/`POC.js`/
+`AnaliseDocumental.js`/`Homologacao.js` —, o gap de PATCH/DELETE
+`/portarias/{id}` sem `estado_sigla`, ou testar/isolar/deployar o lote
+pendente do item acima) e registro aqui à medida que for avançando.
+
+## 11. Limpeza das 4 telas DETRAN não-funcionais (`painel-detran`) — ✅ CONCLUÍDO (2026-08-11)
+
+Removidas `PainelDetran.js`, `AnaliseDocumental.js`, `POC.js`,
+`Homologacao.js` (as 4 telas identificadas no item 10 como permanentemente
+quebradas por `apiCall`/`useApi` — ver `project-sigcr-deploy-pattern` na
+memória — todo `useApi()` delas chamava um método inexistente, erro
+sempre engolido pelo try/catch local, tela sempre em estado vazio).
+Confirmado via grep no repo inteiro: nenhum outro arquivo importa essas 4
+páginas nem referencia suas rotas (`/painel-detran`,
+`/detran/analise`, `/detran/poc`, `/detran/homologacao`) por string; backend
+não tem nenhuma rota `processos*`/`painel_detran` associada (já confirmado
+morto dos dois lados). `hooks/useApi.js` não precisou de alteração.
+
+**Achado antes de deployar:** o working tree em `/opt/sigcr` tinha essa
+limpeza misturada, no mesmo diff de `App.js` e `DashboardLayout.js`, com o
+lote pendente de 2026-08-05 que o usuário pediu explicitamente pra não
+tocar nesta rodada (`PerfilAtivoContext`, rotas `/cadastro`,
+`/fila-registros`, `/registro-contrato`, `/gestao-editais`). Isolado à mão
+num `git worktree` a partir do HEAD (`8211a7d`, confirmado idêntico ao
+release em produção `20260809-1509-timeline-removal`) — mesma técnica do
+item 9: só os imports/rotas dos 4 componentes removidos de `App.js`, só a
+entrada de nav `/painel-detran` (+ import não usado do ícone `Zap`)
+removida de `DashboardLayout.js`, as 4 páginas deletadas. Nada do
+`PerfilAtivoContext`/lote pendente entrou.
+
+**Build e verificação:** `npm ci --legacy-peer-deps && CI=false npm run
+build` no worktree isolado — compilou limpo (só os warnings de eslint
+pré-existentes de sempre). Grep no bundle final (`main.7efca167.js`):
+zero ocorrências de `painel-detran`, zero ocorrências de
+`PerfilAtivoProvider`/`gestao-editais`/`fila-registros`/
+`registro-contrato`/`CadastroPublico` — confirma isolamento completo do
+lote pendente.
+
+**Deploy:** só frontend (backend não tocado nesta mudança). Release
+`releases/20260811-painel-detran-cleanup`, swap atômico do symlink
+`current`. Health check: `sigcr.com.br` serve o hash novo; `index.html`
+`Cache-Control: no-cache`, `/static/` `immutable`; rotas `/`, `/portarias`,
+`/criar-evento`, `/planos`, `/dashboard` todas 200; `api.sigcr.com.br/api/`
+200, `/api/portarias`, `/api/stats`, `/api/companies` 401 sem token
+(backend íntegro, como esperado — não foi restartado). Worktree removido
+após o build.
+
+**Não testado (sem ferramenta de browser):** clique real confirmando que o
+menu DETRAN não mostra mais "Painel DETRAN" e que as rotas antigas
+(`/painel-detran` etc.) caem no catch-all (`/dashboard`) sem erro — só
+verificado que o bundle não contém mais esses componentes.
+
+
+## 12. Dois fixes de segurança — gap de escrita em portarias sem UF + company_id não validado em Solicitações — ✅ CONCLUÍDO (2026-08-11)
+
+Dois gaps de autorização, ambos reais (confirmados explorando em devtest
+antes de corrigir, não só por leitura de código):
+
+**a) `PATCH/DELETE /portarias/{id}` sem `estado_sigla`** (gap identificado em
+2026-08-05, ver memória `project-sigcr-portarias-perfil-fix`, nunca corrigido
+até agora): as duas rotas só exigiam `Depends(get_current_user)` — qualquer
+usuário autenticado, **incluindo `registradora`**, editava ou apagava
+(soft-delete) qualquer portaria sem `estado_sigla` (portarias legadas ou
+cadastradas sem UF), porque `_checar_permissao_escrita_estado` só rodava
+`if portaria.get("estado_sigla")`. Corrigido trocando a dependency das duas
+rotas pra `Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))`
+— o mesmo gate-base que `POST /portarias` já usa — mantendo
+`_checar_permissao_escrita_estado` como checagem adicional de escopo por UF
+quando `estado_sigla` está presente. `registradora` agora recebe 403 em
+ambos os casos (com ou sem UF); `detran`/`detran_admin` seguem podendo editar
+só a própria UF quando ela está setada.
+
+**b) `POST /solicitacoes` não validava dono do `company_id`**: o
+`company_id` vinha direto do body sem nenhuma checagem — qualquer empresa
+com acesso total (`require_acesso_total`) podia criar uma "solicitação"
+anexada ao `company_id` de **outra** empresa. Corrigido reaproveitando
+`_autorizar_acesso_empresa` (mesmo helper usado em `GET/PATCH/DELETE
+/companies/{id}`, documentos etc.) — 400 se `company_id` ausente, 404 se não
+existe, 403 se pertence a outra empresa (dono sempre passa; `sigcr_admin`
+sempre passa, por design, mesmo padrão de todo o resto do sistema).
+
+**Isolamento:** working tree tinha esses dois pontos afogados no meio do
+diff gigante do lote pendente (Fase A financeira/checklist DETRAN-DF/
+autocadastro) em `backend/server.py` — não dava pra usar o arquivo do disco
+como base. Os dois fixes foram escritos direto num `git worktree` a partir
+do HEAD (`8211a7d`, mesmo commit que já estava rodando em produção), diff
+final de 4 linhas + 6 linhas, nada mais tocado.
+
+**Testado em devtest** (`sigcr-backend-devtest` rebuildado com a imagem
+isolada, `sigcr-mongodb-devtest`, dados sintéticos `sectest_*` — 2 empresas,
+5 usuários via `user_sessions` fallback legado, 2 portarias, todos
+removidos ao final do teste): 13 cenários, todos com o resultado esperado —
+inclui confirmação de que `detran_admin`/`detran` no próprio UF, e
+`sigcr_admin` em qualquer caso, continuam funcionando sem regressão (a
+checagem de escopo por UF pré-existente não foi alterada, só ganhou um gate
+anterior).
+
+**Deploy:** só backend, via `deploy.sh` rodado dentro do worktree isolado
+(garante que só os 2 fixes chegam em produção, não o resto do lote
+pendente). Tag de rollback:
+`sigcr-backend:pre-deploy-rollback-20260811-1414`. Health check: `/api/`
+200; `/api/portarias`, `/api/stats`, `/api/companies`,
+`/api/eventos/templates` 401 sem token; `PATCH /api/portarias/x` e `POST
+/api/solicitacoes` também 401 sem token (rotas ainda registradas e
+protegidas); `docker logs sigcr-backend` sem traceback/500 após restart.
+Worktree removido após o deploy.
+
+
+## 13. PerfilAtivoContext + rebrand visual "Berry" (laranja→azul) — ✅ CONCLUÍDO (deploy 2026-08-11)
+
+Terceiro item da rodada de hoje. Isolado do lote pendente de 2026-08-05, com
+uma decisão de escopo tomada em conjunto com o usuário no meio do caminho
+(ver abaixo).
+
+**O que é:**
+- `PerfilAtivoContext.js` (novo): move o estado de "perfil ativo" (badge
+  Registradora/DETRAN/Financeira) de local em `DashboardLayout` pra um
+  Context React, acessível por qualquer tela da árvore autenticada (hoje só
+  `DashboardLayout` consome; a própria mudança já documenta a intenção de
+  outras telas — ex. filtro "Selecionar Empresa" — consumirem depois).
+  Lógica idêntica à anterior (mesmo `PERFIS_PERMITIDOS`, mesma
+  persistência via `localStorage['sigcr_perfil_ativo']`), só realocada.
+- `DashboardLayout.js`: consome o context em vez de estado local; ganha de
+  brinde um fix de bug real e pré-existente (não introduzido pelo lote
+  pendente) — a seção "Administração" do menu duplicava "Dossiê
+  Credenciamento" e "Estados" pra `sigcr_admin` (apareciam tanto no menu do
+  badge DETRAN quanto de novo, incondicional, na seção Administração).
+  Agora filtra por path já presente no menu do badge ativo.
+- **Rebrand de cores "Berry" (achado no meio do trabalho, não estava no
+  pedido original — perguntei ao usuário como proceder, respondeu "aplicar
+  completo")**: `tailwind.config.js` sobrescreve as escalas nomeadas do
+  Tailwind (`orange`→azul MUI blue, `purple`, `emerald`/`green`, `red`,
+  `amber`/`yellow`, `zinc`) e `index.css` troca as variáveis CSS
+  (`--primary`, `--background` etc.) pro tema escuro "Berry". Como a
+  maioria das telas usa classes literais (`bg-orange-500` etc.) direto,
+  isso muda a cor de **todo o sistema**, não só a landing pública — decisão
+  consciente do usuário, não um efeito colateral escondido.
+- Recolor (laranja→azul, sem mudança de interface/props) em `ai-loader.js`,
+  `cookie-banner.js`, `globe-hero.js`, `gradient-menu.js`,
+  `vapour-text-effect.js`. `ai-loader.js`/`globe-hero.js` não são
+  importados em lugar nenhum hoje (achado confirmado por grep) — a mudança
+  neles é inerte até alguma tela vir a usá-los.
+
+**Explicitamente excluído desta fatia** (fica pro resto do lote de
+2026-08-05, numa rodada própria):
+- `interactive-map.js`: sua mudança no working tree quebra a interface (nova
+  prop `data` obrigatória, esperando um formato vindo de um endpoint
+  `GET /mapa-nacional` que não existe no backend hoje). Se essa versão
+  subisse sozinha, o mapa do Dashboard perderia todos os marcadores (sem
+  crash, mas regressão visível). Fica na versão antiga, funcionando como
+  hoje.
+- `CadastroPublico.js`, `FilaRegistros.js`, `GestaoEditais.js`,
+  `SolicitacaoRegistro.js` e as rotas/itens de menu associados
+  (`/cadastro`, `/fila-registros`, `/gestao-editais`, `/registro-contrato`),
+  `Documentos.js` (sua integração com `usePerfilAtivo` filtra por
+  `tipo_empresa`, feature ligada ao módulo Financeira/lote pendente) e a
+  troca de `NAV_FINANCEIRA` pra apontar nessas rotas novas — mantido como
+  está em produção hoje (`/contratos`/`/gravames`, já um gap conhecido e
+  não piorado por esta mudança).
+- `Dashboard.js`, `MapaNacional.js`, `Editais.js`, `EstadoDetalhe.js`,
+  `ChecklistContran.js`, `Checkout.js`, `Planos.js`, `Esteiras.js`,
+  `Notificacoes.js`, `PagamentoAguardando.js`, `SolicitacaoDetalhe.js`,
+  `UploadDocumentos.js`, `AppMobile.js` — reescritas grandes não
+  relacionadas, fora de escopo.
+
+**Isolamento:** `git worktree` a partir do HEAD (`8211a7d`), reaplicando a
+remoção do painel-detran (item 11, ainda não commitada em lugar nenhum) +
+só os arquivos acima copiados/editados à mão. `git diff --stat` final: 9
+arquivos, sem nenhuma menção a `painel-detran`/`gestao-editais`/
+`fila-registros`/`registro-contrato`/`CadastroPublico` (confirmado por
+grep no bundle final).
+
+**Testado:** `npm ci --legacy-peer-deps && CI=false npm run build`
+compilou limpo (só warnings de eslint pré-existentes). Bundle final
+(`main.00c982da.js` / `main.687a6f25.css`) confirmado por grep: zero
+ocorrências das rotas/telas excluídas, `PerfilAtivoProvider`/
+`usePerfilAtivo` presentes, `--primary:207 90% 54%` (azul Berry) presente
+no CSS compilado. Build servido estaticamente pra confirmar que os
+arquivos gerados não estão corrompidos (200 em `index.html`, JS e CSS).
+
+**Não testado (sem ferramenta de browser neste ambiente)**: clique real —
+troca de perfil ativo no seletor, conferência visual de que nenhuma tela
+ficou com contraste ruim/ilegível depois do rebrand (risco real dado que é
+uma repaginação de cor em todo o sistema, incluindo estados como
+sucesso/erro/aviso que agora usam tons diferentes), e confirmação de que o
+menu "Administração" deduplicado não escondeu nada que devia aparecer.
+
+**Deploy autorizado pelo usuário em 2026-08-11** (mesmo dia do teste).
+Release `releases/20260811-perfilativo-rebrand`, swap atômico do symlink
+`current` a partir do build já testado (mesmo hash `main.00c982da.js`/
+`main.687a6f25.css`). Health check pós-swap: hash novo servido; CSS
+compilado confirmado com `--primary:207 90% 54%` (azul Berry); `index.html`
+`Cache-Control: no-cache`, `/static/` `immutable`; rotas `/`, `/dashboard`,
+`/portarias`, `/criar-evento`, `/planos`, `/estados`, `/usuarios`,
+`/notificacoes` todas 200; bundle ao vivo confirmado por grep (0 menções
+das rotas/telas excluídas, `PerfilAtivoProvider`/`usePerfilAtivo`
+presentes); backend intocado, `/api/` 200, `/api/portarias` e
+`/api/companies` 401 sem token. Worktree de build removido após o deploy.
+
+**Ainda não testado (sem ferramenta de browser)**: clique real — troca de
+perfil ativo, conferência visual de contraste em todas as telas após o
+rebrand, e confirmação de que o menu "Administração" deduplicado não
+escondeu nada que devia aparecer. Recomendado que o usuário/Pedro
+confirme visualmente quando puder.
+
+
+## 14. Certificado digital ICP-Brasil como identidade de login — plano de investigação (2026-08-11)
+
+Retomando um pedido de uma conversa anterior que não está registrado em
+lugar nenhum (nem memória, nem neste arquivo) — não tinha o enunciado
+original, então confirmei o escopo com o usuário antes de escrever
+qualquer coisa.
+
+**Escopo confirmado com o usuário:** o certificado ICP-Brasil não é um
+recurso opcional nem só pro cadastro — é a **identidade primária do
+sistema**. Precisa identificar empresa (CNPJ) ou pessoa física (CPF) no
+primeiro acesso, e ser exigido **em todo login subsequente**, não só na
+criação da conta. Objetivo explícito: impedir que um terceiro crie um
+usuário fictício — a conta nasce vinculada a um certificado real,
+validado, não a um CPF/CNPJ autodeclarado num formulário.
+
+### Achado mais importante — muda a pergunta original "A1 vs A3"
+
+A ICP-Brasil está no meio de uma transição regulatória ativa, com prazos
+que já bateram ou estão batendo agora:
+- Emissão do e-CNPJ A3 no modelo de 3 anos **encerrou em 28/02/2026** (já
+  passou) — CNPJ A3 novo agora só sai com validade de 1-2 anos.
+- Emissão de A1/A3 na cadeia V10 (atual) **encerra em 31/12/2026** — daqui
+  a ~4 meses e meio. Depois disso, só "casos específicos".
+- **Certificado A1 está sendo substituído, especificamente pro lado
+  pessoa jurídica (CNPJ), pelo "Selo Eletrônico"** (Selo em Software
+  SE-S / Selo em Hardware SE-H) — um modelo novo, não mais A1/A3.
+- Lado pessoa física (CPF) segue mais estável: A1 válido até a cadeia V5
+  expirar (02/03/2029), A3/A4 seguem como modelo de longo prazo pra CPF
+  depois disso.
+
+**Implicação prática:** como o SIGCR precisa identificar tanto CNPJ
+(empresa) quanto CPF (pessoa física), construir a integração em cima de
+"e-CNPJ A1/A3" hoje é apostar num modelo que a própria ICP-Brasil está
+descontinuando pro lado empresa durante a janela em que o SIGCR estaria
+sendo construído/lançado. Precisa confirmar direto na fonte (ITI/gov.br,
+não posts de blog de certificadoras de 2024) se o Selo Eletrônico
+efetivamente serve pro caso de uso "logar como responsável pela empresa
+toda vez" ou se é mais restrito (ex: só carimbo/integridade de documento,
+não autenticação interativa) — se for mais restrito, a resposta pro lado
+CNPJ pode ser "e-CPF do responsável legal + vínculo com o CNPJ via
+procuração/QSA da Receita", não um certificado da própria empresa.
+
+### A pergunta técnica real: como "login com certificado, toda vez" funciona na web
+
+Não é só validar a cadeia — é fazer o navegador conseguir *acessar* o
+certificado (principalmente A3, que fica preso num hardware) a cada login.
+Quatro caminhos realistas, com trade-offs bem diferentes:
+
+1. **mTLS (certificado de cliente TLS) na borda** — nginx pede o
+   certificado, valida a cadeia, repassa os campos pro backend. Mais
+   "correto" tecnicamente, mas A3 via navegador depende de driver
+   PKCS#11 instalado localmente; navegadores modernos vêm reduzindo esse
+   suporte nativo (a era NPAPI acabou). Mobile é o ponto mais fraco — em
+   geral não dá pra acessar token/smartcard A3 direto do browser mobile.
+2. **Desafio-resposta com assinatura local** — servidor manda um nonce,
+   algum componente local (extensão de navegador, app nativo, SDK tipo
+   "Web PKI" de fornecedores como a Lacuna Software) assina com a chave
+   privada, servidor valida a assinatura + cadeia. É o padrão mais comum
+   em sistemas brasileiros que precisam de A3 de verdade — mas significa
+   pedir pro usuário instalar um componente extra.
+3. **Delegar pro Login gov.br** — o gov.br já tem login por certificado
+   digital (nível Prata/Ouro) funcionando em produção, já resolveu o
+   problema de A3/mobile na prática. O SIGCR (via Keycloak, que já é o IdP
+   atual) poderia registrar o gov.br como *identity broker* e receber
+   CPF (e dados de representação de CNPJ, se o gov.br expuser isso via
+   claim) prontos, sem implementar validação de cadeia ICP-Brasil do zero.
+4. **Achado concreto de reaproveitamento**: existe um plugin open-source
+   já pronto pra Keycloak — `luneo7/authenticator-icpbrasil-keycloak`
+   (GitHub) — que faz exatamente a extração de CPF/CNPJ do certificado
+   (via os campos OtherName do Subject Alternative Name, conforme
+   DOC-ICP-04/05 da ICP-Brasil) e mapeia pra identidade do Keycloak.
+   Resolve a parte de "extrair CPF/CNPJ do certificado dentro do
+   Keycloak", mas **não** resolve o problema de acesso ao hardware A3
+   pelo navegador (item 1 acima) — só ajuda depois que o certificado já
+   chegou no servidor. Precisa avaliar manutenção/maturidade do projeto
+   antes de depender dele.
+
+### Perguntas em aberto que bloqueiam qualquer implementação
+
+- Selo Eletrônico serve pro caso de uso de login interativo recorrente, ou
+  é só carimbo de documento? (bloqueia a decisão pro lado CNPJ)
+- Dado que é "todo login", a operação vai exigir instalar algo no
+  computador do usuário (driver A3, extensão, SDK tipo Web PKI) ou dá pra
+  delegar isso inteiro pro gov.br?
+- O que acontece quando o certificado vence no meio da vida útil da conta
+  (A1: até 1 ano; A3: 1-5 anos) — fluxo de renovação, e existe QUALQUER
+  fallback (ainda que temporário) sem reabrir a brecha de identidade
+  fictícia que essa mudança inteira existe pra fechar?
+- Troca de responsável legal da empresa (o dono do e-CPF/e-CNPJ sai da
+  empresa) — como a conta é re-vinculada sem virar uma nova brecha?
+- Infra atual (nginx → Keycloak → FastAPI) não está configurada pra mTLS
+  hoje — se o caminho 1 for escolhido, precisa de mudança de infra, não só
+  de aplicação.
+
+### Plano de investigação proposto (fases, sem código ainda)
+
+1. **Confirmação regulatória/fornecedores** (poucas horas): checar direto
+   nas fontes oficiais (ITI, gov.br) o que o Selo Eletrônico cobre hoje, e
+   o que exatamente o Login gov.br devolve num login por certificado
+   (CPF sozinho, ou dá pra obter também representação de CNPJ).
+2. **Spike de arquitetura**: comparar só os dois caminhos realistas —
+   delegar pro gov.br vs. mTLS/Keycloak in-house (caminhos 1+2+4 acima
+   juntos) — em esforço de implementação, custo de manutenção contínua
+   (atualização de cadeia/CRL, suporte a driver A3), cobertura de
+   dispositivo (desktop + mobile, A1 + A3).
+3. **Protótipo** (só depois que 1+2 apontarem um caminho único): validar
+   ponta a ponta contra um certificado de teste — extração de CPF/CNPJ,
+   validação de cadeia, revogação.
+
+**Recomendação preliminar (a confirmar na fase 1, não uma decisão
+fechada)**: dado que é "todo login" e precisa cobrir A1 e A3 (e
+provavelmente mobile mais cedo ou mais tarde), delegar pro Login gov.br
+tende a ser o caminho de menor risco/manutenção — evita reimplementar
+validação de cadeia ICP-Brasil e o problema de acesso a hardware A3 pelo
+navegador, que sistemas brasileiros de governo em geral resolvem assim.
+Mas isso depende de confirmar na fase 1 se o gov.br expõe o dado de
+representação de CNPJ que o SIGCR precisa, não só o CPF da pessoa física.
+
+**Status:** plano de investigação entregue, nenhuma decisão de arquitetura
+tomada ainda — aguardando o usuário revisar e decidir se parte pra fase 1
+(confirmação regulatória) ou quer discutir as opções primeiro.
+
+
+## 15. Reorganização de menu DETRAN + tela "Registradoras" (cadastro + status de credenciamento agregado) — ✅ CONCLUÍDO (2026-08-11)
+
+Pedido confirmado pelo Pedro: mover "Empresa" pra dentro de uma seção
+"DETRANs e Registradoras" no menu do DETRAN, e trocar por uma visão nova
+que une cadastro + status de credenciamento por portaria (em vez de só o
+cadastro, como no print que o Pedro mostrou).
+
+**Investigação prévia (antes de codar):**
+- `GET /companies` hoje só devolve empresas do próprio `user_id` (exceto
+  `sigcr_admin`) — DETRAN não tinha nenhuma forma de listar registradoras.
+  A versão com `tipo_empresa` como filtro que aparece no working tree faz
+  parte do lote pendente de 2026-08-05 (Fase A), não está em produção —
+  não dava pra depender dela.
+- Modelo de dados **suporta bem** o agregado pedido: `db.submissoes` já
+  tem `company_id` + `estado_sigla` + `portaria_id` + `status` +
+  `itens[]` (cada item com `status` pendente/enviado/conforme/inconforme)
+  — uma consulta `find({company_id: {$in: [...]}, estado_sigla: uf})`
+  direta, sem fan-out caro. Nenhum ajuste de modelo foi necessário.
+- `PainelConferencia.js` (tela existente de análise de submissões, por
+  portaria) tinha exatamente os badges de status (`STATUS_SUBMISSAO_CFG`,
+  `STATUS_ITEM_CFG`) que a nova tela precisava — reaproveitados
+  integralmente, só sem os botões de ação (essa tela é só leitura; a ação
+  de aprovar/reprovar item continua exclusiva do Painel de Conferência).
+- `Estados.js` (rota `/estados`) já é essencialmente a tela "lista de
+  DETRANs/UFs" — por isso virou a outra metade da seção "DETRANs e
+  Registradoras" ao lado da nova tela.
+
+**Backend** (`GET /detran/registradoras?estado_sigla=<uf>`, novo endpoint):
+devolve, por registradora que atua na UF (`tipo_empresa=registradora` e
+`detrans_atuacao` contém a UF): dados de cadastro (mesmos campos da tela
+Empresa) + lista de submissões nessa UF, cada uma com portaria
+(título/número), status da submissão, contagem de itens
+conforme/inconforme/pendente e a lista de itens individual (nome +
+status + justificativa). Escopo idêntico ao resto do domínio DETRAN
+(`_perfil_pode_ver_estado`): `detran`/`detran_admin` só a própria UF
+(`detran_uf`, parâmetro ignorado se enviado); `sigcr_admin` escolhe a UF
+via query param, obrigatório. `registradora`/`financeira` levam 403.
+
+**Testado em devtest** (`sigcr-backend-devtest` + `sigcr-mongodb-devtest`,
+dados sintéticos `regtest_*`: 3 registradoras em UFs diferentes + 1
+financeira pra confirmar filtro de tipo, 2 submissões com status
+variados): 8 cenários — escopo por UF pro `detran` (só vê quem atua na
+própria UF, financeira nunca aparece), `sigcr_admin` sem `estado_sigla`
+(400), com UF inválida (400), `registradora` (403), sem token (401), e
+confirmação de que a agregação de itens/contadores bate exatamente com o
+que foi semeado (homologado com 2/2 conforme, em_diligencia com 1
+conforme + 1 inconforme).
+
+**Frontend:**
+- `Registradoras.js` (nova tela): lista de cards por registradora
+  (cadastro, reaproveitando o layout de `Empresas.js`) com expansão
+  por clique mostrando as submissões da UF e, dentro de cada uma, os
+  badges de item individual (reaproveitados de `PainelConferencia.js`).
+  Seletor de UF só aparece pro `sigcr_admin` (mesmo padrão do Painel de
+  Conferência); `detran`/`detran_admin` usam `user.detran_uf` direto.
+  100% leitura — sem criar/editar/excluir, como pedido (isso continua só
+  em `Empresas.js`, que o DETRAN nem tem permissão de rota pra acessar).
+- `DashboardLayout.js`: introduzido suporte a `section` opcional nos itens
+  de nav (mecanismo genérico, não específico do DETRAN) — itens com a
+  mesma `section` são agrupados num bloco com cabeçalho, mesmo tratamento
+  visual que o bloco "Administração" já tinha. `/estados` saiu da lista
+  solta do menu DETRAN e entrou, junto com a nova `/registradoras`, na
+  seção "DETRANs e Registradoras". Extraído `NavItemLink` (estava
+  duplicado 3x: itens soltos, seção nova, bloco Administração). `/registradoras`
+  também adicionado a `NAV_ADMIN_EXTRA` (mesmo tratamento que `/estados`
+  já tinha, pro `sigcr_admin` alcançar em qualquer badge).
+- `App.js`: nova rota `/registradoras`, `perfilPermitido={["sigcr_admin",
+  "detran", "detran_admin"]}` (mesma lista de `/estados`).
+
+**Isolamento do deploy:** como o working tree tem o lote pendente de
+2026-08-05 misturado (mesmo problema dos itens 11/13 anteriores), o
+build/deploy foi feito num `git worktree` a partir do HEAD (`8211a7d`)
+reconstruindo em cima dele só o que já está realmente em produção hoje
+(remoção do painel-detran do item 11 + `PerfilAtivoContext`/rebrand do
+item 13) + esta mudança nova — nada do resto do lote pendente (cadastro
+público, fila de registros, gestão de editais) entrou. Confirmado por
+grep no bundle final: zero ocorrências de `painel-detran`/`gestao-editais`/
+`fila-registros`/`registro-contrato`/`CadastroPublico`.
+
+**Depois do deploy**, as mesmas mudanças de código (backend + `App.js` +
+`DashboardLayout.js` + `Registradoras.js` novo) foram também aplicadas de
+volta no working tree principal do `/opt/sigcr` (por cima do estado atual,
+que já inclui o lote pendente) — só pra não perder o código-fonte da
+feature nova dentro de um worktree descartável. Isso significa que o
+working tree principal agora tem uma versão de `DashboardLayout.js`
+ligeiramente à frente do que está de fato em produção (o mecanismo de
+`section` genérico não existia lá antes) — sem problema, é só a mesma
+disciplina de sempre: o que está rodando em produção é o que foi buildado
+no worktree isolado e testado, não o working tree em si.
+
+**Deploy:** backend via `deploy.sh` no worktree isolado (rollback tag
+`sigcr-backend:pre-deploy-rollback-20260811-1625`); frontend via swap
+atômico do symlink `current` pro release
+`releases/20260811-registradoras`. Health check: `/api/` 200,
+`/api/portarias`/`/api/companies`/`/api/estados`/`/api/detran/registradoras`
+401 sem token; rotas `/`, `/dashboard`, `/portarias`, `/estados`,
+`/registradoras`, `/notificacoes`, `/usuarios`, `/empresas` todas 200.
+**Nota:** logo após o restart do backend, `api.sigcr.com.br` devolveu 502
+por alguns segundos (nginx marcou o upstream como fora do ar durante a
+janela de troca de container — `no live upstreams` no error log) e se
+recuperou sozinho antes do próximo health check, sem intervenção — mesmo
+padrão de instabilidade momentânea já visto em deploys anteriores, não é
+uma regressão nova.
+
+**Não testado (sem ferramenta de browser)**: clique real — expandir um
+card de registradora, conferir que o menu lateral do DETRAN mostra a nova
+seção "DETRANs e Registradoras" com Estados+Registradoras agrupados, e
+que `sigcr_admin` navegando pela seção "Administração" com outro badge
+ativo não vê Registradoras duplicado.
+
+
+## 16. Fix crítico do fluxo credenciamento-por-portaria (botão "iniciar
+submissão" 100% quebrado) + destaque de pendência no Dashboard da
+Registradora — ✅ CONCLUÍDO (2026-08-11)
+
+Pedido do Pedro: confirmar que o fluxo ponta a ponta (portaria publicada →
+Registradora vê e envia documentos → DETRAN analisa → diligência) realmente
+funciona hoje, e só depois adicionar um destaque no Dashboard pra deixar
+óbvio, assim que a Registradora loga, que há credenciamento pendente —
+hoje só descobria navegando até "Minhas Submissões".
+
+### Achado crítico — item 1 do pedido tinha um gap real, priorizado antes do destaque
+
+`POST /submissoes` (`backend/server.py`) exigia `portaria_id: str =
+Form(...)` — só aceita o campo vindo de um corpo `multipart/form-data` ou
+`application/x-www-form-urlencoded`. `MinhasSubmissoes.js`
+(`iniciarSubmissao`) sempre chamou `axios.post(`${API}/submissoes`, null, {
+params: { portaria_id } })` — isso manda `portaria_id` como **query
+string**, com corpo vazio. FastAPI rejeita com 422 `Field required` porque
+o corpo não tem o campo que `Form(...)` exige. Não é um regressão recente:
+existia desde a implementação original do fluxo (2026-08-05) — o teste de
+então (ver memória/[[project-sigcr-credenciamento-portaria-feature]])
+validou o backend via `httpx` chamando com form-encoding correto
+diretamente, nunca replicando o padrão de chamada real do frontend, e o
+frontend só foi validado por build (compila), nunca clicado de fato (sem
+ferramenta de browser). Resultado prático: **toda Registradora/Financeira
+que clicasse "Iniciar Submissão" numa portaria publicada recebia erro e
+nunca conseguia começar** — o fluxo inteiro estava bloqueado logo no
+segundo passo, apesar do resto (upload, submeter, análise do DETRAN,
+diligência, homologação, comprovante) estar implementado corretamente.
+
+**Fix**: trocado `portaria_id: str = Form(...)` por `portaria_id: str`
+(FastAPI trata como query param pra `str` fora de rota de corpo) — 1 linha,
+sem mudança nenhuma no frontend (é o único chamador desta rota, confirmado
+por grep). Nenhum outro endpoint do fluxo tinha esse tipo de
+descompasso (`PATCH /submissoes/{id}/itens/{id}` usa corpo JSON — bate com
+o `axios.patch(..., {status, justificativa})` do `PainelConferencia.js`;
+os uploads usam `FormData` de verdade — bate com `Form(...)` no backend).
+
+**Testado em devtest** (`sigcr-backend-devtest` rebuildado a partir de uma
+cópia isolada do `server.py` realmente rodando em produção — extraído
+direto do container via `docker exec cat` — com só essa 1 linha alterada,
+não o `server.py` do working tree, que tem o lote pendente de 2026-08-05
+inteiro misturado): fluxo completo ponta a ponta via `httpx` simulando
+exatamente as chamadas do frontend real (query param pro create, JSON pro
+PATCH de análise, multipart pros uploads) contra dados de teste já
+existentes no devtest (empresa `company_e743fc3ab9dc`/SP, portaria
+`TEST-001/2026`) — 24 checks, todos passando: portaria publicada visível só
+pros itens do perfil da empresa, criar submissão, upload dos 2 itens,
+submeter, DETRAN vê e marca 1 conforme + 1 inconforme com justificativa
+obrigatória (submissão vai pra `em_diligencia`, justificativa visível pra
+Registradora), reenvio do item inconforme (volta pra `em_analise`
+automaticamente), DETRAN aprova e homologa, comprovante PDF baixado
+(`%PDF` confirmado) — **zero achado de regressão no resto do fluxo**, só o
+gap do passo 2.
+
+### Achado separado, não relacionado ao pedido: bind mount de uploads do backend apontando pro lugar errado
+
+Durante a investigação, antes de tocar em produção: `docker inspect
+sigcr-backend` mostrou o mount de `/app/uploads` com **source
+`/tmp/sigcr-build-registradoras/backend/uploads`** (um worktree de build
+descartável do deploy do item 15, hoje vazio) em vez de
+`/opt/sigcr/backend/uploads` (o diretório real, com os 13 documentos já
+enviados por empresas reais). Container rodando assim desde o restart do
+item 15 (`2026-08-11T16:25:58Z`) — mesma classe de incidente do
+`PENDING_ACTIONS.md` item "Incidente do bind mount de uploads"
+(2026-08-02), causado porque `deploy.sh` resolve `$BACKEND_DIR/uploads`
+relativo à própria localização do script, e o script rodou de dentro do
+worktree isolado daquele deploy. Consequência prática confirmada: **zero
+documentos novos enviados nesse intervalo** (`db.documents` sem nenhum
+`created_at` depois do restart — nada foi perdido), mas os 13 documentos
+antigos ficaram invisíveis pra API (download quebraria) e qualquer upload
+que acontecesse nesse meio tempo iria pra um caminho órfão em `/tmp`, sob
+risco real de ser apagado. Corrigido como efeito direto de rodar o
+`deploy.sh` deste item **da localização real** (`/opt/sigcr/backend`, não
+um worktree) — `docker inspect` pós-deploy confirma o mount de volta em
+`/opt/sigcr/backend/uploads`. Vale revisitar depois: `deploy.sh` confirma
+que o mount existe, mas não confirma que a *fonte* é a esperada — teria
+pego esse caso mesmo assim.
+
+### Destaque de pendência no Dashboard (item 2 do pedido)
+
+`Dashboard.js` (mesmo pra todos os perfis, sem branch por perfil hoje)
+ganhou um card condicional, visível só pra `registradora`/`financeira`,
+logo abaixo do cabeçalho (antes do carregamento dos stats gerais, com seu
+próprio loading/erro isolado — falha silenciosamente sem quebrar o resto
+do Dashboard se a checagem falhar): busca a empresa própria + portarias +
+submissões (mesma regra de "relevante" de `MinhasSubmissoes.js` — UF de
+atuação da empresa + checklist com item pro `tipo_empresa` dela) e conta
+quantas portarias relevantes ainda **não têm submissão** ou estão em
+**rascunho** (não iniciadas) vs. em **`em_diligencia`** (ajuste pedido
+pelo DETRAN). Só renderiza se o total for > 0 — "Você tem N
+credenciamento(s) pendente(s) — clique para responder", com o
+detalhamento ("X com ajuste pedido pelo DETRAN · Y aguardando envio de
+documentos") quando aplicável. Clique no card ou no botão navega (SPA,
+sem reload) pra `/credenciamento-portaria`.
+
+**Isolamento pro build**: `Dashboard.js` nunca foi tocado por nenhum dos
+deploys anteriores (11/13/15) — confirmado que a versão em produção hoje
+ainda é exatamente a do commit `8211a7d` (HEAD). Mudança feita em cima
+dela diretamente, não da versão do working tree (que é uma reescrita
+grande e não testada, parte do lote pendente de 2026-08-05 — ver
+[[project-sigcr-pending-batch-20260805]]). Pra montar o worktree de build
+isolado, reconstruí à mão App.js e DashboardLayout.js (que item 13/15 já
+tinham deixado corretos no working tree principal, exceto por 3 entradas
+do lote pendente ainda misturadas neles — rota/import `PortariaPublica`,
+nav `/fila-registros` na Registradora, nav `/gestao-editais` no DETRAN e
+Admin, e `NAV_FINANCEIRA` apontando pras rotas novas em vez de
+`/contratos`+`/gravames` como item 13 documentou explicitamente ter
+mantido — todas removidas pra bater exatamente com o que já está em
+produção) e copiei sem alteração os arquivos que item 13/15 confirmam
+terem sido aplicados de volta ao working tree tal como deployados
+(`DashboardLayout.js` na parte não-financeira, `tailwind.config.js`,
+`index.css`, os 5 componentes de UI recoloridos, `PerfilAtivoContext.js`,
+`Registradoras.js`). Confirmado por grep no bundle final: zero ocorrências
+de `painel-detran`/`gestao-editais`/`fila-registros`/`registro-contrato`/
+`CadastroPublico`/`PortariaPublica`.
+
+**Testado em devtest/isolado**: build (`npm ci --legacy-peer-deps && CI=false
+npm run build`) compilou limpo (só os warnings de eslint pré-existentes de
+sempre, incluindo um novo da mesma classe no `Dashboard.js`). Bundle final
+(`main.6a47f241.js`/`main.ddc9c339.css`) confirmado por grep: texto do
+card presente ("clique para responder", "aguardando envio de documentos",
+"com ajuste pedido pelo DETRAN"), `PerfilAtivoProvider` presente, azul
+Berry presente no CSS, zero ocorrências do lote pendente excluído. Servido
+estaticamente pra confirmar `index.html`/JS/CSS não corrompidos.
+
+**Deploy** (autonomia total, sem pausar pra aprovação prévia — ver
+[[feedback-sigcr-autonomia-total]]):
+- Backend: `server.py` do working tree (que tem o lote pendente inteiro)
+  temporariamente substituído pela versão isolada (prod + só o fix de 1
+  linha) só durante o `deploy.sh`, restaurado logo em seguida — mesma
+  técnica de "stash ao redor do deploy.sh" já usada no primeiro deploy
+  desta feature, só que por substituição de arquivo em vez de `git
+  stash` (mais preciso pra isolar 1 arquivo). Rodado **da localização
+  real** (`/opt/sigcr/backend`), não de um worktree — corrige de quebra o
+  incidente do bind mount acima. Tag de rollback:
+  `sigcr-backend:pre-deploy-rollback-20260811-1835`. Health check: `/api/`
+  200; `/api/portarias`, `/api/companies`, `/api/detran/registradoras` 401
+  sem token; mount de uploads confirmado em `/opt/sigcr/backend/uploads`;
+  sem traceback nos logs.
+- Frontend: release `releases/20260811-dashboard-highlight`, swap atômico
+  do symlink `current`. Health check: hash novo servido
+  (`main.6a47f241.js`), `index.html` `Cache-Control: no-cache`, `/static/`
+  `immutable`, rotas `/dashboard`, `/registradoras`, `/estados`,
+  `/credenciamento-portaria`, `/detran/conferencia`, `/portarias`,
+  `/notificacoes`, `/usuarios`, `/empresas` todas 200.
+- Dados de teste do devtest (submissão, documentos, credenciamento
+  sintéticos criados durante a verificação) removidos ao final — devtest
+  fica limpo pro próximo uso.
+
+**Não testado (sem ferramenta de browser)**: clique real — logar como uma
+Registradora com portaria pendente de verdade (ex. HD Registros, se tiver
+UF com portaria publicada aplicável) e confirmar visualmente que o card
+aparece, o texto/contagem batem, e o clique navega pra
+`/credenciamento-portaria` corretamente; confirmar que o card **não**
+aparece pra quem não tem pendência.
+
+**Recomendação separada pro Pedro**: vale, numa rodada futura, ajustar
+`deploy.sh` pra confirmar não só que o mount de `/app/uploads` existe, mas
+que a *fonte* é exatamente `$BACKEND_DIR/uploads` resolvido a partir do
+caminho real do backend (não just onde o script foi invocado) — o gap que
+causou o incidente deste item passaria despercebido de novo do jeito que
+o script está hoje.
+
+
+## 17. URGENTE — regressão grave do backend (Criar Evento quebrado) + 2
+fixes de segurança também revertidos + auditoria de integridade de uploads
+— ✅ CONCLUÍDO (2026-08-11)
+
+Pedro reportou dois bugs em produção: (1) wizard "Criar Evento" dando erro
+ao publicar, bloqueante; (2) download de documento da HD Registros não
+funcionando. Investigação revelou que o bug 1 é sintoma de uma regressão
+bem maior.
+
+### Causa raiz do bug 1: os itens 12 e 15 (mais cedo hoje) apagaram 3 dias de trabalho backend
+
+Os itens 11 e 12 (limpeza painel-detran e os 2 fixes de segurança) foram
+construídos a partir de `git worktree add ... HEAD` (`8211a7d`) sob a
+premissa "HEAD é o mesmo commit que já está em produção" — premissa que
+valia pro commit em si (a feature de credenciamento por portaria), mas
+**não** pro que foi deployado *depois* dele: a integração Criar Evento ⇄
+Portaria (item 8, deploy 2026-08-08) e a remoção da timeline (item 9, deploy
+2026-08-09) nunca foram commitadas no git — só existiam no working tree e no
+container em produção. Ao rodar `deploy.sh` a partir desses worktrees
+isolados baseados em `HEAD`, cada deploy **substituiu inteiramente** o
+`server.py` de produção por uma versão que não tinha nada disso. O item 15
+(tela Registradoras, também hoje) repetiu o mesmo erro, cimentando a
+regressão. O item 16 (fix do `POST /submissoes`, também nesta sessão,
+mais cedo) involuntariamente **herdou** essa regressão, porque extraiu o
+`server.py` de produção via `docker exec cat` — que essa altura já estava
+regredido — pra aplicar seu fix de 1 linha; o fix em si estava certo, só a
+base sobre a qual foi aplicado já vinha quebrada.
+
+**O que desapareceu de produção, concretamente**: modelo `Portaria` sem
+`template`/`publicado_at`/`token_publico`/`link_publico`/`criado_via`/
+`data_abertura`/`data_encerramento`; `PortariaCreate` com `content`/
+`source`/`date` obrigatórios de novo (o wizard não envia esses 3 campos);
+rota `PATCH /portarias/{id}/publicar` inexistente (404); rota `GET
+/portarias/publico/{token}` inexistente; `/checklist-catalogo` (GET/POST/
+PATCH/DELETE) inexistente, então o Passo 2 do wizard (escolher checklist)
+também não tinha o que carregar; filtro de rascunho-não-vaza em `GET
+/portarias`/`GET /portarias/{id}`/`GET /portarias/search` removido (reabria
+o vazamento de rascunho corrigido em 2026-08-08); trava de 409 no `DELETE
+/portarias/{id}` com submissões em andamento removida. **Além disso**, os 2
+fixes de segurança do item 12 também tinham sumido de novo (o item 15
+repetiu o erro do 12): `PATCH`/`DELETE /portarias/{id}` sem `estado_sigla`
+voltou a aceitar qualquer usuário autenticado (`registradora` incluída);
+`POST /solicitacoes` voltou a aceitar `company_id` de qualquer empresa sem
+checar dono.
+
+**Confirmado no banco**: `db.portarias` só tinha 2 documentos, nenhum com
+`criado_via="wizard"` — ou seja, nenhuma tentativa de Pedro de criar via
+wizard chegou a gravar nada (o `POST /portarias` sempre falhava com 422
+antes de qualquer `insert_one`), nenhum dado órfão pra limpar.
+`db.checklist_catalogo_portaria` continuava com os 13 itens do seed
+original de 2026-08-08 intactos — só o *código* backend regrediu, o banco
+nunca foi tocado.
+
+### Fix
+
+Reconstrução cirúrgica: extraí o `server.py` real de produção
+(`docker exec sigcr-backend cat /app/server.py`, não o `HEAD` do git nem o
+working tree, que tem o lote pendente de 2026-08-05 inteiro misturado) e
+enxertei nele, peça por peça — comparado contra o working tree local (que
+ainda tinha o item 8/9 intactos, nunca perdidos por lá) — só o que
+pertence à integração Criar Evento/Portaria + os 2 fixes de segurança do
+item 12, explicitamente excluindo tudo do lote pendente de Fase A
+(`CHECKLIST_DETRAN_DF_003_2022`, `Company.registradora_id`/`tipo_empresa`
+no autocadastro, `/public/cadastro`, `/editais` PATCH/upload,
+`/solicitacoes-registro*` — nenhum desses entrou). Confirmado por grep: zero
+menções a `registradora_id`/`_validar_tipo_e_vinculo_empresa`/
+`CHECKLIST_DETRAN_DF_003_2022`/`public/cadastro` no arquivo reconstruído.
+
+**Testado em devtest** (imagem isolada `sigcr-backend:devtest-wizard-fix`,
+`sigcr-mongodb-devtest`, usando as mesmas contas de teste SP — registradora
+`company_e743fc3ab9dc` e detran — já seedadas de sessões anteriores): fluxo
+completo do wizard simulando exatamente as chamadas do frontend real
+(`GET /eventos/templates`, `GET /checklist-catalogo`, `POST /portarias` sem
+`content`/`source`/`date`, `PATCH /portarias/{id}/publicar`, visibilidade
+de rascunho vs. publicado pra registradora, `GET /portarias/publico/{token}`
+sem auth) — 15/15 checks; os 2 fixes de segurança re-testados isoladamente
+(registradora barrada de editar/excluir portaria sem UF, barrada de criar
+solicitação pra empresa de outro dono, csos legítimos continuando
+liberados) — 6/6 checks; regressão completa do fluxo credenciamento-por-
+portaria (24 checks, mesmo script do item 16) e de `/detran/registradoras`
+(item 15) — sem quebra em nenhum dos dois.
+
+**Deploy**: `deploy.sh` rodado da localização real (`/opt/sigcr/backend`,
+com o `server.py` reconstruído temporariamente no lugar — mesma técnica dos
+itens 15/16, restaurado o working tree completo com o lote pendente logo
+em seguida, já incluindo os 2 fixes de segurança aplicados por cima dele
+também, já que o working tree nunca os teve). Tag de rollback:
+`sigcr-backend:pre-deploy-rollback-20260811-1855`. Health check: `/api/`
+200; `/api/portarias`, `/api/checklist-catalogo`, `/api/companies`,
+`/api/detran/registradoras` 401 sem token (confirma rotas registradas);
+mount de uploads correto; sem traceback nos logs.
+
+**`deploy.sh` também hardened** contra a causa raiz de tudo isso: agora
+recusa rodar (exit 1) se não for executado a partir de `/opt/sigcr/backend`
+exatamente, e o check de mount pós-deploy passou a validar o `Source`, não
+só o `Destination` — as duas travas que teriam impedido tanto este
+incidente quanto o do item 16.
+
+**Não testado contra produção real** (só devtest, com código
+byte-idêntico ao deployado) — clique real no wizard pelo Pedro/usuário
+ainda recomendado, mas a suíte de testes replica exatamente o payload que
+o `CriarEvento.js` envia.
+
+### Bug 2 — HD Registros, diagnóstico (sem fix de código possível)
+
+Confirmado rodando o download de verdade (sessão de teste temporária pro
+`user_id` real da HD Registros, removida logo em seguida): dos 12
+documentos da empresa, **4 têm o arquivo físico permanentemente perdido**
+— exatamente o incidente já documentado no item 7 (2026-08-02), uploads de
+2026-07-30, antes do mount ter sido corrigido. Os outros 8 baixam
+normalmente (200 OK, testado com um deles). Não existe backup em lugar
+nenhum — não tem como recuperar o conteúdo. Documentos afetados (por
+`document_name`): "ALVARA DE FUNCIONAMENTO HD REGISTROS", "FGTS
+ATUALIZADO", "FGTS HD ATUALIZADO" (a cópia de 2026-07-30, não a de
+2026-08-01 que sobreviveu), "BALANCO PATRIMONIAL HD REGISTROS" (a cópia de
+2026-07-30). **Ação necessária do Pedro**: re-enviar esses 4 documentos
+pela tela de Documentos — o registro no banco já existe, então o reenvio
+naturalmente atualiza o mesmo item do checklist.
+
+### Item 3 — auditoria de integridade de uploads (pedido explícito)
+
+Confirmado: **todo** endpoint de upload no sistema (documentos de empresa,
+portarias com PDF, editais, solicitações de registro, documentos_gov) usa
+o mesmo `UPLOAD_DIR` (`/app/uploads`, um único bind mount) — não há mounts
+paralelos ou caminhos alternativos a auditar separadamente. Cruzamento
+completo banco vs. disco (todas as coleções que referenciam arquivo:
+`documents`, `portarias.link_pdf`; `documentos_gov`/`editais`/
+`solicitacoes_registro` estão vazias hoje, nada a checar): 11 documentos
+não-removidos + 2 PDFs de portaria = 13 referências, 4 ausentes (os já
+conhecidos do item 7, acima), 9 presentes e íntegras. Alguns arquivos
+órfãos no disco sem referência no banco (esperado — sobras de documentos
+soft-deletados), sem risco de perda, não fizeram parte da checagem de
+integridade contrária. Com o mount corrigido (item 16, mais cedo hoje) e o
+`deploy.sh` hardenizado (acima), a proteção estrutural contra recorrência
+está no lugar; o único item real pendente é a perda física, já
+irreversível, dos 4 arquivos do item 7.
+
+## 18. Auto-commit + push obrigatório no deploy (resposta ao drift git↔prod) — ⚠️ EM ANDAMENTO, bloqueado em ação do Pedro (2026-08-12)
+
+Pedido direto do Pedro em resposta ao incidente do item 17: produção ficou
+16 commits à frente do `origin/main` sem ninguém perceber, e dois deploys
+feitos a partir de um `git worktree`/HEAD desatualizado sobrescreveram 3
+dias de trabalho backend. Ele pediu um mecanismo que force commit+push pro
+GitHub como parte do próprio `deploy.sh`, não como passo manual separado —
+e que o deploy PARE se o push falhar, em vez de seguir sem sincronizar.
+
+### Causa raiz descoberta (explica por que os 16 commits nunca foram push)
+
+Investigando antes de implementar, veio a pergunta óbvia: "por que ninguém
+rodou `git push` em 16 commits?" Resposta: **porque não tinha como.** Duas
+credenciais de push estavam configuradas nesta VPS e nenhuma funcionava:
+
+- O remote `origin` (`https://<token>@github.com/prbiomedico/CREDENCIAMENTO.git`)
+  tem um Personal Access Token clássico (`ghp_...`) embutido na URL, em
+  texto puro no `.git/config`. Esse token está **morto** — `git push`
+  falha com `fatal: could not read Password ... No such device or
+  address` (não pede senha, simplesmente não autentica), e a API do
+  GitHub responde `401 Bad credentials` pra ele. `git ls-remote`/`fetch`
+  (leitura) ainda funcionam com ele por algum motivo, o que mascarou o
+  problema — só o push está quebrado.
+- Existe também uma chave SSH geral já configurada em `~/.ssh/id_ed25519`
+  (conta GitHub `AGIOTAPUBG`) — autentica normalmente, tem leitura no
+  repo, mas **não tem permissão de escrita**: `git push` retorna
+  `Permission to prbiomedico/CREDENCIAMENTO.git denied to AGIOTAPUBG`.
+
+Ou seja: os 16 commits não são falta de disciplina, é uma credencial de
+push quebrada há semanas, silenciosa porque nada no fluxo de deploy
+dependia dela funcionar até agora. **Recomendação**: revogar esse PAT no
+GitHub (Settings → Developer settings → Personal access tokens) já que
+está morto e exposto em texto puro no `.git/config` — não precisa mais
+dele com o esquema abaixo.
+
+### Fix implementado (código pronto, testado em sandbox local)
+
+- **Chave SSH dedicada de deploy** gerada nesta VPS:
+  `~/.ssh/sigcr_deploy_key` (ed25519, sem passphrase, só leitura pelo
+  root), com alias em `~/.ssh/config` (`Host github-sigcr-deploy`,
+  `IdentitiesOnly yes`) — isolada da chave SSH geral (`id_ed25519`) e sem
+  depender de nenhuma conta GitHub pessoal. Falta só um passo, que só o
+  Pedro pode fazer (não tenho credencial de admin no repo pra automatizar
+  via API): **cadastrar a chave pública como Deploy Key com "Allow write
+  access"** em github.com/prbiomedico/CREDENCIAMENTO → Settings → Deploy
+  keys → Add deploy key. Chave pública:
+  `ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICwFEblQqP8CZVvAYPnU+VTASHVCNigB9rIJkR8mOyxS sigcr-vps-deploy-20260812`
+- **`scripts/git-sync-or-die.sh <backend|frontend> [label]`** (novo,
+  compartilhado pelos dois deploys): confere a branch atual é `main`; se
+  houver mudanças não commitadas **no escopo do path passado**
+  (`backend/` ou `frontend/`, não o repo inteiro — ver justificativa
+  abaixo), commita como `auto-commit pre-deploy (<label>): <timestamp
+  ISO-8601 UTC>`; dá push pro GitHub via `github-sigcr-deploy`; se o push
+  falhar por qualquer motivo, sai com `exit 1` e mensagem clara — o
+  commit local não se perde, só o deploy para.
+  - **Por que escopo por path e não o repo inteiro**: `backend/deploy.sh`
+    e `frontend/deploy-frontend.sh` são deploys independentes, e o
+    working tree normalmente tem mudanças não commitadas do OUTRO lado
+    que não estão prontas pra ir pra `main` (ex.: o lote pendente/não
+    testado descrito em memória do projeto). Um `git add -A` cego
+    empurraria código não relacionado — e possivelmente não testado —
+    pra main junto com o deploy real.
+- **`backend/deploy.sh`**: chama `git-sync-or-die.sh backend backend`
+  logo após a trava de diretório canônico, antes do `docker build`.
+- **`frontend/deploy-frontend.sh`** (novo — não existia um script, o
+  processo era 100% manual): codifica o padrão já estabelecido em memória
+  (worktree isolado → build → `releases/<label>/` → swap atômico do
+  symlink `current`) e chama `git-sync-or-die.sh frontend frontend` antes
+  de criar o worktree. **Achado durante o teste**: `git worktree add
+  <dir> main` falha (`'main' is already used by worktree at
+  /opt/sigcr`) porque o working tree principal já tem `main` checked
+  out — o padrão antigo (registrado no item 17) já contornava isso
+  usando `HEAD` (detached) em vez do nome da branch; o script novo faz
+  `git worktree add --detach <dir> HEAD`, que não tem esse conflito e,
+  como o sync já garantiu `HEAD == origin/main`, é equivalente.
+- **Identidade git** configurada no repo (estava vazia, causava warning a
+  cada commit): `user.name = "SIGCR Deploy"`,
+  `user.email = deploy@sigcr.com.br`, local a `/opt/sigcr` (não global).
+
+### Testado
+
+Suíte de 3 cenários rodada contra um repo+remote bare **descartáveis**
+(fora de `/opt/sigcr`, sem tocar produção nem GitHub real), via as
+variáveis de override `GIT_SYNC_REPO_ROOT`/`GIT_SYNC_DEPLOY_REMOTE` que o
+script aceita só pra esse fim: (1) commit escopado por path — mudança
+pendente em `backend/` gera commit só de `backend/`, `frontend/`
+modificado no mesmo working tree fica intocado; (2) nada pendente → só
+push, sem commit vazio, sem erro; (3) push pra um remote inexistente →
+`exit 1`, mensagem de erro clara, commit local preservado. Pipeline
+completo do frontend (sync → worktree `--detach HEAD` → build fake →
+release → swap atômico → cleanup do worktree) também rodado ponta a
+ponta no mesmo sandbox, incluindo a trava de branch (rodando fora de
+`main` → `exit 1`). **Não testado ainda contra o GitHub real** — bloqueado
+até a deploy key ser cadastrada (abaixo).
+
+### Bloqueado — próximos passos, nesta ordem
+
+1. **Pedro cadastra a deploy key** (chave pública acima) no GitHub como
+   Deploy Key com write access.
+2. Confirmar com um push de teste real (branch descartável, sem tocar
+   `main`) que a chave funciona.
+3. **Zerar o backlog**: push manual único dos 16 commits acumulados
+   (`8211a7d` … `5b56e4a`) pra `origin/main` — nenhum deles depende do
+   working tree atualmente não commitado (lote pendente 2026-08-05, ver
+   memória do projeto), então esse push não arrasta nada não testado.
+4. Rodar um deploy pequeno de teste em devtest com o mecanismo ativo,
+   confirmar que o commit+push acontece do jeito certo ponta a ponta
+   contra o GitHub real.
+5. Só então considerar isso "ligado" em produção — a partir desse ponto,
+   **nenhum deploy de backend ou frontend roda sem sincronizar com o
+   GitHub primeiro**, isso já está no código (`deploy.sh` e
+   `deploy-frontend.sh` chamam `git-sync-or-die.sh` incondicionalmente),
+   só falta a credencial funcionar.
+
+**Importante**: as mudanças não commitadas hoje no working tree (lote
+pendente — `CadastroPublico.js`, `FilaRegistros.js`, `GestaoEditais.js`,
+`PortariaPublica.js`, reescritas grandes incl. `Dashboard.js`, etc.) **não
+foram tocadas** por este trabalho — continuam não commitadas, não
+testadas, fora do escopo deste item. O push do item 3 acima é só dos 16
+commits já existentes, não desse working tree.
+
+
