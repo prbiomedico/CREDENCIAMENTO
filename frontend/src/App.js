@@ -32,6 +32,8 @@ import GestaoEditais from './pages/GestaoEditais';
 import MinhasSubmissoes from './pages/MinhasSubmissoes';
 import PainelConferencia from './pages/PainelConferencia';
 import Registradoras from './pages/Registradoras';
+import SolicitacaoRegistro from './pages/SolicitacaoRegistro';
+import FilaRegistros from './pages/FilaRegistros';
 import '@/App.css';
 
 // Cada rota recebe seu próprio ErrorBoundary (não um único global): um crash
@@ -49,7 +51,7 @@ function AppRoutes() {
     <Routes>
         <Route path="/" element={b(<Landing />)} />
         <Route path="/dashboard" element={b(<RotaProtegida><Dashboard /></RotaProtegida>)} />
-        <Route path="/empresas" element={b(<RotaProtegida perfilPermitido="registradora"><Empresas /></RotaProtegida>)} />
+        <Route path="/empresas" element={b(<RotaProtegida perfilPermitido={["registradora", "financeira"]}><Empresas /></RotaProtegida>)} />
         <Route path="/portarias" element={b(<RotaProtegida perfilPermitido={["registradora", "detran", "detran_admin"]}><Portarias /></RotaProtegida>)} />
         <Route path="/planos" element={b(<Planos />)} />
         <Route path="/transparencia" element={b(<Transparencia />)} />
@@ -60,6 +62,8 @@ function AppRoutes() {
           <Route path="/documentos/upload" element={b(<UploadDocumentos />)} />
           <Route path="/mapa-nacional" element={b(<MapaNacional />)} />
           <Route path="/documentos" element={b(<RotaProtegida perfilPermitido={["registradora", "financeira"]}><Documentos /></RotaProtegida>)} />
+          <Route path="/registro-contrato" element={b(<RotaProtegida perfilPermitido="financeira"><SolicitacaoRegistro /></RotaProtegida>)} />
+          <Route path="/fila-registros" element={b(<RotaProtegida perfilPermitido="registradora"><FilaRegistros /></RotaProtegida>)} />
           <Route path="/credenciamento-portaria" element={b(<RotaProtegida perfilPermitido={["registradora", "financeira"]}><MinhasSubmissoes /></RotaProtegida>)} />
           <Route path="/detran/conferencia" element={b(<RotaProtegida perfilPermitido={["sigcr_admin", "detran", "detran_admin"]}><PainelConferencia /></RotaProtegida>)} />
           <Route path="/credenciamento/documentos" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><DocumentosGov /></RotaProtegida>)} />

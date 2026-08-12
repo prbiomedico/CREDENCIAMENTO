@@ -46,6 +46,7 @@ const NAV_REGISTRADORA = [
   { path: '/empresas',      icon: Building2,       label: 'Empresa' },
   { path: '/documentos',    icon: FileText,        label: 'Documentos' },
   { path: '/portarias',     icon: Search,          label: 'Portarias' },
+  { path: '/fila-registros', icon: Inbox,          label: 'Registro de Contrato' },
   { path: '/credenciamento-portaria', icon: ListChecks, label: 'Credenciamento por Portaria' },
   { path: '/notificacoes',  icon: Bell,            label: 'Notificações' },
 ];
@@ -66,7 +67,9 @@ const NAV_DETRAN = [
 
 const NAV_FINANCEIRA = [
   { path: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
+  { path: '/empresas',      icon: Building2,       label: 'Empresa' },
   { path: '/documentos',    icon: FileText,        label: 'Documentos' },
+  { path: '/registro-contrato', icon: FileCheck,   label: 'Registro de Contrato' },
   { path: '/credenciamento-portaria', icon: ListChecks, label: 'Credenciamento por Portaria' },
   { path: '/notificacoes',  icon: Bell,            label: 'Notificações' },
 ];

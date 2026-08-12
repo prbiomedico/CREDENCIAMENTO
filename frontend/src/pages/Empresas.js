@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
@@ -35,10 +36,19 @@ const Empresas = () => {
     gestor_contrato: '',
     endereco: '',
     whatsapp: '',
-    detrans_atuacao: []
+    detrans_atuacao: [],
+    tipo_empresa: 'registradora',
+    registradora_id: ''
   });
+  const [registradorasDisponiveis, setRegistradorasDisponiveis] = useState([]);
 
   useEffect(() => { if (!initialized || !user) return; fetchCompanies(); }, [initialized, user]);
+  useEffect(() => {
+    if (!initialized || !user) return;
+    axios.get(`${API}/companies`, { withCredentials: true, params: { tipo_empresa: 'registradora' } })
+      .then((res) => setRegistradorasDisponiveis(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {});
+  }, [initialized, user]);
 
 
   const [showEditModal, setShowEditModal] = React.useState(false);
@@ -51,7 +61,8 @@ const Empresas = () => {
     gestor_contrato: '',
     endereco: '',
     whatsapp: '',
-    detrans_atuacao: []
+    detrans_atuacao: [],
+    registradora_id: ''
   });
 
   useEffect(() => {
@@ -64,7 +75,8 @@ const Empresas = () => {
       gestor_contrato: editingCompany.gestor_contrato || '',
       endereco: editingCompany.endereco || '',
       whatsapp: editingCompany.whatsapp || '',
-      detrans_atuacao: editingCompany.detrans_atuacao || []
+      detrans_atuacao: editingCompany.detrans_atuacao || [],
+      registradora_id: editingCompany.registradora_id || ''
     });
   }, [editingCompany]);
 
@@ -80,14 +92,18 @@ const Empresas = () => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.patch(`${API}/companies/${editingCompany.company_id}`, editFormData, { withCredentials: true });
+      const { registradora_id, ...resto } = editFormData;
+      const payload = editingCompany.tipo_empresa === 'financeira' && registradora_id
+        ? { ...resto, registradora_id }
+        : resto;
+      await axios.patch(`${API}/companies/${editingCompany.company_id}`, payload, { withCredentials: true });
       toast.success('Empresa atualizada com sucesso!');
       setShowEditModal(false);
       setEditingCompany(null);
       fetchCompanies();
     } catch (error) {
       console.error('Error updating company:', error);
-      toast.error('Erro ao atualizar empresa');
+      toast.error(error?.response?.data?.detail || 'Erro ao atualizar empresa');
     }
   };
 
@@ -122,6 +138,10 @@ const Empresas = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.tipo_empresa === 'financeira' && !formData.registradora_id) {
+      toast.error('Selecione a registradora à qual esta financeira está vinculada');
+      return;
+    }
     try {
       await axios.post(`${API}/companies`, formData, { withCredentials: true });
       toast.success('Empresa cadastrada com sucesso!');
@@ -132,7 +152,11 @@ const Empresas = () => {
         cnpj: '',
         email_comercial: '',
         gestor_contrato: '',
-        detrans_atuacao: []
+        endereco: '',
+        whatsapp: '',
+        detrans_atuacao: [],
+        tipo_empresa: 'registradora',
+        registradora_id: ''
       });
       fetchCompanies();
     } catch (error) {
@@ -140,7 +164,7 @@ const Empresas = () => {
       if (error?.response?.status === 401) {
         toast.error('Sessão expirada — recarregue a página e tente de novo');
       } else {
-        toast.error('Erro ao cadastrar empresa');
+        toast.error(error?.response?.data?.detail || 'Erro ao cadastrar empresa');
       }
     }
   };
@@ -218,6 +242,36 @@ const Empresas = () => {
                   </div>
                 </div>
                 
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-zinc-300">Tipo de Empresa</Label>
+                    <Select value={formData.tipo_empresa} onValueChange={(value) => setFormData({ ...formData, tipo_empresa: value, registradora_id: '' })}>
+                      <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white mt-2">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                        <SelectItem value="registradora">Registradora</SelectItem>
+                        <SelectItem value="financeira">Financeira</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {formData.tipo_empresa === 'financeira' && (
+                    <div>
+                      <Label className="text-zinc-300">Registradora Vinculada</Label>
+                      <Select value={formData.registradora_id} onValueChange={(value) => setFormData({ ...formData, registradora_id: value })}>
+                        <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white mt-2">
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                          {registradorasDisponiveis.map((r) => (
+                            <SelectItem key={r.company_id} value={r.company_id}>{r.nome_fantasia || r.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="cnpj" className="text-zinc-300">CNPJ</Label>
@@ -349,6 +403,22 @@ const Empresas = () => {
                   />
                 </div>
               </div>
+
+              {editingCompany?.tipo_empresa === 'financeira' && (
+                <div>
+                  <Label className="text-zinc-300">Registradora Vinculada</Label>
+                  <Select value={editFormData.registradora_id} onValueChange={(value) => setEditFormData({ ...editFormData, registradora_id: value })}>
+                    <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white mt-2">
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                      {registradorasDisponiveis.map((r) => (
+                        <SelectItem key={r.company_id} value={r.company_id}>{r.nome_fantasia || r.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
