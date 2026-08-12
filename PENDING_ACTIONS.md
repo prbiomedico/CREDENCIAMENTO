@@ -1186,7 +1186,7 @@ integridade contrária. Com o mount corrigido (item 16, mais cedo hoje) e o
 está no lugar; o único item real pendente é a perda física, já
 irreversível, dos 4 arquivos do item 7.
 
-## 18. Auto-commit + push obrigatório no deploy (resposta ao drift git↔prod) — ⚠️ EM ANDAMENTO, bloqueado em ação do Pedro (2026-08-12)
+## 18. Auto-commit + push obrigatório no deploy (resposta ao drift git↔prod) — ✅ CONCLUÍDO e ATIVO em produção (2026-08-12)
 
 Pedido direto do Pedro em resposta ao incidente do item 17: produção ficou
 16 commits à frente do `origin/main` sem ninguém perceber, e dois deploys
@@ -1281,30 +1281,54 @@ ponta no mesmo sandbox, incluindo a trava de branch (rodando fora de
 `main` → `exit 1`). **Não testado ainda contra o GitHub real** — bloqueado
 até a deploy key ser cadastrada (abaixo).
 
-### Bloqueado — próximos passos, nesta ordem
+### Resolução (2026-08-12, mesmo dia)
 
-1. **Pedro cadastra a deploy key** (chave pública acima) no GitHub como
-   Deploy Key com write access.
-2. Confirmar com um push de teste real (branch descartável, sem tocar
-   `main`) que a chave funciona.
-3. **Zerar o backlog**: push manual único dos 16 commits acumulados
-   (`8211a7d` … `5b56e4a`) pra `origin/main` — nenhum deles depende do
-   working tree atualmente não commitado (lote pendente 2026-08-05, ver
-   memória do projeto), então esse push não arrasta nada não testado.
-4. Rodar um deploy pequeno de teste em devtest com o mecanismo ativo,
-   confirmar que o commit+push acontece do jeito certo ponta a ponta
-   contra o GitHub real.
-5. Só então considerar isso "ligado" em produção — a partir desse ponto,
-   **nenhum deploy de backend ou frontend roda sem sincronizar com o
-   GitHub primeiro**, isso já está no código (`deploy.sh` e
-   `deploy-frontend.sh` chamam `git-sync-or-die.sh` incondicionalmente),
-   só falta a credencial funcionar.
+Pedro cadastrou a deploy key (`sigcr-vps-deploy`, Read/write) em
+`prbiomedico/CREDENCIAMENTO/settings/keys`. Sequência executada e
+confirmada:
 
-**Importante**: as mudanças não commitadas hoje no working tree (lote
-pendente — `CadastroPublico.js`, `FilaRegistros.js`, `GestaoEditais.js`,
-`PortariaPublica.js`, reescritas grandes incl. `Dashboard.js`, etc.) **não
-foram tocadas** por este trabalho — continuam não commitadas, não
-testadas, fora do escopo deste item. O push do item 3 acima é só dos 16
-commits já existentes, não desse working tree.
+1. **Push de teste** numa branch descartável (`_sigcr_push_test_*`,
+   criada e removida na sequência) — confirmou a chave funcionando com
+   write access antes de tocar `main`.
+2. **Backlog zerado**: os 16 commits antigos + o commit do próprio
+   mecanismo (`d1c96b8`) foram pro `origin/main` num push só,
+   fast-forward, sem conflito (`028b4bd..d1c96b8`).
+3. **`origin` limpo**: a URL do remote (que tinha o PAT morto embutido em
+   texto puro) foi trocada pra `git@github-sigcr-deploy:prbiomedico/CREDENCIAMENTO.git`
+   — sem segredo nenhum no `.git/config` agora.
+4. **Deploy real de teste no backend**: o lote pendente 2026-08-05
+   (`backend/server.py`, 922 inserções não testadas) foi posto de lado
+   com `git stash` só pra esse arquivo, uma linha de comentário trivial
+   foi adicionada como mudança real, e `./deploy.sh` rodou do jeito
+   normal (sem nenhum atalho/flag especial) a partir de
+   `/opt/sigcr/backend`. Resultado: `git-sync-or-die.sh` detectou a
+   mudança, auto-commitou (`f3114e7`), deu push real pro GitHub, e só
+   depois disso o `docker build`/restart rodou — exatamente o fluxo
+   pedido. Health check padrão passou (`/api/` 200, `/api/portarias` e
+   `/api/companies` 401 sem token, mount de uploads confirmado, sem
+   traceback nos logs). Tag de rollback:
+   `sigcr-backend:pre-deploy-rollback-20260812-1426`. Lote pendente
+   restaurado (`git stash pop`) logo depois, intacto e ainda não
+   commitado, por cima da linha de teste — nada do lote foi parar em
+   produção.
+
+**Mecanismo está ativo**: a partir de agora, `backend/deploy.sh` e
+`frontend/deploy-frontend.sh` não rodam build nenhum sem antes commitar
+(escopado por path) e confirmar push pro GitHub — se o push falhar, o
+deploy para com `exit 1`.
+
+**Não testado ainda**: `deploy-frontend.sh` só foi validado em sandbox
+descartável, não contra o GitHub/produção real — o frontend tem um lote
+pendente bem maior (`CadastroPublico.js`, `FilaRegistros.js`,
+`GestaoEditais.js`, `PortariaPublica.js`, reescritas grandes incl.
+`Dashboard.js`, etc.), e um teste real exigiria a mesma técnica de
+`stash` isolando bem mais arquivos — mais arriscado de fazer sem pedido
+explícito. Rodar esse teste real na próxima vez que houver um deploy de
+frontend legítimo, em vez de forçar um agora só pra validar.
+
+**Recomendação em aberto pro Pedro**: revogar o PAT antigo no GitHub
+(Settings → Developer settings → Personal access tokens) — já estava
+morto, mas ficou exposto em texto puro no `.git/config` por meses e não
+tem mais uso nenhum com o esquema de chave SSH dedicada.
 
 
