@@ -1,3 +1,4 @@
+# git-sync-or-die.sh validado end-to-end em 2026-08-12 (PENDING_ACTIONS.md item 18)
 from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File, Request, Response, Depends, Form
 from fastapi.responses import JSONResponse, FileResponse
 from dotenv import load_dotenv
