@@ -1502,6 +1502,14 @@ O pedido original assumia um campo `publicado_at` que faria uma portaria ficar "
 - **Visibilidade** (o ponto crítico): `registradora` e `financeira` de teste veem 0 portarias na listagem; `sigcr_admin` e `detran` veem todas. Acesso direto por `portaria_id` — `registradora` recebe 404 (não revela existência), `sigcr_admin` recebe 200. Download de PDF 404 pra qualquer perfil (nenhum PDF anexado ainda, como esperado).
 - Regressão rápida: `/editais`, `/detran/registradoras`, `/companies`, `/solicitacoes-registro` sem quebra.
 
-### Pendente: confirmação antes de rodar em produção, como combinado.
+### Deploy e import — ✅ CONCLUÍDO (2026-08-12, confirmado pelo Pedro)
+
+**Backend**: fix de `GET /portarias`/`GET /portarias/{id}` aplicado no `server.py` real (mesma técnica de isolamento das fatias anteriores — lote pendente posto de lado via `git stash`, restaurado depois). Deploy via `deploy.sh` real. Health check: `/api/` 200; `/api/portarias`, `/api/editais`, `/api/detran/registradoras`, `/api/companies`, `/api/solicitacoes-registro` todos 401 sem token; `/api/public/registradoras` 200 (público); site 200 via HTTPS real; mount de uploads confirmado; sem traceback.
+
+**Conflito de merge ao restaurar o lote pendente por cima** (esperado — o lote pendente do `PortariaPublica.js` mexe na mesma função com sua própria lógica de rascunho via `criado_via`/`publicado_at`, ainda não testada nem deployada): resolvido **combinando as duas condições**, não descartando nenhuma — uma portaria só fica visível pra registradora/financeira se passar nas duas guardas (tem `link_pdf` E não é rascunho de wizard não publicado). A lógica de wizard é inerte hoje (nenhum documento real tem `criado_via="wizard"` ainda), então isso não muda nada do comportamento atual — só evita que o buraco de visibilidade que acabei de fechar reabra silenciosamente quando o `PortariaPublica.js` for testado e deployado de verdade no futuro.
+
+**Import rodado contra produção real**: `--dry-run` primeiro (confirmou os mesmos 58 itens do teste em devtest, 0 pulados — primeira execução), depois execução real via `docker exec sigcr-backend python3 migrations/2026_08_12_import_portarias_historicas.py`. Confirmado direto no Mongo de produção: **58 portarias criadas**, distribuídas nas 27 UFs (26 estados + DF) batendo exatamente com o `import_spec.json`, todas com `link_pdf` vazio (nenhuma visível pra registradora/financeira, pela lógica já testada em devtest e agora ao vivo).
+
+**Próximo passo, do lado do Pedro**: entrar em cada uma das 58 portarias (tela Portarias, como `detran`/`sigcr_admin` — são as únicas visíveis pra elas hoje), usar Editar pra anexar o PDF real, corrigir `date` (hoje é a data/hora da importação, placeholder) e revisar/ajustar `tipo` (o Select não vai reconhecer o valor importado — ver achado acima sobre vocabulário). Assim que um `link_pdf` for anexado, a portaria correspondente passa a aparecer normalmente pra registradora/financeira.
 
 
