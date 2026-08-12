@@ -3219,8 +3219,8 @@ async def create_edital(request: Request, current_user: User = Depends(require_p
         "data_encerramento": body.get("data_encerramento"),
         "documentos_obrigatorios": body.get("documentos_obrigatorios", []),
         # Área de Transparência: anexos e termo de adesão pra exibição pública.
-        # Sem endpoint de upload dedicado ainda — path precisa vir de um arquivo já
-        # salvo em UPLOAD_DIR (ex: via /portarias/upload) e referenciado aqui.
+        # path vem de POST /editais/upload (upload real, direto da tela de
+        # criação/edição do edital).
         "anexos": body.get("anexos", []),  # [{"nome": str, "path": str}]
         "termo_adesao_path": body.get("termo_adesao_path"),
         "criado_por": current_user.user_id,
@@ -3230,6 +3230,66 @@ async def create_edital(request: Request, current_user: User = Depends(require_p
     edital.pop("_id", None)  # insert_one adiciona _id (ObjectId) de volta no dict por efeito colateral
     await registrar_auditoria(current_user, "criar_edital", "edital", edital["edital_id"], {"titulo": edital["titulo"]})
     return edital
+
+
+class EditalUpdate(BaseModel):
+    titulo: Optional[str] = None
+    descricao: Optional[str] = None
+    uf: Optional[str] = None
+    status: Optional[str] = None
+    data_encerramento: Optional[str] = None
+    documentos_obrigatorios: Optional[List[str]] = None
+    anexos: Optional[List[dict]] = None
+    termo_adesao_path: Optional[str] = None
+
+
+@api_router.patch("/editais/{edital_id}")
+async def atualizar_edital(edital_id: str, updates: EditalUpdate, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
+    edital = await db.editais.find_one({"edital_id": edital_id}, {"_id": 0})
+    if not edital:
+        raise HTTPException(status_code=404, detail="Edital não encontrado")
+
+    campos = {k: v for k, v in updates.model_dump().items() if v is not None}
+    if not campos:
+        return edital
+    campos["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+    await db.editais.update_one({"edital_id": edital_id}, {"$set": campos})
+    await registrar_auditoria(current_user, "atualizar_edital", "edital", edital_id, {
+        "campos": list(campos.keys())
+    })
+    return await db.editais.find_one({"edital_id": edital_id}, {"_id": 0})
+
+
+@api_router.post("/editais/upload")
+async def upload_arquivo_edital(
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin")),
+):
+    """Upload de um anexo ou do termo de adesão pra um edital — desacoplado
+    de criar/atualizar o edital em si: a tela de edição faz upload de cada
+    arquivo primeiro (recebe path+nome de volta) e só depois inclui essas
+    referências no POST/PATCH /editais. Substitui o workaround manual de
+    reaproveitar /portarias/upload só pra conseguir um path em UPLOAD_DIR."""
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Apenas arquivos PDF são aceitos")
+
+    conteudo = await file.read()
+    if not conteudo:
+        raise HTTPException(status_code=400, detail="Arquivo vazio")
+    if len(conteudo) > MAX_PORTARIA_PDF_SIZE:
+        raise HTTPException(status_code=400, detail="Arquivo excede o limite de 20MB")
+
+    editais_dir = UPLOAD_DIR / "editais"
+    editais_dir.mkdir(exist_ok=True)
+    file_path = editais_dir / f"{uuid.uuid4().hex}.pdf"
+    async with aiofiles.open(file_path, "wb") as f:
+        await f.write(conteudo)
+
+    await registrar_auditoria(current_user, "upload_arquivo_edital", "edital", None, {
+        "nome_original": file.filename
+    })
+    return {"nome": file.filename or "documento.pdf", "path": str(file_path)}
 
 
 # ============ ÁREA PÚBLICA DE TRANSPARÊNCIA (sem autenticação) ============
