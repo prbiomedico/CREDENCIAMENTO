@@ -1364,12 +1364,22 @@ Extraído o endpoint (linhas ~2420–2501 do working tree) isolado do resto do l
 
 Endpoint restaurado no `backend/server.py` real (mesma técnica do item 18: lote pendente posto de lado com `git stash` só nesse arquivo, endpoint inserido, `./deploy.sh` rodado de verdade — passou pelo `git-sync-or-die.sh`, commit `8c9c50a`, push confirmado, build/restart normal, rollback tag `sigcr-backend:pre-deploy-rollback-20260812-1447`). Health check: `/api/` 200, `/api/portarias` 401, **`/api/detran/registradoras` agora 401 (era 404)** — confirma restaurado. Lote pendente restaurado por cima (`git stash pop`, 1 conflito de merge só no docstring do mesmo endpoint — resolvido mantendo a versão commitada com a nota do incidente, resto do lote aplicou limpo). Tela Registradoras deve estar funcional em produção de novo — verificação visual real ainda cabe ao Pedro/usuário (sem browser automation neste ambiente).
 
-### Próximas fatias (não iniciadas)
+### Fatia 1 — Gestão de Editais — ✅ CONCLUÍDO e no ar (2026-08-12)
 
-1. Gestão de Editais — isolar, testar em devtest, reportar antes de deployar.
-2. Fila de Registros.
+Backend: `PATCH /editais/{edital_id}` (`EditalUpdate`) + `POST /editais/upload` extraídos isoladamente (mesma técnica da fatia 0), testados em devtest — 10 cenários: sem auth (401), perfil sem permissão (403), criação, upload de PDF válido, rejeição de não-PDF (400), upload sem auth (401), edição preservando anexos/termo de adesão ao editar só o título (replica o fluxo real de `abrirEdicao()` do frontend — pega justamente o tipo de bug de "campo se apaga ao salvar" que um teste ingênuo não pegaria), reflexo correto na Área de Transparência pública, e download do anexo servindo o conteúdo certo via a rota já protegida contra path traversal. Deployado em prod via `deploy.sh` real (commit `b26216d`, rollback tag `sigcr-backend:pre-deploy-rollback-20260812-1457`), health check OK, `/api/editais/upload` sem auth confirma 401 (rota existe).
+
+Frontend: `GestaoEditais.js` + rotas/nav (`App.js`, `DashboardLayout.js`) extraídas isoladamente das outras 3 páginas ainda não testadas do lote (`CadastroPublico.js`, `FilaRegistros.js`, `SolicitacaoRegistro.js`, `PortariaPublica.js`, movidas pra fora do working tree temporariamente) e das reescritas grandes não relacionadas (`Dashboard.js`, `Portarias.js`, `CriarEvento.js` etc., postas de lado via `git stash` — `Portarias.js`/`CriarEvento.js` do working tree importam um `ChecklistCatalogoPicker.js` que **não é o que está no ar hoje**, confirmado via bundle live antes de decidir não tocar nelas). Build isolado testado antes (compilou limpo, bundle sem vazamento das páginas não testadas) e deployado de verdade via `deploy-frontend.sh` (novo script, primeira vez usado em produção — commit `a0e9a35`, release `releases/fatia1-gestao-editais`). Confirmado no bundle ao vivo: `gestao-editais`/`usePerfilAtivo`/`/registradoras` presentes, `CadastroPublico`/`FilaRegistros`/`registro-contrato` ausentes. Site respondendo 200.
+
+**Efeito colateral bom**: `App.js` e `DashboardLayout.js` saíram da lista de arquivos pendentes (agora commitados) — o lote restante encolheu pra só as 3 features que realmente faltam + as reescritas grandes não relacionadas.
+
+**Achado de escopo, não corrigido**: `POST`/`PATCH /editais` não valida a UF do edital contra a UF do `detran`/`detran_admin` que chama — mesma classe de gap já mapeada em [[project-sigcr-portarias-perfil-fix]] só que aqui, não introduzido por esta fatia (já existia no `POST /editais` original). Fora de escopo, só registrado.
+
+### Próximas fatias
+
+1. ~~Gestão de Editais~~ ✅
+2. Fila de Registros — próxima.
 3. Cadastro Público.
 
-Cada uma seguirá o mesmo padrão: extrair do lote isoladamente (não deployar o lote inteiro de uma vez), testar em devtest com dados reais/realistas, reportar resultado, e só então deployar via `deploy.sh`/`deploy-frontend.sh` reais (com o sync automático do item 18 ativo).
+Técnica de isolamento consolidada (reutilizável pras próximas 2 fatias): `git stash` nos arquivos tracked não relacionados + `mv` temporário dos arquivos untracked não relacionados pra fora de `frontend/`, edição cirúrgica de `App.js`/`DashboardLayout.js` removendo só as linhas das rotas ainda não prontas, build de teste isolado primeiro (confirma no bundle o que deveria/não deveria estar lá), só depois `deploy.sh`/`deploy-frontend.sh` reais, depois `git stash pop` + `mv` de volta.
 
 
