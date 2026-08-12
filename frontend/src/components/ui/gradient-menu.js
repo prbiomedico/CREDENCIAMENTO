@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Home, FileText, Map, Bell, Settings } from "lucide-react";
 
 const items = [
-  { title:"Painel",  icon:<Home size={18}/>,     gf:"#f97316", gt:"#ea580c", path:"/dashboard" },
+  { title:"Painel",  icon:<Home size={18}/>,     gf:"#2196f3", gt:"#1e88e5", path:"/dashboard" },
   { title:"Docs",    icon:<FileText size={18}/>,  gf:"#56CCF2", gt:"#2F80ED", path:"/documentos" },
   { title:"Mapa",    icon:<Map size={18}/>,       gf:"#80FF72", gt:"#7EE8FA", path:"/mapa-nacional" },
   { title:"Alertas", icon:<Bell size={18}/>,      gf:"#ffa9c6", gt:"#f434e2", path:"/notificacoes" },

@@ -12,8 +12,8 @@ const Globe = ({ rotationSpeed = 0.003, radius = 1.2 }) => {
   });
   return (
     <group ref={ref}>
-      <mesh><sphereGeometry args={[radius, 48, 48]} /><meshBasicMaterial color="#f97316" transparent opacity={0.07} wireframe /></mesh>
-      <mesh><sphereGeometry args={[radius*0.97, 24, 24]} /><meshBasicMaterial color="#fb923c" transparent opacity={0.03} wireframe /></mesh>
+      <mesh><sphereGeometry args={[radius, 48, 48]} /><meshBasicMaterial color="#2196f3" transparent opacity={0.07} wireframe /></mesh>
+      <mesh><sphereGeometry args={[radius*0.97, 24, 24]} /><meshBasicMaterial color="#64b5f6" transparent opacity={0.03} wireframe /></mesh>
     </group>
   );
 };
@@ -28,7 +28,7 @@ export function GlobeHero({ rotationSpeed = 0.003, children, style = {} }) {
         <Canvas>
           <PerspectiveCamera makeDefault position={[0,0,3.5]} fov={60} />
           <ambientLight intensity={0.2} />
-          <pointLight position={[10,10,10]} intensity={0.6} color="#f97316" />
+          <pointLight position={[10,10,10]} intensity={0.6} color="#2196f3" />
           <Globe rotationSpeed={rotationSpeed} />
         </Canvas>
       </div>

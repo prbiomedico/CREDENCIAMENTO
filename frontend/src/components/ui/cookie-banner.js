@@ -27,8 +27,8 @@ export function CookieBanner() {
     <div style={{ position:"fixed", bottom:"20px", left:"20px", right:"20px", maxWidth:"520px", margin:"0 auto", zIndex:9999, background:"#0f1117", border:"1.5px solid rgba(255,255,255,0.1)", borderRadius:"16px", boxShadow:"0 20px 60px rgba(0,0,0,0.6)", fontFamily:"system-ui,sans-serif", overflow:"hidden" }}>
       {/* Header */}
       <div style={{ display:"flex", alignItems:"center", gap:"10px", padding:"16px 20px 0" }}>
-        <div style={{ width:"34px", height:"34px", background:"rgba(249,115,22,0.1)", borderRadius:"8px", display:"flex", alignItems:"center", justifyContent:"center" }}>
-          <Cookie size={18} color="#f97316"/>
+        <div style={{ width:"34px", height:"34px", background:"rgba(33,150,243,0.1)", borderRadius:"8px", display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <Cookie size={18} color="#2196f3"/>
         </div>
         <div style={{ flex:1 }}>
           <div style={{ fontWeight:700, fontSize:"14px", color:"#fff" }}>Cookies e Privacidade</div>
@@ -46,7 +46,7 @@ export function CookieBanner() {
         </p>
 
         {/* Expandir opes */}
-        <button onClick={() => setExpandido(!expandido)} style={{ display:"flex", alignItems:"center", gap:"6px", background:"none", border:"none", color:"#f97316", cursor:"pointer", fontSize:"12px", fontWeight:600, padding:0, marginBottom:"12px" }}>
+        <button onClick={() => setExpandido(!expandido)} style={{ display:"flex", alignItems:"center", gap:"6px", background:"none", border:"none", color:"#2196f3", cursor:"pointer", fontSize:"12px", fontWeight:600, padding:0, marginBottom:"12px" }}>
           <Shield size={13}/>
           Personalizar preferncias
           <ChevronDown size={13} style={{ transform:expandido?"rotate(180deg)":"none", transition:"0.2s" }}/>
@@ -65,7 +65,7 @@ export function CookieBanner() {
                   <div style={{ fontSize:"11px", color:"#6B7280" }}>{c.desc}</div>
                 </div>
                 <div onClick={() => !c.obrig && setPrefs({...prefs,[c.key]:!prefs[c.key]})}
-                  style={{ width:"36px", height:"20px", borderRadius:"10px", background:prefs[c.key]||c.obrig?"#f97316":"rgba(255,255,255,0.1)", cursor:c.obrig?"default":"pointer", position:"relative", transition:"0.2s", flexShrink:0 }}>
+                  style={{ width:"36px", height:"20px", borderRadius:"10px", background:prefs[c.key]||c.obrig?"#2196f3":"rgba(255,255,255,0.1)", cursor:c.obrig?"default":"pointer", position:"relative", transition:"0.2s", flexShrink:0 }}>
                   <div style={{ position:"absolute", top:"3px", left:prefs[c.key]||c.obrig?"18px":"3px", width:"14px", height:"14px", borderRadius:"50%", background:"#fff", transition:"0.2s" }}/>
                 </div>
               </div>
@@ -79,8 +79,8 @@ export function CookieBanner() {
             S essenciais
           </button>
           {expandido
-            ? <button onClick={() => aceitar("personalizado")} style={{ flex:1, padding:"9px", borderRadius:"8px", border:"none", background:"rgba(249,115,22,0.15)", color:"#f97316", fontSize:"12px", cursor:"pointer", fontWeight:700 }}>Salvar preferncias</button>
-            : <button onClick={() => aceitar("todos")} style={{ flex:1, padding:"9px", borderRadius:"8px", border:"none", background:"linear-gradient(135deg,#f97316,#ea580c)", color:"#fff", fontSize:"12px", cursor:"pointer", fontWeight:700 }}>Aceitar todos</button>
+            ? <button onClick={() => aceitar("personalizado")} style={{ flex:1, padding:"9px", borderRadius:"8px", border:"none", background:"rgba(33,150,243,0.15)", color:"#2196f3", fontSize:"12px", cursor:"pointer", fontWeight:700 }}>Salvar preferncias</button>
+            : <button onClick={() => aceitar("todos")} style={{ flex:1, padding:"9px", borderRadius:"8px", border:"none", background:"linear-gradient(135deg,#2196f3,#1e88e5)", color:"#fff", fontSize:"12px", cursor:"pointer", fontWeight:700 }}>Aceitar todos</button>
           }
         </div>
         <p style={{ fontSize:"10px", color:"#374151", textAlign:"center", margin:"8px 0 0" }}>

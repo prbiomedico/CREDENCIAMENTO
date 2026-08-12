@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { usePerfilAtivo } from '../contexts/PerfilAtivoContext';
 import {LayoutDashboard, Building2, FileText, Search, LogOut, Shield,
-  Menu, X, Map, Folder, Bell, ChevronRight, Zap, Plus,
+  Menu, X, Map, Folder, Bell, ChevronRight, Plus,
   ChevronDown, Users, Landmark, CreditCard, Settings, UserCog, Home, Archive,
-  ListChecks} from 'lucide-react';
+  FileCheck, Inbox, ListChecks} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import axios from 'axios';
@@ -51,21 +52,21 @@ const NAV_REGISTRADORA = [
 
 const NAV_DETRAN = [
   { path: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/painel-detran', icon: Zap,             label: 'Painel DETRAN' },
   { path: '/criar-evento',  icon: Plus,            label: 'Criar Evento' },
   { path: '/editais',       icon: Folder,          label: 'Editais' },
+  { path: '/gestao-editais', icon: FileText,       label: 'Gestão de Editais' },
   { path: '/mapa',          icon: Map,             label: 'Mapa Nacional' },
-  { path: '/estados',       icon: Landmark,        label: 'Estados' },
   { path: '/portarias',     icon: Search,          label: 'Portarias' },
   { path: '/credenciamento/documentos', icon: Archive, label: 'Dossiê Credenciamento' },
   { path: '/detran/conferencia', icon: ListChecks, label: 'Painel de Conferência' },
   { path: '/notificacoes',  icon: Bell,            label: 'Notificações' },
+  { path: '/estados',       icon: Landmark,        label: 'Estados',       section: 'DETRANs e Registradoras' },
+  { path: '/registradoras', icon: Building2,       label: 'Registradoras', section: 'DETRANs e Registradoras' },
 ];
 
 const NAV_FINANCEIRA = [
   { path: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/contratos',     icon: FileText,        label: 'Meus Contratos' },
-  { path: '/gravames',      icon: CreditCard,      label: 'Gravames' },
+  { path: '/documentos',    icon: FileText,        label: 'Documentos' },
   { path: '/credenciamento-portaria', icon: ListChecks, label: 'Credenciamento por Portaria' },
   { path: '/notificacoes',  icon: Bell,            label: 'Notificações' },
 ];
@@ -73,6 +74,8 @@ const NAV_FINANCEIRA = [
 const NAV_ADMIN_EXTRA = [
   { path: '/credenciamento/documentos', icon: Archive, label: 'Dossiê Credenciamento' },
   { path: '/estados',       icon: Landmark,        label: 'Estados' },
+  { path: '/registradoras', icon: Building2,       label: 'Registradoras' },
+  { path: '/gestao-editais', icon: FileText,       label: 'Gestão de Editais' },
   { path: '/detran/conferencia', icon: ListChecks, label: 'Painel de Conferência' },
   { path: '/usuarios',      icon: UserCog,         label: 'Gestão de Usuários' },
   { path: '/configuracoes', icon: Settings,        label: 'Configurações' },
@@ -84,38 +87,45 @@ const MENUS = {
   financeira: NAV_FINANCEIRA,
 };
 
-// Perfis que cada role pode acessar (hierarquia LGPD)
-const PERFIS_PERMITIDOS = {
-  sigcr_admin:      ['registradora', 'detran', 'financeira'],
-  detran_admin:     ['detran', 'registradora'],
-  detran_operator:  ['detran'],
-  registradora_user:['registradora'],
-  financeira_user:  ['financeira'],
+// Um item de nav (link + estado ativo) — usado tanto pros itens soltos no
+// topo do menu quanto pelas seções agrupadas e pelo bloco "Administração",
+// que antes tinham essa mesma marcação de link duplicada 3x.
+const NavItemLink = ({ item, location, onNavigate }) => {
+  const isActive = location.pathname === item.path;
+  return (
+    <Link
+      to={item.path}
+      onClick={onNavigate}
+      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-150 relative group ${
+        isActive
+          ? 'bg-orange-500/15 text-orange-400 border border-orange-500/25'
+          : 'text-zinc-400 hover:bg-zinc-800/70 hover:text-white'
+      }`}
+    >
+      {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-orange-500 rounded-r-full" />}
+      <item.icon className="h-4 w-4 shrink-0" />
+      <span className="text-sm">{item.label}</span>
+      {item.badge > 0 && (
+        <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+          {item.badge > 99 ? '99+' : item.badge}
+        </span>
+      )}
+    </Link>
+  );
 };
-
-function getPerfilInicial(user) {
-  const stored = localStorage.getItem('sigcr_perfil_ativo');
-  const role = user?.perfil || user?.roles?.[0] || '';
-  const permitidos = PERFIS_PERMITIDOS[role] || ['registradora'];
-  if (stored && permitidos.includes(stored)) return stored;
-  if (role.includes('detran')) return 'detran';
-  if (role.includes('financeira')) return 'financeira';
-  return 'registradora';
-}
 
 const DashboardLayout = ({ children }) => {
   const { user, logout } = useAuth();
+  const { perfilAtivo, perfisPermitidos, trocarPerfil } = usePerfilAtivo();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifCount, setNotifCount] = useState(0);
-  const [perfilAtivo, setPerfilAtivo] = useState(() => getPerfilInicial(user));
   const [seletorOpen, setSeletorOpen] = useState(false);
   const seletorRef = useRef(null);
 
   const role = user?.perfil || user?.roles?.[0] || '';
   const isAdmin = role === 'sigcr_admin';
-  const perfisPermitidos = PERFIS_PERMITIDOS[role] || ['registradora'];
 
   // Fecha seletor ao clicar fora
   useEffect(() => {
@@ -143,9 +153,8 @@ const DashboardLayout = ({ children }) => {
 
   const handleLogout = () => logout();
 
-  const trocarPerfil = (perfil) => {
-    setPerfilAtivo(perfil);
-    localStorage.setItem('sigcr_perfil_ativo', perfil);
+  const handleTrocarPerfil = (perfil) => {
+    trocarPerfil(perfil);
     setSeletorOpen(false);
     setSidebarOpen(false);
     navigate('/dashboard');
@@ -154,8 +163,30 @@ const DashboardLayout = ({ children }) => {
   const cfg = PERFIS[perfilAtivo] || PERFIS.registradora;
   const PerfilIcon = cfg.icon;
 
-  let navItems = MENUS[perfilAtivo] || NAV_REGISTRADORA;
-  if (isAdmin) navItems = [...navItems, ...NAV_ADMIN_EXTRA];
+  const todosItens = MENUS[perfilAtivo] || NAV_REGISTRADORA;
+  // Seção "Administração" só lista o que ainda NÃO aparece no menu do badge
+  // ativo (em qualquer sub-seção). NAV_ADMIN_EXTRA e NAV_DETRAN compartilham
+  // paths (Dossiê Credenciamento, Estados, Registradoras, Gestão de
+  // Editais) — sem esse filtro, um sigcr_admin via cada um deles 2x: uma vez
+  // no menu do perfil/badge, outra de novo aqui embaixo, incondicional.
+  // Itens exclusivamente administrativos (Gestão de Usuários, Configurações)
+  // não colidem com nenhum NAV_* de badge, então sempre aparecem em
+  // Administração, badge que for.
+  const pathsDoBadge = new Set(todosItens.map((item) => item.path));
+  const navAdminExtra = isAdmin ? NAV_ADMIN_EXTRA.filter((item) => !pathsDoBadge.has(item.path)) : [];
+
+  // Itens sem `section` ficam soltos no topo do menu, como sempre. Itens com
+  // `section` (ex: "DETRANs e Registradoras") são agrupados por label numa
+  // sub-lista própria, mesmo tratamento visual do bloco "Administração"
+  // abaixo — permite reaproveitar o mesmo componente de bloco pros dois.
+  const navItems = todosItens.filter((item) => !item.section);
+  const navSecoes = [];
+  todosItens.forEach((item) => {
+    if (!item.section) return;
+    let grupo = navSecoes.find((g) => g.label === item.section);
+    if (!grupo) { grupo = { label: item.section, items: [] }; navSecoes.push(grupo); }
+    grupo.items.push(item);
+  });
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -196,7 +227,7 @@ const DashboardLayout = ({ children }) => {
               return (
                 <button
                   key={p}
-                  onMouseDown={(e) => e.stopPropagation()} onClick={() => trocarPerfil(p)}
+                  onMouseDown={(e) => e.stopPropagation()} onClick={() => handleTrocarPerfil(p)}
                   className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-mono hover:bg-zinc-800 transition-colors ${p === perfilAtivo ? pc.color + ' font-bold' : 'text-zinc-300'}`}
                 >
                   <span className={`w-1.5 h-1.5 rounded-full ${pc.dot}`} />
@@ -212,54 +243,27 @@ const DashboardLayout = ({ children }) => {
 
       {/* Nav */}
       <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-150 relative group ${
-                isActive
-                  ? 'bg-orange-500/15 text-orange-400 border border-orange-500/25'
-                  : 'text-zinc-400 hover:bg-zinc-800/70 hover:text-white'
-              }`}
-            >
-              {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-orange-500 rounded-r-full" />}
-              <item.icon className="h-4 w-4 shrink-0" />
-              <span className="text-sm">{item.label}</span>
-              {item.badge > 0 && (
-                <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
-                  {item.badge > 99 ? '99+' : item.badge}
-                </span>
-              )}
-            </Link>
-          );
-        })}
+        {navItems.map((item) => (
+          <NavItemLink key={item.path} item={item} location={location} onNavigate={() => setSidebarOpen(false)} />
+        ))}
+
+        {/* Seções agrupadas (ex: "DETRANs e Registradoras") */}
+        {navSecoes.map((secao) => (
+          <div key={secao.label} className="pt-2 mt-2 border-t border-zinc-800">
+            <p className="text-[10px] text-zinc-600 font-mono uppercase px-3 pb-1">{secao.label}</p>
+            {secao.items.map((item) => (
+              <NavItemLink key={item.path} item={item} location={location} onNavigate={() => setSidebarOpen(false)} />
+            ))}
+          </div>
+        ))}
 
         {/* Separador admin */}
-        {isAdmin && (
+        {navAdminExtra.length > 0 && (
           <div className="pt-2 mt-2 border-t border-zinc-800">
             <p className="text-[10px] text-zinc-600 font-mono uppercase px-3 pb-1">Administrao</p>
-            {NAV_ADMIN_EXTRA.map((item) => {
-              const isActive = location.pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-150 relative group ${
-                    isActive
-                      ? 'bg-orange-500/15 text-orange-400 border border-orange-500/25'
-                      : 'text-zinc-400 hover:bg-zinc-800/70 hover:text-white'
-                  }`}
-                >
-                  {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-orange-500 rounded-r-full" />}
-                  <item.icon className="h-4 w-4 shrink-0" />
-                  <span className="text-sm">{item.label}</span>
-                </Link>
-              );
-            })}
+            {navAdminExtra.map((item) => (
+              <NavItemLink key={item.path} item={item} location={location} onNavigate={() => setSidebarOpen(false)} />
+            ))}
           </div>
         )}
       </nav>

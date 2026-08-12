@@ -399,7 +399,7 @@ export const Component = () => (
     <VaporizeTextCycle
       texts={["sigcr", "SIGCR", "Credenciamento"]}
       font={{ fontFamily: "Inter, sans-serif", fontSize: "70px", fontWeight: 600 }}
-      color="rgb(249, 115, 22)"
+      color="rgb(33, 150, 243)"
       spread={5}
       density={5}
       animation={{ vaporizeDuration: 2, fadeInDuration: 1, waitDuration: 0.5 }}

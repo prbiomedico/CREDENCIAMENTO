@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { PerfilAtivoProvider } from './contexts/PerfilAtivoContext';
 import { Toaster } from '@/components/ui/sonner';
 import RotaProtegida from './components/RotaProtegida';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -18,21 +19,19 @@ import Portarias from './pages/Portarias';
 import Documentos from './pages/Documentos';
 import Editais from './pages/Editais';
 import Solicitacoes from './pages/Solicitacoes';
-import PainelDetran from './pages/PainelDetran';
 import Notificacoes from './pages/Notificacoes';
 import CriarEvento from './pages/CriarEvento';
 import Esteiras from './pages/Esteiras';
 import SolicitacaoDetalhe from './pages/SolicitacaoDetalhe';
 import GestaoUsuarios from './pages/GestaoUsuarios';
-import AnaliseDocumental from './pages/AnaliseDocumental';
-import POC from './pages/POC';
-import Homologacao from './pages/Homologacao';
 import DocumentosGov from './pages/DocumentosGov';
 import Estados from './pages/Estados';
 import EstadoDetalhe from './pages/EstadoDetalhe';
 import Transparencia from './pages/Transparencia';
+import GestaoEditais from './pages/GestaoEditais';
 import MinhasSubmissoes from './pages/MinhasSubmissoes';
 import PainelConferencia from './pages/PainelConferencia';
+import Registradoras from './pages/Registradoras';
 import '@/App.css';
 
 // Cada rota recebe seu próprio ErrorBoundary (não um único global): um crash
@@ -60,19 +59,17 @@ function AppRoutes() {
           <Route path="/app-mobile" element={b(<AppMobile />)} />
           <Route path="/documentos/upload" element={b(<UploadDocumentos />)} />
           <Route path="/mapa-nacional" element={b(<MapaNacional />)} />
-          <Route path="/documentos" element={b(<RotaProtegida perfilPermitido="registradora"><Documentos /></RotaProtegida>)} />
+          <Route path="/documentos" element={b(<RotaProtegida perfilPermitido={["registradora", "financeira"]}><Documentos /></RotaProtegida>)} />
           <Route path="/credenciamento-portaria" element={b(<RotaProtegida perfilPermitido={["registradora", "financeira"]}><MinhasSubmissoes /></RotaProtegida>)} />
           <Route path="/detran/conferencia" element={b(<RotaProtegida perfilPermitido={["sigcr_admin", "detran", "detran_admin"]}><PainelConferencia /></RotaProtegida>)} />
           <Route path="/credenciamento/documentos" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><DocumentosGov /></RotaProtegida>)} />
           <Route path="/estados" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><Estados /></RotaProtegida>)} />
+          <Route path="/registradoras" element={b(<RotaProtegida perfilPermitido={["sigcr_admin", "detran", "detran_admin"]}><Registradoras /></RotaProtegida>)} />
+          <Route path="/gestao-editais" element={b(<RotaProtegida perfilPermitido={["sigcr_admin", "detran", "detran_admin"]}><GestaoEditais /></RotaProtegida>)} />
           <Route path="/estados/:sigla" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><EstadoDetalhe /></RotaProtegida>)} />
         <Route path="/mapa" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><MapaNacional /></RotaProtegida>)} />
         <Route path="/editais" element={b(<RotaProtegida perfilPermitido={["registradora", "detran", "detran_admin"]}><Editais /></RotaProtegida>)} />
         <Route path="/solicitacoes" element={b(<RotaProtegida perfilPermitido={["registradora", "detran", "detran_admin"]}><Solicitacoes /></RotaProtegida>)} />
-        <Route path="/painel-detran" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><PainelDetran /></RotaProtegida>)} />
-        <Route path="/detran/analise" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><AnaliseDocumental /></RotaProtegida>)} />
-        <Route path="/detran/poc" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><POC /></RotaProtegida>)} />
-        <Route path="/detran/homologacao" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><Homologacao /></RotaProtegida>)} />
         <Route path="/notificacoes" element={b(<RotaProtegida><Notificacoes /></RotaProtegida>)} />
         <Route path="/criar-evento" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><CriarEvento /></RotaProtegida>)} />
       <Route path="/esteiras" element={b(<RotaProtegida><Esteiras /></RotaProtegida>)} />
@@ -88,9 +85,11 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <AppRoutes />
-        <CookieBanner />
-        <Toaster position="top-right" />
+        <PerfilAtivoProvider>
+          <AppRoutes />
+          <CookieBanner />
+          <Toaster position="top-right" />
+        </PerfilAtivoProvider>
       </AuthProvider>
     </BrowserRouter>
   );

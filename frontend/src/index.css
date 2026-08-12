@@ -17,25 +17,29 @@ code {
 
 @layer base {
     :root {
-        --background: 240 10% 3.9%;
-        --foreground: 0 0% 98%;
-        --card: 240 5% 7.5%;
-        --card-foreground: 0 0% 98%;
-        --popover: 240 10% 3.9%;
-        --popover-foreground: 0 0% 98%;
-        --primary: 24 95% 53%;
-        --primary-foreground: 240 10% 3.9%;
-        --secondary: 240 4% 15.9%;
-        --secondary-foreground: 0 0% 98%;
-        --muted: 240 5% 9.6%;
-        --muted-foreground: 240 4% 63.9%;
-        --accent: 24 95% 53%;
-        --accent-foreground: 0 0% 98%;
-        --destructive: 0 84.2% 60.2%;
+        /* Identidade visual "Berry" (referência MUI, MIT) — variante escura.
+           Paper mais escuro que Background é intencional (assim o Berry
+           original é definido); Levels 1/2 (#212946/#29314f) alimentam
+           border/input/muted como superfícies elevadas. */
+        --background: 227 42% 18%;         /* #1a223f */
+        --foreground: 226 36% 88%;         /* texto título #d7dcec */
+        --card: 227 52% 14%;               /* paper #111936 */
+        --card-foreground: 226 36% 88%;
+        --popover: 227 52% 14%;
+        --popover-foreground: 226 36% 88%;
+        --primary: 207 90% 54%;            /* azul Berry main #2196f3 */
+        --primary-foreground: 227 52% 14%;
+        --secondary: 256 100% 65%;         /* roxo Berry main #7c4dff */
+        --secondary-foreground: 227 52% 14%;
+        --muted: 227 36% 20%;              /* level1 #212946 */
+        --muted-foreground: 227 35% 64%;   /* texto secundário #8492c4 */
+        --accent: 207 90% 54%;
+        --accent-foreground: 227 52% 14%;
+        --destructive: 4 90% 58%;          /* erro Berry #f44336 */
         --destructive-foreground: 0 0% 98%;
-        --border: 240 4% 15.9%;
-        --input: 240 4% 15.9%;
-        --ring: 24 95% 53%;
+        --border: 227 32% 24%;             /* level2 #29314f */
+        --input: 227 32% 24%;              /* level2 #29314f */
+        --ring: 207 90% 54%;
         --radius: 0.5rem;
     }
 }
