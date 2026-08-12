@@ -1461,6 +1461,16 @@ Todas as contas de teste criadas no Keycloak de produção (2) e os dados no Mon
 
 **Frontend**: `CadastroPublico.js` isolado (sem `PortariaPublica.js`, que continua fora — não foi pedido), build limpo, bundle confirmado com `public/cadastro`/`public/registradoras` presentes e `PortariaPublica`/`portarias/publico` ausentes.
 
-### Pendente: confirmação antes do deploy, como combinado.
+### Deploy — ✅ CONCLUÍDO e no ar (2026-08-12, confirmado pelo Pedro)
+
+Mesma técnica das fatias anteriores: `git stash` nos arquivos tracked não relacionados, `mv` temporário de `PortariaPublica.js`/`ChecklistCatalogoPicker.js` pra fora de `frontend/` (continuam fora do lote, não foram pedidos), `POST /public/cadastro`/`GET /public/registradoras` aplicados no `backend/server.py` real, rota `/cadastro` + import no `App.js` real. Deploy via `deploy.sh`/`deploy-frontend.sh` reais (commit backend `b97325b`, commit frontend `9a6848a`, release `releases/fatia3-cadastro-publico`). Um conflito de merge ao restaurar o lote pendente por cima (2 hunks, ambos sobre o fix do `status="pendente_aprovacao"`) — resolvido mantendo a versão deployada em produção, sem duplicação de rota confirmada via grep.
+
+**Health check final completo**: `/api/` 200; `/api/editais`, `/api/editais/upload`, `/api/portarias`, `/api/detran/registradoras`, `/api/companies`, `/api/solicitacoes-registro` todos 401 sem token; `/api/public/registradoras` 200 (público, como deve ser); `/api/public/cadastro` sem body 422 (rota existe, valida payload); site 200 via HTTPS real; `/cadastro`, `/gestao-editais`, `/fila-registros` todos 200 (SPA servindo certo); bind mount de uploads confirmado; sem traceback nos logs.
+
+**Resultado**: o lote de 2026-08-05 inteiro que motivou a retomada (Gestão de Editais, Fila de Registro de Contrato, Cadastro Público, PerfilAtivoContext) está testado, no ar, e commitado/pushado no GitHub via o mecanismo do item 18 — nenhuma parte dele mais vivendo só em produção sem estar no git. Junto no caminho: a regressão do item 15 (`/detran/registradoras`) foi restaurada (fatia 0) e o vínculo financeira↔registradora foi construído do zero (não existia nem no lote original) pra fila de registros funcionar de verdade.
+
+**O que sobrou do lote 2026-08-05, ainda fora de qualquer fatia, sem pedido pra entrar**: `PortariaPublica.js` + `ChecklistCatalogoPicker.js` (frontend, untracked) + as rotas backend correspondentes (`/portarias/publico/{token}`, `/portarias/{id}/publicar`, `/checklist-catalogo`) + as reescritas grandes não relacionadas (`Dashboard.js`, `Portarias.js`, `CriarEvento.js`, `ChecklistContran.js`, `Editais.js`, `EstadoDetalhe.js`, `MapaNacional.js`, `Checkout.js`, `Planos.js`, `Documentos.js`, `Esteiras.js`, `Notificacoes.js`, `PagamentoAguardando.js`, `SolicitacaoDetalhe.js`, `UploadDocumentos.js`, `interactive-map.js`'s pending version). Nada disso foi tocado nesta rodada.
+
+**Achado aberto, não corrigido, sinalizado pra revisão futura**: o descompasso do vocabulário de status do `Company` (commit `9afbb99` diz ter migrado pra `"pendente_aprovacao"`, produção real ainda usa `"pending"`) continua existindo pra `POST /companies` (admin/self-service) — só `POST /public/cadastro` foi corrigido, por decisão explícita do Pedro de manter o escopo mínimo. Isso significa que uma empresa criada hoje via `Empresas.js` (fluxo self-service já no ar) ainda nasce com `status="pending"` e fica fora da fila de aprovação `pendente_aprovacao`-only. Mesma classe de bug, ainda não resolvida fora do caminho novo.
 
 
