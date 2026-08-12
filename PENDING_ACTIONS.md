@@ -1435,4 +1435,32 @@ Implementado e testado em devtest antes de qualquer coisa ir pra produção:
 
 **Lote restante após esta fatia**: `CadastroPublico.js`, `PortariaPublica.js`, `ChecklistCatalogoPicker.js` (frontend, untracked) + a parte de `POST /public/cadastro`/`/public/registradoras`/`/portarias/publico`/`/portarias/{id}/publicar` no `backend/server.py` (ainda não commitada) + as reescritas grandes não relacionadas (`Dashboard.js`, `Portarias.js`, `CriarEvento.js`, etc.) — essas últimas continuam de fora de qualquer fatia até serem pedidas.
 
+## Fatia 3 — Cadastro Público — 🧪 TESTADA, deploy NÃO executado (aguardando confirmação, 2026-08-12)
+
+Última fatia do lote original. Maior risco do lote inteiro: endpoint público sem autenticação (`POST /public/cadastro`) que cria conta de verdade no Keycloak + empresa em Mongo na mesma chamada.
+
+### Achado antes de testar: vocabulário de status (conforme pedido, relatado antes de decidir)
+
+`GET /admin/cadastros-pendentes` (fila de aprovação, `GestaoUsuarios.js`) filtra estritamente por `status == "pendente_aprovacao"`. O `Company.status` default que está rodando em produção (mantido na fatia 2, por ser o que já está no ar) ainda é `"pending"` (legado) — se `POST /public/cadastro` não setasse `status` explicitamente, todo cadastro público novo nasceria invisível pra fila de aprovação, num limbo permanente. **Decisão do Pedro**: só `POST /public/cadastro` seta `status="pendente_aprovacao"` explicitamente na criação — não mexe no default do modelo nem no `POST /companies` existente, escopo mínimo, sem mudar nada que já está no ar. Implementado assim.
+
+### Testes em devtest (sem Keycloak isolado — usei o Keycloak real de produção com contas claramente descartáveis, limpas depois)
+
+**Validação antes de tocar o Keycloak** (nenhum desses cria usuário órfão, confirmado checando o Keycloak depois): `tipo_empresa` inválido (400), `financeira` sem `registradora_id` (400), `registradora_id` inexistente (404), senha curta (400), CNPJ duplicado (409).
+
+**Fluxo real completo, ponta a ponta, com dados reais (não sintéticos)**:
+1. `GET /public/registradoras` sem auth — lista só `company_id`+`nome_fantasia`, nada sensível.
+2. Cadastro público de uma **registradora** de verdade: usuário criado no Keycloak (confirmado via `kcadm.sh get-roles --effective`, role `registradora` presente), empresa criada em Mongo com `status: "pendente_aprovacao"` — **e confirmado que aparece na fila `GET /admin/cadastros-pendentes`** (prova que o fix do vocabulário resolveu o problema real).
+3. Cadastro público de uma **financeira** vinculada a essa registradora: mesma validação, role `financeira` no Keycloac, `registradora_id` gravado certo.
+4. **E-mail duplicado** → 409, sem criar segunda empresa.
+5. Financeira recém-cadastrada (sessão própria, não sintética) vê a própria empresa via `GET /companies` e **cria uma solicitação de registro de contrato de verdade**; a registradora (sessão própria) vê e conclui com upload de comprovante — fecha o loop completo desde o cadastro público até uma ação de negócio real, usando só as fatias já deployadas.
+6. **Escopo**: uma terceira registradora, não relacionada, não vê nem alcança por ID a solicitação que veio desse fluxo (0 na listagem, 403 no acesso direto).
+7. **Rollback testado de verdade, não só por leitura de código**: instrumentei uma falha forçada logo depois da criação do usuário no Keycloak (variável de ambiente só nesse build de teste, nunca vai pro deploy real) — confirmado que o usuário órfão é deletado automaticamente e nenhuma empresa fica pra trás.
+8. **Regressão rápida**: `/editais`, `/portarias`, `/detran/registradoras` (403 correto pro perfil errado) sem quebra.
+
+Todas as contas de teste criadas no Keycloak de produção (2) e os dados no Mongo devtest foram removidos ao final.
+
+**Frontend**: `CadastroPublico.js` isolado (sem `PortariaPublica.js`, que continua fora — não foi pedido), build limpo, bundle confirmado com `public/cadastro`/`public/registradoras` presentes e `PortariaPublica`/`portarias/publico` ausentes.
+
+### Pendente: confirmação antes do deploy, como combinado.
+
 
