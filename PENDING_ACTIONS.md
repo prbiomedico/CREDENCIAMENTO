@@ -1473,4 +1473,35 @@ Mesma técnica das fatias anteriores: `git stash` nos arquivos tracked não rela
 
 **Achado aberto, não corrigido, sinalizado pra revisão futura**: o descompasso do vocabulário de status do `Company` (commit `9afbb99` diz ter migrado pra `"pendente_aprovacao"`, produção real ainda usa `"pending"`) continua existindo pra `POST /companies` (admin/self-service) — só `POST /public/cadastro` foi corrigido, por decisão explícita do Pedro de manter o escopo mínimo. Isso significa que uma empresa criada hoje via `Empresas.js` (fluxo self-service já no ar) ainda nasce com `status="pending"` e fica fora da fila de aprovação `pendente_aprovacao`-only. Mesma classe de bug, ainda não resolvida fora do caminho novo.
 
+## 20. Importação em lote de 58 portarias históricas de acervo — 🧪 TESTADA, import em produção NÃO executado (aguardando confirmação, 2026-08-12)
+
+Pedido do Pedro: importar 58 portarias/editais/instruções/chamamentos públicos reais (26 estados + DF, `import_spec.json` salvo em `backend/`) como rascunho — sem PDF ainda, sem notificar ninguém, sem aparecer pra registradora/financeira até o Pedro anexar o PDF de cada uma manualmente via Portarias.js.
+
+### Achado antes de escrever qualquer coisa: a premissa do pedido não correspondia à produção real
+
+O pedido original assumia um campo `publicado_at` que faria uma portaria ficar "rascunho" até ser publicada. **Esse campo não existe no modelo `Portaria` em produção** — confirmado direto no container (`docker exec sigcr-backend grep ... /app/server.py`). Existe só no lote ainda-não-deployado do `PortariaPublica.js` (memória do projeto), e mesmo lá a lógica só esconde portarias com `criado_via == "wizard"` especificamente, não qualquer rascunho.
+
+**Mais grave**: `GET /portarias` (a rota que `Portarias.js` chama, sem passar `estado_sigla`) **não tinha nenhum filtro por perfil ou por rascunho hoje** — retorna toda portaria não-deletada pra qualquer perfil autenticado, `registradora`/`financeira` incluído. Se eu tivesse simplesmente inserido os 58 registros como pedido, eles apareceriam imediatamente pra toda registradora e financeira do sistema — o oposto do que foi pedido.
+
+**Decisão do Pedro**: filtrar por `link_pdf` vazio. Implementado:
+
+- `GET /portarias` e `GET /portarias/{id}`: perfil `registradora`/`financeira` não vê (lista) nem alcança por ID (404, não 403 — não revela nem que existe) nenhuma portaria com `link_pdf` vazio. `sigcr_admin`/`detran`/`detran_admin` continuam vendo tudo, pra poder editar/anexar o PDF. `GET /portarias/{id}/pdf` já 404ava sozinho nesse caso (sem mudança necessária).
+
+### Achado secundário, sinalizado mas não decidido por conta própria: vocabulário de `tipo`
+
+`tipo_sugerido` no `import_spec.json` (portaria/edital/instrucao/chamamento_publico — tipo de **instrumento**) não é o mesmo vocabulário que a tela `Portarias.js` já usa pro campo `tipo` (credenciamento/descredenciamento/renovacao/alteracao/outro — tipo de **ação**). Gravado como pedido explicitamente (`tipo=tipo_sugerido`), mas o Select de edição não vai reconhecer o valor (aparece em branco) até o Pedro escolher uma das 5 opções existentes ao revisar cada portaria. Não bloqueante — ele já vai abrir cada uma pra editar de qualquer forma.
+
+### Script
+
+`backend/migrations/2026_08_12_import_portarias_historicas.py` — lê `backend/import_spec.json`, valida UF/tipo antes de tocar o banco (tudo ou nada), idempotente (identifica por `criado_via="importacao_manual"` + `title`+`estado_sigla`, pula quem já existe), `--dry-run`. Grava `title`, `content="Importado de acervo histórico — aguardando revisão"`, `source="Importação em lote"`, `estado_sigla`, `tipo`, `link_pdf=None`, mais os campos extras `criado_via="importacao_manual"` e `arquivo_origem_referencia` (nome do PDF original, pro Pedro localizar o arquivo físico ao anexar). `date` (campo obrigatório no modelo, sem equivalente no spec) preenchido com a data/hora da importação — placeholder, o Pedro deve corrigir pra data real do ato ao revisar.
+
+### Testado em devtest
+
+- `--dry-run` e execução real: 58 registros criados, título/UF/tipo conferidos.
+- Rodado 2 vezes: segunda vez pulou os 58 (idempotência confirmada, sem duplicar).
+- **Visibilidade** (o ponto crítico): `registradora` e `financeira` de teste veem 0 portarias na listagem; `sigcr_admin` e `detran` veem todas. Acesso direto por `portaria_id` — `registradora` recebe 404 (não revela existência), `sigcr_admin` recebe 200. Download de PDF 404 pra qualquer perfil (nenhum PDF anexado ainda, como esperado).
+- Regressão rápida: `/editais`, `/detran/registradoras`, `/companies`, `/solicitacoes-registro` sem quebra.
+
+### Pendente: confirmação antes de rodar em produção, como combinado.
+
 
