@@ -1692,7 +1692,15 @@ async def get_portarias(
     current_user: User = Depends(get_current_user),
 ):
     """Get all portarias. Sem estado_sigla: comportamento legado (aberto a qualquer perfil,
-    usado pela tela genérica /portarias). Com estado_sigla: aplica controle de acesso por estado."""
+    usado pela tela genérica /portarias). Com estado_sigla: aplica controle de acesso por estado.
+
+    Rascunho sem PDF anexado (link_pdf vazio) fica invisível pra registradora/
+    financeira — são as portarias criadas via importação em lote (ver
+    migrations/2026_08_12_import_portarias_historicas.py), ainda sem revisão
+    nem PDF de verdade. sigcr_admin/detran/detran_admin continuam vendo tudo,
+    pra poder editar e anexar o PDF antes de liberar. Não existe (ainda) um
+    campo de status de publicação dedicado — este é o sinal real disponível
+    hoje pra distinguir rascunho de portaria pronta."""
     query = {}
     if estado_sigla:
         estado_sigla = estado_sigla.upper()
@@ -1703,6 +1711,8 @@ async def get_portarias(
         query["estado_sigla"] = estado_sigla
     if not incluir_removidos:
         query["deleted_at"] = None
+    if current_user.perfil in ("registradora", "financeira"):
+        query["link_pdf"] = {"$nin": [None, ""]}
     portarias = await db.portarias.find(query, {"_id": 0}).sort("date", -1).to_list(1000)
     return portarias
 
@@ -1889,6 +1899,8 @@ async def get_portaria(portaria_id: str, current_user: User = Depends(get_curren
     caso o checklist devolvido é filtrado só pros itens do perfil da empresa."""
     portaria = await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
     if not portaria:
+        raise HTTPException(status_code=404, detail="Portaria não encontrada")
+    if current_user.perfil in ("registradora", "financeira") and not portaria.get("link_pdf"):
         raise HTTPException(status_code=404, detail="Portaria não encontrada")
     if portaria.get("estado_sigla"):
         empresa = await _empresa_do_usuario(current_user)
