@@ -1331,4 +1331,45 @@ frontend legítimo, em vez de forçar um agora só pra validar.
 morto, mas ficou exposto em texto puro no `.git/config` por meses e não
 tem mais uso nenhum com o esquema de chave SSH dedicada.
 
+## 19. Retomada do lote de 2026-08-05 (auto-cadastro público, fila de registro de contrato, gestão de editais) — ⚠️ EM ANDAMENTO, fatia 0 concluída (2026-08-12)
+
+Pedido do Pedro pra retomar o lote parado desde 2026-08-05 ([[project-sigcr-pending-batch-20260805]] na memória), agora protegido pelo mecanismo do item 18. Plano combinado: relatório do estado real primeiro (prod ao vivo, não git/working tree — lição do item 17), depois fatiar por risco, testar cada fatia isolada em devtest, deployar com o sync automático rodando.
+
+### Relatório do estado real (auditoria feita antes de tocar em qualquer código)
+
+Cruzamento `docker exec sigcr-backend cat /app/server.py` (prod real) × bundle JS da release atual (`main.6a47f241.js`) × `git HEAD` × working tree:
+
+- **`PerfilAtivoContext` — já estava pronto e no ar** (confirmado no bundle: `usePerfilAtivo`/`PerfilAtivoProvider` presentes, `DashboardLayout.js` consumindo). Não fazia parte do trabalho pendente, só faltava ficar commitado.
+- **🔴 Achado não relacionado ao pedido — regressão ativa encontrada em produção**: a tela Registradoras (item 15, dada como concluída em 2026-08-11) estava **quebrada**. O frontend (ao vivo) chama `GET /api/detran/registradoras`; testei direto — **404**. O endpoint nunca foi commitado (só o frontend foi copiado de volta manualmente na época) e se perdeu numa das sobrescritas do item 17, sem que o health-check padrão (que não cobre essa rota específica) detectasse. Tratado como fatia 0, fora do lote — ver abaixo.
+- **Auto-cadastro público** (`CadastroPublico.js` + `POST/GET /public/*`) — 100% pendente, zero ocorrências no bundle. Maior risco (endpoint público sem auth, provisionamento Keycloak) — fica por último.
+- **Fila de registro de contrato** (`FilaRegistros.js` + `SolicitacaoRegistro.js` + 6 rotas `/solicitacoes-registro/*`) — 100% pendente, backend inteiro ausente em prod (404).
+- **Gestão de Editais** (`GestaoEditais.js` + `PATCH`/`upload` em `/editais`) — parcialmente no ar: `GET`/`POST /editais` já existem e funcionam (usados pela Transparência pública); o lote só adiciona edição/exclusão/upload de anexos, é aditivo.
+- `PortariaPublica.js` e `ChecklistCatalogoPicker.js` também estão no mesmo lote, fora do escopo deste pedido — deixados de lado.
+
+Ordem de fatiamento definida por risco: **0. fix Registradoras (urgente, fora do lote) → 1. Gestão de Editais → 2. Fila de Registros → 3. Cadastro Público.**
+
+### Fatia 0 — fix `/detran/registradoras` — ✅ CONCLUÍDO e no ar
+
+Extraído o endpoint (linhas ~2420–2501 do working tree) isolado do resto do lote pendente (que ficou de lado via `git stash` só do `backend/server.py`), aplicado num worktree limpo a partir de HEAD. Testado em devtest (release fresca do endpoint, `sigcr-mongodb-devtest` com dados existentes de sessões de teste anteriores — perfis/UF reais o bastante pra exercitar a lógica) via sessões `session_token` legadas simulando 3 perfis, 7 cenários:
+
+1. Sem auth → 401
+2. `sigcr_admin` sem `estado_sigla` → 400
+3. `sigcr_admin` com `estado_sigla=SP` → 200, 5 empresas retornadas corretamente (todas `tipo_empresa=registradora` com `SP` em `detrans_atuacao`)
+4. `sigcr_admin` com UF inválida → 400
+5. `detran` (UF própria SP) sem param → 200, usa a UF do próprio usuário
+6. `registradora` (perfil sem acesso) → 403
+7. `detran` (SP) tentando forçar `estado_sigla=RJ` via query param → **ignorado**, continua retornando só SP (confirma que não dá pra um detran de uma UF ver dados de outra UF só mexendo no query param)
+
+**Bug pego no processo, corrigido antes de repetir**: os e-mails sintéticos de teste (`@test.local`) causavam `500` — `EmailStr` do Pydantic rejeita TLD `.local` por ser "special-use/reserved". Troquei pra um domínio genérico não reservado; não é bug do endpoint, é só higiene de dado de teste — documentando caso alguém tropece de novo no mesmo problema.
+
+Endpoint restaurado no `backend/server.py` real (mesma técnica do item 18: lote pendente posto de lado com `git stash` só nesse arquivo, endpoint inserido, `./deploy.sh` rodado de verdade — passou pelo `git-sync-or-die.sh`, commit `8c9c50a`, push confirmado, build/restart normal, rollback tag `sigcr-backend:pre-deploy-rollback-20260812-1447`). Health check: `/api/` 200, `/api/portarias` 401, **`/api/detran/registradoras` agora 401 (era 404)** — confirma restaurado. Lote pendente restaurado por cima (`git stash pop`, 1 conflito de merge só no docstring do mesmo endpoint — resolvido mantendo a versão commitada com a nota do incidente, resto do lote aplicou limpo). Tela Registradoras deve estar funcional em produção de novo — verificação visual real ainda cabe ao Pedro/usuário (sem browser automation neste ambiente).
+
+### Próximas fatias (não iniciadas)
+
+1. Gestão de Editais — isolar, testar em devtest, reportar antes de deployar.
+2. Fila de Registros.
+3. Cadastro Público.
+
+Cada uma seguirá o mesmo padrão: extrair do lote isoladamente (não deployar o lote inteiro de uma vez), testar em devtest com dados reais/realistas, reportar resultado, e só então deployar via `deploy.sh`/`deploy-frontend.sh` reais (com o sync automático do item 18 ativo).
+
 
