@@ -1070,6 +1070,118 @@ async def create_company(company_data: CompanyCreate, current_user: User = Depen
     return company
 
 
+@api_router.get("/public/registradoras")
+async def listar_registradoras_publico():
+    """Lista mínima e pública de registradoras ativas — alimenta o seletor de
+    vínculo no autocadastro de Financeira (Fase A). Só o essencial pra exibir
+    numa lista de escolha; nada de dados sensíveis da empresa."""
+    registradoras = await db.companies.find(
+        {"tipo_empresa": "registradora", "status": "ativo_contrato_assinado", "deleted_at": None},
+        {"_id": 0, "company_id": 1, "nome_fantasia": 1},
+    ).sort("nome_fantasia", 1).to_list(1000)
+    return registradoras
+
+
+class CadastroPublicoPayload(CompanyCreate):
+    password: str
+
+
+@api_router.post("/public/cadastro")
+async def autocadastro_publico(payload: CadastroPublicoPayload):
+    """Autocadastro público (Fase 3, estendido na Fase A pra cobrir Financeira
+    também) — cria a conta no Keycloak e a empresa em 'pendente_aprovacao' na
+    mesma chamada. Sem autenticação por natureza (é o próprio cadastro), então
+    toda validação de negócio (tipo_empresa/registradora_id, CNPJ único)
+    acontece aqui dentro, nunca confiando em nada vindo do cliente sem checar.
+
+    status="pendente_aprovacao" setado explicitamente aqui (não confiar no
+    default do modelo Company, que continua "pending" — legado, ainda usado
+    por POST /companies) — GET /admin/cadastros-pendentes só filtra por
+    "pendente_aprovacao", então um cadastro público que nascesse com o
+    default antigo nunca apareceria na fila de aprovação de ninguém. Ver
+    PENDING_ACTIONS.md item 19."""
+    await _validar_tipo_e_vinculo_empresa(payload.tipo_empresa, payload.registradora_id)
+
+    if len(payload.password) < 8:
+        raise HTTPException(status_code=400, detail="Senha deve ter pelo menos 8 caracteres")
+
+    if await db.companies.find_one({"cnpj": payload.cnpj, "deleted_at": None}, {"_id": 0}):
+        raise HTTPException(status_code=409, detail="CNPJ já cadastrado")
+
+    token = await get_kc_admin_token()
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    username = payload.email_comercial
+    user_data = {
+        "username": username,
+        "email": payload.email_comercial,
+        "firstName": payload.gestor_contrato,
+        "lastName": "",
+        "enabled": True,
+        "credentials": [{"type": "password", "value": payload.password, "temporary": False}],
+    }
+    async with httpx.AsyncClient() as client:
+        r = await client.post(
+            f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users",
+            headers=headers, json=user_data,
+        )
+        if r.status_code == 409:
+            raise HTTPException(status_code=409, detail="E-mail já cadastrado")
+        r.raise_for_status()
+
+        ru = await client.get(
+            f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users?username={username}&exact=true",
+            headers=headers,
+        )
+        users = ru.json()
+        if not users:
+            raise HTTPException(status_code=500, detail="Conta criada mas não encontrada")
+        user_id = users[0]["id"]
+
+        try:
+            rr = await client.get(
+                f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/roles/{payload.tipo_empresa}",
+                headers=headers,
+            )
+            rr.raise_for_status()
+            role_obj = rr.json()
+            await client.post(
+                f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}/role-mappings/realm",
+                headers=headers, json=[role_obj],
+            )
+
+            company = Company(
+                user_id=user_id,
+                name=payload.name,
+                nome_fantasia=payload.nome_fantasia,
+                cnpj=payload.cnpj,
+                endereco=payload.endereco,
+                email_comercial=payload.email_comercial,
+                whatsapp=payload.whatsapp,
+                gestor_contrato=payload.gestor_contrato,
+                detrans_atuacao=payload.detrans_atuacao,
+                tipo_empresa=payload.tipo_empresa,
+                registradora_id=payload.registradora_id,
+                status="pendente_aprovacao",
+            )
+            doc = company.model_dump()
+            doc['created_at'] = doc['created_at'].isoformat()
+            doc['updated_at'] = doc['updated_at'].isoformat()
+            try:
+                await db.companies.insert_one(doc)
+            except DuplicateKeyError:
+                raise HTTPException(status_code=409, detail="CNPJ já cadastrado")
+        except Exception:
+            # Rollback: não deixa um usuário Keycloak órfão (sem empresa) se
+            # qualquer coisa depois da criação da conta falhar.
+            await client.delete(
+                f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}",
+                headers=headers,
+            )
+            raise
+
+    return {"message": "Cadastro realizado com sucesso. Aguarde aprovação.", "company_id": company.company_id}
+
+
 @api_router.get("/companies/{company_id}", response_model=Company)
 async def get_company(company_id: str, current_user: User = Depends(get_current_user)):
     """Get company by ID (dono ou sigcr_admin em modo 'ver como')"""
