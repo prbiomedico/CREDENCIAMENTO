@@ -2372,7 +2372,7 @@ async def get_submissao(submissao_id: str, current_user: User = Depends(get_curr
 
 
 @api_router.post("/submissoes", response_model=Submissao)
-async def criar_submissao(portaria_id: str = Form(...), current_user: User = Depends(get_current_user)):
+async def criar_submissao(portaria_id: str, current_user: User = Depends(get_current_user)):
     """Get-or-create idempotente: se a empresa já tem uma submissão (não
     removida) pra esta portaria, devolve ela em vez de criar duplicata."""
     empresa = await _empresa_do_usuario(current_user)
