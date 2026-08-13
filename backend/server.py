@@ -763,6 +763,20 @@ class EffectiveScope(BaseModel):
     def is_viewing_as(self) -> bool:
         return self.viewing_as is not None
 
+    def as_user(self) -> "User":
+        """Visão User-shaped dos campos EFETIVOS (perfil/user_id/detran_uf) —
+        deixa helpers antigos que só sabem ler um `User` (_perfil_pode_ver_estado,
+        _empresa_do_usuario, _checar_permissao_escrita_estado etc.) funcionarem
+        sob simulação 'ver como' sem precisar ser reescritos: endpoints que
+        migram pra EffectiveScope passam `scope.as_user()` no lugar de
+        `current_user` só nesses helpers de leitura/checagem, e continuam
+        usando `scope.current_user` (identidade real) pra auditoria/created_by."""
+        return self.current_user.model_copy(update={
+            "perfil": self.effective_perfil,
+            "user_id": self.effective_user_id,
+            "detran_uf": self.effective_detran_uf,
+        })
+
 
 async def get_effective_scope(
     view_as_company_id: Optional[str] = None,
@@ -1689,7 +1703,7 @@ async def _empresa_do_usuario(user: User) -> Optional[dict]:
 async def get_portarias(
     estado_sigla: Optional[str] = None,
     incluir_removidos: bool = False,
-    current_user: User = Depends(get_current_user),
+    scope: EffectiveScope = Depends(get_effective_scope),
 ):
     """Get all portarias. Sem estado_sigla: comportamento legado (aberto a qualquer perfil,
     usado pela tela genérica /portarias). Com estado_sigla: aplica controle de acesso por estado.
@@ -1700,7 +1714,14 @@ async def get_portarias(
     nem PDF de verdade. sigcr_admin/detran/detran_admin continuam vendo tudo,
     pra poder editar e anexar o PDF antes de liberar. Não existe (ainda) um
     campo de status de publicação dedicado — este é o sinal real disponível
-    hoje pra distinguir rascunho de portaria pronta."""
+    hoje pra distinguir rascunho de portaria pronta.
+
+    Usa EffectiveScope (não current_user direto) pra que o modo "ver como"
+    do sigcr_admin (view_as_company_id/view_as_detran_uf) realmente restrinja
+    a listagem ao que a empresa/DETRAN simulado veria — sem isso, a badge
+    "Trocar Visão" no frontend trocava só o menu, e o admin continuava vendo
+    a lista irrestrita mesmo simulando registradora/financeira."""
+    current_user = scope.as_user()
     query = {}
     if estado_sigla:
         estado_sigla = estado_sigla.upper()
@@ -1890,13 +1911,19 @@ async def buscar_portarias_queridodiario(
 
 
 @api_router.get("/portarias/{portaria_id}", response_model=Portaria)
-async def get_portaria(portaria_id: str, current_user: User = Depends(get_current_user)):
+async def get_portaria(portaria_id: str, scope: EffectiveScope = Depends(get_effective_scope)):
     """Detalhe de uma portaria (permite ver mesmo se removida — mesma convenção de GET /documentos/{id}).
     Além de sigcr_admin/detran/detran_admin (via _perfil_pode_ver_estado), uma
     empresa registradora/financeira também enxerga a portaria de uma UF em que
     ela mesma atua (detrans_atuacao) — necessário pro fluxo de credenciamento
     por portaria (Passo B: a empresa precisa ver o checklist publicado). Nesse
-    caso o checklist devolvido é filtrado só pros itens do perfil da empresa."""
+    caso o checklist devolvido é filtrado só pros itens do perfil da empresa.
+
+    EffectiveScope (não current_user direto) pelo mesmo motivo de GET /portarias:
+    "ver como" simulado precisa valer aqui também, senão o admin simulando
+    registradora enxergaria (ou não) detalhes de portaria de forma diferente
+    da lista, inconsistência que seria seu próprio tipo de falso-positivo."""
+    current_user = scope.as_user()
     portaria = await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
     if not portaria:
         raise HTTPException(status_code=404, detail="Portaria não encontrada")
@@ -2339,11 +2366,17 @@ async def _autorizar_acesso_submissao(submissao: dict, current_user: User):
 async def listar_submissoes(
     estado_sigla: Optional[str] = None,
     status: Optional[str] = None,
-    current_user: User = Depends(get_current_user),
+    scope: EffectiveScope = Depends(get_effective_scope),
 ):
     """Registradora/financeira: só as próprias submissões (por company_id).
     DETRAN/detran_admin/sigcr_admin: escopado por estado_sigla (obrigatório,
-    e restrito à própria UF pra detran/detran_admin via _perfil_pode_ver_estado)."""
+    e restrito à própria UF pra detran/detran_admin via _perfil_pode_ver_estado).
+
+    EffectiveScope: sigcr_admin simulando "ver como" registradora/financeira
+    cai no ramo de empresa (via _empresa_do_usuario) em vez de sempre exigir
+    estado_sigla como se fosse DETRAN — sem isso a simulação de empresa não
+    alcançava esta tela (Credenciamento por Portaria) de jeito nenhum."""
+    current_user = scope.as_user()
     query = {"deleted_at": None}
     empresa = await _empresa_do_usuario(current_user)
     if empresa:
@@ -3560,7 +3593,11 @@ async def download_termo_adesao_publico(edital_id: str):
 # ============ SOLICITAÇÕES ============
 
 @api_router.get("/solicitacoes")
-async def get_solicitacoes(current_user: User = Depends(get_current_user)):
+async def get_solicitacoes(scope: EffectiveScope = Depends(get_effective_scope)):
+    """EffectiveScope pra que "ver como" (sigcr_admin simulando registradora/
+    financeira) restrinja à empresa simulada, em vez de sempre cair no ramo
+    sigcr_admin (visão irrestrita) mesmo com a simulação ativa."""
+    current_user = scope.as_user()
     if current_user.perfil in ["detran", "detran_admin", "sigcr_admin"]:
         query = {}
     else:
@@ -3753,10 +3790,17 @@ async def criar_solicitacao_registro(
 
 
 @api_router.get("/solicitacoes-registro")
-async def listar_solicitacoes_registro(current_user: User = Depends(require_perfil("financeira", "registradora"))):
+async def listar_solicitacoes_registro(
+    _gate: User = Depends(require_perfil("financeira", "registradora")),
+    scope: EffectiveScope = Depends(get_effective_scope),
+):
     """Financeira vê as próprias (todas as financeiras que possui); registradora
     vê as recebidas das financeiras vinculadas a ela (todas as registradoras que
-    possui); sigcr_admin vê tudo."""
+    possui); sigcr_admin sem "ver como" ativo vê tudo. O gate de entrada
+    (_gate, quem pode chamar a rota) continua na identidade real — sigcr_admin
+    sempre passa, como sempre passou; só o ESCOPO dos dados retornados abaixo
+    passa a respeitar a simulação, via EffectiveScope."""
+    current_user = scope.as_user()
     if current_user.perfil == "sigcr_admin":
         query = {}
     elif current_user.perfil == "financeira":
@@ -3880,9 +3924,12 @@ async def rejeitar_solicitacao_registro(
 # ============ NOTIFICAÇÕES ============
 
 @api_router.get("/notificacoes")
-async def get_notificacoes(current_user: User = Depends(get_current_user)):
+async def get_notificacoes(scope: EffectiveScope = Depends(get_effective_scope)):
+    """EffectiveScope só na LEITURA — marcar como lida (abaixo) continua na
+    identidade real, de propósito: simulação é pra visualizar, não pra
+    disparar efeito colateral de escrita na conta real da empresa simulada."""
     notifs = await db.notificacoes.find(
-        {"user_id": current_user.user_id}, {"_id": 0}
+        {"user_id": scope.effective_user_id}, {"_id": 0}
     ).sort("created_at", -1).to_list(50)
     return notifs
 
