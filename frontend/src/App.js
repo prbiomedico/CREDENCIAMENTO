@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ViewProvider } from './contexts/ViewContext';
 import { PerfilAtivoProvider } from './contexts/PerfilAtivoContext';
 import { Toaster } from '@/components/ui/sonner';
 import RotaProtegida from './components/RotaProtegida';
@@ -91,11 +92,13 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <PerfilAtivoProvider>
-          <AppRoutes />
-          <CookieBanner />
-          <Toaster position="top-right" />
-        </PerfilAtivoProvider>
+        <ViewProvider>
+          <PerfilAtivoProvider>
+            <AppRoutes />
+            <CookieBanner />
+            <Toaster position="top-right" />
+          </PerfilAtivoProvider>
+        </ViewProvider>
       </AuthProvider>
     </BrowserRouter>
   );

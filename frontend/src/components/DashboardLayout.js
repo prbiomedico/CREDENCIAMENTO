@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfilAtivo } from '../contexts/PerfilAtivoContext';
+import { useViewContext } from '../contexts/ViewContext';
 import {LayoutDashboard, Building2, FileText, Search, LogOut, Shield,
   Menu, X, Map, Folder, Bell, ChevronRight, Plus,
   ChevronDown, Users, Landmark, CreditCard, Settings, UserCog, Home, Archive,
@@ -90,6 +91,14 @@ const MENUS = {
   financeira: NAV_FINANCEIRA,
 };
 
+// UFs pro seletor de simulação "ver como DETRAN de <UF>" do sigcr_admin —
+// mesma lista usada em GestaoUsuarios.js/Editais.js/CriarEvento.js etc.
+const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+
+// Perfil do badge -> tipo_empresa correspondente, pra buscar candidatos reais
+// de "ver como empresa". 'detran' não entra aqui (usa UFS acima, não empresa).
+const TIPO_EMPRESA_POR_PERFIL = { registradora: 'registradora', financeira: 'financeira' };
+
 // Um item de nav (link + estado ativo) — usado tanto pros itens soltos no
 // topo do menu quanto pelas seções agrupadas e pelo bloco "Administração",
 // que antes tinham essa mesma marcação de link duplicada 3x.
@@ -120,15 +129,59 @@ const NavItemLink = ({ item, location, onNavigate }) => {
 const DashboardLayout = ({ children }) => {
   const { user, logout } = useAuth();
   const { perfilAtivo, perfisPermitidos, trocarPerfil } = usePerfilAtivo();
+  const { viewingAs, verComoEmpresa, verComoDetran, sair } = useViewContext();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifCount, setNotifCount] = useState(0);
   const [seletorOpen, setSeletorOpen] = useState(false);
+  const [empresasSimulacao, setEmpresasSimulacao] = useState([]);
   const seletorRef = useRef(null);
 
   const role = user?.perfil || user?.roles?.[0] || '';
   const isAdmin = role === 'sigcr_admin';
+
+  // "Trocar Visão" (só sigcr_admin): o badge sozinho só diz o TIPO de perfil
+  // (registradora/detran/financeira), não uma empresa/UF específica — então
+  // a simulação real (view_as_company_id/view_as_detran_uf, injetada pelo
+  // interceptor global em AuthContext.js) precisa de um alvo explícito,
+  // escolhido no seletor abaixo. Ao trocar de tipo de badge, uma simulação
+  // ativa que não é mais do tipo certo é encerrada — nunca deixa, por
+  // exemplo, "ver como HD Registros" grudado depois de trocar pro badge
+  // DETRAN, o que mostraria dados errados sem nenhum aviso.
+  useEffect(() => {
+    if (!isAdmin) return;
+    const tipoEmpresa = TIPO_EMPRESA_POR_PERFIL[perfilAtivo];
+    const tipoEsperado = perfilAtivo === 'detran' ? 'detran' : (tipoEmpresa ? 'empresa' : null);
+    if (viewingAs && viewingAs.tipo !== tipoEsperado) {
+      // window.__viewContext é escrito direto (além de sair()) pra garantir
+      // que a busca de candidatos abaixo, no mesmo tick, já não carregue o
+      // view_as_company_id antigo — sair() só reflete no interceptor depois
+      // do próximo ciclo de render do ViewProvider.
+      window.__viewContext.viewingAs = null;
+      sair();
+    }
+    if (!tipoEmpresa) { setEmpresasSimulacao([]); return; }
+    let cancelado = false;
+    axios.get(`${API}/companies`, { params: { tipo_empresa: tipoEmpresa }, withCredentials: true })
+      .then(res => { if (!cancelado) setEmpresasSimulacao(Array.isArray(res.data) ? res.data : []); })
+      .catch(() => { if (!cancelado) setEmpresasSimulacao([]); });
+    return () => { cancelado = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin, perfilAtivo]);
+
+  const handleSimularEmpresa = (e) => {
+    const id = e.target.value;
+    if (!id) { sair(); return; }
+    const empresa = empresasSimulacao.find(c => c.company_id === id);
+    verComoEmpresa(id, empresa?.nome_fantasia || empresa?.name || id);
+  };
+
+  const handleSimularDetran = (e) => {
+    const uf = e.target.value;
+    if (!uf) { sair(); return; }
+    verComoDetran(uf, uf);
+  };
 
   // Fecha seletor ao clicar fora
   useEffect(() => {
@@ -240,6 +293,41 @@ const DashboardLayout = ({ children }) => {
                 </button>
               );
             })}
+          </div>
+        )}
+
+        {/* Simulação real de "ver como" (sigcr_admin) — liga o badge acima ao
+            view_as_company_id/view_as_detran_uf de verdade no backend, em vez
+            de só trocar o menu local. Sem escolher um alvo aqui, o admin
+            continua com a visão irrestrita de sempre. */}
+        {isAdmin && (
+          <div className="mt-1">
+            {perfilAtivo === 'detran' ? (
+              <select
+                value={viewingAs?.tipo === 'detran' ? viewingAs.id : ''}
+                onChange={handleSimularDetran}
+                className="w-full text-[11px] font-mono bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-zinc-300"
+              >
+                <option value="">Visão irrestrita (sem simulação)</option>
+                {UFS.map(uf => <option key={uf} value={uf}>Simular DETRAN {uf}</option>)}
+              </select>
+            ) : (
+              <select
+                value={viewingAs?.tipo === 'empresa' ? viewingAs.id : ''}
+                onChange={handleSimularEmpresa}
+                className="w-full text-[11px] font-mono bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-zinc-300"
+              >
+                <option value="">Visão irrestrita (sem simulação)</option>
+                {empresasSimulacao.map(c => (
+                  <option key={c.company_id} value={c.company_id}>Simular {c.nome_fantasia || c.name}</option>
+                ))}
+              </select>
+            )}
+            {viewingAs && (
+              <p className="text-[10px] text-amber-400 font-mono mt-1 px-0.5">
+                ● Vendo exatamente como {viewingAs.tipo === 'detran' ? `DETRAN ${viewingAs.id}` : viewingAs.nome}
+              </p>
+            )}
           </div>
         )}
       </div>
