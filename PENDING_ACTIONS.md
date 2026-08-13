@@ -1544,4 +1544,20 @@ Relatado ao usuário com esses detalhes, confirmado "sim, restaurar as duas" ant
 
 **Ainda não testado (sem ferramenta de browser neste ambiente)**: clique real no seletor "Simular como" pelo Pedro — escolher HD Registros no badge Registradora e confirmar visualmente que Portarias/Solicitações/etc. mudam pra visão restrita, e que sair da simulação volta a mostrar tudo.
 
+## 22. Bug de download de PDF de portaria — 403 pra toda registradora/financeira, pré-existente — ✅ CONCLUÍDO (2026-08-13)
+
+Pedro reportou "Erro ao baixar PDF da portaria" tentando baixar o PDF das 2 portarias restauradas no item 21 (Edital 17-SP e Portaria 651-RN).
+
+**Investigação (na ordem pedida):**
+
+1. **`link_pdf` e arquivo físico**: confirmados intactos — mesmo caminho de antes do soft-delete (`/app/uploads/portarias/fdd0f8aef...pdf` e `.../69360a9a...pdf`), arquivos presentes no bind-mount (391KB e 320KB), bind mount com `Source` correto.
+2. **Reprodução real** (não só checagem de existência — chamada real da rota, replicando a forma exata que `Portarias.js`'s `handleDownloadPdf` chama: `axios.get('/portarias/{id}/pdf', {withCredentials:true, responseType:'blob'})`): como `sigcr_admin` (Pedro), a rota respondia 200 normalmente. Como a sessão real da HD Registros (registradora, `detrans_atuacao` cobrindo SP e RN), a rota respondia **403 "Perfil sem acesso a esta portaria"**.
+3. **Causa raiz, não relacionada às correções de hoje**: `download_portaria_pdf` checava só `_perfil_pode_ver_estado(current_user, uf)` — que é **sempre `False`** pra `registradora`/`financeira`, sem exceção. Diferente de `GET /portarias` (lista) e `GET /portarias/{id}` (detalhe), que também liberam via `empresa_atua` (a empresa opera naquela UF, campo `detrans_atuacao`). Ou seja: **toda** registradora/financeira sempre levou 403 tentando baixar o PDF de **qualquer** portaria que conseguia ver normalmente na lista — bug geral, pré-existente, não introduzido pelas correções do item 21 nem pela restauração em si. Só ficou visível porque essas 2 portarias específicas acabaram de passar por verificação.
+
+**Fix**: `download_portaria_pdf` migrado pra `EffectiveScope` (mesmo padrão do item 21) e replicando a MESMA regra de acesso de `GET /portarias/{id}` (`_perfil_pode_ver_estado` OR `empresa_atua`), em vez de reinventar. Log de auditoria continua com `scope.current_user` (identidade real), não a efetiva — consistente com o padrão já estabelecido.
+
+**Testado em devtest com os 2 PDFs reais** (copiados do bind-mount de produção, bytes idênticos): sessão real da HD Registros agora recebe 200 com o PDF **byte-a-byte idêntico** ao arquivo original (sha256 conferido) nas duas portarias; controle de isolamento — uma segunda empresa de teste que só atua em SP continua levando 403 na portaria de RN (o fix não virou bypass geral, só fecha a lacuna real); caso de portaria-rascunho sem PDF continua 404 normalmente.
+
+**Deploy**: commit `0d9efb4`, isolado do lote pendente do mesmo jeito dos itens anteriores (diff final: só as 21 linhas desta função). Health check OK (`/api/portarias/{id}/pdf` sem auth → 401, não 404/500). As 2 portarias restauradas confirmadas intactas no Mongo pós-deploy.
+
 
