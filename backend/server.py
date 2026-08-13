@@ -1943,15 +1943,32 @@ async def get_portaria(portaria_id: str, scope: EffectiveScope = Depends(get_eff
 
 
 @api_router.get("/portarias/{portaria_id}/pdf")
-async def download_portaria_pdf(portaria_id: str, current_user: User = Depends(get_current_user)):
+async def download_portaria_pdf(portaria_id: str, scope: EffectiveScope = Depends(get_effective_scope)):
+    """Bug real encontrado 2026-08-13 (achado ao investigar erro de download
+    relatado pelo Pedro nas 2 portarias restauradas naquele dia): esta rota
+    checava só `_perfil_pode_ver_estado`, que é SEMPRE False pra
+    registradora/financeira — diferente de GET /portarias e GET
+    /portarias/{id}, que também liberam via `empresa_atua` (a empresa opera
+    naquela UF, `detrans_atuacao`). Resultado: toda registradora/financeira
+    levava 403 tentando baixar o PDF de QUALQUER portaria que conseguia ver
+    normalmente na lista/detalhe — não era um bug das 2 portarias restauradas
+    especificamente, é geral, pré-existente, só ficou visível porque essas
+    duas acabaram de ser verificadas. Corrigido replicando a MESMA regra de
+    GET /portarias/{id} aqui. EffectiveScope (em vez de current_user direto)
+    também pra ficar consistente com a simulação "ver como" adicionada nesta
+    mesma leva de fixes."""
+    current_user = scope.as_user()
     portaria = await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
     if not portaria:
         raise HTTPException(status_code=404, detail="Portaria não encontrada")
-    if portaria.get("estado_sigla") and not _perfil_pode_ver_estado(current_user, portaria["estado_sigla"]):
-        raise HTTPException(status_code=403, detail="Perfil sem acesso a esta portaria")
+    if portaria.get("estado_sigla"):
+        empresa = await _empresa_do_usuario(current_user)
+        empresa_atua = bool(empresa) and portaria["estado_sigla"] in (empresa.get("detrans_atuacao") or [])
+        if not _perfil_pode_ver_estado(current_user, portaria["estado_sigla"]) and not empresa_atua:
+            raise HTTPException(status_code=403, detail="Perfil sem acesso a esta portaria")
     if not portaria.get("link_pdf") or not Path(portaria["link_pdf"]).exists():
         raise HTTPException(status_code=404, detail="Nenhum PDF anexado a esta portaria")
-    await registrar_auditoria(current_user, "download_portaria_pdf", "portaria", portaria_id, {
+    await registrar_auditoria(scope.current_user, "download_portaria_pdf", "portaria", portaria_id, {
         "estado_sigla": portaria.get("estado_sigla")
     })
     return FileResponse(
