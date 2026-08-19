@@ -1560,4 +1560,24 @@ Pedro reportou "Erro ao baixar PDF da portaria" tentando baixar o PDF das 2 port
 
 **Deploy**: commit `0d9efb4`, isolado do lote pendente do mesmo jeito dos itens anteriores (diff final: só as 21 linhas desta função). Health check OK (`/api/portarias/{id}/pdf` sem auth → 401, não 404/500). As 2 portarias restauradas confirmadas intactas no Mongo pós-deploy.
 
+## 23. Rodada de 4 fixes (sessão expirada, boas-vindas duplicado, título Compliance, cor "Atenção") — ✅ CONCLUÍDO (2026-08-19)
+
+Pedro reportou 4 problemas encontrados testando produção como Registradora. Investigada a causa raiz de cada um antes de codar, conforme pedido.
+
+**1. "Sessão expirada" em `/empresas` após ~45min**: confirmado via `kcadm.sh` que o realm `sigcr` expira sessões ociosas em `ssoSessionIdleTimeout=1800s` (30min) — o refresh silencioso via `refresh_token` já existia (interval de 30s + `onTokenExpired` em `AuthContext.js`), então em uso ativo a sessão não deveria cair. Bug real encontrado: o interceptor global do axios tentava `kc.updateToken(30)` e, se falhasse (sessão do Keycloak de fato morta), **engolia o erro silenciosamente** (`catch {}`) e mandava a requisição mesmo assim com o token velho — garantindo um 401 cru que cada tela tratava do seu jeito (banner estático em `Empresas.js`), em vez de cair no re-login automático que o resto do app já fazia. Fix: no catch do interceptor, chama `keycloak.login()` direto, mesmo caminho do interval. Ainda precisa de confirmação do Pedro em uso real (deixar sessão ociosa expirar e ver se cai direto no login do Keycloak).
+
+**2. "Bem-vindo ao sigcr SIGCR" duplicado no Dashboard**: typo literal em `Dashboard.js` (não interpolação). Corrigido pra "Bem-vindo ao SIGCR".
+
+**3. Título "Compliance" com aparência de glitch**: não é CSS mal posicionado — é `VaporizeTextCycle` (`components/ui/vapour-text-effect.js`), uma animação real em `<canvas>` que dissolve o texto em partículas entre "Credenciamento"/"Compliance"/"SIGCR". Um print no meio da transição mostra letras sólidas + nuvem de partículas se desfazendo por design, não um bug de camada. O que piorava a leitura: cor hardcoded em `rgb(249, 115, 22)` — laranja puro que não existe mais em nenhum outro lugar da marca (paleta `orange` do Tailwind foi remapeada pro azul "Berry" no rebrand anterior, ver [[project-sigcr-keycloak-login-theme]]). Corrigido pra `rgb(33, 150, 243)` (mesmo azul do resto do app); a animação de dissolução em si foi mantida — trocar por título estático seria decisão de produto separada, não bug.
+
+**4. Card "Atenção" do semáforo sem cor de farol**: usava `color: 'orange'` → classes Tailwind `bg-orange-500`/`text-orange-400`, que hoje renderizam como o azul primário da marca (mesmo remapeamento do item 3) — por isso "Atenção" saía visualmente igual a um botão comum. Confirmado que `amber` é a cor semântica de alerta real, não remapeada, já usada em outros pontos (inclusive o banner "Sessão expirada" do item 1). Corrigido pra `color: 'amber'`.
+
+**Validação visual**: harness isolado (`git worktree` descartável + rota `/__preview` temporária, nunca commitada) renderizando os componentes reais (`Dashboard.js`, `vapour-text-effect.js`) com dados mock, sem precisar de login — puppeteer-core + chromium via snap, mesma técnica de [[project-sigcr-keycloak-login-theme]]. Confirmado depois que o bundle publicado em produção contém exatamente os valores esperados (grep no JS minificado: `"Bem-vindo ao SIGCR"`, `rgb(33, 150, 243)`, `color:"amber"`).
+
+**Deploy**: isolado do lote pendente (Cadastro Público, Dashboard Financeira, catálogo de checklist, mudanças em `server.py`) via `git stash push -u` antes de codar, restaurado (`stash pop`, merge automático sem conflito) depois do deploy — mesmo padrão dos itens anteriores. Só 2 arquivos tocados: `frontend/src/contexts/AuthContext.js` e `frontend/src/pages/Dashboard.js`. Commit `a52e57e` via `deploy-frontend.sh` (git-sync-or-die real), release `releases/4fixes-20260819`. Health check: site 200, bundle novo (`main.53a31f0f.js`) confirmado com os 3 fixes visuais/texto; CSS não mudou (mesmo hash `main.7a4a33bc.css` — confirma que `amber`/`bg-orange` já existiam como classes literais em outros pontos do código, sem risco de purge do Tailwind).
+
+**Fora do escopo, como combinado com Pedro**: funil de Planos/Checkout (laranja hardcoded) — decisão de marca separada.
+
+**Observado mas não mexido**: worktree órfão de `/tmp/sigcr-build-20260813-161830` (sessão anterior, nunca removido) e um dev server `craco start` rodando desde 27/07 (PID antigo, propósito desconhecido) — vale o Pedro confirmar se pode limpar os dois.
+
 
