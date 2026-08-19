@@ -54,7 +54,7 @@ const Dashboard = () => {
 
   const SEMAFORO = [
     { label: 'Conformes', value: stats?.compliance_verde || 0, color: 'emerald', icon: CheckCircle },
-    { label: 'Atenção', value: stats?.compliance_amarelo || 0, color: 'orange', icon: Clock },
+    { label: 'Atenção', value: stats?.compliance_amarelo || 0, color: 'amber', icon: Clock },
     { label: 'Crítico', value: stats?.compliance_vermelho || 0, color: 'red', icon: AlertCircle },
   ];
 
@@ -72,13 +72,13 @@ const Dashboard = () => {
           <h1 className="text-3xl font-heading font-bold tracking-tight">
             Olá, {user?.name?.split(' ')[0]} 👋
           </h1>
-          <p className="text-zinc-500 text-sm mt-1">Bem-vindo ao sigcr SIGCR — {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <p className="text-zinc-500 text-sm mt-1">Bem-vindo ao SIGCR — {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
       {/* VaporizeText Hero  21st.dev */}
       <div style={{ width: "100%", height: "80px", position: "relative", marginBottom: "8px" }}>
         <VaporizeTextCycle
           texts={["Credenciamento", "Compliance", "SIGCR"]}
           font={{ fontFamily: "Inter, sans-serif", fontSize: "36px", fontWeight: 700 }}
-          color="rgb(249, 115, 22)"
+          color="rgb(33, 150, 243)"
           spread={4}
           density={6}
           animation={{ vaporizeDuration: 2.5, fadeInDuration: 0.8, waitDuration: 1 }}

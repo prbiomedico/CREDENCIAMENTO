@@ -25,7 +25,19 @@ axios.interceptors.request.use(async (config) => {
   await window.__kcReady;
   const kc = window.__kc;
   if (kc?.authenticated && kc?.token) {
-    try { await kc.updateToken(30); } catch {}
+    try {
+      await kc.updateToken(30);
+    } catch {
+      // refresh_token não renovou (sessão do Keycloak realmente expirou,
+      // ex: SSO Session Idle) — não faz sentido mandar a requisição com um
+      // access token que já sabemos estar morto, só pra render um 401 feio
+      // em cada tela. Manda direto pro re-login, igual o setInterval/
+      // onTokenExpired já fazem — antes disso, essa falha era engolida
+      // silenciosamente e cada página tratava o 401 resultante do seu
+      // próprio jeito (ex: banner "Sessão expirada" em Empresas.js).
+      kc.login();
+      return new Promise(() => {}); // nunca resolve; a navegação já saiu da página
+    }
     config.headers.Authorization = `Bearer ${kc.token}`;
   }
   return config;
