@@ -1,15 +1,203 @@
+/* Tema SIGCR — alinhado ao visual dark/laranja do restante do app
+   (zinc-950 + glow + grid-pattern, ver frontend/src/App.css) */
+
 :root {
   --pf-v5-global--primary-color--100: #f97316;
   --pf-v5-global--link--Color: #f97316;
 }
-body {
-  background: linear-gradient(135deg, #18181b 0%, #2d1810 100%) !important;
+
+body#keycloak-bg {
+  background: #09090b;
+  background-image:
+    linear-gradient(to right, rgba(228, 228, 231, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(228, 228, 231, 0.05) 1px, transparent 1px),
+    radial-gradient(circle 500px at 50% 0%, rgba(249, 115, 22, 0.18), transparent 70%);
+  background-size: 24px 24px, 24px 24px, 100% 100%;
+  background-repeat: repeat, repeat, no-repeat;
+  min-height: 100vh;
 }
-.pf-v5-c-button.pf-m-primary, button[type="submit"] {
-  background-color: #f97316 !important;
+
+/* O PatternFly v5 login usa um CSS grid com áreas "main header"/"main
+   footer" que, em telas largas (breakpoint xl), joga o header de marca pra
+   uma coluna estreita ao lado do card — pensado pra um hero image atrás,
+   que este tema não usa. Força coluna única sempre: marca em cima, card
+   no meio, rodapé embaixo. */
+.pf-v5-c-login__container {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  grid-template-columns: none !important;
+  max-width: 26rem !important;
+  width: 100%;
+  padding-inline: 1.5rem !important;
+}
+
+/* Cabeçalho / marca — realm.displayNameHtml fica vazio hoje, então o brand
+   inteiro (ícone + nome) é desenhado via pseudo-elementos, sem depender de
+   HTML injetado por mensagem. */
+.pf-v5-c-login__header {
+  text-align: center;
+  margin-bottom: 1.5rem !important;
+  width: 100%;
+}
+
+.pf-v5-c-login__main {
+  background-color: rgba(24, 24, 27, 0.85) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(63, 63, 70, 0.8);
+  border-radius: 1rem !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6) !important;
+  width: 100%;
+}
+
+#kc-header-wrapper.pf-v5-c-brand {
+  display: block;
+  min-height: 3rem;
+  /* realm.displayName cai pro nome técnico do realm ("sigcr") quando
+     displayNameHtml não está setado — zera o texto nativo pra não duplicar
+     com o wordmark desenhado no ::after abaixo. */
+  font-size: 0;
+}
+
+#kc-header-wrapper.pf-v5-c-brand::before {
+  content: "";
+  display: block;
+  width: 3.5rem;
+  height: 3.5rem;
+  margin: 0 auto 0.75rem;
+  background-color: rgba(249, 115, 22, 0.1);
+  border-radius: 0.85rem;
+  box-shadow: 0 0 40px -8px rgba(249, 115, 22, 0.5);
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z'/%3E%3C/svg%3E");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: 1.75rem;
+  mask-size: 1.75rem;
+  background-image: linear-gradient(135deg, #f97316, #fb923c);
+  -webkit-mask-composite: source-over;
+}
+
+#kc-header-wrapper.pf-v5-c-brand::after {
+  content: "SIGCR";
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fafafa;
+}
+
+.pf-v5-c-login__main-header-title,
+h1#kc-page-title.pf-v5-c-title {
+  color: #fafafa;
+  text-align: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.pf-v5-c-login__main-body {
+  color: #d4d4d8;
+}
+
+/* Campos do formulário */
+.pf-v5-c-form__label-text {
+  color: #d4d4d8;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.pf-v5-c-form-control,
+.pf-v5-c-form-control input {
+  background-color: rgba(39, 39, 42, 0.6) !important;
+  border: 1px solid #3f3f46 !important;
+  color: #fafafa !important;
+  border-radius: 0.5rem !important;
+  box-shadow: none !important;
+}
+
+.pf-v5-c-form-control::placeholder {
+  color: #71717a;
+}
+
+.pf-v5-c-form-control:focus,
+.pf-v5-c-form-control:focus-within {
   border-color: #f97316 !important;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.25) !important;
 }
-.pf-v5-c-button.pf-m-primary:hover, button[type="submit"]:hover {
-  background-color: #ea580c !important;
+
+.pf-v5-c-input-group,
+.pf-v5-c-input-group__item.pf-m-fill {
+  background: transparent;
 }
-a { color: #f97316 !important; }
+
+/* Botão "mostrar senha" e botão de reiniciar login */
+.pf-v5-c-button.pf-m-control {
+  background: transparent !important;
+  color: #a1a1aa !important;
+  border: 1px solid #3f3f46 !important;
+}
+
+.pf-v5-c-button.pf-m-control:hover {
+  color: #fafafa !important;
+}
+
+/* Botão principal (Entrar) */
+.pf-v5-c-button.pf-m-primary,
+button[type="submit"] {
+  background: linear-gradient(135deg, #f97316, #ea580c) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+  font-weight: 600;
+  border-radius: 0.5rem !important;
+  height: 2.75rem;
+  box-shadow: 0 0 25px -6px rgba(249, 115, 22, 0.55);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.pf-v5-c-button.pf-m-primary:hover,
+button[type="submit"]:hover {
+  background: linear-gradient(135deg, #fb923c, #f97316) !important;
+  box-shadow: 0 0 35px -6px rgba(249, 115, 22, 0.75);
+}
+
+.pf-v5-c-button.pf-m-primary:active {
+  transform: scale(0.98);
+}
+
+/* Links e rodapé */
+a {
+  color: #f97316 !important;
+}
+
+a:hover {
+  color: #fb923c !important;
+}
+
+.pf-v5-c-login__main-footer,
+#kc-registration-container,
+.pf-v5-c-login__footer {
+  color: #71717a;
+  text-align: center;
+}
+
+.pf-v5-c-check__label {
+  color: #a1a1aa;
+}
+
+/* Mensagens de alerta (erro/aviso/sucesso) */
+.pf-v5-c-alert {
+  border-radius: 0.5rem;
+  background-color: rgba(39, 39, 42, 0.6);
+}
+
+.pf-v5-c-alert.pf-m-danger {
+  border-left: 4px solid #ef4444;
+}
+
+.pf-v5-c-alert.pf-m-success {
+  border-left: 4px solid #22c55e;
+}
