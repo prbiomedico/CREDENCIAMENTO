@@ -597,7 +597,11 @@ async def get_current_user(request: Request) -> User:
     # Tenta validar como JWT do Keycloak
     try:
         from jose import jwt as jose_jwt, JWTError
-        JWKS_URL = f"{KEYCLOAK_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/certs"
+        # KC_INTERNAL_URL (rede docker), não KEYCLOAK_URL (hostname público) —
+        # esse fetch roda de dentro do container, e auth.sigcr.com.br resolve
+        # pro /etc/hosts do HOST (127.0.0.1 -> nginx do host), não pro
+        # loopback do próprio container, onde nada escuta na porta 443.
+        JWKS_URL = f"{KC_INTERNAL_URL}/realms/{KEYCLOAK_REALM}/protocol/openid-connect/certs"
 
         # Busca JWKS com cache global (evita chamada a cada request)
         global _jwks_cache, _jwks_cache_time
