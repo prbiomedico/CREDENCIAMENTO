@@ -1580,4 +1580,22 @@ Pedro reportou 4 problemas encontrados testando produção como Registradora. In
 
 **Observado mas não mexido**: worktree órfão de `/tmp/sigcr-build-20260813-161830` (sessão anterior, nunca removido) e um dev server `craco start` rodando desde 27/07 (PID antigo, propósito desconhecido) — vale o Pedro confirmar se pode limpar os dois.
 
+## 24. "Erro ao carregar solicitações" em toda página — JWKS do Keycloak inacessível de dentro do container — ✅ CONCLUÍDO (2026-08-22)
+
+Pedro reportou o erro aparecendo em toda tela do frontend, não só numa página. Investigação seguiu a ordem pedida, causa raiz confirmada antes de mexer em qualquer código.
+
+**1. Componente**: a mensagem literal só existe em 3 páginas (`Solicitacoes.js`, `SolicitacaoRegistro.js`, `SolicitacaoDetalhe.js`) — nenhum componente global (`DashboardLayout.js` etc.) dispara esse texto. Não era um bug de componente global: era o MESMO tipo de falha (401) acontecendo em paralelo em praticamente todo endpoint que qualquer página chama no mount, incluindo o polling global de `/notificacoes` do `DashboardLayout` — por isso a impressão de "toda tela".
+
+**2/3. Logs do backend** (`docker logs sigcr-backend`): distribuição de status nas últimas 3h mostrava 401 em praticamente tudo — `/notificacoes` (33x), `/companies` (20x), `/estados` (15x), `/solicitacoes` (7x), etc. O log de aplicação (não só o access log) tinha a causa exata repetida centenas de vezes: `WARNING - JWT Keycloak inválido: All connection attempts failed`.
+
+**Causa raiz**: `get_current_user` (`server.py`) monta a URL do JWKS com `KEYCLOAK_URL` (`https://auth.sigcr.com.br`, hostname público) em vez de `KC_INTERNAL_URL` (`http://sigcr-keycloak:8080`, rede docker) — que já é o padrão usado em TODO o resto do arquivo pra chamadas backend→Keycloak (admin API, criação de usuário, etc.), só esse ponto ficou de fora. `auth.sigcr.com.br` está mapeado em `/etc/hosts` do HOST pra `127.0.0.1` (nginx do host escuta lá) — mas de dentro do container `sigcr-backend`, `127.0.0.1` é o loopback do PRÓPRIO container, onde nada escuta na porta 443. Reproduzido diretamente: `docker exec sigcr-backend python3 -c "httpx.get('https://auth.sigcr.com.br/...')"` → `ConnectError: Connection refused`; a mesma chamada trocando pra `http://sigcr-keycloak:8080/...` → `200 OK`. Como o cache de JWKS (`_jwks_cache`, TTL 1h) nunca conseguia se popular, **todo** token, de qualquer usuário, em qualquer endpoint, caía no fallback de `session_token` legado e virava 401 "Token inválido" — não é 4xx de lógica de negócio nem CORS, é falha de rede container→host.
+
+**Correção**: trocado `KEYCLOAK_URL` por `KC_INTERNAL_URL` na montagem de `JWKS_URL`, alinhando com o padrão já usado no resto do arquivo. Fix simples, sem decisão de produto envolvida — corrigido e deployado direto, como combinado com o Pedro.
+
+**Validação**: reproduzido o erro de rede isoladamente antes do fix (`docker exec` + `httpx` direto, sem precisar de token real de usuário — a falha é de conectividade, não de credencial); confirmado pós-deploy que a mesma chamada, de dentro do container reconstruído, retorna 200 com 2 chaves; confirmado com tráfego real do Pedro logo após o deploy que `GET /api/solicitacoes` e `GET /api/notificacoes` passaram a responder 200 (antes, 401 constante).
+
+**Deploy**: isolado do lote pendente (`git stash push -u` / `stash pop`, mesmo padrão dos itens anteriores) — só 6 linhas em `backend/server.py` tocadas. Commit `4fdb1fa` via `deploy.sh` real (rollback tag `sigcr-backend:pre-deploy-rollback-20260822-1131`). Health check OK.
+
+**Não investigado, fora do escopo deste fix**: por que `auth.sigcr.com.br` foi parar no `/etc/hosts` do host apontando pra `127.0.0.1` — não sei precisar quando isso mudou nem se foi intencional (não achei o commit/log de quem fez). Vale o Pedro confirmar se essa entrada faz sentido ficar assim (só um problema pro `sigcr-backend` por causa do isolamento de rede do container) ou se deveria ser removida/trocada por um IP real, já que hoje qualquer outro processo rodando em container que precise falar com `auth.sigcr.com.br` vai cair na mesma armadilha.
+
 
