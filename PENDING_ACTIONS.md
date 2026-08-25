@@ -1663,3 +1663,15 @@ Pedro aprovou a sequência completa pra terminar de reconciliar o import do Emer
 
 **Próximo passo**: Fase 2 (Fatia C — selo público de compliance + varredura de vencimento por e-mail, modo mock).
 
+## 27. Fase 2 do plano Emergent — Fatia C: selo público de compliance + varredura de vencimento por e-mail ✅ CONCLUÍDO e no ar (2026-08-25)
+
+**O que entrou**: `GET /public/selo/{company_id}` (sem auth, rate limit 30/min, CNPJ mascarado, status/semáforo de compliance calculado a partir dos documentos reais via `calcular_status_documento` já existente); `_executar_avisos_vencimento()` (varre documentos vencendo ≤30 dias ou vencidos, dispara notificação in-app via `criar_notificacao` já existente + e-mail via `email_service.enviar_email`, novo arquivo trazido do zip — idempotente por documento/dia via `db.avisos_vencimento`); `POST /admin/notificacoes-vencimento/executar` (dispara a varredura manualmente, só `sigcr_admin`/`detran`/`detran_admin`); `POST /cron/avisos-vencimento` (versão agendável, protegida por `WEBHOOK_CRON_SECRET` — não configurada hoje, então responde 401 sempre, inerte por padrão, mesmo tratamento que `TURNSTILE_SECRET_KEY` na Fatia B).
+
+**Deliberadamente não configurado**: `RESEND_API_KEY` continua vazia — `enviar_email` cai no modo mock (grava em `db.email_outbox` com `provider:"mock"`, ninguém recebe e-mail real). Fica pronto e dormente até o Pedro decidir ativar.
+
+**Testado em devtest** (worktree limpo + `sigcr-backend-devtest` + `sigcr-mongodb-devtest`, mesma técnica das fases anteriores): empresa sintética com 1 documento vencido → `/public/selo/{id}` retorna semáforo vermelho corretamente; empresa inexistente → 404 (não 500); `/cron/avisos-vencimento` sem secret → 401; `/admin/notificacoes-vencimento/executar` como admin → gera 1 aviso (notificação in-app confirmada em `db.notificacoes` + registro em `db.email_outbox` com `provider:"mock"`/`status:"mock_registrado"`); rodado de novo no mesmo dia → 0 avisos novos (idempotência confirmada); sem token → 401; sem traceback nos logs do devtest.
+
+**Deploy**: isolado do lote pendente via `git stash push -u`/`pop`. Dessa vez teve conflito de verdade no `stash pop` (diferente das fases anteriores) — o lote pendente também insere conteúdo no mesmíssimo ponto do arquivo (logo antes de `app.include_router`, o `seed_checklist_catalogo_portaria` do catálogo de checklist de portaria). Resolvido combinando os dois blocos, nenhum descartado — mesma técnica do item 20. Sem marcadores de conflito sobrando, sintaxe validada depois. Deploy via `deploy.sh` real, commit `1ebec53`. Smoke test em produção (`api.sigcr.com.br`): `/docs` 404, `/api/companies`/`/api/portarias`/`/api/editais` 401 sem token, `/api/cron/avisos-vencimento` sem secret → 401, `/api/public/selo/nao_existe` → 404 (não 500), sem traceback.
+
+**Próximo passo**: Fase 3 — reconciliação do frontend do zip contra o HEAD real de produção (diff de verdade, resumo antes de aplicar qualquer coisa, sem merge em massa).
+
