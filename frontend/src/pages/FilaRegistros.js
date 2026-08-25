@@ -17,7 +17,7 @@ const API = `${BACKEND_URL}/api`;
 
 const STATUS_CONFIG = {
   pendente: { label: 'Pendente', bg: 'bg-zinc-800', text: 'text-zinc-400', icon: Clock },
-  em_processamento: { label: 'Em Processamento', bg: 'bg-orange-500/10', text: 'text-orange-400', icon: Loader2 },
+  em_processamento: { label: 'Em Processamento', bg: 'bg-primary-500/10', text: 'text-primary-400', icon: Loader2 },
   concluido: { label: 'Concluído', bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: CheckCircle },
   rejeitado: { label: 'Rejeitado', bg: 'bg-red-500/10', text: 'text-red-400', icon: XCircle },
 };
@@ -122,8 +122,8 @@ const FilaRegistros = () => {
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         <div className="mb-8 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
-            <FileText className="h-5 w-5 text-orange-500" />
+          <div className="w-10 h-10 rounded-lg bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+            <FileText className="h-5 w-5 text-primary-500" />
           </div>
           <div>
             <h1 className="text-3xl font-heading font-bold tracking-tight">Fila de Registro de Contrato</h1>
@@ -133,7 +133,7 @@ const FilaRegistros = () => {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : solicitacoes.length === 0 ? (
           <Card className="bg-zinc-900/50 border-zinc-800">

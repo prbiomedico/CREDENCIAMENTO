@@ -20,7 +20,7 @@ const STATUS_SUBMISSAO_CFG = {
   rascunho: { label: 'Rascunho', className: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
   submetido: { label: 'Submetido', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  em_diligencia: { label: 'Em Diligência', icon: AlertTriangle, className: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
+  em_diligencia: { label: 'Em Diligência', icon: AlertTriangle, className: 'bg-primary-500/10 text-primary-400 border-primary-500/20' },
   homologado: { label: 'Homologado', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
 };
 
@@ -184,7 +184,7 @@ const PainelConferencia = () => {
 
         {loading ? (
           <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
-            <Loader2 className="h-5 w-5 animate-spin text-orange-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
             <span>Carregando...</span>
           </div>
         ) : !estadoSigla ? (
@@ -205,7 +205,7 @@ const PainelConferencia = () => {
               return (
                 <Card
                   key={sub.submissao_id}
-                  className="bg-zinc-900/50 border-zinc-800 hover:border-orange-500/30 transition-colors cursor-pointer"
+                  className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors cursor-pointer"
                   onClick={() => setSubmissaoAtivaId(sub.submissao_id)}
                 >
                   <CardContent className="p-5 flex items-center justify-between gap-4">
@@ -280,7 +280,7 @@ const PainelConferencia = () => {
                         <a
                           href={`${API}/documents/download/${item.document_id}`}
                           target="_blank" rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-orange-400 hover:text-orange-300"
+                          className="inline-flex items-center gap-1.5 text-xs text-primary-400 hover:text-primary-300"
                         >
                           <FileText className="h-3.5 w-3.5" /> Ver documento enviado
                         </a>

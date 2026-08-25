@@ -156,7 +156,7 @@ const ChecklistContran = ({ companyId }) => {
   if (loading && !checklist) {
     return (
       <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500 mx-auto mb-4" />
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-500 mx-auto mb-4" />
         <p className="text-zinc-400">Carregando checklist...</p>
       </div>
     );
@@ -180,7 +180,7 @@ const ChecklistContran = ({ companyId }) => {
                 {resumo.rejeitados > 0 && ` · ${resumo.rejeitados} rejeitado(s)`}
               </p>
             </div>
-            <span className="text-2xl font-heading font-bold text-orange-400">{pctGeral}%</span>
+            <span className="text-2xl font-heading font-bold text-primary-400">{pctGeral}%</span>
           </div>
           <Progress value={pctGeral} className="h-2" />
         </CardContent>
@@ -235,7 +235,7 @@ const ChecklistContran = ({ companyId }) => {
                                 variant="ghost"
                                 onClick={() => abrirUpload(item)}
                                 data-testid={`checklist-enviar-${item.item_id}`}
-                                className="h-7 text-orange-500 hover:text-orange-400 hover:bg-orange-500/10"
+                                className="h-7 text-primary-500 hover:text-primary-400 hover:bg-primary-500/10"
                               >
                                 <Upload className="h-3.5 w-3.5 mr-1" /> Enviar
                               </Button>
@@ -299,7 +299,7 @@ const ChecklistContran = ({ companyId }) => {
                                 variant="ghost"
                                 onClick={() => handleDownload(doc.document_id, doc.file_name)}
                                 data-testid={`checklist-download-${item.item_id}`}
-                                className="h-7 w-7 p-0 text-orange-500 hover:text-orange-400 hover:bg-orange-500/10"
+                                className="h-7 w-7 p-0 text-primary-500 hover:text-primary-400 hover:bg-primary-500/10"
                               >
                                 <Download className="h-3.5 w-3.5" />
                               </Button>
@@ -357,7 +357,7 @@ const ChecklistContran = ({ companyId }) => {
                 type="submit"
                 disabled={enviando || !arquivo}
                 data-testid="checklist-submit-upload-btn"
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white button-shadow"
+                className="w-full bg-primary-500 hover:bg-primary-600 text-white button-shadow"
               >
                 {enviando ? 'Enviando...' : 'Enviar Documento'}
               </Button>

@@ -292,14 +292,14 @@ const Portarias = () => {
             <Dialog open={analyzeDialogOpen} onOpenChange={setAnalyzeDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 gap-2">
-                  <Sparkles className="h-4 w-4 text-purple-400" />
+                  <Sparkles className="h-4 w-4 text-secondary-400" />
                   Analisar com IA
                 </Button>
               </DialogTrigger>
               <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-2xl">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-purple-400" />
+                    <Sparkles className="h-5 w-5 text-secondary-400" />
                     Análise de Portaria com IA
                   </DialogTitle>
                 </DialogHeader>
@@ -313,7 +313,7 @@ const Portarias = () => {
                   <Button
                     onClick={handleAnalyze}
                     disabled={analyzing}
-                    className="bg-purple-600 hover:bg-purple-700 text-white w-full gap-2"
+                    className="bg-secondary-600 hover:bg-secondary-700 text-white w-full gap-2"
                   >
                     {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                     {analyzing ? 'Analisando...' : 'Analisar'}
@@ -330,7 +330,7 @@ const Portarias = () => {
             {podeCadastrar && (
             <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetFormData(); }}>
               <DialogTrigger asChild>
-                <Button className="bg-orange-500 hover:bg-orange-600 text-white gap-2">
+                <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
                   <Plus className="h-4 w-4" />
                   Nova Portaria
                 </Button>
@@ -434,7 +434,7 @@ const Portarias = () => {
 
                   <div className="border-t border-zinc-800 pt-4">
                     <Label className="text-zinc-300 flex items-center gap-2 mb-2">
-                      <ListChecks className="h-4 w-4 text-orange-400" />
+                      <ListChecks className="h-4 w-4 text-primary-400" />
                       Checklist de exigências (credenciamento)
                     </Label>
                     <p className="text-xs text-zinc-500 mb-3">
@@ -531,7 +531,7 @@ const Portarias = () => {
                     )}
                   </div>
 
-                  <Button type="submit" disabled={salvando} className="bg-orange-500 hover:bg-orange-600 text-white w-full">
+                  <Button type="submit" disabled={salvando} className="bg-primary-500 hover:bg-primary-600 text-white w-full">
                     {salvando ? 'Cadastrando...' : 'Cadastrar'}
                   </Button>
                 </form>
@@ -553,7 +553,7 @@ const Portarias = () => {
               className="pl-9 bg-zinc-900 border-zinc-700 text-white"
             />
           </div>
-          <Button onClick={handleSearch} className="bg-orange-500 hover:bg-orange-600 text-white gap-2">
+          <Button onClick={handleSearch} className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
             <Search className="h-4 w-4" />
             Buscar
           </Button>
@@ -562,7 +562,7 @@ const Portarias = () => {
         {/* ── Lista de Portarias Internas ── */}
         {loading ? (
           <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
-            <Loader2 className="h-5 w-5 animate-spin text-orange-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
             <span>Carregando portarias...</span>
           </div>
         ) : portarias.length === 0 ? (
@@ -573,7 +573,7 @@ const Portarias = () => {
               {podeCadastrar ? (
                 <>
                   <p className="text-zinc-600 text-sm mb-4">Cadastre portarias ou use o Querido Diário abaixo</p>
-                  <Button onClick={() => setDialogOpen(true)} className="bg-orange-500 hover:bg-orange-600 text-white gap-2">
+                  <Button onClick={() => setDialogOpen(true)} className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
                     <Plus className="h-4 w-4" />
                     Cadastrar Primeira Portaria
                   </Button>
@@ -586,7 +586,7 @@ const Portarias = () => {
         ) : (
           <div className="space-y-3">
             {portarias.map((portaria) => (
-              <Card key={portaria.portaria_id} className="bg-zinc-900/50 border-zinc-800 hover:border-orange-500/30 transition-colors">
+              <Card key={portaria.portaria_id} className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -595,7 +595,7 @@ const Portarias = () => {
                       </CardTitle>
                       <div className="flex gap-2 flex-wrap">
                         {portaria.source && (
-                          <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/20 font-mono text-xs">
+                          <Badge className="bg-primary-500/10 text-primary-400 border-primary-500/20 font-mono text-xs">
                             {portaria.source}
                           </Badge>
                         )}
@@ -610,7 +610,7 @@ const Portarias = () => {
                           </Badge>
                         )}
                         {portaria.tipo && (
-                          <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 font-mono text-xs">
+                          <Badge className="bg-secondary-500/10 text-secondary-400 border-secondary-500/20 font-mono text-xs">
                             {TIPOS_PORTARIA.find((t) => t.value === portaria.tipo)?.label || portaria.tipo}
                           </Badge>
                         )}
@@ -640,7 +640,7 @@ const Portarias = () => {
                     <button
                       type="button"
                       onClick={() => handleDownloadPdf(portaria)}
-                      className="mt-2 inline-flex items-center gap-1.5 text-xs text-orange-400 hover:text-orange-300"
+                      className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary-400 hover:text-primary-300"
                     >
                       <ExternalLink className="h-3 w-3" />
                       Ver PDF

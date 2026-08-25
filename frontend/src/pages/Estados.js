@@ -46,7 +46,7 @@ const Estados = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Landmark className="h-6 w-6 text-orange-400" />
+            <Landmark className="h-6 w-6 text-primary-400" />
             Estados
           </h1>
           <p className="text-zinc-400 text-sm mt-1">
@@ -56,7 +56,7 @@ const Estados = () => {
 
         {loading ? (
           <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
-            <Loader2 className="h-5 w-5 animate-spin text-orange-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
             <span>Carregando estados...</span>
           </div>
         ) : (
@@ -64,13 +64,13 @@ const Estados = () => {
             {estados.map((estado) => (
               <Card
                 key={estado.sigla}
-                className="bg-zinc-900/50 border-zinc-800 hover:border-orange-500/30 transition-colors cursor-pointer"
+                className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors cursor-pointer"
                 onClick={() => navigate(`/estados/${estado.sigla}`)}
               >
                 <CardContent className="p-5 flex items-center justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-mono font-bold text-orange-400">{estado.sigla}</span>
+                      <span className="font-mono font-bold text-primary-400">{estado.sigla}</span>
                       <span className="text-white font-medium">{estado.nome}</span>
                     </div>
                     <div className="flex gap-2 flex-wrap">

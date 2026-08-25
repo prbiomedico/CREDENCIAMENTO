@@ -60,7 +60,7 @@ const Dashboard = () => {
 
   const CARDS = [
     { label: 'Empresas', value: stats?.total_companies || 0, icon: Building2, color: 'blue' },
-    { label: 'Documentos', value: stats?.total_documents || 0, icon: FileText, color: 'orange' },
+    { label: 'Documentos', value: stats?.total_documents || 0, icon: FileText, color: 'primary' },
     { label: 'Pendências', value: stats?.pending_validations || 0, icon: Clock, color: 'yellow' },
     { label: 'Portarias', value: stats?.active_portarias || 0, icon: Search, color: 'emerald' },
   ];
@@ -94,7 +94,7 @@ const Dashboard = () => {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <>
@@ -119,7 +119,7 @@ const Dashboard = () => {
             <Card className="bg-zinc-900/50 border-zinc-800 mb-8">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-heading flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-orange-500" />
+                  <Shield className="h-4 w-4 text-primary-500" />
                   Semáforo de Compliance
                 </CardTitle>
               </CardHeader>
@@ -192,13 +192,13 @@ const Dashboard = () => {
             <Card className="bg-zinc-900/50 border-zinc-800">
               <CardContent className="p-5">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center text-lg font-bold text-orange-400">
+                  <div className="w-12 h-12 rounded-full bg-primary-500/20 flex items-center justify-center text-lg font-bold text-primary-400">
                     {user?.name?.[0]?.toUpperCase()}
                   </div>
                   <div>
                     <p className="font-semibold text-white">{user?.name}</p>
                     <p className="text-sm text-zinc-500">{user?.email}</p>
-                    <p className="text-xs font-mono text-orange-400 mt-0.5 uppercase">{user?.perfil}</p>
+                    <p className="text-xs font-mono text-primary-400 mt-0.5 uppercase">{user?.perfil}</p>
                   </div>
                 </div>
               </CardContent>

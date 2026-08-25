@@ -12,12 +12,12 @@ const API = `${BACKEND_URL}/api`;
 
 const TIPO_CONFIG = {
   novo_edital: { icon: Folder, color: 'blue', label: 'Novo Edital' },
-  status_atualizado: { icon: TrendingUp, color: 'orange', label: 'Status Atualizado' },
+  status_atualizado: { icon: TrendingUp, color: 'primary', label: 'Status Atualizado' },
   documento_validado: { icon: FileText, color: 'emerald', label: 'Documento' },
   portaria_publicada: { icon: CheckCircle, color: 'emerald', label: 'Portaria' },
   nova_solicitacao: { icon: TrendingUp, color: 'blue', label: 'Nova Solicitação' },
   submissao_recebida: { icon: FileText, color: 'blue', label: 'Submissão de Credenciamento' },
-  checklist_inconforme: { icon: AlertTriangle, color: 'orange', label: 'Pendência no Credenciamento' },
+  checklist_inconforme: { icon: AlertTriangle, color: 'primary', label: 'Pendência no Credenciamento' },
   submissao_homologada: { icon: CheckCircle, color: 'emerald', label: 'Credenciamento Homologado' },
 };
 
@@ -56,9 +56,9 @@ const Notificacoes = () => {
       <div className="p-6 lg:p-8">
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center relative">
-              <Bell className="h-5 w-5 text-orange-500" />
-              {naoLidas > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center text-[9px] text-white font-bold">{naoLidas}</span>}
+            <div className="w-10 h-10 rounded-lg bg-primary-500/10 border border-primary-500/20 flex items-center justify-center relative">
+              <Bell className="h-5 w-5 text-primary-500" />
+              {naoLidas > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary-500 rounded-full flex items-center justify-center text-[9px] text-white font-bold">{naoLidas}</span>}
             </div>
             <div>
               <h1 className="text-3xl font-heading font-bold tracking-tight">Notificações</h1>
@@ -74,7 +74,7 @@ const Notificacoes = () => {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : notifs.length === 0 ? (
           <Card className="bg-zinc-900/50 border-zinc-800">
@@ -97,7 +97,7 @@ const Notificacoes = () => {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
                       <p className={`text-sm font-semibold ${notif.lida ? 'text-zinc-400' : 'text-white'}`}>{notif.titulo}</p>
-                      {!notif.lida && <div className="w-1.5 h-1.5 rounded-full bg-orange-500" />}
+                      {!notif.lida && <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />}
                     </div>
                     <p className="text-xs text-zinc-500">{notif.mensagem}</p>
                     <p className="text-[10px] text-zinc-600 mt-1 font-mono">{new Date(notif.created_at).toLocaleString('pt-BR')}</p>

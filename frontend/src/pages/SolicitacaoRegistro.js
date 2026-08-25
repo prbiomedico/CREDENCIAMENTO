@@ -17,7 +17,7 @@ const API = `${BACKEND_URL}/api`;
 
 const STATUS_CONFIG = {
   pendente: { label: 'Pendente', bg: 'bg-zinc-800', text: 'text-zinc-400', icon: Clock },
-  em_processamento: { label: 'Em Processamento', bg: 'bg-orange-500/10', text: 'text-orange-400', icon: Loader2 },
+  em_processamento: { label: 'Em Processamento', bg: 'bg-primary-500/10', text: 'text-primary-400', icon: Loader2 },
   concluido: { label: 'Concluído', bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: CheckCircle },
   rejeitado: { label: 'Rejeitado', bg: 'bg-red-500/10', text: 'text-red-400', icon: XCircle },
 };
@@ -130,8 +130,8 @@ const SolicitacaoRegistro = () => {
       <div className="p-6 lg:p-8">
         <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
-              <FileText className="h-5 w-5 text-orange-500" />
+            <div className="w-10 h-10 rounded-lg bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+              <FileText className="h-5 w-5 text-primary-500" />
             </div>
             <div>
               <h1 className="text-3xl font-heading font-bold tracking-tight">Registro de Contrato</h1>
@@ -141,7 +141,7 @@ const SolicitacaoRegistro = () => {
 
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button className="bg-orange-500 hover:bg-orange-600 text-white gap-2" disabled={companies.length === 0}>
+              <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2" disabled={companies.length === 0}>
                 <Plus className="h-4 w-4" />
                 Nova Solicitação
               </Button>
@@ -268,7 +268,7 @@ const SolicitacaoRegistro = () => {
                   />
                 </div>
 
-                <Button type="submit" disabled={salvando} className="bg-orange-500 hover:bg-orange-600 text-white w-full">
+                <Button type="submit" disabled={salvando} className="bg-primary-500 hover:bg-primary-600 text-white w-full">
                   {salvando ? 'Enviando...' : 'Enviar Solicitação'}
                 </Button>
               </form>
@@ -278,7 +278,7 @@ const SolicitacaoRegistro = () => {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : companies.length === 0 ? (
           <Card className="bg-zinc-900/50 border-zinc-800">

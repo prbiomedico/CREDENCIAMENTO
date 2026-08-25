@@ -36,7 +36,7 @@ export default function SeloPublico() {
   if (!selo) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
-        <Loader2 className="h-8 w-8 text-orange-500 animate-spin" />
+        <Loader2 className="h-8 w-8 text-primary-500 animate-spin" />
       </div>
     );
   }

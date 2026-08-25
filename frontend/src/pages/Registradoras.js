@@ -28,7 +28,7 @@ const STATUS_SUBMISSAO_CFG = {
   rascunho: { label: 'Rascunho', className: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
   submetido: { label: 'Submetido', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  em_diligencia: { label: 'Em Diligência', icon: FileText, className: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
+  em_diligencia: { label: 'Em Diligência', icon: FileText, className: 'bg-primary-500/10 text-primary-400 border-primary-500/20' },
   homologado: { label: 'Homologado', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
 };
 
@@ -91,7 +91,7 @@ const Registradoras = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              <Building2 className="h-6 w-6 text-orange-400" />
+              <Building2 className="h-6 w-6 text-primary-400" />
               Registradoras
             </h1>
             <p className="text-zinc-400 text-sm mt-1">
@@ -114,7 +114,7 @@ const Registradoras = () => {
 
         {loading ? (
           <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
-            <Loader2 className="h-5 w-5 animate-spin text-orange-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
             <span>Carregando...</span>
           </div>
         ) : !estadoSigla ? (

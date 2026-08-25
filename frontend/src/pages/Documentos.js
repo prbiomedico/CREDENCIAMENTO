@@ -60,7 +60,7 @@ const Documentos = () => {
               <FileText className="h-16 w-16 text-amber-700 mx-auto mb-4" />
               <p className="text-amber-400 mb-4">Sessão expirada</p>
               <p className="text-sm text-zinc-500 mb-4">Não foi possível confirmar sua autenticação — isso não significa que você não tem empresas cadastradas.</p>
-              <Button onClick={() => window.location.reload()} className="bg-orange-500 hover:bg-orange-600 text-white">
+              <Button onClick={() => window.location.reload()} className="bg-primary-500 hover:bg-primary-600 text-white">
                 Recarregar página
               </Button>
             </CardContent>

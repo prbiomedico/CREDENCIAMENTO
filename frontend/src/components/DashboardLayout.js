@@ -18,9 +18,9 @@ const API = `${BACKEND_URL}/api`;
 const PERFIS = {
   registradora: {
     label: 'Registradora',
-    color: 'text-orange-400',
-    dot: 'bg-orange-400',
-    badge: 'bg-orange-500/10 border-orange-500/30 text-orange-400',
+    color: 'text-primary-400',
+    dot: 'bg-primary-400',
+    badge: 'bg-primary-500/10 border-primary-500/30 text-primary-400',
     icon: Building2,
   },
   detran: {
@@ -110,15 +110,15 @@ const NavItemLink = ({ item, location, onNavigate }) => {
       onClick={onNavigate}
       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-150 relative group ${
         isActive
-          ? 'bg-orange-500/15 text-orange-400 border border-orange-500/25'
+          ? 'bg-primary-500/15 text-primary-400 border border-primary-500/25'
           : 'text-zinc-400 hover:bg-zinc-800/70 hover:text-white'
       }`}
     >
-      {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-orange-500 rounded-r-full" />}
+      {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary-500 rounded-r-full" />}
       <item.icon className="h-4 w-4 shrink-0" />
       <span className="text-sm">{item.label}</span>
       {item.badge > 0 && (
-        <span className="ml-auto bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+        <span className="ml-auto bg-primary-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
           {item.badge > 99 ? '99+' : item.badge}
         </span>
       )}
@@ -249,12 +249,12 @@ const DashboardLayout = ({ children }) => {
       {/* Logo */}
       <div className="p-4 border-b border-zinc-800/50">
         <Link to="/dashboard" className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-orange-500/10 border border-orange-500/20 rounded-lg flex items-center justify-center">
-            <Shield className="h-5 w-5 text-orange-500" />
+          <div className="w-9 h-9 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center justify-center">
+            <Shield className="h-5 w-5 text-primary-500" />
           </div>
           <div>
             <span className="text-base font-heading font-bold block leading-none">sigcr</span>
-            <span className="text-xs text-orange-500 font-mono font-bold">SIGCR</span>
+            <span className="text-xs text-primary-500 font-mono font-bold">SIGCR</span>
           </div>
         </Link>
       </div>
@@ -366,7 +366,7 @@ const DashboardLayout = ({ children }) => {
         <div className="flex items-center gap-3 mb-3 p-2 rounded-lg bg-zinc-900/50">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user?.picture} alt={user?.name} />
-            <AvatarFallback className="bg-orange-500/20 text-orange-400 text-xs font-bold">
+            <AvatarFallback className="bg-primary-500/20 text-primary-400 text-xs font-bold">
               {user?.name?.[0]?.toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -415,12 +415,12 @@ const DashboardLayout = ({ children }) => {
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
             <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-orange-500" />
+              <Shield className="h-5 w-5 text-primary-500" />
               <span className="font-heading font-bold text-sm">sigcr SIGCR</span>
             </div>
             <Link to="/notificacoes" data-testid="mobile-notif-link" className="relative">
               <Bell className="h-5 w-5 text-zinc-400" />
-              {notifCount > 0 && <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{notifCount}</span>}
+              {notifCount > 0 && <span className="absolute -top-1 -right-1 bg-primary-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{notifCount}</span>}
             </Link>
           </div>
         </header>

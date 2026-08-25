@@ -16,7 +16,7 @@ const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','P
 
 const STATUS_EDITAL = {
   aberto: { label: 'Aberto', bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: CheckCircle },
-  em_analise: { label: 'Em Análise', bg: 'bg-orange-500/10', text: 'text-orange-400', icon: Clock },
+  em_analise: { label: 'Em Análise', bg: 'bg-primary-500/10', text: 'text-primary-400', icon: Clock },
   encerrado: { label: 'Encerrado', bg: 'bg-zinc-800', text: 'text-zinc-400', icon: XCircle },
 };
 
@@ -66,8 +66,8 @@ const Editais = () => {
       <div className="p-6 lg:p-8">
         <div className="mb-8 flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center">
-              <Folder className="h-5 w-5 text-orange-500" />
+            <div className="w-10 h-10 rounded-lg bg-primary-500/10 border border-primary-500/20 flex items-center justify-center">
+              <Folder className="h-5 w-5 text-primary-500" />
             </div>
             <div>
               <h1 className="text-3xl font-heading font-bold tracking-tight">Editais</h1>
@@ -87,7 +87,7 @@ const Editais = () => {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : editaisFiltrados.length === 0 ? (
           <Card className="bg-zinc-900/50 border-zinc-800">
@@ -119,12 +119,12 @@ const Editais = () => {
                         <div className="flex items-center gap-4 text-xs text-zinc-500">
                           <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Encerra {new Date(edital.data_encerramento).toLocaleDateString('pt-BR')}</span>
                           {edital.status === 'aberto' && dias > 0 && (
-                            <span className={`font-mono font-semibold ${dias <= 7 ? 'text-red-400' : dias <= 15 ? 'text-orange-400' : 'text-zinc-400'}`}>{dias} dias restantes</span>
+                            <span className={`font-mono font-semibold ${dias <= 7 ? 'text-red-400' : dias <= 15 ? 'text-primary-400' : 'text-zinc-400'}`}>{dias} dias restantes</span>
                           )}
                         </div>
                       </div>
                       {edital.status === 'aberto' && (
-                        <Button onClick={() => handleCandidatar(edital)} className="bg-orange-500 hover:bg-orange-600 text-white text-sm h-9 px-4 shrink-0">
+                        <Button onClick={() => handleCandidatar(edital)} className="bg-primary-500 hover:bg-primary-600 text-white text-sm h-9 px-4 shrink-0">
                           Candidatar-se <ChevronRight className="h-4 w-4 ml-1" />
                         </Button>
                       )}

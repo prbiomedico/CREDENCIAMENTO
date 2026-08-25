@@ -11,31 +11,29 @@ module.exports = {
       },
       colors: {
         // ===== Identidade visual "Berry" (referência MUI, licença MIT) =====
-        // Repaginação de cores só — sem migrar pra MUI. A maioria das telas
-        // usa classes literais do Tailwind (bg-orange-500, text-emerald-400,
-        // etc.) direto, não as variáveis semânticas abaixo — por isso a
-        // reskin real acontece aqui, sobrescrevendo as escalas nomeadas do
-        // Tailwind, não só as variáveis --primary/--secondary/etc. Isso
-        // aplica a mudança em toda tela existente sem tocar em nenhum
-        // arquivo de página.
+        // Repaginação de cores só — sem migrar pra MUI.
         //
-        // orange   -> primária Berry (azul, MUI blue) — cor de marca/CTA
-        // purple   -> secundária Berry (roxo, MUI deepPurple accent)
-        // emerald/green -> sucesso Berry
-        // red      -> erro Berry
-        // amber/yellow  -> aviso Berry
+        // primary/secondary -> escala completa (50-950) da marca Berry
+        //   (azul/roxo), MESMOS valores hex que viviam em orange/purple
+        //   antes do redesign de 2026-08-25 (SIGCR-Design-System-Fase1.md,
+        //   PENDING_ACTIONS.md item 30) — só renomeados, zero mudança
+        //   visual. orange/purple mapeavam pra essas cores de um jeito que
+        //   parecia armadilha (orange-500 renderizava azul, não laranja) —
+        //   causou bug 2x (título Compliance, card Atenção) antes de ser
+        //   corrigido. primary/secondary têm nome que já diz o que são.
+        // emerald/green -> sucesso Berry (mantido — nome já é consistente
+        //   com a cor real, sem armadilha)
+        // red      -> erro Berry (idem, sem armadilha)
+        // amber/yellow  -> aviso Berry (idem, sem armadilha)
         // zinc     -> escala de cinza Berry + superfícies paper/background/
         //             níveis + tons de texto (título/primário/secundário)
-        orange: {
-          50: '#e3f2fd', 100: '#bbdefb', 200: '#90caf9', 300: '#64b5f6',
-          400: '#42a5f5', 500: '#2196f3', 600: '#1e88e5', 700: '#1976d2',
-          800: '#1565c0', 900: '#0d47a1', 950: '#082a5e',
-        },
-        purple: {
-          50: '#ede7f6', 100: '#d1c4e9', 200: '#b39ddb', 300: '#9575cd',
-          400: '#7e57c2', 500: '#7c4dff', 600: '#651fff', 700: '#6200ea',
-          800: '#5600e8', 900: '#4a00c2', 950: '#33008a',
-        },
+        //
+        // orange/purple (chaves originais "cru"): removidas em 2026-08-25
+        // depois de confirmar zero uso restante fora deste arquivo e do
+        // marcador de mapa (ver item 30) — a armadilha (orange-500
+        // renderizando azul) deixa de existir porque o nome nem existe mais
+        // como escala de cor; quem usar "orange-500" agora cai no laranja
+        // de verdade do Tailwind (comportamento óbvio, não silencioso).
         emerald: {
           50: '#f0fff5', 100: '#b9f6ca', 200: '#69f0ae', 300: '#3ee88f',
           400: '#1eec82', 500: '#00e676', 600: '#00c853', 700: '#00b34a',
@@ -76,10 +74,20 @@ module.exports = {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         primary: {
+          // Escala 50-950 idêntica ao antigo "orange" — bg-primary-500 ==
+          // bg-orange-500 de antes, byte a byte. DEFAULT/foreground
+          // continuam nas variáveis HSL (já batem com o 500 desta escala).
+          50: '#e3f2fd', 100: '#bbdefb', 200: '#90caf9', 300: '#64b5f6',
+          400: '#42a5f5', 500: '#2196f3', 600: '#1e88e5', 700: '#1976d2',
+          800: '#1565c0', 900: '#0d47a1', 950: '#082a5e',
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
         },
         secondary: {
+          // Escala 50-950 idêntica ao antigo "purple".
+          50: '#ede7f6', 100: '#d1c4e9', 200: '#b39ddb', 300: '#9575cd',
+          400: '#7e57c2', 500: '#7c4dff', 600: '#651fff', 700: '#6200ea',
+          800: '#5600e8', 900: '#4a00c2', 950: '#33008a',
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
         },

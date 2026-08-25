@@ -206,7 +206,7 @@ const Empresas = () => {
             <DialogTrigger asChild>
               <Button
                 data-testid="new-company-btn"
-                className="bg-orange-500 hover:bg-orange-600 text-white button-shadow"
+                className="bg-primary-500 hover:bg-primary-600 text-white button-shadow"
               >
                 <Plus className="h-5 w-5 mr-2" />
                 Nova Empresa
@@ -225,7 +225,7 @@ const Empresas = () => {
                       data-testid="company-name-input"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                      className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                       required
                     />
                   </div>
@@ -236,7 +236,7 @@ const Empresas = () => {
                       data-testid="company-fantasia-input"
                       value={formData.nome_fantasia}
                       onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })}
-                      className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                      className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                       required
                     />
                   </div>
@@ -281,7 +281,7 @@ const Empresas = () => {
                       value={formData.cnpj}
                       onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
                       placeholder="00.000.000/0000-00"
-                      className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                      className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                       required
                     />
                   </div>
@@ -293,7 +293,7 @@ const Empresas = () => {
                       data-testid="company-email-input"
                       value={formData.email_comercial}
                       onChange={(e) => setFormData({ ...formData, email_comercial: e.target.value })}
-                      className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                      className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                       required
                     />
                   </div>
@@ -307,7 +307,7 @@ const Empresas = () => {
                     value={formData.gestor_contrato}
                     onChange={(e) => setFormData({ ...formData, gestor_contrato: e.target.value })}
                     placeholder="Nome completo do gestor"
-                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                     required
                   />
                 </div>
@@ -320,7 +320,7 @@ const Empresas = () => {
                       value={formData.endereco}
                       onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
                       placeholder="Endereço"
-                      className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                      className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                     />
                   </div>
                   <div>
@@ -330,7 +330,7 @@ const Empresas = () => {
                       value={formData.whatsapp}
                       onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                       placeholder="(99) 99999-9999"
-                      className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                      className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                     />
                   </div>
                 </div>
@@ -344,7 +344,7 @@ const Empresas = () => {
                           id={`detran-${detran}`}
                           checked={formData.detrans_atuacao.includes(detran)}
                           onCheckedChange={() => handleDetranToggle(detran)}
-                          className="border-zinc-700 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                          className="border-zinc-700 data-[state=checked]:bg-primary-500 data-[state=checked]:border-primary-500"
                         />
                         <label
                           htmlFor={`detran-${detran}`}
@@ -363,7 +363,7 @@ const Empresas = () => {
                 <Button
                   data-testid="submit-company-btn"
                   type="submit"
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white button-shadow"
+                  className="w-full bg-primary-500 hover:bg-primary-600 text-white button-shadow"
                 >
                   Cadastrar
                 </Button>
@@ -387,7 +387,7 @@ const Empresas = () => {
                     data-testid="edit-company-name-input"
                     value={editFormData.name}
                     onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                     required
                   />
                 </div>
@@ -398,7 +398,7 @@ const Empresas = () => {
                     data-testid="edit-company-fantasia-input"
                     value={editFormData.nome_fantasia}
                     onChange={(e) => setEditFormData({ ...editFormData, nome_fantasia: e.target.value })}
-                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                     required
                   />
                 </div>
@@ -429,7 +429,7 @@ const Empresas = () => {
                     value={editFormData.cnpj}
                     onChange={(e) => setEditFormData({ ...editFormData, cnpj: e.target.value })}
                     placeholder="00.000.000/0000-00"
-                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                     required
                   />
                 </div>
@@ -441,7 +441,7 @@ const Empresas = () => {
                     data-testid="edit-company-email-input"
                     value={editFormData.email_comercial}
                     onChange={(e) => setEditFormData({ ...editFormData, email_comercial: e.target.value })}
-                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                     required
                   />
                 </div>
@@ -455,7 +455,7 @@ const Empresas = () => {
                   value={editFormData.gestor_contrato}
                   onChange={(e) => setEditFormData({ ...editFormData, gestor_contrato: e.target.value })}
                   placeholder="Nome completo do gestor"
-                  className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                  className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                   required
                 />
               </div>
@@ -468,7 +468,7 @@ const Empresas = () => {
                     value={editFormData.endereco}
                     onChange={(e) => setEditFormData({ ...editFormData, endereco: e.target.value })}
                     placeholder="Endereço"
-                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                   />
                 </div>
                 <div>
@@ -478,7 +478,7 @@ const Empresas = () => {
                     value={editFormData.whatsapp}
                     onChange={(e) => setEditFormData({ ...editFormData, whatsapp: e.target.value })}
                     placeholder="(99) 99999-9999"
-                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                   />
                 </div>
               </div>
@@ -492,7 +492,7 @@ const Empresas = () => {
                         id={`edit-detran-${detran}`}
                         checked={editFormData.detrans_atuacao.includes(detran)}
                         onCheckedChange={() => handleEditDetranToggle(detran)}
-                        className="border-zinc-700 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                        className="border-zinc-700 data-[state=checked]:bg-primary-500 data-[state=checked]:border-primary-500"
                       />
                       <label
                         htmlFor={`edit-detran-${detran}`}
@@ -511,7 +511,7 @@ const Empresas = () => {
               <Button
                 data-testid="submit-edit-company-btn"
                 type="submit"
-                className="w-full bg-orange-500 hover:bg-orange-600 text-white button-shadow"
+                className="w-full bg-primary-500 hover:bg-primary-600 text-white button-shadow"
               >
                 Salvar Alterações
               </Button>
@@ -522,7 +522,7 @@ const Empresas = () => {
         {/* Companies List */}
         {loading ? (
           <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
             <p className="text-zinc-400">Carregando empresas...</p>
           </div>
         ) : sessaoExpirada ? (
@@ -531,7 +531,7 @@ const Empresas = () => {
               <Building2 className="h-16 w-16 text-amber-700 mx-auto mb-4" />
               <p className="text-amber-400 mb-4">Sessão expirada</p>
               <p className="text-sm text-zinc-500 mb-4">Não foi possível confirmar sua autenticação — isso não significa que você não tem empresas cadastradas.</p>
-              <Button onClick={() => window.location.reload()} className="bg-orange-500 hover:bg-orange-600 text-white">
+              <Button onClick={() => window.location.reload()} className="bg-primary-500 hover:bg-primary-600 text-white">
                 Recarregar página
               </Button>
             </CardContent>
@@ -544,7 +544,7 @@ const Empresas = () => {
               <Button
                 data-testid="empty-state-add-btn"
                 onClick={() => setDialogOpen(true)}
-                className="bg-orange-500 hover:bg-orange-600 text-white button-shadow"
+                className="bg-primary-500 hover:bg-primary-600 text-white button-shadow"
               >
                 <Plus className="h-5 w-5 mr-2" />
                 Cadastrar Primeira Empresa
@@ -557,7 +557,7 @@ const Empresas = () => {
               <Card
                 key={company.company_id}
                 data-testid={`company-card-${company.company_id}`}
-                className="bg-zinc-900/50 border-zinc-800 hover:border-orange-500/30 transition-colors"
+                className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors"
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">

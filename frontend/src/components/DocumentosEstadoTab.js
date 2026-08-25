@@ -275,7 +275,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
         {podeEscrever && (
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button data-testid="upload-documento-gov-btn" className="bg-orange-500 hover:bg-orange-600 text-white button-shadow">
+              <Button data-testid="upload-documento-gov-btn" className="bg-primary-500 hover:bg-primary-600 text-white button-shadow">
                 <Upload className="h-5 w-5 mr-2" />
                 Enviar Documento
               </Button>
@@ -325,7 +325,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                       placeholder="Ex: SP"
                       maxLength={2}
                       disabled={isDetranAdmin && !isAdmin}
-                      className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2 disabled:opacity-70"
+                      className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2 disabled:opacity-70"
                       required
                     />
                   </div>
@@ -360,7 +360,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                     value={form.tipo}
                     onChange={(e) => setForm((prev) => ({ ...prev, tipo: e.target.value }))}
                     placeholder="Ex: Contrato Social"
-                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                     required
                   />
                   <datalist id="tipos-sugeridos-list">
@@ -377,7 +377,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                     value={form.nome}
                     onChange={(e) => setForm((prev) => ({ ...prev, nome: e.target.value }))}
                     placeholder="Ex: Contrato Social - 2ª Alteração"
-                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                     required
                   />
                 </div>
@@ -388,7 +388,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                     id="notes"
                     value={form.notes}
                     onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
-                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                   />
                 </div>
 
@@ -398,7 +398,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                     id="file"
                     type="file"
                     onChange={(e) => setForm((prev) => ({ ...prev, file: e.target.files?.[0] || null }))}
-                    className="bg-zinc-950 border-zinc-800 focus:border-orange-500 text-white mt-2"
+                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
                     required
                   />
                   <p className="text-xs text-zinc-500 mt-1">Máx. 20MB. Tipos aceitos variam por categoria.</p>
@@ -407,7 +407,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                 <Button
                   type="submit"
                   disabled={uploading}
-                  className="w-full bg-orange-500 hover:bg-orange-600 text-white button-shadow"
+                  className="w-full bg-primary-500 hover:bg-primary-600 text-white button-shadow"
                 >
                   {uploading ? 'Enviando...' : 'Enviar Documento'}
                 </Button>
@@ -481,7 +481,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
         <CardContent>
           {loading ? (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
               <p className="text-zinc-400">Carregando documentos...</p>
             </div>
           ) : documentos.length === 0 ? (
@@ -572,7 +572,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
           </DialogHeader>
           <div className="space-y-2 mt-2">
             {versoesDialog.itens.map((v) => (
-              <div key={v.documento_id} className={`flex items-center justify-between p-3 rounded-lg border ${v.documento_id === versoesDialog.documento_id ? 'border-orange-500/40 bg-orange-500/5' : 'border-zinc-800'}`}>
+              <div key={v.documento_id} className={`flex items-center justify-between p-3 rounded-lg border ${v.documento_id === versoesDialog.documento_id ? 'border-primary-500/40 bg-primary-500/5' : 'border-zinc-800'}`}>
                 <div>
                   <p className="text-sm font-medium">v{v.versao} — {v.nome}</p>
                   <p className="text-xs text-zinc-500">{new Date(v.created_at).toLocaleString('pt-BR')} · {v.uploaded_by_nome}</p>
@@ -633,7 +633,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                 className="bg-zinc-950 border-zinc-800 text-white mt-2"
               />
             </div>
-            <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white button-shadow">
+            <Button type="submit" className="w-full bg-primary-500 hover:bg-primary-600 text-white button-shadow">
               Salvar
             </Button>
           </form>

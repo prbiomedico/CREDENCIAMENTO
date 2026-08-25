@@ -21,7 +21,7 @@ const STATUS_SUBMISSAO_CFG = {
   rascunho: { label: 'Rascunho', className: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
   submetido: { label: 'Submetido', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
-  em_diligencia: { label: 'Em Diligência', icon: AlertTriangle, className: 'bg-orange-500/10 text-orange-400 border-orange-500/20' },
+  em_diligencia: { label: 'Em Diligência', icon: AlertTriangle, className: 'bg-primary-500/10 text-primary-400 border-primary-500/20' },
   homologado: { label: 'Homologado', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
 };
 
@@ -181,7 +181,7 @@ const MinhasSubmissoes = () => {
 
         {loading ? (
           <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
-            <Loader2 className="h-5 w-5 animate-spin text-orange-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
             <span>Carregando...</span>
           </div>
         ) : !company ? (
@@ -205,7 +205,7 @@ const MinhasSubmissoes = () => {
               return (
                 <Card
                   key={portaria.portaria_id}
-                  className="bg-zinc-900/50 border-zinc-800 hover:border-orange-500/30 transition-colors cursor-pointer"
+                  className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors cursor-pointer"
                   onClick={() => setPortariaAtiva(portaria.portaria_id)}
                 >
                   <CardContent className="p-5 flex items-center justify-between gap-4">
@@ -250,7 +250,7 @@ const MinhasSubmissoes = () => {
                   <Button
                     onClick={() => iniciarSubmissao(portariaSelecionada.portaria_id)}
                     disabled={criandoSubmissao}
-                    className="bg-orange-500 hover:bg-orange-600 text-white"
+                    className="bg-primary-500 hover:bg-primary-600 text-white"
                   >
                     {criandoSubmissao ? 'Iniciando...' : 'Iniciar Credenciamento'}
                   </Button>
@@ -270,7 +270,7 @@ const MinhasSubmissoes = () => {
                       <Button
                         onClick={() => submeter(submissaoSelecionada.submissao_id)}
                         disabled={submetendo || submissaoSelecionada.itens.some((i) => i.status !== 'enviado')}
-                        className="bg-orange-500 hover:bg-orange-600 text-white"
+                        className="bg-primary-500 hover:bg-primary-600 text-white"
                       >
                         {submetendo ? 'Enviando...' : 'Submeter pro DETRAN'}
                       </Button>
@@ -305,7 +305,7 @@ const MinhasSubmissoes = () => {
                               </Badge>
                               {podeEnviar && (
                                 <Button size="sm" variant="ghost" onClick={() => abrirUpload(item)}
-                                  className="h-7 text-orange-500 hover:text-orange-400 hover:bg-orange-500/10">
+                                  className="h-7 text-primary-500 hover:text-primary-400 hover:bg-primary-500/10">
                                   <Upload className="h-3.5 w-3.5 mr-1" /> Enviar
                                 </Button>
                               )}
@@ -357,7 +357,7 @@ const MinhasSubmissoes = () => {
                 <Input type="file" onChange={(e) => setArquivo(e.target.files?.[0] || null)}
                   className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
               </div>
-              <Button type="submit" disabled={enviando} className="w-full bg-orange-500 hover:bg-orange-600 text-white">
+              <Button type="submit" disabled={enviando} className="w-full bg-primary-500 hover:bg-primary-600 text-white">
                 {enviando ? 'Enviando...' : 'Enviar Documento'}
               </Button>
             </form>

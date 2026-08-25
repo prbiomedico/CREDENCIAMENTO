@@ -18,7 +18,7 @@ import {
 const API = `${process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br'}/api`;
 
 const PERFIS = {
-  sigcr_admin:       { label: 'Admin SIGCR',    color: 'bg-orange-500/20 text-orange-400 border-orange-500/30',   icon: Shield },
+  sigcr_admin:       { label: 'Admin SIGCR',    color: 'bg-primary-500/20 text-primary-400 border-primary-500/30',   icon: Shield },
   detran_admin:      { label: 'Admin DETRAN',   color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',         icon: Landmark },
   detran:            { label: 'Operador DETRAN', color: 'bg-blue-500/10 text-blue-300 border-blue-500/20',         icon: Landmark },
   registradora:      { label: 'Registradora',   color: 'bg-zinc-500/20 text-zinc-300 border-zinc-500/30',         icon: Building2 },
@@ -26,11 +26,11 @@ const PERFIS = {
 };
 
 const TODAS_ROLES = [
-  { value: 'registradora',  label: 'Registradora',    desc: 'Acesso ao mdulo de credenciamento e documentos', icon: Building2,  color: 'orange' },
+  { value: 'registradora',  label: 'Registradora',    desc: 'Acesso ao mdulo de credenciamento e documentos', icon: Building2,  color: 'primary' },
   { value: 'detran',        label: 'Operador DETRAN',  desc: 'Acesso ao painel DETRAN e gesto de editais',     icon: Landmark,   color: 'blue' },
   { value: 'detran_admin',  label: 'Admin DETRAN',     desc: 'Acesso total ao mdulo DETRAN + configuraes',   icon: Landmark,   color: 'blue' },
   { value: 'financeira',    label: 'Financeira',       desc: 'Acesso a contratos e gravames',                   icon: CreditCard, color: 'emerald' },
-  { value: 'sigcr_admin',   label: 'Admin SIGCR',      desc: 'Acesso total ao sistema  todas as camadas',      icon: Shield,     color: 'orange' },
+  { value: 'sigcr_admin',   label: 'Admin SIGCR',      desc: 'Acesso total ao sistema  todas as camadas',      icon: Shield,     color: 'primary' },
 ];
 
 // Hierarquia LGPD: cada perfil s cria quem est abaixo dele
@@ -175,8 +175,8 @@ export default function GestaoUsuarios() {
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-orange-500/10 border border-orange-500/20 rounded-lg flex items-center justify-center">
-              <UserCog className="h-5 w-5 text-orange-500" />
+            <div className="w-10 h-10 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center justify-center">
+              <UserCog className="h-5 w-5 text-primary-500" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white">Gestão de Usuários</h1>
@@ -187,13 +187,13 @@ export default function GestaoUsuarios() {
 
         <Tabs defaultValue="usuarios" className="w-full">
           <TabsList className="bg-zinc-900 border border-zinc-800">
-            <TabsTrigger value="usuarios" className="data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400">
+            <TabsTrigger value="usuarios" className="data-[state=active]:bg-primary-500/20 data-[state=active]:text-primary-400">
               <UserCog className="h-4 w-4 mr-2" /> Usuários
             </TabsTrigger>
-            <TabsTrigger value="pendentes" className="data-[state=active]:bg-orange-500/20 data-[state=active]:text-orange-400">
+            <TabsTrigger value="pendentes" className="data-[state=active]:bg-primary-500/20 data-[state=active]:text-primary-400">
               <ClipboardList className="h-4 w-4 mr-2" /> Cadastros Pendentes
               {cadastrosPendentes.length > 0 && (
-                <Badge className="ml-2 bg-orange-500 text-white border-0 h-5 min-w-5 px-1.5 flex items-center justify-center text-[11px]">
+                <Badge className="ml-2 bg-primary-500 text-white border-0 h-5 min-w-5 px-1.5 flex items-center justify-center text-[11px]">
                   {cadastrosPendentes.length}
                 </Badge>
               )}
@@ -207,7 +207,7 @@ export default function GestaoUsuarios() {
             <RefreshCw className="h-4 w-4 mr-2" /> Atualizar
           </Button>
           <Button onClick={() => setShowForm(!showForm)}
-            className="bg-orange-500 hover:bg-orange-600 text-white">
+            className="bg-primary-500 hover:bg-primary-600 text-white">
             <Plus className="h-4 w-4 mr-2" /> Novo Usuário
           </Button>
         </div>
@@ -218,7 +218,7 @@ export default function GestaoUsuarios() {
             <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider mb-3">Hierarquia de Acesso (LGPD — Princípio do Mínimo Privilégio)</p>
             <div className="flex items-center gap-2 flex-wrap text-xs">
               {[
-                { label: 'Admin SIGCR', color: 'text-orange-400', desc: 'Todas as camadas' },
+                { label: 'Admin SIGCR', color: 'text-primary-400', desc: 'Todas as camadas' },
                 { label: '', color: 'text-zinc-600', desc: '' },
                 { label: 'DETRAN', color: 'text-blue-400', desc: 'Registradoras sob sua jurisdio' },
                 { label: '', color: 'text-zinc-600', desc: '' },
@@ -236,10 +236,10 @@ export default function GestaoUsuarios() {
 
         {/* Formulrio de criao */}
         {showForm && (
-          <Card className="border-orange-500/30 bg-zinc-900/70">
+          <Card className="border-primary-500/30 bg-zinc-900/70">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold text-white flex items-center gap-2">
-                <Plus className="h-4 w-4 text-orange-400" /> Novo Usuário
+                <Plus className="h-4 w-4 text-primary-400" /> Novo Usuário
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -261,7 +261,7 @@ export default function GestaoUsuarios() {
                         <div className="flex items-center gap-2 mb-1">
                           <Icon className={`h-4 w-4 ${isSelected ? `text-${r.color}-400` : 'text-zinc-500'}`} />
                           <span className={`text-sm font-semibold ${isSelected ? 'text-white' : 'text-zinc-400'}`}>{r.label}</span>
-                          {isSelected && <Check className="h-3.5 w-3.5 text-orange-400 ml-auto" />}
+                          {isSelected && <Check className="h-3.5 w-3.5 text-primary-400 ml-auto" />}
                         </div>
                         <p className="text-[11px] text-zinc-500">{r.desc}</p>
                       </button>
@@ -284,7 +284,7 @@ export default function GestaoUsuarios() {
                       value={form[f.key]}
                       onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
                       placeholder={f.placeholder}
-                      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500/60"
+                      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-primary-500/60"
                     />
                   </div>
                 ))}
@@ -298,7 +298,7 @@ export default function GestaoUsuarios() {
                       value={form.password}
                       onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
                       placeholder="Mnimo 8 caracteres"
-                      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500/60 pr-10"
+                      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-primary-500/60 pr-10"
                     />
                     <button onClick={() => setShowSenha(!showSenha)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
@@ -312,7 +312,7 @@ export default function GestaoUsuarios() {
                   <div>
                     <label className="text-xs text-zinc-400 font-mono mb-1 block">UF do DETRAN *</label>
                     <select value={form.uf} onChange={e => setForm(p => ({ ...p, uf: e.target.value }))}
-                      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white focus:outline-none focus:border-orange-500/60">
+                      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white focus:outline-none focus:border-primary-500/60">
                       <option value="">Selecione o estado</option>
                       {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
                     </select>
@@ -321,7 +321,7 @@ export default function GestaoUsuarios() {
               </div>
 
               <div className="flex gap-2 pt-2">
-                <Button onClick={handleSalvar} disabled={saving} className="bg-orange-500 hover:bg-orange-600 text-white">
+                <Button onClick={handleSalvar} disabled={saving} className="bg-primary-500 hover:bg-primary-600 text-white">
                   {saving ? <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />Criando...</> : <><Check className="h-4 w-4 mr-2" />Criar Usuário</>}
                 </Button>
                 <Button variant="outline" onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}
@@ -338,13 +338,13 @@ export default function GestaoUsuarios() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
           <input value={busca} onChange={e => setBusca(e.target.value)}
             placeholder="Buscar por username ou e-mail..."
-            className="w-full pl-10 pr-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500/40" />
+            className="w-full pl-10 pr-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-primary-500/40" />
         </div>
 
         {/* Lista de usuários */}
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : usuariosFiltrados.length === 0 ? (
           <Card className="bg-zinc-900/50 border-zinc-800">
@@ -363,7 +363,7 @@ export default function GestaoUsuarios() {
               return (
                 <Card key={u.id} className="border-zinc-800 bg-zinc-900/50 hover:border-zinc-700 transition-colors">
                   <CardContent className="p-4 flex items-center gap-4">
-                    <div className="w-9 h-9 rounded-full bg-orange-500/20 border border-orange-500/20 flex items-center justify-center text-orange-400 font-bold text-sm shrink-0">
+                    <div className="w-9 h-9 rounded-full bg-primary-500/20 border border-primary-500/20 flex items-center justify-center text-primary-400 font-bold text-sm shrink-0">
                       {u.firstName?.[0] || u.username?.[0]?.toUpperCase() || '?'}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -418,7 +418,7 @@ export default function GestaoUsuarios() {
 
             {loadingCadastros ? (
               <div className="flex justify-center py-12">
-                <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : cadastrosPendentes.length === 0 ? (
               <Card className="bg-zinc-900/50 border-zinc-800">

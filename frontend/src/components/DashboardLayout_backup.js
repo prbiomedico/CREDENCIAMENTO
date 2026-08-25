@@ -35,7 +35,7 @@ const DashboardLayout = ({ children }) => {
           {/* Logo */}
           <div className="p-6 border-b border-zinc-800">
             <Link to="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <Shield className="h-7 w-7 text-orange-500" />
+              <Shield className="h-7 w-7 text-primary-500" />
               <span className="text-xl font-heading font-bold tracking-tight">SIGCR</span>
             </Link>
           </div>
@@ -52,7 +52,7 @@ const DashboardLayout = ({ children }) => {
                   onClick={() => setSidebarOpen(false)}
                   className={`flex items-center gap-3 px-4 py-3 rounded-md font-medium transition-colors ${
                     isActive
-                      ? 'bg-orange-500/10 text-orange-500 border border-orange-500/20'
+                      ? 'bg-primary-500/10 text-primary-500 border border-primary-500/20'
                       : 'text-zinc-400 hover:bg-zinc-800 hover:text-white'
                   }`}
                 >
@@ -68,7 +68,7 @@ const DashboardLayout = ({ children }) => {
             <div className="flex items-center gap-3 mb-3">
               <Avatar>
                 <AvatarImage src={user?.picture} alt={user?.name} />
-                <AvatarFallback className="bg-orange-500/10 text-orange-500">
+                <AvatarFallback className="bg-primary-500/10 text-primary-500">
                   {user?.name?.[0]?.toUpperCase()}
                 </AvatarFallback>
               </Avatar>
@@ -104,7 +104,7 @@ const DashboardLayout = ({ children }) => {
               {sidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </Button>
             <div className="flex items-center gap-2">
-              <Shield className="h-6 w-6 text-orange-500" />
+              <Shield className="h-6 w-6 text-primary-500" />
               <span className="text-lg font-heading font-bold">SIGCR</span>
             </div>
             <div className="w-10"></div>

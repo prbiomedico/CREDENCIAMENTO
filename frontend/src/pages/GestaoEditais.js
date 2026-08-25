@@ -180,7 +180,7 @@ const GestaoEditais = () => {
           </div>
           <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetForm(); }}>
             <DialogTrigger asChild>
-              <Button onClick={abrirNovo} className="bg-orange-500 hover:bg-orange-600 text-white gap-2">
+              <Button onClick={abrirNovo} className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
                 <Plus className="h-4 w-4" />
                 Novo Edital
               </Button>
@@ -262,7 +262,7 @@ const GestaoEditais = () => {
                   <Label className="text-zinc-300">Anexos (PDF)</Label>
                   <div className="mt-1 flex items-center gap-2">
                     <Input type="file" accept="application/pdf" onChange={handleAnexoUpload} disabled={enviandoAnexo} className="bg-zinc-800 border-zinc-700 text-white" />
-                    {enviandoAnexo && <Loader2 className="h-4 w-4 animate-spin text-orange-400 shrink-0" />}
+                    {enviandoAnexo && <Loader2 className="h-4 w-4 animate-spin text-primary-400 shrink-0" />}
                   </div>
                   {formData.anexos.length > 0 && (
                     <div className="space-y-1 mt-2">
@@ -284,7 +284,7 @@ const GestaoEditais = () => {
                   <Label className="text-zinc-300">Termo de Adesão (PDF)</Label>
                   <div className="mt-1 flex items-center gap-2">
                     <Input type="file" accept="application/pdf" onChange={handleTermoUpload} disabled={enviandoTermo} className="bg-zinc-800 border-zinc-700 text-white" />
-                    {enviandoTermo && <Loader2 className="h-4 w-4 animate-spin text-orange-400 shrink-0" />}
+                    {enviandoTermo && <Loader2 className="h-4 w-4 animate-spin text-primary-400 shrink-0" />}
                   </div>
                   {termoNome && (
                     <p className="text-xs text-zinc-400 mt-1.5 flex items-center gap-1.5">
@@ -293,7 +293,7 @@ const GestaoEditais = () => {
                   )}
                 </div>
 
-                <Button type="submit" disabled={salvando} className="bg-orange-500 hover:bg-orange-600 text-white w-full">
+                <Button type="submit" disabled={salvando} className="bg-primary-500 hover:bg-primary-600 text-white w-full">
                   {salvando ? 'Salvando...' : editandoId ? 'Salvar Alterações' : 'Cadastrar'}
                 </Button>
               </form>
@@ -303,7 +303,7 @@ const GestaoEditais = () => {
 
         {loading ? (
           <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
-            <Loader2 className="h-5 w-5 animate-spin text-orange-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
             <span>Carregando editais...</span>
           </div>
         ) : editais.length === 0 ? (
@@ -311,7 +311,7 @@ const GestaoEditais = () => {
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <FileText className="h-12 w-12 text-zinc-700 mb-4" />
               <p className="text-zinc-400 font-medium mb-1">Nenhum edital cadastrado</p>
-              <Button onClick={abrirNovo} className="bg-orange-500 hover:bg-orange-600 text-white gap-2 mt-3">
+              <Button onClick={abrirNovo} className="bg-primary-500 hover:bg-primary-600 text-white gap-2 mt-3">
                 <Plus className="h-4 w-4" />
                 Cadastrar Primeiro Edital
               </Button>
@@ -320,7 +320,7 @@ const GestaoEditais = () => {
         ) : (
           <div className="space-y-3">
             {editais.map((edital) => (
-              <Card key={edital.edital_id} className="bg-zinc-900/50 border-zinc-800 hover:border-orange-500/30 transition-colors">
+              <Card key={edital.edital_id} className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -338,7 +338,7 @@ const GestaoEditais = () => {
                           </Badge>
                         )}
                         {edital.termo_adesao_path && (
-                          <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 font-mono text-xs">
+                          <Badge className="bg-secondary-500/10 text-secondary-400 border-secondary-500/20 font-mono text-xs">
                             Termo de adesão
                           </Badge>
                         )}

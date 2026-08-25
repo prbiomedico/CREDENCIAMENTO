@@ -86,7 +86,7 @@ const CadastroPublico = () => {
             <p className="text-zinc-400 text-sm mb-6">
               Seu cadastro foi recebido e está aguardando aprovação. Você será notificado por e-mail quando o acesso for liberado.
             </p>
-            <Button onClick={() => navigate('/')} className="bg-orange-500 hover:bg-orange-600 text-white w-full">
+            <Button onClick={() => navigate('/')} className="bg-primary-500 hover:bg-primary-600 text-white w-full">
               Voltar ao início
             </Button>
           </CardContent>
@@ -99,19 +99,19 @@ const CadastroPublico = () => {
     <div className="min-h-screen bg-zinc-950 text-white py-10 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 bg-orange-500/10 border border-orange-500/20 rounded-lg flex items-center justify-center">
-            <Shield className="h-5 w-5 text-orange-500" />
+          <div className="w-10 h-10 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center justify-center">
+            <Shield className="h-5 w-5 text-primary-500" />
           </div>
           <div>
             <span className="text-lg font-heading font-bold block leading-none">sigcr</span>
-            <span className="text-xs text-orange-500 font-mono font-bold">SIGCR</span>
+            <span className="text-xs text-primary-500 font-mono font-bold">SIGCR</span>
           </div>
         </div>
 
         <Card className="bg-zinc-900/50 border-zinc-800">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5 text-orange-400" />
+              <Building2 className="h-5 w-5 text-primary-400" />
               Cadastro de Empresa
             </CardTitle>
           </CardHeader>
@@ -211,7 +211,7 @@ const CadastroPublico = () => {
                 </div>
               </div>
 
-              <Button type="submit" disabled={enviando} className="bg-orange-500 hover:bg-orange-600 text-white w-full">
+              <Button type="submit" disabled={enviando} className="bg-primary-500 hover:bg-primary-600 text-white w-full">
                 {enviando ? 'Enviando...' : 'Cadastrar'}
               </Button>
             </form>

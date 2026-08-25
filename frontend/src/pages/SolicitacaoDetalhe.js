@@ -23,8 +23,8 @@ const STATUS_DOC = {
 };
 
 const RESPONSABILIDADE = {
-  orgao:      { label: 'Responsabilidade do rgo', color: 'bg-purple-900/30 text-purple-400 border-purple-700' },
-  empresa:    { label: 'Empresa',                   color: 'bg-orange-900/30 text-orange-400 border-orange-700' },
+  orgao:      { label: 'Responsabilidade do rgo', color: 'bg-secondary-900/30 text-secondary-400 border-secondary-700' },
+  empresa:    { label: 'Empresa',                   color: 'bg-primary-900/30 text-primary-400 border-primary-700' },
 };
 
 export default function SolicitacaoDetalhe() {
@@ -134,7 +134,7 @@ export default function SolicitacaoDetalhe() {
   if (loading) return (
     <DashboardLayout>
       <div className="flex items-center justify-center h-screen">
-        <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
       </div>
     </DashboardLayout>
   );
@@ -161,7 +161,7 @@ export default function SolicitacaoDetalhe() {
             <h1 className="text-2xl font-bold text-white">{solicitacao.titulo || 'Solicitao de Credenciamento'}</h1>
             <p className="text-zinc-500 text-sm">DETRAN-{solicitacao.uf}  Solicitao #{id?.slice(0,8)}</p>
           </div>
-          <Badge className="bg-orange-500/20 text-orange-400 border-orange-500/30 font-mono text-xs">
+          <Badge className="bg-primary-500/20 text-primary-400 border-primary-500/30 font-mono text-xs">
             {solicitacao.status?.toUpperCase() || 'EM ANLISE'}
           </Badge>
         </div>
@@ -171,7 +171,7 @@ export default function SolicitacaoDetalhe() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm text-zinc-400 font-medium">Progresso da Documentao</span>
-              <span className="text-sm font-mono text-orange-400">{aprovados}/{totalDocs} aprovados</span>
+              <span className="text-sm font-mono text-primary-400">{aprovados}/{totalDocs} aprovados</span>
             </div>
             <div className="w-full bg-zinc-800 rounded-full h-2.5">
               <div
@@ -282,7 +282,7 @@ export default function SolicitacaoDetalhe() {
                         <Button
                           onClick={() => fileInputRefs.current[docNome]?.click()}
                           disabled={isUploading}
-                          className="bg-orange-500 hover:bg-orange-600 text-white w-full sm:w-auto">
+                          className="bg-primary-500 hover:bg-primary-600 text-white w-full sm:w-auto">
                           {isUploading ? (
                             <><RefreshCw className="h-4 w-4 mr-2 animate-spin" /> Enviando...</>
                           ) : (

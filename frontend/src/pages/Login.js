@@ -13,15 +13,15 @@ const Login = () => {
       <div className="relative z-10 w-full max-w-md">
         <div className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 rounded-2xl p-8 shadow-2xl">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-orange-500/10 mb-4 glow-orange">
-              <Shield className="h-8 w-8 text-orange-500" />
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-500/10 mb-4 glow-orange">
+              <Shield className="h-8 w-8 text-primary-500" />
             </div>
             <h1 className="text-3xl font-heading font-bold tracking-tight mb-2">SIGCR</h1>
             <p className="text-zinc-400">Sistema Integrado de Gestão de Credenciamento</p>
           </div>
           <Button
             onClick={login}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-medium tracking-wide button-shadow h-12"
+            className="w-full bg-primary-500 hover:bg-primary-600 text-white font-medium tracking-wide button-shadow h-12"
           >
             Entrar
           </Button>

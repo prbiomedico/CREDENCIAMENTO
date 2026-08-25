@@ -346,7 +346,7 @@ export default function EstadoDetalhe() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold text-white">
-              Estado <span className="text-orange-400 font-mono">{siglaUpper}</span>
+              Estado <span className="text-primary-400 font-mono">{siglaUpper}</span>
               {estadoInfo?.estado_nome && <span className="text-zinc-400 font-normal"> — {estadoInfo.estado_nome}</span>}
             </h1>
             <p className="text-zinc-400 text-sm mt-1">
@@ -357,7 +357,7 @@ export default function EstadoDetalhe() {
 
         {loading ? (
           <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
-            <Loader2 className="h-5 w-5 animate-spin text-orange-400" />
+            <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
             <span>Carregando...</span>
           </div>
         ) : (
@@ -387,7 +387,7 @@ export default function EstadoDetalhe() {
                   {!estadoInfo?.configurado ? (
                     <div className="text-center py-6">
                       <p className="text-zinc-400 mb-4">Este estado ainda não foi ativado para acompanhamento de credenciamento.</p>
-                      <Button onClick={ativarEstado} disabled={salvandoEstado} className="bg-orange-500 hover:bg-orange-600 text-white gap-2">
+                      <Button onClick={ativarEstado} disabled={salvandoEstado} className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
                         <Plus className="h-4 w-4" />
                         {salvandoEstado ? 'Ativando...' : `Ativar ${siglaUpper} para acompanhamento`}
                       </Button>
@@ -404,7 +404,7 @@ export default function EstadoDetalhe() {
                         />
                       </div>
                       <div className="flex gap-2">
-                        <Button onClick={salvarObservacoes} disabled={salvandoEstado || !!estadoInfo?.estado?.deleted_at} className="bg-orange-500 hover:bg-orange-600 text-white">
+                        <Button onClick={salvarObservacoes} disabled={salvandoEstado || !!estadoInfo?.estado?.deleted_at} className="bg-primary-500 hover:bg-primary-600 text-white">
                           Salvar observações
                         </Button>
                         {estadoInfo?.estado?.deleted_at ? (
@@ -430,7 +430,7 @@ export default function EstadoDetalhe() {
                     <span>Empresas credenciadas</span>
                     <Dialog open={credDialogOpen} onOpenChange={setCredDialogOpen}>
                       <DialogTrigger asChild>
-                        <Button onClick={abrirNovoCredenciamento} size="sm" className="bg-orange-500 hover:bg-orange-600 text-white gap-2">
+                        <Button onClick={abrirNovoCredenciamento} size="sm" className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
                           <Plus className="h-4 w-4" />
                           Novo credenciamento
                         </Button>
@@ -497,7 +497,7 @@ export default function EstadoDetalhe() {
                               <Input type="number" step="0.01" value={credForm.valor_registradora} onChange={(e) => setCredForm((p) => ({ ...p, valor_registradora: e.target.value }))} className="bg-zinc-950 border-zinc-800 text-white mt-2" />
                             </div>
                           </div>
-                          <Button type="submit" className="w-full bg-orange-500 hover:bg-orange-600 text-white">Salvar</Button>
+                          <Button type="submit" className="w-full bg-primary-500 hover:bg-primary-600 text-white">Salvar</Button>
                         </form>
                       </DialogContent>
                     </Dialog>
@@ -557,7 +557,7 @@ export default function EstadoDetalhe() {
                     <span>Portarias de {siglaUpper}</span>
                     <Dialog open={portariaDialogOpen} onOpenChange={(open) => { setPortariaDialogOpen(open); if (!open) resetPortariaForm(); }}>
                       <DialogTrigger asChild>
-                        <Button size="sm" className="bg-orange-500 hover:bg-orange-600 text-white gap-2">
+                        <Button size="sm" className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
                           <Plus className="h-4 w-4" />
                           Nova portaria
                         </Button>
@@ -621,7 +621,7 @@ export default function EstadoDetalhe() {
                               </div>
                             )}
                           </div>
-                          <Button type="submit" disabled={salvandoPortaria} className="w-full bg-orange-500 hover:bg-orange-600 text-white">
+                          <Button type="submit" disabled={salvandoPortaria} className="w-full bg-primary-500 hover:bg-primary-600 text-white">
                             {salvandoPortaria ? 'Cadastrando...' : 'Cadastrar'}
                           </Button>
                         </form>
