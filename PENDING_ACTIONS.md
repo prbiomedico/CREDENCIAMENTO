@@ -1726,3 +1726,20 @@ Pedro trouxe `SIGCR-Design-System-Fase1.md` (baseado na auditoria técnica do it
 
 **Próximo passo**: Passo 2 — redesenhar `ui/button.jsx`, `ui/card.jsx`, `ui/badge.jsx`, `ui/select.jsx`, `ui/input.jsx`, `ui/label.jsx`, `ui/dialog.jsx` (nesta ordem, commit+smoke test por item).
 
+## 31. Redesign SIGCR — Passo 2: os 7 componentes base (button/card/badge/select/input/label/dialog) — ✅ CONCLUÍDO (2026-08-25)
+
+Redesenhados via CSS/classes só — **nenhum primitivo Radix trocado**, mesma base de sempre, só reestilização por tokens.
+
+- **`button.jsx`**: gradiente `primary→primary-600` (era cor sólida), glow no hover (`shadow` colorido usando a variável HSL, não hex fixo — funciona igual pra qualquer variant), `active:scale-[0.97]` como microinteração de clique, anel de foco na cor da marca em vez do cinza genérico do shadcn. **Decisão de risco deliberada**: microinteração via CSS puro (`transition`/`active:scale`), não `motion` — `Button` é usado com `asChild` (Radix Slot) em vários lugares (`<Button asChild><Link>`), e um wrapper `motion.*` quebraria esse contrato à toa.
+- **`card.jsx`**: só ganhou `transition-all duration-200` no base — a maioria das 22 telas que usam `Card` já sobrescreve `bg`/`border` via `className` próprio, então o efeito de elevação real já vinha de cada tela; a transição faz esses estados (quando já existiam) animarem suave em vez de trocar seco.
+- **`badge.jsx`**: mesma lógica do Card — `transition-colors` → `transition-all`, sem mudar cor base (a maioria das 19 telas já passa cor via `className`, como `perfilCfg.color` renomeado no Passo 1).
+- **`input.jsx`/`select.jsx`**: foco ganhou anel + borda na cor da marca (`focus-visible:ring-primary/30`) no lugar do ring cinza padrão do shadcn — mesmo tratamento nos dois, pra formulário inteiro (13+15 telas) sentir consistente.
+- **`label.jsx`**: mudança mínima de propósito (só transição) — é usado puro em 12 arquivos como rótulo de formulário, tom neutro atual já correto pro papel.
+- **`dialog.jsx`**: overlay ganhou `backdrop-blur-sm` (era preto chapado), conteúdo do modal ganhou glow sutil na cor da marca (`shadow` com a variável `--primary`) — visual "glassmorphism", mais alinhado à direção bento/glow do resto.
+
+**Testado antes do deploy**: build limpo (CSS só +103 bytes — mudança pequena e cirúrgica, como esperado pra reestilização, não reescrita), screenshot real via Puppeteer do formulário "Novo Usuário" (`GestaoUsuarios`, no harness `/__preview` — combina os 7 componentes na mesma tela: cards de perfil, inputs, label, botões primário/outline, badge de perfil ativo) — layout íntegro, gradiente/cantos/estados aplicados sem quebra visual.
+
+**Deploy**: isolado do lote pendente via `git stash push -u`/`pop`, **sem conflito** (o lote pendente não toca `components/ui/*` diretamente). Deploy via `deploy-frontend.sh`, release `releases/passo2-componentes-base` — hash do CSS em produção idêntico ao do build de teste. Smoke test: site 200, `/mapa-nacional` 200, tráfego real (`/api/notificacoes`, `/api/stats`, `/api/documentos/vencimento-resumo`) 200 sem erro.
+
+**Próximo passo**: Passo 3 — componente `BentoGrid`/`BentoCard` novo (wrapper sobre `ui/card.jsx`).
+
