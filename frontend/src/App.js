@@ -36,6 +36,7 @@ import Registradoras from './pages/Registradoras';
 import SolicitacaoRegistro from './pages/SolicitacaoRegistro';
 import FilaRegistros from './pages/FilaRegistros';
 import CadastroPublico from './pages/CadastroPublico';
+import SeloPublico from './pages/SeloPublico';
 import '@/App.css';
 
 // Cada rota recebe seu próprio ErrorBoundary (não um único global): um crash
@@ -57,6 +58,7 @@ function AppRoutes() {
         <Route path="/portarias" element={b(<RotaProtegida perfilPermitido={["registradora", "detran", "detran_admin"]}><Portarias /></RotaProtegida>)} />
         <Route path="/planos" element={b(<Planos />)} />
         <Route path="/cadastro" element={b(<CadastroPublico />)} />
+        <Route path="/selo/:companyId" element={b(<SeloPublico />)} />
         <Route path="/transparencia" element={b(<Transparencia />)} />
         <Route path="/transparencia/:uf" element={b(<Transparencia />)} />
           <Route path="/checkout" element={b(<Checkout />)} />

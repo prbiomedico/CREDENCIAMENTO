@@ -43,9 +43,10 @@ export const PerfilAtivoProvider = ({ children }) => {
   // mudar e o perfil atual deixar de ser permitido.
   useEffect(() => {
     if (!user) return;
-    if (!perfisPermitidos.includes(perfilAtivo)) {
-      setPerfilAtivoState(perfilInicial(user));
-    }
+    // Recalcula SEMPRE que o usuário real resolve (não só quando o perfil
+    // atual deixa de ser permitido): o valor inicial foi computado com
+    // user=null e caía em 'registradora' mesmo para detran_admin.
+    setPerfilAtivoState(perfilInicial(user));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, role]);
 

@@ -65,7 +65,7 @@ export default function GestaoUsuarios() {
   const [rejeicaoAlvo, setRejeicaoAlvo] = useState(null);
   const [motivoRejeicao, setMotivoRejeicao] = useState('');
 
-  // Roles que este usurio pode criar  baseado na hierarquia LGPD
+  // Roles que este usuário pode criar  baseado na hierarquia LGPD
   const perfilAtual = user?.perfil || user?.roles?.[0] || 'financeira';
   const rolesPermitidas = ROLES_POR_PERFIL[perfilAtual] || [];
   const ROLES_DISPONIVEIS = TODAS_ROLES.filter(r => rolesPermitidas.includes(r.value));
@@ -84,7 +84,7 @@ export default function GestaoUsuarios() {
       const res = await axios.get(`${API}/admin/usuarios`, { withCredentials: true });
       setUsuarios(Array.isArray(res.data) ? res.data : []);
     } catch {
-      toast({ title: 'Erro ao carregar usurios', variant: 'destructive' });
+      toast({ title: 'Erro ao carregar usuários', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -134,18 +134,18 @@ export default function GestaoUsuarios() {
 
   const handleSalvar = async () => {
     if (!form.username || !form.email || !form.password || !form.role) {
-      toast({ title: 'Preencha todos os campos obrigatrios', variant: 'destructive' });
+      toast({ title: 'Preencha todos os campos obrigatórios', variant: 'destructive' });
       return;
     }
     setSaving(true);
     try {
       await axios.post(`${API}/admin/usuarios`, form, { withCredentials: true });
-      toast({ title: ' Usurio criado com sucesso', description: `${form.email}  perfil: ${PERFIS[form.role]?.label}` });
+      toast({ title: ' Usuário criado com sucesso', description: `${form.email}  perfil: ${PERFIS[form.role]?.label}` });
       setForm(EMPTY_FORM);
       setShowForm(false);
       await fetchUsuarios();
     } catch (e) {
-      toast({ title: 'Erro ao criar usurio', description: e.response?.data?.detail || 'Tente novamente', variant: 'destructive' });
+      toast({ title: 'Erro ao criar usuário', description: e.response?.data?.detail || 'Tente novamente', variant: 'destructive' });
     } finally {
       setSaving(false);
     }
@@ -155,7 +155,7 @@ export default function GestaoUsuarios() {
     if (deletando !== userId) { setDeletando(userId); return; }
     try {
       await axios.delete(`${API}/admin/usuarios/${userId}`, { withCredentials: true });
-      toast({ title: `Usurio ${username} removido` });
+      toast({ title: `Usuário ${username} removido` });
       setDeletando(null);
       await fetchUsuarios();
     } catch (e) {
@@ -208,14 +208,14 @@ export default function GestaoUsuarios() {
           </Button>
           <Button onClick={() => setShowForm(!showForm)}
             className="bg-orange-500 hover:bg-orange-600 text-white">
-            <Plus className="h-4 w-4 mr-2" /> Novo Usurio
+            <Plus className="h-4 w-4 mr-2" /> Novo Usuário
           </Button>
         </div>
 
         {/* Hierarquia visual */}
         <Card className="bg-zinc-900/50 border-zinc-800">
           <CardContent className="p-4">
-            <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider mb-3">Hierarquia de Acesso (LGPD  Princpio do Mnimo Privilgio)</p>
+            <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider mb-3">Hierarquia de Acesso (LGPD — Princípio do Mínimo Privilégio)</p>
             <div className="flex items-center gap-2 flex-wrap text-xs">
               {[
                 { label: 'Admin SIGCR', color: 'text-orange-400', desc: 'Todas as camadas' },
@@ -239,7 +239,7 @@ export default function GestaoUsuarios() {
           <Card className="border-orange-500/30 bg-zinc-900/70">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold text-white flex items-center gap-2">
-                <Plus className="h-4 w-4 text-orange-400" /> Novo Usurio
+                <Plus className="h-4 w-4 text-orange-400" /> Novo Usuário
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -322,7 +322,7 @@ export default function GestaoUsuarios() {
 
               <div className="flex gap-2 pt-2">
                 <Button onClick={handleSalvar} disabled={saving} className="bg-orange-500 hover:bg-orange-600 text-white">
-                  {saving ? <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />Criando...</> : <><Check className="h-4 w-4 mr-2" />Criar Usurio</>}
+                  {saving ? <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />Criando...</> : <><Check className="h-4 w-4 mr-2" />Criar Usuário</>}
                 </Button>
                 <Button variant="outline" onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}
                   className="border-zinc-700 text-zinc-400">
@@ -341,7 +341,7 @@ export default function GestaoUsuarios() {
             className="w-full pl-10 pr-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500/40" />
         </div>
 
-        {/* Lista de usurios */}
+        {/* Lista de usuários */}
         {loading ? (
           <div className="flex justify-center py-12">
             <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
@@ -350,8 +350,8 @@ export default function GestaoUsuarios() {
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardContent className="p-12 text-center">
               <UserCog className="h-12 w-12 text-zinc-700 mx-auto mb-3" />
-              <p className="text-zinc-400">Nenhum usurio encontrado</p>
-              <p className="text-zinc-600 text-sm mt-1">Crie o primeiro usurio usando o boto acima</p>
+              <p className="text-zinc-400">Nenhum usuário encontrado</p>
+              <p className="text-zinc-600 text-sm mt-1">Crie o primeiro usuário usando o botão acima</p>
             </CardContent>
           </Card>
         ) : (
@@ -405,7 +405,7 @@ export default function GestaoUsuarios() {
           </div>
         )}
 
-        <p className="text-center text-zinc-600 text-xs font-mono">{usuariosFiltrados.length} usurio(s)</p>
+        <p className="text-center text-zinc-600 text-xs font-mono">{usuariosFiltrados.length} usuário(s)</p>
           </TabsContent>
 
           <TabsContent value="pendentes" className="space-y-6 mt-4">

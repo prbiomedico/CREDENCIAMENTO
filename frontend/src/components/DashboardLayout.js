@@ -276,7 +276,7 @@ const DashboardLayout = ({ children }) => {
         {/* Dropdown de troca de perfil */}
         {seletorOpen && perfisPermitidos.length > 1 && (
           <div className="mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl overflow-hidden z-50">
-            <p className="text-[10px] text-zinc-500 font-mono uppercase px-3 pt-2 pb-1">Trocar viso</p>
+            <p className="text-[10px] text-zinc-500 font-mono uppercase px-3 pt-2 pb-1">Trocar visão</p>
             {perfisPermitidos.map(p => {
               const pc = PERFIS[p];
               const PIcon = pc.icon;
@@ -306,6 +306,7 @@ const DashboardLayout = ({ children }) => {
               <select
                 value={viewingAs?.tipo === 'detran' ? viewingAs.id : ''}
                 onChange={handleSimularDetran}
+                data-testid="view-as-detran-select"
                 className="w-full text-[11px] font-mono bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-zinc-300"
               >
                 <option value="">Visão irrestrita (sem simulação)</option>
@@ -315,6 +316,7 @@ const DashboardLayout = ({ children }) => {
               <select
                 value={viewingAs?.tipo === 'empresa' ? viewingAs.id : ''}
                 onChange={handleSimularEmpresa}
+                data-testid="view-as-empresa-select"
                 className="w-full text-[11px] font-mono bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-zinc-300"
               >
                 <option value="">Visão irrestrita (sem simulação)</option>
@@ -351,7 +353,7 @@ const DashboardLayout = ({ children }) => {
         {/* Separador admin */}
         {navAdminExtra.length > 0 && (
           <div className="pt-2 mt-2 border-t border-zinc-800">
-            <p className="text-[10px] text-zinc-600 font-mono uppercase px-3 pb-1">Administrao</p>
+            <p className="text-[10px] text-zinc-600 font-mono uppercase px-3 pb-1">Administração</p>
             {navAdminExtra.map((item) => (
               <NavItemLink key={item.path} item={item} location={location} onNavigate={() => setSidebarOpen(false)} />
             ))}
@@ -375,6 +377,7 @@ const DashboardLayout = ({ children }) => {
         </div>
         <Button
           onClick={handleLogout}
+          data-testid="logout-btn"
           variant="ghost"
           size="sm"
           className="w-full text-zinc-500 hover:text-white hover:bg-zinc-800 justify-start gap-2 text-xs"
@@ -415,14 +418,8 @@ const DashboardLayout = ({ children }) => {
               <Shield className="h-5 w-5 text-orange-500" />
               <span className="font-heading font-bold text-sm">sigcr SIGCR</span>
             </div>
-            <Link to="/notificacoes" className="relative">
-              <a href="/dashboard" title="Incio" style={{display:"flex",alignItems:"center",justifyContent:"center",width:"36px",height:"36px",borderRadius:"8px",background:"rgba(255,255,255,0.05)",color:"rgba(255,255,255,0.6)",marginRight:"8px",textDecoration:"none",fontSize:"18px"}}></a><Bell className="h-5 w-5 text-zinc-400" />
-              <a href="/app-mobile" style={{ display:"flex", alignItems:"center", gap:"10px", padding:"10px 16px", borderRadius:"8px", color:"rgba(255,255,255,0.6)", textDecoration:"none", fontSize:"13px", transition:"all 0.15s" }}>
-                 App Mobile
-              </a>
-              <a href="/documentos/upload" style={{ display:"flex", alignItems:"center", gap:"10px", padding:"10px 16px", borderRadius:"8px", color:"rgba(255,255,255,0.6)", textDecoration:"none", fontSize:"13px", transition:"all 0.15s" }}>
-                 Upload Docs
-              </a>
+            <Link to="/notificacoes" data-testid="mobile-notif-link" className="relative">
+              <Bell className="h-5 w-5 text-zinc-400" />
               {notifCount > 0 && <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{notifCount}</span>}
             </Link>
           </div>
