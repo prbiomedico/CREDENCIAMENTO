@@ -1,5 +1,5 @@
 # git-sync-or-die.sh validado end-to-end em 2026-08-12 (PENDING_ACTIONS.md item 18)
-from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File, Request, Response, Depends, Form
+from fastapi import FastAPI, APIRouter, HTTPException, UploadFile, File, Request, Response, Depends, Form, BackgroundTasks
 from fastapi.responses import JSONResponse, FileResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -90,6 +90,9 @@ async def _verificar_captcha(captcha_token: Optional[str]):
         )
         if not r.json().get("success"):
             raise HTTPException(status_code=400, detail="Falha na verificação anti-robô")
+
+
+from email_service import enviar_email
 
 # LLM API Key
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
@@ -4976,6 +4979,117 @@ async def seed_atividades_raci():
         })
     await db.atividades_raci.insert_many(docs)
     logger.info("Seed: 40 atividades da Matriz RACI GOV-CRD-001 inseridas em atividades_raci")
+
+
+# ============ Fatia C (2026-08-25, PENDING_ACTIONS.md item 27): selo público
+# de compliance + varredura de vencimento por e-mail ============
+
+@api_router.post("/admin/notificacoes-vencimento/executar")
+async def executar_notificacoes_vencimento(
+    current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))
+):
+    """Dispara manualmente a varredura de vencimentos (mesma rotina do cron diário)."""
+    avisos = await _executar_avisos_vencimento()
+    return {"avisos_gerados": avisos}
+
+
+async def _executar_avisos_vencimento() -> int:
+    """Varre documentos vencendo (≤30 dias) ou vencidos e dispara notificação
+    in-app + e-mail (Resend se RESEND_API_KEY configurada; senão registra em
+    db.email_outbox — modo mock, ninguém recebe nada de verdade até a chave
+    ser configurada). Idempotente por documento/dia via db.avisos_vencimento."""
+    hoje = date.today().isoformat()
+    companies = await db.companies.find(
+        {"deleted_at": None},
+        {"_id": 0, "company_id": 1, "user_id": 1, "nome_fantasia": 1, "email_comercial": 1},
+    ).to_list(2000)
+    avisos = 0
+    for comp in companies:
+        docs = await db.documents.find({"company_id": comp["company_id"]}, {"_id": 0}).to_list(500)
+        for d in docs:
+            status = calcular_status_documento(d)
+            if status not in ("vencendo", "vencido"):
+                continue
+            doc_id = d.get("document_id") or d.get("id") or d.get("nome", "")
+            marcador = {"document_id": doc_id, "data": hoje}
+            if await db.avisos_vencimento.find_one(marcador):
+                continue
+            venc = d.get("vencimento", "")
+            titulo = "Documento vencido" if status == "vencido" else "Documento vence em breve"
+            nome_doc = d.get("document_name") or d.get("document_type") or "documento"
+            msg = f"O documento '{nome_doc}' de {comp.get('nome_fantasia', '')} " + (
+                f"venceu em {venc}." if status == "vencido" else f"vence em {venc} (30 dias ou menos)."
+            )
+            await criar_notificacao(comp["user_id"], "documento_vencimento", titulo, msg,
+                                    {"company_id": comp["company_id"], "document_id": doc_id, "status": status})
+            if comp.get("email_comercial"):
+                await enviar_email(
+                    db, comp["email_comercial"], f"SIGCR — {titulo}",
+                    f"<p>{msg}</p><p>Acesse o SIGCR para regularizar: renove o documento na área de Gestão Documental.</p>",
+                    {"company_id": comp["company_id"], "document_id": doc_id},
+                )
+            await db.avisos_vencimento.insert_one({**marcador, "criado_em": datetime.now(timezone.utc).isoformat()})
+            avisos += 1
+    logger.info(f"Varredura de vencimentos: {avisos} avisos gerados")
+    return avisos
+
+
+@api_router.post("/cron/avisos-vencimento")
+async def cron_avisos_vencimento(request: Request, background_tasks: BackgroundTasks):
+    # Endpoint de cron precisa responder 2xx na hora; o trabalho de verdade
+    # roda em background. Sem WEBHOOK_CRON_SECRET configurada (não está
+    # hoje), este endpoint responde 401 sempre — inerte por padrão.
+    import hmac
+    secret = os.environ.get("WEBHOOK_CRON_SECRET", "")
+    auth = request.headers.get("Authorization", "")
+    if not secret or not auth.startswith("Bearer ") or not hmac.compare_digest(auth[7:], secret):
+        raise HTTPException(status_code=401, detail="Não autorizado")
+    run_id = request.headers.get("X-Webhook-Id") or ""
+    if run_id:
+        if await db.cron_runs.find_one({"run_id": run_id}):
+            return {"status": "duplicado", "run_id": run_id}
+        await db.cron_runs.insert_one({
+            "run_id": run_id, "job": "avisos-vencimento",
+            "criado_em": datetime.now(timezone.utc).isoformat(),
+        })
+    background_tasks.add_task(_executar_avisos_vencimento)
+    return {"status": "aceito"}
+
+
+@api_router.get("/public/selo/{company_id}")
+async def selo_publico(company_id: str, request: Request):
+    """Selo público verificável do status de credenciamento/compliance de uma
+    empresa — sem auth, só dados não sensíveis (CNPJ mascarado)."""
+    _rate_limit(request, "selo_publico", max_hits=30, window_s=60)
+    comp = await db.companies.find_one({"company_id": company_id, "deleted_at": None}, {"_id": 0})
+    if not comp:
+        raise HTTPException(status_code=404, detail="Empresa não encontrada")
+    docs = await db.documents.find({"company_id": company_id}, {"_id": 0, "vencimento": 1}).to_list(500)
+    validos = vencendo = vencidos = 0
+    for d in docs:
+        s = calcular_status_documento(d)
+        if s == "vencido":
+            vencidos += 1
+        elif s == "vencendo":
+            vencendo += 1
+        elif s == "valido":
+            validos += 1
+    semaforo = "vermelho" if vencidos else ("amarelo" if vencendo else "verde")
+    cnpj = (comp.get("cnpj") or "").replace(".", "").replace("/", "").replace("-", "")
+    cnpj_mascarado = f"{cnpj[:2]}.***.***/****-{cnpj[-2:]}" if len(cnpj) == 14 else "***"
+    credenciada = comp.get("status") in ["approved", "ativo_contrato_assinado"]
+    return {
+        "company_id": company_id,
+        "nome_fantasia": comp.get("nome_fantasia") or comp.get("name"),
+        "tipo_empresa": comp.get("tipo_empresa"),
+        "cnpj_mascarado": cnpj_mascarado,
+        "status": comp.get("status"),
+        "credenciada": credenciada,
+        "semaforo": semaforo,
+        "documentos": {"validos": validos, "vencendo": vencendo, "vencidos": vencidos, "total": len(docs)},
+        "detrans_atuacao": comp.get("detrans_atuacao", []),
+        "verificado_em": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 app.include_router(api_router)
