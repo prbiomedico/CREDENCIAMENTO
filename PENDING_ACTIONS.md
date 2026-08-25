@@ -1598,4 +1598,57 @@ Pedro reportou o erro aparecendo em toda tela do frontend, não só numa página
 
 **Não investigado, fora do escopo deste fix**: por que `auth.sigcr.com.br` foi parar no `/etc/hosts` do host apontando pra `127.0.0.1` — não sei precisar quando isso mudou nem se foi intencional (não achei o commit/log de quem fez). Vale o Pedro confirmar se essa entrada faz sentido ficar assim (só um problema pro `sigcr-backend` por causa do isolamento de rede do container) ou se deveria ser removida/trocada por um IP real, já que hoje qualquer outro processo rodando em container que precise falar com `auth.sigcr.com.br` vai cair na mesma armadilha.
 
+## 25. Reconciliação de um snapshot divergente do Emergent (auth pluggable, rate limiting, CAPTCHA, docs fecháveis) — Fatia A+B ✅ CONCLUÍDO e no ar (2026-08-25)
+
+Pedro trouxe um zip (`SIGCR-082026-main.zip`, 13MB) de uma sessão separada do Emergent — código sem histórico de git compartilhado com este repo, com `AUTH_MODE=local|keycloak` plugável, rate limiting, CAPTCHA plugável (Turnstile), `/docs`/`/redoc`/`/openapi.json` fecháveis em produção, validação de CNPJ/e-mail, e-mail plugável (Resend/mock), e uma migração Keycloak→local pronta (`migrations/2026_08_23_migrar_keycloak_para_local.py`). Extraído em `/tmp/sigcr-emergent-import` (isolado, nunca em `/opt/sigcr` direto) pra reconciliação antes de qualquer merge.
+
+### Reconciliação — sem conflito com os fixes recentes
+
+Diff feito contra `git show HEAD:backend/server.py` (o HEAD deployado, não a working tree suja com o lote pendente de 05/08 — que teria distorcido o diff). Resultado: 16 hunks, 686 linhas, **zero conflito** com os itens 21 (Trocar Visão/`EffectiveScope`), 22 (download de PDF) e 24 (JWKS `KC_INTERNAL_URL`) — as três correções estão byte-a-byte idênticas nos dois lados, inclusive o comentário do fix do JWKS é texto igual. Indica que essa sessão do Emergent partiu do GitHub `main` já depois do deploy do item 24 (22/08).
+
+### Correção sobre o pedido original: o fix de `GET /auditoria/{entidade_id}` NÃO estava no zip
+
+Pedro pediu pra priorizar um suposto fix de `GET /auditoria/{entidade_id}` sem filtro de escopo "já implementado no zip". Conferido linha a linha: a função está **idêntica** à de produção nos dois lados — sem filtro de escopo, qualquer perfil autenticado ainda vê o histórico de auditoria de qualquer entidade por ID. Esse gap continua real e aberto, mas não veio pronto — fica pra uma rodada futura, precisa ser escrito do zero.
+
+O que **de fato** veio implementado e testado no zip foi um IDOR diferente e real: `PATCH /documents/{id}/vencimento` não checava dono da empresa do documento — qualquer usuário autenticado conseguia alterar a data de vencimento de documento de empresa alheia (sem 403/404). Tinha teste de regressão no próprio zip (`test_patch_vencimento_de_documento_alheio_deve_ser_negado`). Essa foi a Fatia A que efetivamente entrou nesta rodada, no lugar do pedido original.
+
+### O que entrou (Fatia A + Fatia B)
+
+**Fatia A — IDOR real**: `set_vencimento` migrado pra `_autorizar_acesso_empresa` (mesmo padrão do item 21/22 — dono da empresa ou `sigcr_admin`), mais validação de formato de data (`YYYY-MM-DD`, 400 se inválida).
+
+**Fatia B — hardening aditivo, tudo gateado por env ausente hoje**:
+- `/docs`, `/redoc`, `/openapi.json` fechados quando `ENVIRONMENT=production` ou `DISABLE_API_DOCS=true`.
+- Rate limiting em memória (hand-rolled, não usa a lib `slowapi` que estava no `requirements.txt` do zip — dependência morta, não trazida) aplicado a `POST /public/cadastro` (5/5min).
+- CAPTCHA plugável (Cloudflare Turnstile) — no-op sem `TURNSTILE_SECRET_KEY` na env (não setada hoje).
+- Validação de CNPJ real (`validate-docbr`, que **já estava** no `requirements.txt` de produção — não precisou adicionar) em `POST /companies` e `POST /public/cadastro` (só nos endpoints de criação, não em update — empresas existentes não são afetadas).
+- `CORS_ORIGINS` deny-all por padrão em vez de `*` — no-op hoje, produção já seta `CORS_ORIGINS=https://sigcr.com.br` explicitamente no `.env`.
+
+**Deliberadamente fora**: `GET /public/selo/{company_id}` (selo público de compliance) e a varredura+e-mail de vencimento de documento (`_executar_avisos_vencimento`, `/cron/avisos-vencimento`) — recursos novos, não hardening, ficam pendentes como Fatia C até o Pedro decidir com calma. Toda a Fatia D (`AUTH_MODE=local`, `auth_local.py`, `email_service.py`, `/auth/login`, `/auth/esqueci-senha`, telas novas de login/reset) continua bloqueada, nada disso foi importado.
+
+### Testado (não deu pra rodar `backend/tests/` como pedido — motivo abaixo)
+
+O `backend/tests/` do zip **não roda contra um deploy Fatia A+B** porque `conftest.py` é inteiramente construído em cima de `AUTH_MODE=local`: todo login de teste passa por `POST /auth/login` (Fatia D, fora de escopo) e por credenciais em `/app/memory/test_credentials.md` (convenção de path do próprio Emergent, nem existe aqui). Não é um bug — é a suite inteira estruturalmente amarrada a um recurso que a gente decidiu não trazer ainda.
+
+Em vez disso, validado com a técnica já estabelecida neste projeto (sessão `session_token` legada inserida direto no Mongo — dispensa Keycloak real pra simular perfil):
+- Worktree limpo a partir de HEAD (`/tmp/sigcr-worktree-fatiaAB`), devtest (`sigcr-backend-devtest-fatiaAB` + `sigcr-mongodb-devtest`, banco `sigcr_devtest_fatiaAB`, dropado ao final).
+- **IDOR do vencimento**: empresa B tentando editar documento da empresa A → 403; dona (empresa A) edita → 200; `sigcr_admin` edita → 200; data em formato inválido → 400; documento inexistente → 404. Os 5 cenários bateram.
+- **Docs fechados**: `/docs`, `/openapi.json` → 404 com `ENVIRONMENT=production`.
+- **Rate limit**: 6ª chamada a `/public/cadastro` na janela de 5min → 429 (as 5 primeiras passam).
+- **CNPJ**: inválido → 400; válido (gerado via `validate_docbr`) → 200, cadastro real criado (inclusive usuário real no Keycloak de produção, via `KEYCLOAK_INTERNAL_URL` — apagado depois com `kcadm.sh delete users/...`, confirmado removido).
+- **Regressão rápida**: `/companies`, `/editais`, `/portarias` sem quebra com sessões sintéticas; nenhum traceback nos logs do devtest além do esperado (um 500 inicial foi artefato dos meus próprios dados sintéticos incompletos, corrigido e reconfirmado — não bug de código).
+
+### Deploy — ✅ no ar
+
+Isolado do lote pendente via `git stash push -u` / `stash pop` (mesmo padrão dos itens 21-24), diff final conferido (só `server.py` + `requirements.txt`, 90+2 linhas, nada do lote pendente vazando). `.env` real ganhou `ENVIRONMENT=production` + `DISABLE_API_DOCS=true` (chmod 600 restaurado depois — o Edit recriou o arquivo com permissão default). `requirements.txt`: adicionadas `bcrypt==4.1.3` e `PyJWT==2.13.0` a pedido do Pedro — registrando que **nenhuma delas é exercitada por código desta Fatia A+B** (só entrariam em uso na Fatia D, via `auth_local.py`, que não foi trazido); ficam instaladas e dormentes até lá. `validate-docbr` já estava presente, não precisou de mudança.
+
+Deploy via `deploy.sh` real — auto-commit `17568eb`, push confirmado pro GitHub (`0ccd7d6..17568eb`) antes do build (git-sync-or-die), rollback tag `sigcr-backend:pre-deploy-rollback-20260825-1543`, mount de uploads confirmado.
+
+**Smoke test em produção** (achado no caminho: testei primeiro contra `sigcr.com.br/api/*` por engano e vi tudo voltando 200/HTML — falso alarme, `sigcr.com.br` é só a SPA estática sem proxy de `/api` nenhum; a API real vive em `api.sigcr.com.br`, confirmado via `/etc/nginx/sites-available/sigcr-com-br` e `sigcr-api-com-br`): `api.sigcr.com.br/docs`, `/redoc`, `/openapi.json` → 404; `/api/companies`, `/api/portarias`, `/api/editais`, `/api/solicitacoes-registro`, `/api/notificacoes`, `/api/stats` → 401 sem token; `/api/public/registradoras` → 200; CNPJ inválido em `/api/public/cadastro` real → 400 sem criar nada; sem traceback nos logs do container real.
+
+`git stash pop` restaurou o lote pendente por cima sem conflito (`Auto-merging backend/server.py`, sem marcadores de conflito, sintaxe válida depois).
+
+### Pendência crítica registrada, NÃO implementada — bloqueio pra Fatia D
+
+`auth_local.py` (ainda não trazido pro repo) semeia 3 contas demo (`detran.pr@demo.sigcr.com.br` / `Detran@2026`, `registradora@demo.sigcr.com.br` / `Registradora@2026`, `financeira@demo.sigcr.com.br` / `Financeira@2026`) com **senhas fixas hardcoded no código-fonte**, sem nenhum gate de ambiente — `seed_local_users` roda incondicionalmente sempre que `AUTH_MODE=local`, produção incluída. Isso vai pro GitHub público (mesmo repo `prbiomedico/CREDENCIAMENTO`) no momento em que a Fatia D for mergeada. **Antes de cogitar mergear qualquer parte da Fatia D pro `main`**, isso precisa de gate — algo como só seedar as contas demo se `ENVIRONMENT != "production"`, ou remover as senhas hardcoded do código e mover pra env/seed manual. Fica registrado aqui como condição bloqueante, não uma sugestão — não decidir a migração Keycloak→local sem resolver isto primeiro.
+
 
