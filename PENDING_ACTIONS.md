@@ -1675,3 +1675,22 @@ Pedro aprovou a sequência completa pra terminar de reconciliar o import do Emer
 
 **Próximo passo**: Fase 3 — reconciliação do frontend do zip contra o HEAD real de produção (diff de verdade, resumo antes de aplicar qualquer coisa, sem merge em massa).
 
+## 28. Fase 3 do plano Emergent — reconciliação do frontend, aplicado em 2 grupos escolhidos pelo Pedro ✅ CONCLUÍDO e no ar (2026-08-25)
+
+Diff feito contra o HEAD real de produção extraído via `git archive` (não a working tree, que tem o lote pendente misturado) — resultado bem menor do que a comparação anterior sugeria: **14 arquivos**, não os 27+ que apareciam contra a working tree suja.
+
+**Classificado em 5 grupos e apresentado ao Pedro antes de tocar em qualquer coisa** (como pedido — sem merge em massa):
+1. `SeloPublico.js` (novo) — completa a Fatia C (item 27), que já tinha o backend no ar sem nenhuma tela alcançável.
+2. Bugs reais sem relação com auth: `cookie-banner.js`/`GestaoUsuarios.js`/`DashboardLayout.js` corrigindo **acentuação corrompida** (mojibake) espalhada em produção — "Usurio"→"Usuário", "Trocar viso"→"Trocar visão", "Administrao"→"Administração", dezenas de ocorrências; `DashboardLayout.js` também corrige uma `<a>` aninhada dentro de um `<Link>` (HTML inválido) com 2 links mortos escondidos no ícone de notificação mobile; `PerfilAtivoContext.js` corrige o perfil ativo inicial sendo calculado com `user=null` antes do usuário real resolver.
+3. `Dashboard.js` — misturava o card do selo (ligado ao grupo 1) com um painel novo de onboarding ("Comece por aqui", não pedido) e um fix separado (Dashboard não reconsultava as estatísticas ao trocar a simulação "Trocar Visão").
+4. `AuthContext.js`/`Login.js`/`EsqueciSenha.js`/`RedefinirSenha.js`/`RotaProtegida.js` — Fatia D, confirmado continuar bloqueado.
+5. `constants/testIds/*` + maior parte de `CadastroPublico.js` — tooling de QA interno do Emergent (`data-testid`), sem função no nosso app, não vale trazer.
+
+**Achado crítico registrado pra Fase 4**: `AuthContext.js` do zip define `AUTH_MODE = process.env.REACT_APP_AUTH_MODE || 'local'` — o padrão sem a env é **`'local'`**, o oposto do padrão seguro do backend (`keycloak`). Se esse arquivo entrar em produção sem `REACT_APP_AUTH_MODE=keycloak` explícito no build, o login inteiro quebra silenciosamente (frontend tenta local, backend continua `AUTH_MODE=keycloak`). Isso precisa entrar no checklist da Fase 4, não é um detalhe menor.
+
+**Pedro escolheu grupos 1 + 2** (não trouxe o grupo 3 — nem o card do selo no Dashboard, nem o painel de onboarding, nem o fix do refetch na simulação — ficam pendentes se ele quiser depois).
+
+**Deploy**: isolado do lote pendente via `git stash push -u`/`pop` (sem conflito desta vez — os arquivos tocados não se sobrepõem ao lote pendente). Arquivos trazidos: `pages/SeloPublico.js` (novo), `components/ui/cookie-banner.js`, `pages/GestaoUsuarios.js`, `components/DashboardLayout.js`, `contexts/PerfilAtivoContext.js` (substituição integral — confirmado que a única diferença de cada um contra o HEAD deployado era exatamente o que foi revisado, nada a mais escondido), `App.js` só com a rota `/selo/:companyId` (sem as rotas de Login/EsqueciSenha/RedefinirSenha, que ficam pra Fase 4). Deploy via `deploy-frontend.sh` real (worktree isolado, `npm run build`, swap atômico de symlink) — commit `d0d52d2`, release `releases/fase3-grupo1-2`. Build limpo (só warnings de eslint pré-existentes, nenhum novo). Verificado no bundle real de produção (`main.da22f647.js`, minificado com `\xXX` no lugar de acentos — `Usu\xe1rio`, `Trocar vis\xe3o`, `Administra\xe7ão`, `Selo p\xfablico SIGCR` todos presentes e corretos); site 200; `/selo/:id` servido pela SPA (200).
+
+**Próximo passo**: Fase 4 (Keycloak → auth local) — bloqueada até confirmação explícita do Pedro nesta fase específica.
+
