@@ -31,11 +31,65 @@ db = client[os.environ['DB_NAME']]
 UPLOAD_DIR = ROOT_DIR / 'uploads'
 UPLOAD_DIR.mkdir(exist_ok=True)
 
-# Create the main app without a prefix
-app = FastAPI()
+# Fatia B (2026-08-25, ver PENDING_ACTIONS.md item 25): /docs, /redoc e
+# /openapi.json fechados em produção via env — comportamento hoje inalterado
+# até ENVIRONMENT=production ou DISABLE_API_DOCS=true serem setados no .env.
+_docs_off = (
+    os.environ.get("ENVIRONMENT", "").lower() == "production"
+    or os.environ.get("DISABLE_API_DOCS", "false").lower() == "true"
+)
+app = FastAPI(
+    docs_url=None if _docs_off else "/docs",
+    redoc_url=None if _docs_off else "/redoc",
+    openapi_url=None if _docs_off else "/openapi.json",
+)
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
+
+# Fatia B: rate limiting em memória para endpoints públicos sensíveis
+# (login/cadastro fica de fora aqui porque AUTH_MODE=local é Fatia D, ainda
+# fora de escopo — hoje só se aplica a /public/cadastro).
+_rate_buckets: dict = {}
+
+
+def _rate_limit(request: Request, bucket: str, max_hits: int, window_s: int):
+    import time as _t
+    ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+          or (request.client.host if request.client else "unknown"))
+    key = f"{bucket}:{ip}"
+    now = _t.time()
+    hits = [t for t in _rate_buckets.get(key, []) if now - t < window_s]
+    if len(hits) >= max_hits:
+        raise HTTPException(status_code=429, detail="Muitas requisições — aguarde alguns instantes")
+    hits.append(now)
+    _rate_buckets[key] = hits
+
+
+from validate_docbr import CNPJ as _CNPJValidator
+_cnpj_validator = _CNPJValidator()
+
+
+def _validar_cnpj(cnpj: str):
+    if not _cnpj_validator.validate(cnpj):
+        raise HTTPException(status_code=400, detail="CNPJ inválido")
+
+
+async def _verificar_captcha(captcha_token: Optional[str]):
+    """CAPTCHA plugável (Cloudflare Turnstile). Sem TURNSTILE_SECRET_KEY na
+    env, a verificação fica desativada — ativa só configurando a chave."""
+    secret = os.environ.get("TURNSTILE_SECRET_KEY", "")
+    if not secret:
+        return
+    if not captcha_token:
+        raise HTTPException(status_code=400, detail="Verificação anti-robô obrigatória")
+    async with httpx.AsyncClient(timeout=10.0) as c:
+        r = await c.post(
+            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+            data={"secret": secret, "response": captcha_token},
+        )
+        if not r.json().get("success"):
+            raise HTTPException(status_code=400, detail="Falha na verificação anti-robô")
 
 # LLM API Key
 EMERGENT_LLM_KEY = os.environ.get('EMERGENT_LLM_KEY', '')
@@ -1062,6 +1116,7 @@ async def _validar_tipo_e_vinculo_empresa(tipo_empresa: str, registradora_id: Op
 @api_router.post("/companies", response_model=Company)
 async def create_company(company_data: CompanyCreate, current_user: User = Depends(get_current_user)):
     """Create new company"""
+    _validar_cnpj(company_data.cnpj)
     await _validar_tipo_e_vinculo_empresa(company_data.tipo_empresa, company_data.registradora_id)
     company = Company(
         user_id=current_user.user_id,
@@ -1102,10 +1157,11 @@ async def listar_registradoras_publico():
 
 class CadastroPublicoPayload(CompanyCreate):
     password: str
+    captcha_token: Optional[str] = None
 
 
 @api_router.post("/public/cadastro")
-async def autocadastro_publico(payload: CadastroPublicoPayload):
+async def autocadastro_publico(payload: CadastroPublicoPayload, request: Request):
     """Autocadastro público (Fase 3, estendido na Fase A pra cobrir Financeira
     também) — cria a conta no Keycloak e a empresa em 'pendente_aprovacao' na
     mesma chamada. Sem autenticação por natureza (é o próprio cadastro), então
@@ -1118,6 +1174,9 @@ async def autocadastro_publico(payload: CadastroPublicoPayload):
     "pendente_aprovacao", então um cadastro público que nascesse com o
     default antigo nunca apareceria na fila de aprovação de ninguém. Ver
     PENDING_ACTIONS.md item 19."""
+    _rate_limit(request, "public_cadastro", max_hits=5, window_s=300)
+    await _verificar_captcha(payload.captcha_token)
+    _validar_cnpj(payload.cnpj)
     await _validar_tipo_e_vinculo_empresa(payload.tipo_empresa, payload.registradora_id)
 
     if len(payload.password) < 8:
@@ -3185,7 +3244,10 @@ async def rejeitar_cadastro(
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
+    # Fatia B: deny-all por padrão — sem CORS_ORIGINS na env, nenhuma origem
+    # cross-site é aceita. Produção já seta CORS_ORIGINS explicitamente, então
+    # isto é no-op hoje (ver PENDING_ACTIONS.md item 25).
+    allow_origins=[o for o in os.environ.get('CORS_ORIGINS', '').split(',') if o.strip()],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -3321,15 +3383,27 @@ async def get_compliance_geral(scope: EffectiveScope = Depends(get_effective_sco
 async def set_vencimento(document_id: str, request: Request, current_user: User = Depends(get_current_user)):
     """Define data de vencimento de um documento manualmente — marca
     vencimento_fonte="manual" mesmo se uma sugestão de OCR já existia,
-    porque a edição do usuário sempre prevalece."""
+    porque a edição do usuário sempre prevalece. Autorização: dono da
+    empresa do documento ou sigcr_admin (mesma regra dos demais endpoints
+    de documento — corrige IDOR: qualquer usuário autenticado conseguia
+    alterar vencimento de documento de empresa alheia. Ver PENDING_ACTIONS.md
+    item 25)."""
+    doc = await db.documents.find_one({"document_id": document_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+    await _autorizar_acesso_empresa(doc["company_id"], current_user, exigir_nao_deletada=False)
+
     body = await request.json()
     vencimento = body.get("vencimento")
-    result = await db.documents.update_one(
+    if vencimento:
+        try:
+            datetime.fromisoformat(str(vencimento))
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Data de vencimento inválida (use YYYY-MM-DD)")
+    await db.documents.update_one(
         {"document_id": document_id},
         {"$set": {"vencimento": vencimento, "vencimento_fonte": "manual" if vencimento else None}}
     )
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="Documento não encontrado")
     return {"message": "Vencimento atualizado"}
 
 
