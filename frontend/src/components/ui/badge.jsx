@@ -3,8 +3,12 @@ import { cva } from "class-variance-authority";
 
 import { cn } from "@/lib/utils"
 
+// Redesign bento/glow (item 31): transition-all no lugar de transition-colors
+// (a maioria dos usos já sobrescreve bg/border via className com cores por
+// perfil/status — a troca só garante que essas mudanças de estado, quando a
+// tela já anima algo em cima, ficam suaves em vez de instantâneas).
 const badgeVariants = cva(
-  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
   {
     variants: {
       variant: {

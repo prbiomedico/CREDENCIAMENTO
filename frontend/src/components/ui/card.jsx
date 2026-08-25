@@ -2,10 +2,15 @@ import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+// Redesign bento/glow (item 31): transition adicionada no base pra qualquer
+// hover:border-*/hover:shadow-* que uma tela já passe via className animar
+// suave em vez de trocar de estado seco — não força glow em cards que não
+// pediram (a maioria das telas já sobrescreve bg/border via className, então
+// o efeito só aparece onde a própria tela já declarava um estado de hover).
 const Card = React.forwardRef(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("rounded-xl border bg-card text-card-foreground shadow", className)}
+    className={cn("rounded-xl border bg-card text-card-foreground shadow transition-all duration-200", className)}
     {...props} />
 ))
 Card.displayName = "Card"

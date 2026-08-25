@@ -4,21 +4,26 @@ import { cva } from "class-variance-authority";
 
 import { cn } from "@/lib/utils"
 
+// Redesign bento/glow (2026-08-25, SIGCR-Design-System-Fase1.md Passo 2,
+// PENDING_ACTIONS.md item 31): microinteração via CSS puro (scale + shadow),
+// não `motion`, de propósito — Button é usado com `asChild` (Radix Slot) em
+// vários lugares (ex: `<Button asChild><Link>`), e envolver isso num
+// componente `motion.*` quebraria esse contrato sem necessidade real.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-primary text-primary-foreground shadow hover:bg-primary/90",
+          "bg-gradient-to-br from-primary to-primary-600 text-primary-foreground shadow hover:shadow-[0_0_24px_-4px_hsl(var(--primary)/0.6)] hover:brightness-110",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/90",
+          "bg-destructive text-destructive-foreground shadow-sm hover:shadow-[0_0_20px_-4px_hsl(var(--destructive)/0.55)] hover:brightness-110",
         outline:
-          "border border-input shadow-sm hover:bg-accent hover:text-accent-foreground",
+          "border border-input shadow-sm hover:border-primary/40 hover:bg-accent hover:text-accent-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground shadow-sm hover:bg-secondary/80",
+          "bg-gradient-to-br from-secondary to-secondary-600 text-secondary-foreground shadow-sm hover:shadow-[0_0_20px_-4px_hsl(var(--secondary)/0.55)] hover:brightness-110",
         ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
+        link: "text-primary underline-offset-4 hover:underline active:scale-100",
       },
       size: {
         default: "h-9 px-4 py-2",
