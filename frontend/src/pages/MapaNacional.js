@@ -1,12 +1,34 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { Shield } from "lucide-react";
 import { MapaNacional } from "../components/ui/interactive-map";
 import { useAuth } from "../contexts/AuthContext";
+import DashboardLayout from "../components/DashboardLayout";
+
+// Header mínimo pra visitante público (sem sessão) — a página é semi-pública
+// (rota /mapa-nacional, sem RotaProtegida), então não faz sentido puxar o
+// DashboardLayout inteiro (menu por perfil, seletor de simulação etc.) pra
+// quem não tem conta. Só um jeito de sair da tela: logo clicável pra home.
+function CabecalhoPublico() {
+  return (
+    <div style={{ padding: "16px 32px 0" }}>
+      <Link to="/" style={{ display: "inline-flex", alignItems: "center", gap: "10px", textDecoration: "none" }}>
+        <div style={{ width: "32px", height: "32px", background: "rgba(249,115,22,0.1)", border: "1px solid rgba(249,115,22,0.2)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <Shield size={18} color="#f97316" />
+        </div>
+        <span style={{ fontWeight: 800, fontSize: "14px", color: "#F1F3F8" }}>
+          sigcr <span style={{ color: "#f97316" }}>SIGCR</span>
+        </span>
+      </Link>
+    </div>
+  );
+}
 
 export default function MapaNacionalPage() {
   const { user } = useAuth();
   const [selected, setSelected] = useState(null);
 
-  return (
+  const conteudo = (
     <div style={{ padding:"24px 32px", height:"100%", minHeight:"100vh", background:"#0A0D12", fontFamily:"system-ui, sans-serif", color:"#E8EAF0" }}>
       {/* Header */}
       <div style={{ marginBottom:"24px" }}>
@@ -79,5 +101,20 @@ export default function MapaNacionalPage() {
         </div>
       </div>
     </div>
+  );
+
+  // /mapa (RotaProtegida, detran/detran_admin) sempre chega aqui com user
+  // preenchido — recebe a navegação padrão do painel. /mapa-nacional é
+  // pública (sem RotaProtegida): mesmo componente, mas sem sessão nenhuma
+  // pra alimentar o DashboardLayout (menu por perfil não faz sentido pra
+  // visitante) — só o cabeçalho mínimo com link de volta pra home.
+  if (user) {
+    return <DashboardLayout>{conteudo}</DashboardLayout>;
+  }
+  return (
+    <>
+      <CabecalhoPublico />
+      {conteudo}
+    </>
   );
 }
