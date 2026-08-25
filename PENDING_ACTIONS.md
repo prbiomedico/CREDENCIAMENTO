@@ -1743,3 +1743,13 @@ Redesenhados via CSS/classes só — **nenhum primitivo Radix trocado**, mesma b
 
 **Próximo passo**: Passo 3 — componente `BentoGrid`/`BentoCard` novo (wrapper sobre `ui/card.jsx`).
 
+## 32. Redesign SIGCR — Passo 3: componente `BentoGrid`/`BentoCard` novo — ✅ CONCLUÍDO (2026-08-25)
+
+Novo arquivo `components/ui/bento-grid.jsx` — wrapper sobre `ui/card.jsx` (não substitui, importa e usa `Card` por baixo). `BentoGrid` é um grid CSS responsivo (`grid-cols-2 md:grid-cols-4`); `BentoCard` aceita `size` (`1x1`/`2x1`/`1x2`/`2x2`, 2 colunas só a partir de `md` pra não quebrar o grid no mobile de 2 colunas) e `interactive` (liga/desliga hover). Hover usa `motion` de verdade (`whileHover={{ scale: 1.015 }}` + spring) — diferente do `Button` do Passo 2, aqui é seguro porque `BentoCard` nunca precisa do padrão `asChild`, então não há conflito de contrato.
+
+**Testado antes do deploy**: demo descartável no harness `/__preview` (nunca commitado) com 6 cards nos 4 tamanhos + 1 card `interactive=false`. Como o ambiente não conseguiu renderizar a screenshot pra inspeção visual direta nesta rodada (tooling indisponível no momento), a verificação foi feita por dois caminhos objetivos: (1) inspeção do DOM real via Puppeteer (`getComputedStyle` + `getBoundingClientRect`) confirmando os 4 tamanhos de card com as dimensões exatas esperadas pela matemática do grid (2x2 = 504×336px, 2x1 = 504×160px, 1x1 = 244×160px, gap 16px, 4 colunas de 244px) e zero erro de console/página; (2) análise de histograma de cor do PNG gerado (via `pngjs`, já que a leitura visual direta não estava disponível) confirmando fundo escuro (~`#0A0D12`), superfície de card (~`#111936`) e ícones na cor primária (~`#2196f3`) presentes nas proporções esperadas — nenhuma tela em branco/erro.
+
+**Deploy**: só o arquivo novo (`bento-grid.jsx`) foi pra produção — a demo (`__PreviewBento.js`) e o harness de teste ficaram de fora, como sempre. Isolado do lote pendente via stash/pop, sem conflito. Hash do JS em produção **idêntico** ao do Passo 2 (`main.10a877f4.js`) — confirma que o componente é 100% morto/inerte até ser usado de verdade (Passo 4), exatamente como o padrão já usado pro `auth_local.py` no item 26. CSS cresceu ~130 bytes (esperado — o Tailwind escaneia o arquivo por texto mesmo sem ele ser importado em nenhum lugar ainda). Smoke test: site 200, `/mapa-nacional` 200.
+
+**Próximo passo**: Passo 4 — reativar `globe-hero.js`/`stagger-text.js` e reorganizar a Landing pública com `BentoGrid` pra seção de features.
+
