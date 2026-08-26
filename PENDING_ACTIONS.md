@@ -1853,3 +1853,17 @@ Primeira fatia da Fase 4 (telas por perfil). Escopo pedido: Gestão de Usuários
 **Deploy**: isolado do lote pendente via `git stash push -u`/`pop` (só `Editais.js` foi, reconciliado com a técnica do item 36/37 — versão limpa pro deploy, versão completa com o fluxo pendente do Pedro restaurada depois). Release `releases/fase4-admin-editais-bentogrid`. Smoke test: site 200, `/mapa-nacional` 200, `api.sigcr.com.br/api/editais` 401 sem token.
 
 **Próxima fatia**: DETRAN (Portarias da UF, Painel de Conferência, Painel Registradoras visão DETRAN).
+
+## 39. Redesign SIGCR — Fase 4, fatia DETRAN — ✅ CONCLUÍDO (2026-08-26)
+
+Segunda fatia da Fase 4. Escopo pedido: Portarias da UF, Painel de Conferência, Painel Registradoras (visão DETRAN) — os dois últimos são os mesmos arquivos `Portarias.js`/`Registradoras.js` já auditados na fatia sigcr_admin (o componente é o mesmo, só muda o escopo de dados por perfil, não a estrutura visual).
+
+**Achado real, corrigido: padding ausente em 5 telas**. Enquanto auditava `PainelConferencia.js`, notei que o conteúdo colava direto na borda — faltava o `p-6 lg:p-8` que toda outra tela usa logo depois de `<DashboardLayout>`. Varredura em todas as páginas confirmou o mesmo problema em mais 4: `Portarias.js` (também usada na fatia sigcr_admin — não pego antes porque a comparação pixel a pixel daquela fatia era contra o próprio estado anterior idêntico, não contra "deveria ter padding"), `Estados.js`, `MinhasSubmissoes.js` (fatia Registradora/Financeira — corrigido agora, antecipando) e `GestaoEditais.js`. Corrigidas as 5 de uma vez (mudança mecânica, mesma classe de bug, resolver piecemeal por fatia seria retrabalho).
+
+**Achado de nomenclatura**: "Editais (gestão)" da fatia sigcr_admin provavelmente se referia a `GestaoEditais.js` (CRUD de editais, usado por DETRAN — rota `/gestao-editais`), não `Editais.js` (browse/candidatura, item 38) — os dois arquivos existem e têm nomes parecidos. Como `GestaoEditais.js` também está no nav do DETRAN, faz parte desta fatia de qualquer forma: aplicado o mesmo tratamento BentoGrid do `Editais.js` (2 colunas, `interactive`) na lista de editais cadastrados, mantendo o botão de editar (ícone lápis) e todos os badges (UF/status/anexos/termo de adesão) intactos.
+
+**Testado antes do deploy**: harness `/__preview` estendido com `PainelConferencia`, `Estados`, `MinhasSubmissoes`, `GestaoEditais` (mocks reaproveitando `/estados`, `/companies`, `/portarias`). Pixelmatch contra o HEAD anterior: `Registradoras` em 0.000% (confirma que a fatia sigcr_admin já deixou esse arquivo certo); `PainelConferencia` 0.519%, `Estados` 0.845%, `MinhasSubmissoes` 0.742% (só o deslocamento do padding); `Portarias` 4.333% (padding, tela com mais conteúdo visível); `GestaoEditais` 3.038% (padding + BentoGrid). Zero erro de console nas 12 capturas.
+
+**Deploy**: `Portarias.js` reconciliado com o lote pendente (mesma técnica — versão limpa pro deploy, versão completa com o trabalho do Pedro restaurada depois); os outros 4 arquivos não tinham conflito. Release `releases/fase4-detran-conferencia-e-padding`. Smoke test: site 200, `/mapa-nacional` 200, `/api/portarias` e `/api/estados` 401 sem token.
+
+**Próxima fatia**: Registradora/Financeira (Minhas Submissões — padding já corrigido aqui, Fila de Registro de Contrato, Empresas.js, Editais participação — já feito no item 38).
