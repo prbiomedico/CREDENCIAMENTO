@@ -1785,3 +1785,21 @@ Pedro pediu pra fechar o Passo 5 do plano (`SIGCR-Design-System-Fase1.md`): vali
 **Deploy**: isolado do lote pendente via `git stash push -u`/`pop` (só `button.jsx` foi, sem conflito). `deploy-frontend.sh` real, release `releases/passo5-buttonfix-bg-override`, commit `37397d6`, push confirmado (`origin/main` sincronizado). Smoke test: site 200, `/mapa-nacional` 200 — **nota**: primeira tentativa de checar `/api/*` bateu no domínio errado (`sigcr.com.br` em vez de `api.sigcr.com.br`), corrigido antes de reportar; contra o domínio certo, `/api/notificacoes`, `/api/companies`, `/api/stats` voltam 401 sem token como esperado.
 
 **Resultado final do Passo 5**: Landing pública confirmada visualmente antes/depois (globo não verificável neste sandbox por limitação de WebGL, não de produto). Área logada confirmada sem regressão de layout nas 4 telas testadas — e a ÚNICA regressão real de cor encontrada (botão Excluir + 4 outros call sites) foi corrigida e já está no ar, não só documentada. Relatório com screenshots entregue ao Pedro como Artifact.
+
+## 35. Redesign SIGCR — Fase 3, fatia 1: DashboardLayout.js (shell da área logada) — ✅ CONCLUÍDO (2026-08-26)
+
+Pedro pediu pra seguir pro plano geral, Fases 3 (área logada comum) e 4 (telas por perfil), com deploy por fatia. Primeira fatia: `DashboardLayout.js`, o shell usado por 20 das 32 páginas — testado isolado antes de qualquer outra coisa, como pedido.
+
+**Achado ao planejar**: o brief original do Passo 2 (item 31) pedia um "token de glow reutilizável (primary→secondary, radial, baixa opacidade)" e uma "escala de elevação por sombra+borda" como infraestrutura — na prática só saiu como sombra ad hoc dentro do `button.jsx`/`dialog.jsx`, nunca virou token de verdade. Construído agora em `index.css` (`@layer components`): `.glow-brand` (radial duplo primary+secondary, opacidade 10-14%, pra wash decorativo atrás de blocos de marca) e `.elevate-2`/`.elevate-3` (2 níveis de sombra pra hierarquia — painel persistente vs. popover flutuante). Puramente aditivo, zero risco pro que já existe.
+
+**Aplicado em `DashboardLayout.js`** (só classes, nenhuma mudança de lógica/comportamento):
+- Bloco do logo (topo da sidebar) e header mobile ganharam `glow-brand`.
+- As duas `<aside>` (desktop + mobile) ganharam `elevate-2`.
+- Dropdown "Trocar Visão" trocou `border-zinc-700 shadow-xl` ad hoc por `elevate-3`.
+- Item de nav ativo ganhou glow sutil (`shadow-[0_0_16px_-6px_hsl(var(--primary)/0.5)]`) consistente com o hover-glow do `button.jsx`.
+
+**Testado isolado**: worktrees before/after (`git stash push -u` isolando o lote pendente, os únicos 2 arquivos tocados voltaram intactos depois), harness `/__preview` renderizando `Dashboard` — 3 estados capturados via Puppeteer: desktop full, dropdown "Trocar Visão" aberto, header mobile (viewport 390px). Diff de pixel (`pixelmatch`) baixo nos 3 (0.027%–0.492%, a maior parte é ruído de animação do `vapour-text-effect`, já conhecido) — nenhuma quebra de layout, elemento sumido ou erro de console. Inspeção visual direta (crop com zoom) confirmou o glow renderizando como esperado — sutil o bastante pra não aparecer no diff automático de pixel em fundo escuro, mas visível a olho.
+
+**Deploy**: isolado do lote pendente via `git stash push -u`/`pop`, sem conflito (`index.css`/`DashboardLayout.js` não fazem parte do lote). `deploy-frontend.sh` real, release `releases/fase3-slice1-dashboardlayout`. Smoke test: site 200, `/mapa-nacional` 200, `api.sigcr.com.br/api/notificacoes` e `/api/stats` 401 sem token (domínio correto desta vez, ver lição do item 34).
+
+**Próxima fatia**: Dashboard (BentoGrid nas métricas/atalhos, mantendo `vapour-text-effect.js`/`gradient-menu.js` como estão) + Mapa Nacional autenticado + Notificações.
