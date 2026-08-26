@@ -53,6 +53,34 @@ code {
     }
 }
 
+@layer components {
+    /* Glow de marca — o brief do Passo 2 (PENDING_ACTIONS.md item 31) pedia
+       isso como "token de glow reutilizável (primary→secondary, radial,
+       baixa opacidade)", mas só saiu como sombra ad hoc por componente
+       (button.jsx). Nasce aqui de verdade porque a Fase 3 (shell da área
+       logada) é o primeiro lugar que precisa de um wash decorativo, não só
+       de um glow de hover em elemento pontual. Radial dupla (primary +
+       secondary) pra ecoar o gradiente da Landing sem competir com o
+       conteúdo por cima. */
+    .glow-brand {
+        background-image:
+            radial-gradient(circle at 20% 15%, hsl(var(--primary) / 0.14), transparent 55%),
+            radial-gradient(circle at 85% 80%, hsl(var(--secondary) / 0.10), transparent 55%);
+    }
+
+    /* Escala de elevação por sombra+borda — 3 níveis de hierarquia visual,
+       mesmo pedido do Passo 2. Nível 1 = superfície normal (cards padrão já
+       cobertos pelo próprio ui/card.jsx); 2 = painel persistente elevado
+       (sidebar); 3 = flutuante por cima de tudo (dropdown/popover). */
+    .elevate-2 {
+        box-shadow: 0 10px 30px -8px rgb(0 0 0 / 0.5);
+    }
+    .elevate-3 {
+        border: 1px solid hsl(var(--primary) / 0.2);
+        box-shadow: 0 16px 40px -10px rgb(0 0 0 / 0.65), 0 0 0 1px hsl(var(--primary) / 0.05);
+    }
+}
+
 @layer base {
     [data-debug-wrapper="true"] {
         display: contents !important;

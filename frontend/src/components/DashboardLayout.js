@@ -110,7 +110,7 @@ const NavItemLink = ({ item, location, onNavigate }) => {
       onClick={onNavigate}
       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-150 relative group ${
         isActive
-          ? 'bg-primary-500/15 text-primary-400 border border-primary-500/25'
+          ? 'bg-primary-500/15 text-primary-400 border border-primary-500/25 shadow-[0_0_16px_-6px_hsl(var(--primary)/0.5)]'
           : 'text-zinc-400 hover:bg-zinc-800/70 hover:text-white'
       }`}
     >
@@ -247,7 +247,7 @@ const DashboardLayout = ({ children }) => {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-4 border-b border-zinc-800/50">
+      <div className="p-4 border-b border-zinc-800/50 glow-brand">
         <Link to="/dashboard" className="flex items-center gap-3">
           <div className="w-9 h-9 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center justify-center">
             <Shield className="h-5 w-5 text-primary-500" />
@@ -275,7 +275,7 @@ const DashboardLayout = ({ children }) => {
 
         {/* Dropdown de troca de perfil */}
         {seletorOpen && perfisPermitidos.length > 1 && (
-          <div className="mt-1 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl overflow-hidden z-50">
+          <div className="mt-1 bg-zinc-900 rounded-lg overflow-hidden z-50 elevate-3">
             <p className="text-[10px] text-zinc-500 font-mono uppercase px-3 pt-2 pb-1">Trocar visão</p>
             {perfisPermitidos.map(p => {
               const pc = PERFIS[p];
@@ -393,7 +393,7 @@ const DashboardLayout = ({ children }) => {
     <div className="min-h-screen bg-zinc-950 text-white flex flex-col">
       <div className="flex-1 flex min-h-0">
       {/* Sidebar desktop */}
-      <aside className="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-black/60 backdrop-blur-xl border-r border-zinc-800 transform transition-transform duration-300 lg:translate-x-0 lg:flex flex-col hidden">
+      <aside className="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-black/60 backdrop-blur-xl border-r border-zinc-800 transform transition-transform duration-300 lg:translate-x-0 lg:flex flex-col hidden elevate-2">
         <SidebarContent />
       </aside>
 
@@ -403,13 +403,13 @@ const DashboardLayout = ({ children }) => {
           <div className="absolute inset-0 bg-black/60" />
         </div>
       )}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-black/90 backdrop-blur-xl border-r border-zinc-800 transform transition-transform duration-300 lg:hidden flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-black/90 backdrop-blur-xl border-r border-zinc-800 transform transition-transform duration-300 lg:hidden flex flex-col elevate-2 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <SidebarContent />
       </aside>
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="lg:hidden sticky top-0 z-40 bg-black/60 backdrop-blur-xl border-b border-zinc-800 px-4 py-3">
+        <header className="lg:hidden sticky top-0 z-40 bg-black/60 backdrop-blur-xl border-b border-zinc-800 px-4 py-3 glow-brand">
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
