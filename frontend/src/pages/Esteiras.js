@@ -39,7 +39,7 @@ function ModalNovaEsteira({ onClose, onSave, token }) {
   };
   return (
     <div style={{ position:"fixed", inset:0, zIndex:1000, background:"rgba(0,0,0,0.7)", backdropFilter:"blur(8px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ background:"#111318", border:"1.5px solid rgba(251,146,60,0.25)", borderRadius:20, padding:32, width:460 }}>
+      <div style={{ background:"#111318", border:"1.5px solid rgba(33,150,243,0.25)", borderRadius:20, padding:32, width:460 }}>
         <div style={{ fontWeight:800, fontSize:17, color:"#F1F3F8", marginBottom:6 }}>Nova Esteira</div>
         <div style={{ fontSize:12, color:"#6B7280", marginBottom:22 }}>Iniciar processo de credenciamento</div>
         <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
@@ -58,7 +58,7 @@ function ModalNovaEsteira({ onClose, onSave, token }) {
         </div>
         <div style={{ display:"flex", gap:10, marginTop:24 }}>
           <button onClick={onClose} style={{ flex:1, padding:"11px", borderRadius:9, cursor:"pointer", background:"transparent", border:"1.5px solid rgba(255,255,255,0.1)", color:"#6B7280", fontSize:13, fontWeight:700 }}>Cancelar</button>
-          <button onClick={handleSubmit} disabled={loading} style={{ flex:2, padding:"11px", borderRadius:9, cursor:"pointer", background:"linear-gradient(135deg,#f97316,#fb923c)", border:"none", color:"#fff", fontSize:13, fontWeight:800 }}>
+          <button onClick={handleSubmit} disabled={loading} style={{ flex:2, padding:"11px", borderRadius:9, cursor:"pointer", background:"linear-gradient(135deg,#2196f3,#1e88e5)", border:"none", color:"#fff", fontSize:13, fontWeight:800 }}>
             {loading ? "Criando..." : "Criar Esteira"}
           </button>
         </div>
@@ -84,7 +84,7 @@ function ModalEvento({ esteira, onClose, onSave, token }) {
   };
   return (
     <div style={{ position:"fixed", inset:0, zIndex:1000, background:"rgba(0,0,0,0.7)", backdropFilter:"blur(8px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ background:"#111318", border:"1.5px solid rgba(251,146,60,0.25)", borderRadius:20, padding:32, width:500, maxHeight:"90vh", overflowY:"auto" }}>
+      <div style={{ background:"#111318", border:"1.5px solid rgba(33,150,243,0.25)", borderRadius:20, padding:32, width:500, maxHeight:"90vh", overflowY:"auto" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
           <div>
             <div style={{ fontWeight:800, fontSize:17, color:"#F1F3F8" }}>Criar Evento</div>
@@ -122,7 +122,7 @@ function ModalEvento({ esteira, onClose, onSave, token }) {
         </div>
         <div style={{ display:"flex", gap:10, marginTop:24 }}>
           <button onClick={onClose} style={{ flex:1, padding:"11px", borderRadius:9, cursor:"pointer", background:"transparent", border:"1.5px solid rgba(255,255,255,0.1)", color:"#6B7280", fontSize:13, fontWeight:700 }}>Cancelar</button>
-          <button onClick={handleSubmit} disabled={loading} style={{ flex:2, padding:"11px", borderRadius:9, cursor:"pointer", background:"linear-gradient(135deg,#f97316,#fb923c)", border:"none", color:"#fff", fontSize:13, fontWeight:800 }}>
+          <button onClick={handleSubmit} disabled={loading} style={{ flex:2, padding:"11px", borderRadius:9, cursor:"pointer", background:"linear-gradient(135deg,#2196f3,#1e88e5)", border:"none", color:"#fff", fontSize:13, fontWeight:800 }}>
             {loading ? "Salvando..." : "Registrar Evento"}
           </button>
         </div>
@@ -169,8 +169,8 @@ export default function Esteiras() {
   );
 
   const cardStyle = (sel) => ({
-    background: sel ? "rgba(251,146,60,0.07)" : "rgba(255,255,255,0.02)",
-    border: sel ? "1.5px solid rgba(251,146,60,0.4)" : "1.5px solid rgba(255,255,255,0.06)",
+    background: sel ? "rgba(33,150,243,0.07)" : "rgba(255,255,255,0.02)",
+    border: sel ? "1.5px solid rgba(33,150,243,0.4)" : "1.5px solid rgba(255,255,255,0.06)",
     borderRadius:14, padding:"18px 20px", cursor:"pointer", transition:"all 0.2s", marginBottom:10,
   });
 
@@ -179,7 +179,7 @@ export default function Esteiras() {
       <div style={{ width:320, borderRight:"1px solid rgba(255,255,255,0.06)", padding:"24px 18px", overflowY:"auto", flexShrink:0 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
           <span style={{ fontWeight:800, fontSize:15, color:"#F1F3F8" }}>Esteiras ({esteiras.length})</span>
-          <button onClick={() => setModal("nova")} style={{ fontSize:11, fontWeight:800, padding:"4px 12px", borderRadius:20, background:"linear-gradient(135deg,#f97316,#fb923c)", border:"none", color:"#fff", cursor:"pointer" }}>+ Nova</button>
+          <button onClick={() => setModal("nova")} style={{ fontSize:11, fontWeight:800, padding:"4px 12px", borderRadius:20, background:"linear-gradient(135deg,#2196f3,#1e88e5)", border:"none", color:"#fff", cursor:"pointer" }}>+ Nova</button>
         </div>
         <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar registradora..."
           style={{ background:"rgba(255,255,255,0.04)", border:"1.5px solid rgba(255,255,255,0.08)", borderRadius:9, color:"#E8EAF0", padding:"9px 13px", fontSize:12, outline:"none", width:"100%", marginBottom:14, boxSizing:"border-box", fontFamily:"inherit" }} />
@@ -188,7 +188,7 @@ export default function Esteiras() {
         : filtradas.length === 0 ? (
           <div style={{ color:"#6B7280", fontSize:13, textAlign:"center", padding:"40px 0" }}>
             Nenhuma esteira.<br/>
-            <button onClick={() => setModal("nova")} style={{ marginTop:10, fontSize:12, color:"#f97316", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" }}>Criar primeira</button>
+            <button onClick={() => setModal("nova")} style={{ marginTop:10, fontSize:12, color:"#2196f3", background:"none", border:"none", cursor:"pointer", textDecoration:"underline" }}>Criar primeira</button>
           </div>
         ) : filtradas.map(est => {
           const p = prog(est.eventos); const sel = est.esteira_id === selectedId;
@@ -199,15 +199,15 @@ export default function Esteiras() {
                   <div style={{ fontWeight:800, fontSize:14, color:"#F1F3F8", marginBottom:2 }}>{est.registradora}</div>
                   <div style={{ fontSize:11, color:"#6B7280" }}>{est.cnpj}  {est.detran}</div>
                 </div>
-                <span style={{ fontSize:9, fontWeight:700, padding:"3px 7px", borderRadius:20, background:"rgba(251,146,60,0.1)", color:"#fb923c", textTransform:"uppercase", flexShrink:0 }}>{est.esteira_id?.slice(0,8)}</span>
+                <span style={{ fontSize:9, fontWeight:700, padding:"3px 7px", borderRadius:20, background:"rgba(33,150,243,0.1)", color:"#1e88e5", textTransform:"uppercase", flexShrink:0 }}>{est.esteira_id?.slice(0,8)}</span>
               </div>
               <div style={{ marginBottom:8 }}>
                 <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
                   <span style={{ fontSize:11, color:"#6B7280" }}>Progresso</span>
-                  <span style={{ fontSize:11, fontWeight:700, color: p===100 ? "#81C784" : "#fb923c" }}>{p}%</span>
+                  <span style={{ fontSize:11, fontWeight:700, color: p===100 ? "#81C784" : "#1e88e5" }}>{p}%</span>
                 </div>
                 <div style={{ height:3, borderRadius:3, background:"rgba(255,255,255,0.06)" }}>
-                  <div style={{ height:"100%", borderRadius:3, background: p===100 ? "linear-gradient(90deg,#81C784,#4DB6AC)" : "linear-gradient(90deg,#f97316,#fb923c)", width:`${p}%`, transition:"width 0.4s" }} />
+                  <div style={{ height:"100%", borderRadius:3, background: p===100 ? "linear-gradient(90deg,#81C784,#4DB6AC)" : "linear-gradient(90deg,#2196f3,#1e88e5)", width:`${p}%`, transition:"width 0.4s" }} />
                 </div>
               </div>
               <div style={{ fontSize:11, color:"#6B7280" }}> {est.responsavel}</div>
@@ -230,7 +230,7 @@ export default function Esteiras() {
                   <span> {selected.responsavel}</span>
                 </div>
               </div>
-              <button onClick={() => setModal("evento")} style={{ background:"linear-gradient(135deg,#f97316,#fb923c)", border:"none", borderRadius:11, color:"#fff", padding:"11px 22px", fontWeight:800, fontSize:13, cursor:"pointer", flexShrink:0 }}>
+              <button onClick={() => setModal("evento")} style={{ background:"linear-gradient(135deg,#2196f3,#1e88e5)", border:"none", borderRadius:11, color:"#fff", padding:"11px 22px", fontWeight:800, fontSize:13, cursor:"pointer", flexShrink:0 }}>
                 + Criar Evento
               </button>
             </div>
@@ -238,10 +238,10 @@ export default function Esteiras() {
             <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.07)", borderRadius:14, padding:"18px 22px", marginBottom:28 }}>
               <div style={{ display:"flex", justifyContent:"space-between", marginBottom:10 }}>
                 <span style={{ fontWeight:700, fontSize:13, color:"#9CA3AF" }}>Progresso da Esteira</span>
-                <span style={{ fontWeight:800, fontSize:20, color: prog(selected.eventos)===100 ? "#81C784" : "#f97316" }}>{prog(selected.eventos)}%</span>
+                <span style={{ fontWeight:800, fontSize:20, color: prog(selected.eventos)===100 ? "#81C784" : "#2196f3" }}>{prog(selected.eventos)}%</span>
               </div>
               <div style={{ height:5, borderRadius:5, background:"rgba(255,255,255,0.06)" }}>
-                <div style={{ height:"100%", borderRadius:5, background: prog(selected.eventos)===100 ? "linear-gradient(90deg,#81C784,#4DB6AC)" : "linear-gradient(90deg,#f97316,#fb923c)", width:`${prog(selected.eventos)}%`, transition:"width 0.5s" }} />
+                <div style={{ height:"100%", borderRadius:5, background: prog(selected.eventos)===100 ? "linear-gradient(90deg,#81C784,#4DB6AC)" : "linear-gradient(90deg,#2196f3,#1e88e5)", width:`${prog(selected.eventos)}%`, transition:"width 0.5s" }} />
               </div>
               <div style={{ display:"flex", gap:8, marginTop:14, flexWrap:"wrap" }}>
                 {Object.entries(STATUS_CFG).map(([k,c]) => {
@@ -263,7 +263,7 @@ export default function Esteiras() {
                   <div key={etapa.id} style={{ display:"flex", gap:12, alignItems:"flex-start" }}>
                     <div style={{ display:"flex", flexDirection:"column", alignItems:"center" }}>
                       <div style={{ width:34, height:34, borderRadius:"50%", background:cfg.bg, border:`2px solid ${cfg.color}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, flexShrink:0 }}>{etapa.icone}</div>
-                      {!isLast && <div style={{ width:2, minHeight:28, background: ev.status==="concluido" ? "#f97316" : "rgba(255,255,255,0.07)", margin:"3px 0" }} />}
+                      {!isLast && <div style={{ width:2, minHeight:28, background: ev.status==="concluido" ? "#2196f3" : "rgba(255,255,255,0.07)", margin:"3px 0" }} />}
                     </div>
                     <div style={{ paddingBottom: isLast ? 0 : 18, flex:1 }}>
                       <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:3 }}>
