@@ -1835,3 +1835,21 @@ Terceira fatia da Fase 3: `MapaNacional.js` (autenticado, `/mapa`) e `Notificaco
 **Deploy**: reconciliação igual ao item 36 (arquivo já estava no lote pendente) — versão limpa (HEAD + fix, sem o resto da reescrita do Pedro) trocada temporariamente pro deploy isolado, lote completo restaurado depois. Release `releases/passo1b-esteiras-cor-laranja`, commit próprio e separado do resto do redesign visual, como pedido. Smoke test: site 200, `/mapa-nacional` 200, API 401 sem token.
 
 **Fase 3 completa**: shell (`DashboardLayout.js`), `Dashboard.js` (BentoGrid), Mapa Nacional/Notificações (auditados) — todas as 20 páginas que usam o shell comum herdam a nova identidade visual. Próximo: Fase 4 (telas por perfil — sigcr_admin, DETRAN, Registradora/Financeira), rodada separada.
+
+## 38. Redesign SIGCR — Fase 4, fatia sigcr_admin — ✅ CONCLUÍDO (2026-08-26)
+
+Primeira fatia da Fase 4 (telas por perfil). Escopo pedido: Gestão de Usuários, Portarias (listagem geral), Wizard "Criar Evento", Editais (gestão), Auditoria, Painel Registradoras (visão admin).
+
+**Achado antes de começar — "Auditoria" não existe**: nenhuma página/rota de auditoria existe no frontend. O backend tem `registrar_auditoria()` (grava trilha de auditoria em várias ações), mas não há UI nenhuma pra visualizar isso — zero rota, zero componente. Não é algo pra "redesenhar", é uma tela que nunca foi construída. Sinalizado, não inventado.
+
+**Resultado da varredura das outras 5**: confirmando o que o Pedro já esperava ("a maior parte já deve herdar boa parte do visual automaticamente") — **4 das 5 já estavam 100% consistentes, zero mudança de código**: Gestão de Usuários (Passo 5 anterior já deixou certo, confirmado), Portarias (listagem), Wizard Criar Evento, Painel Registradoras (visão admin — usa padrão de accordion com conteúdo de altura variável, BentoGrid não se aplica bem aqui, decisão deliberada de não forçar).
+
+**Única mudança real: Editais (gestão)** — lista de editais que era `space-y-4` empilhado virou `BentoGrid` com `size="2x1"` (2 cards por linha), `interactive={true}` porque cada card tem ação real ("Candidatar-se"), diferente dos tiles de métrica do Dashboard que são só leitura.
+
+**Achado, sinalizado separadamente, NÃO corrigido**: o lote pendente do Pedro adiciona um fluxo novo em `Editais.js` (diálogo de escolha de empresa quando a conta tem mais de uma) com um botão `bg-orange-500 hover:bg-orange-600` literal — a mesma armadilha do Passo 1, mas em código ainda não commitado (não está em produção). Como é trabalho em andamento dele, não mexi — só registro pra quando esse lote for finalizado.
+
+**Testado antes do deploy**: harness `/__preview` estendido com as 5 telas (mocks pra `/portarias`, `/eventos/templates`, `/editais`, `/estados`, `/detran/registradoras`), screenshot full-page de cada uma, `pixelmatch` comparando contra o HEAD anterior. Resultado: **Gestão de Usuários, Portarias, Wizard Criar Evento e Painel Registradoras em 0.000% de diff** (prova objetiva de que nada mudou silenciosamente nelas) — só Editais com 2.073% (a mudança intencional do BentoGrid). Zero erro de console nas 10 capturas (5 telas × antes/depois).
+
+**Deploy**: isolado do lote pendente via `git stash push -u`/`pop` (só `Editais.js` foi, reconciliado com a técnica do item 36/37 — versão limpa pro deploy, versão completa com o fluxo pendente do Pedro restaurada depois). Release `releases/fase4-admin-editais-bentogrid`. Smoke test: site 200, `/mapa-nacional` 200, `api.sigcr.com.br/api/editais` 401 sem token.
+
+**Próxima fatia**: DETRAN (Portarias da UF, Painel de Conferência, Painel Registradoras visão DETRAN).
