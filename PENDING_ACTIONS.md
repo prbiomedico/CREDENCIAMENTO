@@ -1803,3 +1803,19 @@ Pedro pediu pra seguir pro plano geral, Fases 3 (área logada comum) e 4 (telas 
 **Deploy**: isolado do lote pendente via `git stash push -u`/`pop`, sem conflito (`index.css`/`DashboardLayout.js` não fazem parte do lote). `deploy-frontend.sh` real, release `releases/fase3-slice1-dashboardlayout`. Smoke test: site 200, `/mapa-nacional` 200, `api.sigcr.com.br/api/notificacoes` e `/api/stats` 401 sem token (domínio correto desta vez, ver lição do item 34).
 
 **Próxima fatia**: Dashboard (BentoGrid nas métricas/atalhos, mantendo `vapour-text-effect.js`/`gradient-menu.js` como estão) + Mapa Nacional autenticado + Notificações.
+
+## 36. Redesign SIGCR — Fase 3, fatia 2: Dashboard com BentoGrid — ✅ CONCLUÍDO (2026-08-26)
+
+Segunda fatia da Fase 3: métricas/atalhos do `Dashboard.js` (view principal, não a `DashboardFinanceira`) agora usam `BentoGrid`/`BentoCard` em vez do grid + Cards empilhados de antes. `vapour-text-effect.js` e `gradient-menu.js` não foram tocados, como pedido — só a seção de métricas abaixo deles.
+
+**Layout**: 4 cards de stat (Empresas/Documentos/Pendências/Portarias) como células 1x1 na primeira linha; Semáforo de Compliance e Documentos Vencendo como células 2x1 lado a lado na segunda linha (antes eram 2 `Card`s full-width empilhados verticalmente). Todos com `interactive={false}` — são só leitura, sem ação de clique associada, seguindo a convenção já documentada no próprio `bento-grid.jsx`. Resultado: mesma informação, ~30% menos altura de página, hierarquia mais clara.
+
+**Achado no meio do trabalho, não corrigido — sinalizado**: `Dashboard.js` já tinha ~99 linhas de mudança pendente e não commitada (lote do Pedro) adicionando um componente `DashboardFinanceira` novo — e esse componente usa `border-orange-500`/`text-orange-500`/`bg-orange-500` literais (3 ocorrências), a mesma armadilha que o Passo 1 eliminou em todo o resto do app. Como é código do Pedro ainda em andamento (não é meu de mesclar/corrigir por conta própria, mesma regra aplicada no item 30), **não mexi** — só registro aqui pra não esquecer: quando esse lote for finalizado e for a vez dele, essas 3 linhas precisam do mesmo tratamento de token.
+
+**Reconciliação com o lote pendente** (mesma técnica do item 30, adaptada): como `Dashboard.js` já estava sujo com a `DashboardFinanceira`, testei minha mudança isolada em worktrees before/after a partir do HEAD limpo (sem a Financeira). Pra deploy, troquei temporariamente o arquivo real por essa versão limpa (HEAD + BentoGrid, sem `DashboardFinanceira`), rodei o `git stash push -u` excluindo só esse arquivo (isolando o resto do lote), `deploy-frontend.sh` de verdade, e depois restaurei o arquivo completo (agora HEAD-novo + `DashboardFinanceira` do Pedro por cima) antes do `stash pop`. Working tree ficou exatamente como estava, só que agora sobre um HEAD que já tem o BentoGrid.
+
+**Testado antes do deploy**: worktrees before/after com harness `/__preview`, screenshot full-page via Puppeteer, zero erro de console nos dois. Comparação visual confirmou o novo layout lado a lado sem perda de conteúdo (inclusive preservando o bug pré-existente "Invalid Date" em Documentos Vencendo, fora de escopo, não mexido).
+
+**Deploy**: release `releases/fase3-slice2-dashboard-bentogrid`. Smoke test: site 200, `/mapa-nacional` 200, `api.sigcr.com.br/api/notificacoes` e `/api/stats` 401 sem token.
+
+**Próxima fatia**: Mapa Nacional autenticado (`/mapa`) e Notificações — conferir herança dos componentes base, sem mudança estrutural nova esperada.
