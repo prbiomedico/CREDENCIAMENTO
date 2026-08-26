@@ -1867,3 +1867,18 @@ Segunda fatia da Fase 4. Escopo pedido: Portarias da UF, Painel de Conferência,
 **Deploy**: `Portarias.js` reconciliado com o lote pendente (mesma técnica — versão limpa pro deploy, versão completa com o trabalho do Pedro restaurada depois); os outros 4 arquivos não tinham conflito. Release `releases/fase4-detran-conferencia-e-padding`. Smoke test: site 200, `/mapa-nacional` 200, `/api/portarias` e `/api/estados` 401 sem token.
 
 **Próxima fatia**: Registradora/Financeira (Minhas Submissões — padding já corrigido aqui, Fila de Registro de Contrato, Empresas.js, Editais participação — já feito no item 38).
+
+## 40. Redesign SIGCR — Fase 4, fatia Registradora/Financeira — ✅ CONCLUÍDO, sem deploy necessário (2026-08-26)
+
+Terceira e última fatia da Fase 4. Escopo pedido: Minhas Submissões, Fila de Registro de Contrato, Empresas.js, Editais (participação).
+
+**Resultado: fatia 100% de verificação, zero mudança de código.** Todos os 4 itens já estavam consistentes:
+- **Minhas Submissões**: padding já corrigido antecipadamente no item 39 (fatia DETRAN).
+- **Editais (participação)**: já ganhou BentoGrid no item 38 (fatia sigcr_admin) — é o mesmo arquivo `Editais.js`.
+- **Fila de Registro de Contrato** (`FilaRegistros.js`) e **Empresas.js**: os dois alvos originais do fix de `button.jsx` do Passo 5 (item 34) — confirmado visualmente que o fix se sustenta: "Concluir" verde sólido, "Rejeitar" outline vermelho em `FilaRegistros.js`; "Excluir" vermelho translúcido em `Empresas.js`. Nenhum dos dois tinha cor hardcoded nem padding ausente.
+
+**Testado**: harness `/__preview` estendido com `FilaRegistros` (mock de 2 solicitações, uma pendente pra exercitar os botões Concluir/Rejeitar, uma concluída). Screenshot das 4 telas, zero erro de console. Sem diff pixel a pixel contra HEAD anterior porque não houve mudança nenhuma pra comparar — a verificação aqui foi inspeção visual direta das cores dos botões, que é exatamente o que tinha quebrado no Passo 5.
+
+**Sem deploy**: nada mudou no código, então não há release nova pra esta fatia.
+
+**Fase 4 completa**: as 3 fatias (sigcr_admin, DETRAN, Registradora/Financeira) cobriram as ~15 telas por perfil pedidas. Achados principais da fase inteira: "Auditoria" não existe (item 38), padding ausente em 5 telas cross-cutting corrigido de uma vez (item 39), 2 telas ganharam BentoGrid real (Editais.js, GestaoEditais.js), 2 achados de laranja hardcoded fora do escopo original sinalizados mas não corrigidos por estarem em código pendente do Pedro (Dashboard.js's `DashboardFinanceira`, item 36; `Editais.js`'s diálogo de escolha de empresa, item 38).
