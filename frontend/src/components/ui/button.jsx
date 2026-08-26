@@ -39,11 +39,32 @@ const buttonVariants = cva(
   }
 )
 
+// bg-gradient-to-br é uma camada de background-image — o `cn()` deste projeto
+// (lib/utils.js) é só um join de strings, sem merge de conflito Tailwind, e
+// mesmo com merge um background-image sempre pinta por cima de um
+// background-color, então nenhum `bg-{cor}` passado via `className` nunca
+// conseguiria aparecer por cima do gradiente das variantes default/secondary.
+// Achado no Passo 5 (PENDING_ACTIONS.md): quebrava silenciosamente os
+// botões que usam cor própria pra sinalizar uma ação diferente do azul da
+// marca (ex: "Excluir" vermelho, "Concluir"/baixar comprovante verde) — eles
+// saíam sempre azuis em produção. Quando o caller passa seu próprio `bg-`,
+// removemos o gradiente da variante pra a cor customizada valer de verdade.
+const GRADIENT_BG = {
+  default: "bg-gradient-to-br from-primary to-primary-600",
+  secondary: "bg-gradient-to-br from-secondary to-secondary-600",
+};
+
 const Button = React.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
   const Comp = asChild ? Slot : "button"
+  const gradientClass = GRADIENT_BG[variant || "default"];
+  const hasCustomBg = gradientClass && className && /\bbg-/.test(className);
+  let variantClasses = buttonVariants({ variant, size });
+  if (hasCustomBg) {
+    variantClasses = variantClasses.replace(gradientClass, "").replace(/\s+/g, " ").trim();
+  }
   return (
     <Comp
-      className={cn(buttonVariants({ variant, size, className }))}
+      className={cn(variantClasses, className)}
       ref={ref}
       {...props} />
   );
