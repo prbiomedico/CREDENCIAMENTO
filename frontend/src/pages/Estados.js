@@ -43,7 +43,7 @@ const Estados = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="p-6 lg:p-8 space-y-6">
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
             <Landmark className="h-6 w-6 text-primary-400" />

@@ -3,6 +3,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import { Plus, FileText, Paperclip, Trash2, Pencil, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BentoGrid, BentoCard } from '@/components/ui/bento-grid';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -172,7 +173,7 @@ const GestaoEditais = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="p-6 lg:p-8 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white">Gestão de Editais</h1>
@@ -318,9 +319,12 @@ const GestaoEditais = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
+          // Mesma lógica de BentoGrid do Editais.js (Fase 4, PENDING_ACTIONS.md
+          // item 39) — lista de cards uniformes o bastante (descrição
+          // truncada em 2 linhas) pra ganhar em escaneabilidade lado a lado.
+          <BentoGrid>
             {editais.map((edital) => (
-              <Card key={edital.edital_id} className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors">
+              <BentoCard key={edital.edital_id} size="2x1" interactive className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors">
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
@@ -352,9 +356,9 @@ const GestaoEditais = () => {
                 <CardContent className="pt-0">
                   <p className="text-sm text-zinc-400 line-clamp-2">{edital.descricao}</p>
                 </CardContent>
-              </Card>
+              </BentoCard>
             ))}
-          </div>
+          </BentoGrid>
         )}
       </div>
     </DashboardLayout>

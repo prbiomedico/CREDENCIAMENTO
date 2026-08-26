@@ -171,7 +171,7 @@ const MinhasSubmissoes = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="p-6 lg:p-8 space-y-8">
         <div>
           <h1 className="text-2xl font-bold text-white">Credenciamento por Portaria</h1>
           <p className="text-zinc-400 text-sm mt-1">
