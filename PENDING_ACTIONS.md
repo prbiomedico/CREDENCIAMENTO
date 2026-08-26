@@ -1819,3 +1819,19 @@ Segunda fatia da Fase 3: métricas/atalhos do `Dashboard.js` (view principal, n�
 **Deploy**: release `releases/fase3-slice2-dashboard-bentogrid`. Smoke test: site 200, `/mapa-nacional` 200, `api.sigcr.com.br/api/notificacoes` e `/api/stats` 401 sem token.
 
 **Próxima fatia**: Mapa Nacional autenticado (`/mapa`) e Notificações — conferir herança dos componentes base, sem mudança estrutural nova esperada.
+
+## 37. Redesign SIGCR — Fase 3, fatia 3: Mapa Nacional + Notificações (auditoria) + "Passo 1b" resolvido — ✅ CONCLUÍDO (2026-08-26)
+
+Terceira fatia da Fase 3: `MapaNacional.js` (autenticado, `/mapa`) e `Notificacoes.js` — pedido era conferir herança dos componentes base, não redesenho estrutural novo.
+
+**Notificações**: zero cor hardcoded, zero classe fora do padrão — já herda os componentes base (badge/card) limpo. Nada a corrigir.
+
+**Mapa Nacional**: achado real — a versão hoje em produção (HEAD) tem 15 linhas com laranja real hardcoded (`#f97316`/`rgba(249,115,22,...)`), exatamente o arquivo já flagado no item 33 como parte do "Passo 1b". **Não corrigido separadamente**: o lote pendente do Pedro já reescreve esse arquivo quase por inteiro (dados reais da API em vez de mock, nova taxonomia de status) e, como efeito colateral dessa reescrita, **já elimina toda a cor laranja** (confirmado: 0 ocorrências na versão pendente). Corrigir a versão antiga separadamente seria trabalho jogado fora — quando o lote do Pedro for ao ar, o arquivo antigo inteiro é substituído. Sinalizado, não duplicado.
+
+**"Passo 1b" — resolução real**: com a autorização do Pedro pra tratar isso nesta rodada (item separado, commit próprio), foi feita a varredura dos 8 arquivos reais flagados no item 33 (excluindo `interactive-map.js`, que é falso-positivo — nome de arquivo de ícone real do `leaflet-color-markers`, não bug). Achado: **6 dos 8 já estavam com zero laranja** — `UploadDocumentos.js`, `SolicitacaoDetalhe.js`, `PagamentoAguardando.js`, `Planos.js`, `AppMobile.js`, `Checkout.js` — todos fazem parte do lote pendente do Pedro e o laranja já tinha sido removido lá como efeito colateral de outras mudanças, sem eu precisar tocar. `MapaNacional.js` também (ver acima). Restava só **`Esteiras.js`**, o pior caso original (13+ ocorrências) — o lote pendente já tinha reduzido pra 4 (2 bordas de modal, 1 fundo+borda de card selecionado), então apliquei o mesmo codemod cor-a-cor nessas 4 E separadamente na versão HEAD limpa (15 ocorrências: botões "Criar Esteira"/"Registrar Evento"/"+ Nova"/"+ Criar Evento", badge de ID, barra de progresso, conector "concluído") — todas eram uso de "cor de marca/estado ativo", nunca alarme/perigo real, então mapeado pra `primary` (mesma regra do Passo 1 original, sem reinterpretação semântica por instância).
+
+**Testado antes do deploy**: worktree isolado, harness `/__preview` estendido pra incluir `Esteiras` (com 2 esteiras mock, uma 100% outra 0%, pra exercitar os dois estados de cor), screenshot confirmando lista + modal "Nova Esteira" abertos — badge/botões/borda todos azul primário, zero laranja, zero erro de console.
+
+**Deploy**: reconciliação igual ao item 36 (arquivo já estava no lote pendente) — versão limpa (HEAD + fix, sem o resto da reescrita do Pedro) trocada temporariamente pro deploy isolado, lote completo restaurado depois. Release `releases/passo1b-esteiras-cor-laranja`, commit próprio e separado do resto do redesign visual, como pedido. Smoke test: site 200, `/mapa-nacional` 200, API 401 sem token.
+
+**Fase 3 completa**: shell (`DashboardLayout.js`), `Dashboard.js` (BentoGrid), Mapa Nacional/Notificações (auditados) — todas as 20 páginas que usam o shell comum herdam a nova identidade visual. Próximo: Fase 4 (telas por perfil — sigcr_admin, DETRAN, Registradora/Financeira), rodada separada.
