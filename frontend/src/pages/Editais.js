@@ -3,6 +3,7 @@ import DashboardLayout from '../components/DashboardLayout';
 import { Folder, Plus, Calendar, ChevronRight, Clock, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { BentoGrid, BentoCard } from '@/components/ui/bento-grid';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import axios from 'axios';
@@ -98,42 +99,44 @@ const Editais = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
+          // Lista de editais — BentoGrid, 2 cards por linha via size="2x1"
+          // (Fase 4, PENDING_ACTIONS.md item 38): cards uniformes o bastante
+          // (descrição já truncada em 2 linhas) pra ganhar em escaneabilidade
+          // lado a lado em vez de empilhados. interactive=true porque cada
+          // card tem uma ação real ("Candidatar-se"), diferente dos tiles de
+          // métrica do Dashboard, que são só leitura.
+          <BentoGrid>
             {editaisFiltrados.map((edital) => {
               const cfg = STATUS_EDITAL[edital.status] || STATUS_EDITAL.encerrado;
               const Icon = cfg.icon;
               const dias = Math.ceil((new Date(edital.data_encerramento) - new Date()) / (1000*60*60*24));
               return (
-                <Card key={edital.edital_id} className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-colors">
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between gap-4 flex-wrap">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2 flex-wrap">
-                          <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-mono text-xs">DETRAN-{edital.uf}</Badge>
-                          <Badge className={`${cfg.bg} ${cfg.text} text-xs font-mono`}>
-                            <Icon className="h-3 w-3 mr-1" />{cfg.label}
-                          </Badge>
-                        </div>
-                        <h3 className="text-lg font-semibold text-white mb-1">{edital.titulo}</h3>
-                        <p className="text-sm text-zinc-400 line-clamp-2 mb-3">{edital.descricao}</p>
-                        <div className="flex items-center gap-4 text-xs text-zinc-500">
-                          <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Encerra {new Date(edital.data_encerramento).toLocaleDateString('pt-BR')}</span>
-                          {edital.status === 'aberto' && dias > 0 && (
-                            <span className={`font-mono font-semibold ${dias <= 7 ? 'text-red-400' : dias <= 15 ? 'text-primary-400' : 'text-zinc-400'}`}>{dias} dias restantes</span>
-                          )}
-                        </div>
-                      </div>
-                      {edital.status === 'aberto' && (
-                        <Button onClick={() => handleCandidatar(edital)} className="bg-primary-500 hover:bg-primary-600 text-white text-sm h-9 px-4 shrink-0">
-                          Candidatar-se <ChevronRight className="h-4 w-4 ml-1" />
-                        </Button>
+                <BentoCard key={edital.edital_id} size="2x1" interactive className="bg-zinc-900/50 border-zinc-800">
+                  <CardContent className="p-6 h-full flex flex-col">
+                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                      <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-mono text-xs">DETRAN-{edital.uf}</Badge>
+                      <Badge className={`${cfg.bg} ${cfg.text} text-xs font-mono`}>
+                        <Icon className="h-3 w-3 mr-1" />{cfg.label}
+                      </Badge>
+                    </div>
+                    <h3 className="text-lg font-semibold text-white mb-1">{edital.titulo}</h3>
+                    <p className="text-sm text-zinc-400 line-clamp-2 mb-3">{edital.descricao}</p>
+                    <div className="flex items-center gap-4 text-xs text-zinc-500 mb-4">
+                      <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Encerra {new Date(edital.data_encerramento).toLocaleDateString('pt-BR')}</span>
+                      {edital.status === 'aberto' && dias > 0 && (
+                        <span className={`font-mono font-semibold ${dias <= 7 ? 'text-red-400' : dias <= 15 ? 'text-primary-400' : 'text-zinc-400'}`}>{dias} dias restantes</span>
                       )}
                     </div>
+                    {edital.status === 'aberto' && (
+                      <Button onClick={() => handleCandidatar(edital)} className="bg-primary-500 hover:bg-primary-600 text-white text-sm h-9 px-4 mt-auto self-start">
+                        Candidatar-se <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    )}
                   </CardContent>
-                </Card>
+                </BentoCard>
               );
             })}
-          </div>
+          </BentoGrid>
         )}
       </div>
     </DashboardLayout>
