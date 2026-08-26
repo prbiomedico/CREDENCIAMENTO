@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { Building2, FileText, Search, TrendingUp, Shield, CheckCircle, Clock, AlertCircle, CalendarClock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { BentoGrid, BentoCard } from '@/components/ui/bento-grid';
 import { useAuth } from '../contexts/AuthContext';
 import { useApi } from '../hooks/useApi';
 import { toast } from 'sonner';
@@ -98,10 +99,14 @@ const Dashboard = () => {
           </div>
         ) : (
           <>
-            {/* Cards principais */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            {/* Métricas — BentoGrid (Fase 3, PENDING_ACTIONS.md item 36):
+                4 cards de stat (1x1, sem hover de ação — são só leitura, ver
+                convenção de `interactive` em bento-grid.jsx) + Semáforo de
+                Compliance e Documentos Vencendo como células 2x1, mesma
+                linha, pra ficar lado a lado em vez de empilhado. */}
+            <BentoGrid className="mb-8">
               {CARDS.map(({ label, value, icon: Icon, color }) => (
-                <Card key={label} className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-colors">
+                <BentoCard key={label} interactive={false} className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-colors">
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider">{label}</p>
@@ -111,82 +116,82 @@ const Dashboard = () => {
                     </div>
                     <p className={`text-3xl font-bold font-mono text-${color}-400`}>{value}</p>
                   </CardContent>
-                </Card>
+                </BentoCard>
               ))}
-            </div>
 
-            {/* Semáforo de Compliance */}
-            <Card className="bg-zinc-900/50 border-zinc-800 mb-8">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-heading flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-primary-500" />
-                  Semáforo de Compliance
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-3 gap-4">
-                  {SEMAFORO.map(({ label, value, color, icon: Icon }) => (
-                    <div key={label} className={`p-4 rounded-xl bg-${color}-500/10 border border-${color}-500/20 text-center`}>
-                      <Icon className={`h-6 w-6 text-${color}-400 mx-auto mb-2`} />
-                      <p className={`text-2xl font-bold font-mono text-${color}-400`}>{value}</p>
-                      <p className="text-xs text-zinc-500 mt-1">{label}</p>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Documentos vencendo (30 dias) + vencidos */}
-            {(vencimentoResumo.vencendo.length > 0 || vencimentoResumo.vencidos.length > 0) && (
-              <Card className="bg-zinc-900/50 border-zinc-800 mb-8">
+              {/* Semáforo de Compliance */}
+              <BentoCard size="2x1" interactive={false} className="bg-zinc-900/50 border-zinc-800">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-heading flex items-center gap-2">
-                    <CalendarClock className="h-4 w-4 text-amber-400" />
-                    Documentos Vencendo
+                    <Shield className="h-4 w-4 text-primary-500" />
+                    Semáforo de Compliance
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
-                      <p className="text-2xl font-bold font-mono text-amber-400">{vencimentoResumo.vencendo.length}</p>
-                      <p className="text-xs text-zinc-500 mt-1">Vencendo em até 30 dias</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
-                      <p className="text-2xl font-bold font-mono text-red-400">{vencimentoResumo.vencidos.length}</p>
-                      <p className="text-xs text-zinc-500 mt-1">Já vencidos</p>
-                    </div>
+                <CardContent>
+                  <div className="grid grid-cols-3 gap-4">
+                    {SEMAFORO.map(({ label, value, color, icon: Icon }) => (
+                      <div key={label} className={`p-4 rounded-xl bg-${color}-500/10 border border-${color}-500/20 text-center`}>
+                        <Icon className={`h-6 w-6 text-${color}-400 mx-auto mb-2`} />
+                        <p className={`text-2xl font-bold font-mono text-${color}-400`}>{value}</p>
+                        <p className="text-xs text-zinc-500 mt-1">{label}</p>
+                      </div>
+                    ))}
                   </div>
-
-                  {vencimentoResumo.vencidos.length > 0 && (
-                    <div>
-                      <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider mb-2">Vencidos</p>
-                      <div className="space-y-1.5">
-                        {vencimentoResumo.vencidos.map((item) => (
-                          <div key={`${item.origem}-${item.id}`} className="flex items-center justify-between text-sm p-2 rounded-lg bg-red-500/5 border border-red-500/10">
-                            <span className="text-zinc-300">{item.nome}</span>
-                            <span className="text-red-400 font-mono text-xs">{new Date(item.vencimento).toLocaleDateString('pt-BR')}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {vencimentoResumo.vencendo.length > 0 && (
-                    <div>
-                      <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider mb-2">Vencendo em breve</p>
-                      <div className="space-y-1.5">
-                        {vencimentoResumo.vencendo.map((item) => (
-                          <div key={`${item.origem}-${item.id}`} className="flex items-center justify-between text-sm p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
-                            <span className="text-zinc-300">{item.nome}</span>
-                            <span className="text-amber-400 font-mono text-xs">{new Date(item.vencimento).toLocaleDateString('pt-BR')}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </CardContent>
-              </Card>
-            )}
+              </BentoCard>
+
+              {/* Documentos vencendo (30 dias) + vencidos */}
+              {(vencimentoResumo.vencendo.length > 0 || vencimentoResumo.vencidos.length > 0) && (
+                <BentoCard size="2x1" interactive={false} className="bg-zinc-900/50 border-zinc-800">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base font-heading flex items-center gap-2">
+                      <CalendarClock className="h-4 w-4 text-amber-400" />
+                      Documentos Vencendo
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
+                        <p className="text-2xl font-bold font-mono text-amber-400">{vencimentoResumo.vencendo.length}</p>
+                        <p className="text-xs text-zinc-500 mt-1">Vencendo em até 30 dias</p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
+                        <p className="text-2xl font-bold font-mono text-red-400">{vencimentoResumo.vencidos.length}</p>
+                        <p className="text-xs text-zinc-500 mt-1">Já vencidos</p>
+                      </div>
+                    </div>
+
+                    {vencimentoResumo.vencidos.length > 0 && (
+                      <div>
+                        <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider mb-2">Vencidos</p>
+                        <div className="space-y-1.5">
+                          {vencimentoResumo.vencidos.map((item) => (
+                            <div key={`${item.origem}-${item.id}`} className="flex items-center justify-between text-sm p-2 rounded-lg bg-red-500/5 border border-red-500/10">
+                              <span className="text-zinc-300">{item.nome}</span>
+                              <span className="text-red-400 font-mono text-xs">{new Date(item.vencimento).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {vencimentoResumo.vencendo.length > 0 && (
+                      <div>
+                        <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider mb-2">Vencendo em breve</p>
+                        <div className="space-y-1.5">
+                          {vencimentoResumo.vencendo.map((item) => (
+                            <div key={`${item.origem}-${item.id}`} className="flex items-center justify-between text-sm p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
+                              <span className="text-zinc-300">{item.nome}</span>
+                              <span className="text-amber-400 font-mono text-xs">{new Date(item.vencimento).toLocaleDateString('pt-BR')}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </BentoCard>
+              )}
+            </BentoGrid>
 
             {/* Info do perfil */}
             <Card className="bg-zinc-900/50 border-zinc-800">
