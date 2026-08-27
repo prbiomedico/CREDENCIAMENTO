@@ -2,6 +2,7 @@ import GradientMenu from '../components/ui/gradient-menu';
 import { MapaNacional } from '../components/ui/interactive-map';
 import VaporizeTextCycle from '../components/ui/vapour-text-effect';
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { Building2, FileText, Search, TrendingUp, Shield, CheckCircle, Clock, AlertCircle, CalendarClock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +17,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const { user, initialized } = useAuth();
   const api = useApi();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!initialized || !user) return;
@@ -59,8 +61,19 @@ const Dashboard = () => {
     { label: 'Crítico', value: stats?.compliance_vermelho || 0, color: 'red', icon: AlertCircle },
   ];
 
+  // Card "Empresas" vira o atalho pra própria empresa só pra quem tem uma
+  // empresa própria (registradora/financeira) — sigcr_admin/detran/detran_admin
+  // mantêm o card genérico como estava (o split em REGISTRADORAS/FINANCEIRAS
+  // pra esses perfis é uma fatia futura, depende de uma visão agregada de
+  // Financeiras que ainda não existe).
+  const empresaCard = user?.perfil === 'registradora'
+    ? { label: 'Minha Registradora', value: stats?.total_companies || 0, icon: Building2, color: 'blue', to: '/registradoras-empresa' }
+    : user?.perfil === 'financeira'
+    ? { label: 'Minha Financeira', value: stats?.total_companies || 0, icon: Building2, color: 'blue', to: '/financeiras-empresa' }
+    : { label: 'Empresas', value: stats?.total_companies || 0, icon: Building2, color: 'blue' };
+
   const CARDS = [
-    { label: 'Empresas', value: stats?.total_companies || 0, icon: Building2, color: 'blue' },
+    empresaCard,
     { label: 'Documentos', value: stats?.total_documents || 0, icon: FileText, color: 'primary' },
     { label: 'Pendências', value: stats?.pending_validations || 0, icon: Clock, color: 'yellow' },
     { label: 'Portarias', value: stats?.active_portarias || 0, icon: Search, color: 'emerald' },
@@ -105,8 +118,13 @@ const Dashboard = () => {
                 Compliance e Documentos Vencendo como células 2x1, mesma
                 linha, pra ficar lado a lado em vez de empilhado. */}
             <BentoGrid className="mb-8">
-              {CARDS.map(({ label, value, icon: Icon, color }) => (
-                <BentoCard key={label} interactive={false} className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-colors">
+              {CARDS.map(({ label, value, icon: Icon, color, to }) => (
+                <BentoCard
+                  key={label}
+                  interactive={!!to}
+                  onClick={to ? () => navigate(to) : undefined}
+                  className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-colors"
+                >
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider">{label}</p>
