@@ -3,7 +3,7 @@ import AppMenuBar from '../components/ui/app-menu-bar';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
-import { Building2, FileText, Search, TrendingUp, Shield, CheckCircle, Clock, AlertCircle, CalendarClock, ArrowRight } from 'lucide-react';
+import { Building2, CreditCard, FileText, Search, TrendingUp, Shield, CheckCircle, Clock, AlertCircle, CalendarClock, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BentoGrid, BentoCard } from '@/components/ui/bento-grid';
@@ -108,6 +108,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const { user, initialized } = useAuth();
   const api = useApi();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!initialized || !user || user.perfil === 'financeira') return;
@@ -145,20 +146,48 @@ const Dashboard = () => {
     }
   };
 
-  const SEMAFORO = [
-    { label: 'Conformes', value: stats?.compliance_verde || 0, color: 'emerald', icon: CheckCircle },
-    { label: 'Atenção', value: stats?.compliance_amarelo || 0, color: 'amber', icon: Clock },
-    { label: 'Crítico', value: stats?.compliance_vermelho || 0, color: 'red', icon: AlertCircle },
-  ];
+  if (user?.perfil === 'financeira') return <DashboardFinanceira />;
+
+  // Item 1 do Dashboard (2026-08-27): cada card leva pra tela/filtro real
+  // que corresponde ao número mostrado. Mapeamento por perfil:
+  // - registradora (dona de 1 empresa própria): "Minha X" +
+  //   Documentos/Pendências/Semáforo apontam pra própria tela de Documentos,
+  //   com filtro por status/compliance.
+  // - sigcr_admin/detran/detran_admin: Empresas virou 2 cards reais
+  //   (Registradoras/Financeiras, visão agregada por UF) em vez do card
+  //   único; Documentos/Pendências/Semáforo apontam pra Registradoras
+  //   (mesmo escopo que GET /stats passou a usar pro DETRAN depois do fix
+  //   do bug de ownership) com o filtro correspondente.
+  const isEmpresaSelf = user?.perfil === 'registradora';
+  const isDetranOuAdmin = ['sigcr_admin', 'detran', 'detran_admin'].includes(user?.perfil);
+
+  const empresaCards = user?.perfil === 'registradora'
+    ? [{ label: 'Minha Registradora', value: stats?.total_companies || 0, icon: Building2, color: 'blue', to: '/registradoras-empresa' }]
+    : isDetranOuAdmin
+    ? [
+        { label: 'Registradoras', value: stats?.total_registradoras || 0, icon: Building2, color: 'blue', to: '/registradoras' },
+        { label: 'Financeiras', value: stats?.total_financeiras || 0, icon: CreditCard, color: 'blue', to: '/financeiras' },
+      ]
+    : [{ label: 'Empresas', value: stats?.total_companies || 0, icon: Building2, color: 'blue' }];
+
+  const documentosTo = isEmpresaSelf ? '/documentos' : (isDetranOuAdmin ? '/registradoras' : undefined);
+  const pendenciasTo = isEmpresaSelf ? '/documentos?status=pending' : (isDetranOuAdmin ? '/registradoras?pendencias=1' : undefined);
+  const portariasTo = '/portarias?status=vigente';
 
   const CARDS = [
-    { label: 'Empresas', value: stats?.total_companies || 0, icon: Building2, color: 'blue' },
-    { label: 'Documentos', value: stats?.total_documents || 0, icon: FileText, color: 'primary' },
-    { label: 'Pendências', value: stats?.pending_validations || 0, icon: Clock, color: 'yellow' },
-    { label: 'Portarias', value: stats?.active_portarias || 0, icon: Search, color: 'emerald' },
+    ...empresaCards,
+    { label: 'Documentos', value: stats?.total_documents || 0, icon: FileText, color: 'primary', to: documentosTo },
+    { label: 'Pendências', value: stats?.pending_validations || 0, icon: Clock, color: 'yellow', to: pendenciasTo },
+    { label: 'Portarias', value: stats?.active_portarias || 0, icon: Search, color: 'emerald', to: portariasTo },
   ];
 
-  if (user?.perfil === 'financeira') return <DashboardFinanceira />;
+  const semaforoTo = (bucket) => (isEmpresaSelf ? `/documentos?compliance=${bucket}` : (isDetranOuAdmin ? `/registradoras?compliance=${bucket}` : undefined));
+
+  const SEMAFORO = [
+    { label: 'Conformes', value: stats?.compliance_verde || 0, color: 'emerald', icon: CheckCircle, to: semaforoTo('valido') },
+    { label: 'Atenção', value: stats?.compliance_amarelo || 0, color: 'amber', icon: Clock, to: semaforoTo('vencendo') },
+    { label: 'Crítico', value: stats?.compliance_vermelho || 0, color: 'red', icon: AlertCircle, to: semaforoTo('vencido') },
+  ];
 
   return (
     <DashboardLayout>
@@ -180,13 +209,18 @@ const Dashboard = () => {
         ) : (
           <>
             {/* Métricas — BentoGrid (Fase 3, PENDING_ACTIONS.md item 36):
-                4 cards de stat (1x1, sem hover de ação — são só leitura, ver
+                4 cards de stat (1x1, clicáveis quando têm destino real, ver
                 convenção de `interactive` em bento-grid.jsx) + Semáforo de
                 Compliance e Documentos Vencendo como células 2x1, mesma
                 linha, pra ficar lado a lado em vez de empilhado. */}
             <BentoGrid className="mb-8">
-              {CARDS.map(({ label, value, icon: Icon, color }) => (
-                <BentoCard key={label} interactive={false} className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-colors">
+              {CARDS.map(({ label, value, icon: Icon, color, to }) => (
+                <BentoCard
+                  key={label}
+                  interactive={!!to}
+                  onClick={to ? () => navigate(to) : undefined}
+                  className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-colors"
+                >
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between mb-3">
                       <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider">{label}</p>
@@ -209,8 +243,12 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-3 gap-4">
-                    {SEMAFORO.map(({ label, value, color, icon: Icon }) => (
-                      <div key={label} className={`p-4 rounded-xl bg-${color}-500/10 border border-${color}-500/20 text-center`}>
+                    {SEMAFORO.map(({ label, value, color, icon: Icon, to }) => (
+                      <div
+                        key={label}
+                        onClick={to ? () => navigate(to) : undefined}
+                        className={`p-4 rounded-xl bg-${color}-500/10 border border-${color}-500/20 text-center${to ? ' cursor-pointer hover:brightness-125 transition-[filter]' : ''}`}
+                      >
                         <Icon className={`h-6 w-6 text-${color}-400 mx-auto mb-2`} />
                         <p className={`text-2xl font-bold font-mono text-${color}-400`}>{value}</p>
                         <p className="text-xs text-zinc-500 mt-1">{label}</p>
