@@ -2040,3 +2040,41 @@ Deploy: release `releases/20260827-fatia2-financeira-acesso` (hash `main.0a74f0b
 **Achado sinalizado, não expandido sem perguntar (conforme pedido)**: `Edital` continua sendo um dict avulso sem model Pydantic formal no backend — a fusão de UI não piorou nem expôs isso como risco novo (mesmos 2 endpoints de sempre, mesma validação mínima do lado do form), então não havia gatilho pra formalizar o model agora. Fica como está, sinalizado se algum dia um campo faltando quebrar a tela na prática.
 
 Deploy: release `releases/20260827-fatia3-fusao-transparencia` (hash `main.106dd771.js`), rollback = release anterior `20260827-fatia2-financeira-acesso`. Health check: `sigcr.com.br` 200 com hash novo; `/portarias`, `/editais` (redirect) e `/transparencia` (pública, intocada) todos 200; backend não foi tocado. **Fusão "Transparência" completa** — as 3 fatias (unificação de Editais, acesso da financeira, fusão de menu/rota) todas deployadas no mesmo dia.
+
+## 53. Auditoria do ciclo central Portaria→Submissão: achado crítico (backend em produção estava 3 semanas defasado) + 2 correções pedidas pelo Pedro — ✅ DEPLOYADO (2026-08-27)
+
+Pedro pediu uma auditoria ponta a ponta do "carro chefe" do SIGCR (DETRAN publica portaria com checklist → registradora/financeira da UF são notificadas → se inscrevem e enviam documentos → DETRAN é notificado da revisão pendente), com duas correções já decididas: (1) o clique numa notificação não navegava pra lugar nenhum, só marcava como lida; (2) a notificação de portaria publicada notificava financeira e registradora da UF sem checar se o checklist tinha algo pra cada uma.
+
+**Achado crítico, não pedido, descoberto durante o teste isolado**: ao isolar o backend pra testar a fatia 2 (o filtro de precisão em `PATCH /portarias/{id}/publicar`), a rota **não existia na produção real** (`docker exec sigcr-backend cat /app/server.py`) nem no último commit de `backend/server.py` em `git HEAD` — só existia no working tree local, não commitada. Produção ainda rodava a rota legada `PATCH /eventos/{evento_id}/publicar` (notifica *toda* `registradora` do sistema, sem filtro de UF, sem financeira) — o que documentado em `project-sigcr-criar-evento-integracao` como "deployado 2026-08-08" tinha sido perdido silenciosamente numa reconstrução de backend posterior (mesma classe de incidente do item 17, nunca detectada desde então). Pior: **o frontend já deployado chama `/portarias/{id}/publicar`** (confirmado via grep no bundle `main.*.js` ao vivo) — ou seja, o botão "Publicar e Gerar Link" do wizard Criar Evento estava retornando 404 em produção, e `GET /checklist-catalogo` (usado pelo seletor de checklist do wizard) também não existia. O ciclo central estava efetivamente quebrado na etapa 1, antes de qualquer notificação entrar em jogo.
+
+**Decisão tomada**: restaurar o bloco inteiro de ~490 linhas do working tree (que corresponde a uma única unidade coesa e já documentada — fusão Criar-Evento/Portaria, catálogo de checklist reutilizável, checklist DETRAN-DF 003/2022 pra financeira, e 3 correções de segurança que vieram junto), não só as 2 correções pontuais pedidas. Justificativa: as 2 correções pedidas *dependem* dessa rota existir pra terem qualquer efeito; a alternativa (aplicar só o filtro de notificação numa rota que não existe em produção) seria um no-op disfarçado de fix. Autonomia total já concedida cobre "corrigir o que for encontrado, sem esperar aprovação passo a passo" — mas o achado e a decisão estão registrados aqui em detalhe por ser bem maior que o pedido original.
+
+**Correções de segurança encontradas de graça nesse mesmo bloco (não pedidas, mas reais)**: `PATCH /portarias/{id}` aceitava `get_current_user` (qualquer perfil autenticado podia editar qualquer portaria) — corrigido pra `require_perfil(sigcr_admin, detran, detran_admin)`. `POST /solicitacoes` aceitava `company_id` do body sem checar posse (IDOR — uma empresa podia candidatar outra) — corrigido com `_autorizar_acesso_empresa`. `DELETE /portarias/{id}` ganhou guarda de "há submissões em andamento, revogue em vez de excluir".
+
+### Correção 1 — filtro de precisão em `publicar_portaria` (pedido do Pedro)
+
+```python
+perfis_com_checklist = {i.get("perfil_alvo") for i in (portaria.get("checklist_itens") or []) if i.get("perfil_alvo")}
+if perfis_com_checklist:
+    empresas = await db.companies.find({
+        "detrans_atuacao": portaria["estado_sigla"], "deleted_at": None,
+        "tipo_empresa": {"$in": list(perfis_com_checklist)},
+    }, {"_id": 0, "user_id": 1}).to_list(1000)
+    for empresa in empresas:
+        ...
+```
+Só notifica quem tem pelo menos 1 item de checklist pro seu `tipo_empresa`.
+
+### Correção 2 — deep-link nas notificações (pedido do Pedro)
+
+`Notificacoes.js`: clique continua marcando como lida, e agora também navega, por tipo — `novo_edital` → `/portarias?portaria_id=X` (Transparência, aba Portarias); `submissao_recebida` → `/detran/conferencia?submissao_id=Y`; `checklist_inconforme`/`submissao_homologada` → `/credenciamento-portaria?submissao_id=Y`. Deliberadamente só esses 4 tipos — o resto (sistema antigo Editais+Solicitações, vencimento de documento, registro de contrato) continua só marcando como lida, sem rota própria, pra não misturar os dois fluxos como o Pedro pediu.
+
+3 telas ganharam suporte a deep-link via `useSearchParams` (nenhuma tinha antes): `AreaTransparencia.js` (`?portaria_id=` expande o grupo de UF certo no accordion — accordion virou controlado — e destaca/rola até o card com um anel azul); `MinhasSubmissoes.js` (`?portaria_id=` ou `?submissao_id=` pré-seleciona a portaria certa assim que a lista carrega); `PainelConferencia.js` (`?submissao_id=` seleciona a submissão certa; se for `sigcr_admin` numa UF diferente da submissão, troca o filtro de UF sozinho antes de selecionar — `detran`/`detran_admin` já estão sempre na própria UF, então não precisam disso).
+
+**Teste isolado — backend**: técnica já usada nesta sessão (docker cp do `server.py` candidato + script Python com `httpx.AsyncClient(transport=ASGITransport(app=srv.app))`, `MONGO_URL`/`DB_NAME` apontando pra um banco descartável `sigcr_devtest_fluxo` no mesmo mongod, nunca tocando dado real). 20 asserções cobrindo a jornada completa: publicar portaria com checklist só-registradora → notifica só registradora da UF, não financeira (e o inverso, checklist só-financeira → não notifica registradora); registradora se inscreve, envia documento, submete → DETRAN da UF certa é notificado, DETRAN de outra UF não; `GET /checklist-catalogo` responde; os 2 fixes de segurança bloqueiam corretamente (403). Todas as 20 passaram. Banco descartável destruído (`drop_database`) depois do teste.
+
+**Teste isolado — frontend**: worktree + Playwright com o bypass de auth já documentado, mockando as 3 jornadas de clique: notificação `novo_edital` → chega em `/portarias?portaria_id=X` com o grupo de UF expandido e o card com anel de destaque visível; notificação `submissao_recebida` (perfil DETRAN) → chega em `/detran/conferencia?submissao_id=Y` já com a empresa/submissão certa aberta; notificação `checklist_inconforme` (perfil registradora) → chega em `/credenciamento-portaria?submissao_id=Y` já na portaria/submissão certa, não na lista genérica. As 3 confirmadas por screenshot.
+
+**Deploy**: backend — commit `bf2fa66` (auto-commit + push, escopo `backend/`), rollback `sigcr-backend:pre-deploy-rollback-20260827-1847`. Health check pós-deploy: `PATCH /api/portarias/nao-existe/publicar` agora responde 401 (rota existe, exige auth) em vez do 404 de antes; `GET /api/checklist-catalogo` responde 401 (existe); logs do container limpos, sem erro no startup (seed do catálogo rodou). Frontend — commit `95ece3d`, release `releases/20260827-ciclo-notificacao-portaria-submissao` (hash `main.bd3ad7d8.js`), rollback = release anterior `20260827-fatia3-fusao-transparencia`. Site 200 com hash novo, as 4 rotas envolvidas (`/portarias`, `/notificacoes`, `/credenciamento-portaria`, `/detran/conferencia`) todas 200.
+
+**Ainda não confirmado por humano**: clique real de um usuário DETRAN publicando uma portaria de verdade em produção e vendo a notificação chegar pra uma registradora real — o teste isolado prova a lógica, não substitui uma confirmação visual do Pedro quando puder.
