@@ -34,6 +34,7 @@ import GestaoEditais from './pages/GestaoEditais';
 import MinhasSubmissoes from './pages/MinhasSubmissoes';
 import PainelConferencia from './pages/PainelConferencia';
 import Registradoras from './pages/Registradoras';
+import Financeiras from './pages/Financeiras';
 import SolicitacaoRegistro from './pages/SolicitacaoRegistro';
 import FilaRegistros from './pages/FilaRegistros';
 import CadastroPublico from './pages/CadastroPublico';
@@ -76,6 +77,7 @@ function AppRoutes() {
           <Route path="/credenciamento/documentos" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><DocumentosGov /></RotaProtegida>)} />
           <Route path="/estados" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><Estados /></RotaProtegida>)} />
           <Route path="/registradoras" element={b(<RotaProtegida perfilPermitido={["sigcr_admin", "detran", "detran_admin"]}><Registradoras /></RotaProtegida>)} />
+          <Route path="/financeiras" element={b(<RotaProtegida perfilPermitido={["sigcr_admin", "detran", "detran_admin"]}><Financeiras /></RotaProtegida>)} />
           <Route path="/gestao-editais" element={b(<RotaProtegida perfilPermitido={["sigcr_admin", "detran", "detran_admin"]}><GestaoEditais /></RotaProtegida>)} />
           <Route path="/estados/:sigla" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><EstadoDetalhe /></RotaProtegida>)} />
         <Route path="/mapa" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><MapaNacional /></RotaProtegida>)} />

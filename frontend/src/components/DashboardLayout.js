@@ -64,6 +64,7 @@ const NAV_DETRAN = [
   { path: '/notificacoes',  icon: Bell,            label: 'Notificações' },
   { path: '/estados',       icon: Landmark,        label: 'Estados',       section: 'DETRANs e Registradoras' },
   { path: '/registradoras', icon: Building2,       label: 'Registradoras', section: 'DETRANs e Registradoras' },
+  { path: '/financeiras',   icon: CreditCard,      label: 'Financeiras',   section: 'DETRANs e Registradoras' },
 ];
 
 const NAV_FINANCEIRA = [
@@ -79,6 +80,7 @@ const NAV_ADMIN_EXTRA = [
   { path: '/credenciamento/documentos', icon: Archive, label: 'Dossiê Credenciamento' },
   { path: '/estados',       icon: Landmark,        label: 'Estados' },
   { path: '/registradoras', icon: Building2,       label: 'Registradoras' },
+  { path: '/financeiras',   icon: CreditCard,      label: 'Financeiras' },
   { path: '/gestao-editais', icon: FileText,       label: 'Gestão de Editais' },
   { path: '/detran/conferencia', icon: ListChecks, label: 'Painel de Conferência' },
   { path: '/usuarios',      icon: UserCog,         label: 'Gestão de Usuários' },
