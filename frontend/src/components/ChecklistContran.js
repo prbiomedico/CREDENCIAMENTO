@@ -34,12 +34,18 @@ const getVencimentoStatus = (vencimento) => {
   hoje.setHours(0, 0, 0, 0);
   const dataVenc = new Date(vencimento);
   const diffDias = Math.round((dataVenc - hoje) / (1000 * 60 * 60 * 24));
-  if (diffDias < 0) return { label: 'Vencido', className: 'bg-red-500/10 text-red-400 border-red-500/20' };
-  if (diffDias <= 30) return { label: `Vence em ${diffDias}d`, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' };
-  return { label: 'Válido', className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
+  if (diffDias < 0) return { key: 'vencido', label: 'Vencido', className: 'bg-red-500/10 text-red-400 border-red-500/20' };
+  if (diffDias <= 30) return { key: 'vencendo', label: `Vence em ${diffDias}d`, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' };
+  return { key: 'valido', label: 'Válido', className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
 };
 
-const ChecklistContran = ({ companyId }) => {
+// filtroStatus: casa com item.status (pendente/enviado/aprovado/rejeitado) —
+// vem do card "Pendências" do Dashboard (Item 1, 2026-08-27), mapeado pra
+// 'enviado' (documento enviado, aguardando validação — o que pending_validations
+// do /stats realmente conta). filtroVencimento: casa com a chave de
+// getVencimentoStatus (vencido/vencendo/valido) — vem do Semáforo de
+// Compliance (Conformes/Atenção/Crítico). Só um dos dois é usado por vez.
+const ChecklistContran = ({ companyId, filtroStatus, filtroVencimento }) => {
   const [checklist, setChecklist] = useState(null);
   const [loading, setLoading] = useState(false);
   const [itemUpload, setItemUpload] = useState(null); // item sendo enviado (abre o dialog)
@@ -164,11 +170,34 @@ const ChecklistContran = ({ companyId }) => {
 
   if (!checklist) return null;
 
-  const { resumo, blocos } = checklist;
+  const { resumo, blocos: blocosOriginais } = checklist;
   const pctGeral = resumo.total > 0 ? Math.round((resumo.aprovados / resumo.total) * 100) : 0;
+
+  const filtroAtivo = filtroStatus || filtroVencimento;
+  const blocos = filtroAtivo
+    ? blocosOriginais
+        .map((bloco) => ({
+          ...bloco,
+          itens: bloco.itens.filter((item) => {
+            if (filtroStatus) return item.status === filtroStatus;
+            const vs = item.documento ? getVencimentoStatus(item.documento.vencimento) : null;
+            return vs?.key === filtroVencimento;
+          }),
+        }))
+        .filter((bloco) => bloco.itens.length > 0)
+    : blocosOriginais;
+  const totalFiltrado = blocos.reduce((acc, b) => acc + b.itens.length, 0);
+  const FILTRO_LABELS = { enviado: 'aguardando validação', vencido: 'vencidos', vencendo: 'vencendo', valido: 'em dia' };
 
   return (
     <div className="space-y-6" data-testid="checklist-contran">
+      {filtroAtivo && (
+        <div className="flex items-center gap-2 text-sm bg-primary-500/10 border border-primary-500/20 rounded-lg px-4 py-2 w-fit">
+          <span className="text-primary-300">
+            {totalFiltrado} item(ns) {FILTRO_LABELS[filtroStatus || filtroVencimento] || ''}
+          </span>
+        </div>
+      )}
       <Card className="bg-zinc-900/50 border-zinc-800">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-2">

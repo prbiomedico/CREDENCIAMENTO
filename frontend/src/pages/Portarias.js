@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import QueridoDiarioBusca, { ESTADOS_IBGE } from '../components/QueridoDiarioBusca';
 
@@ -62,6 +63,8 @@ const emptyFormData = () => ({
 
 const Portarias = () => {
   const { user, initialized, keycloak } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const statusFiltro = searchParams.get('status'); // ex: ?status=vigente, vindo do card "Portarias" do Dashboard
 
   // Cadastro de portaria é restrito a sigcr_admin/detran/detran_admin — a
   // registradora só pode visualizar (ex: pra saber se está credenciada em
@@ -71,7 +74,11 @@ const Portarias = () => {
 
   // ── Portarias internas ──
   const [portarias, setPortarias] = useState([]);
-  const gruposPorUf = React.useMemo(() => agruparPorUf(portarias), [portarias]);
+  const portariasFiltradas = React.useMemo(
+    () => (statusFiltro ? portarias.filter((p) => p.status === statusFiltro) : portarias),
+    [portarias, statusFiltro]
+  );
+  const gruposPorUf = React.useMemo(() => agruparPorUf(portariasFiltradas), [portariasFiltradas]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [analyzeText, setAnalyzeText] = useState('');
@@ -643,27 +650,49 @@ const Portarias = () => {
           </Button>
         </div>
 
+        {/* ── Filtro ativo (deep-link, ex: card "Portarias" do Dashboard) ── */}
+        {statusFiltro && (
+          <div className="flex items-center gap-2 text-sm bg-primary-500/10 border border-primary-500/20 rounded-lg px-4 py-2 w-fit">
+            <span className="text-primary-300">
+              Filtrando por status: <span className="font-mono uppercase">{statusFiltro}</span>
+            </span>
+            <button
+              type="button"
+              onClick={() => setSearchParams((prev) => { const p = new URLSearchParams(prev); p.delete('status'); return p; })}
+              className="text-primary-400 hover:text-primary-200 underline text-xs"
+            >
+              limpar
+            </button>
+          </div>
+        )}
+
         {/* ── Lista de Portarias Internas ── */}
         {loading ? (
           <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
             <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
             <span>Carregando portarias...</span>
           </div>
-        ) : portarias.length === 0 ? (
+        ) : portariasFiltradas.length === 0 ? (
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <FileText className="h-12 w-12 text-zinc-700 mb-4" />
-              <p className="text-zinc-400 font-medium mb-1">Nenhuma portaria cadastrada</p>
-              {podeCadastrar ? (
-                <>
-                  <p className="text-zinc-600 text-sm mb-4">Cadastre portarias ou use o Querido Diário abaixo</p>
-                  <Button onClick={() => setDialogOpen(true)} className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
-                    <Plus className="h-4 w-4" />
-                    Cadastrar Primeira Portaria
-                  </Button>
-                </>
+              {statusFiltro ? (
+                <p className="text-zinc-400 font-medium mb-1">Nenhuma portaria com status "{statusFiltro}"</p>
               ) : (
-                <p className="text-zinc-600 text-sm">Use o Querido Diário abaixo para consultar Diários Oficiais</p>
+                <>
+                  <p className="text-zinc-400 font-medium mb-1">Nenhuma portaria cadastrada</p>
+                  {podeCadastrar ? (
+                    <>
+                      <p className="text-zinc-600 text-sm mb-4">Cadastre portarias ou use o Querido Diário abaixo</p>
+                      <Button onClick={() => setDialogOpen(true)} className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
+                        <Plus className="h-4 w-4" />
+                        Cadastrar Primeira Portaria
+                      </Button>
+                    </>
+                  ) : (
+                    <p className="text-zinc-600 text-sm">Use o Querido Diário abaixo para consultar Diários Oficiais</p>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>

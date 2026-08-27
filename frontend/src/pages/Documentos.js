@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import axios from 'axios';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import ChecklistContran from '../components/ChecklistContran';
@@ -15,6 +16,13 @@ const API = `${BACKEND_URL}/api`;
 
 const Documentos = () => {
   const { user, initialized, getToken } = useAuth();
+  const [searchParams] = useSearchParams();
+  // Deep-link do Dashboard (Item 1, 2026-08-27): ?status=pending -> pendências
+  // aguardando validação; ?compliance=vencido|vencendo|valido -> Semáforo.
+  const statusParam = searchParams.get('status');
+  const complianceParam = searchParams.get('compliance');
+  const filtroStatus = statusParam === 'pending' ? 'enviado' : null;
+  const filtroVencimento = ['vencido', 'vencendo', 'valido'].includes(complianceParam) ? complianceParam : null;
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState('');
   const [sessaoExpirada, setSessaoExpirada] = useState(false);
@@ -97,7 +105,7 @@ const Documentos = () => {
               </CardContent>
             </Card>
 
-            <ChecklistContran companyId={selectedCompany} />
+            <ChecklistContran companyId={selectedCompany} filtroStatus={filtroStatus} filtroVencimento={filtroVencimento} />
           </>
         )}
       </div>

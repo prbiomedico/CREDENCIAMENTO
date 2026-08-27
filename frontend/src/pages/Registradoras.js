@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import axios from 'axios';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -39,6 +40,12 @@ const STATUS_ITEM_CFG = {
   inconforme: { label: 'Inconforme', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
 };
 
+const COMPLIANCE_CFG = {
+  vencido: { label: 'Doc. Vencido', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
+  vencendo: { label: 'Doc. Vencendo', icon: Clock, className: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+  valido: { label: 'Em Dia', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
+};
+
 const badge = (cfg, key, extra = '') => {
   const c = cfg[key] || cfg.pendente || Object.values(cfg)[0];
   return (
@@ -50,6 +57,13 @@ const badge = (cfg, key, extra = '') => {
 
 const Registradoras = () => {
   const { user, initialized } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Deep-link do Dashboard (Item 1, 2026-08-27): DOCUMENTOS/PENDÊNCIAS/Semáforo
+  // do DETRAN não tinham destino real — viraram um filtro nesta mesma tela
+  // em vez de uma tela nova, já que a lista de registradoras é exatamente o
+  // escopo (por UF) que GET /stats passou a usar depois do fix do item 44.
+  const complianceFiltro = searchParams.get('compliance'); // vencido|vencendo|valido
+  const pendenciasFiltro = searchParams.get('pendencias') === '1';
   const [ufs, setUfs] = useState([]);
   const [estadoSigla, setEstadoSigla] = useState(user?.detran_uf || '');
   const [registradoras, setRegistradoras] = useState([]);
@@ -83,6 +97,13 @@ const Registradoras = () => {
 
   useEffect(() => { if (initialized) fetchRegistradoras(); }, [initialized, fetchRegistradoras]);
 
+  const registradorasFiltradas = (complianceFiltro || pendenciasFiltro)
+    ? registradoras.filter((r) => (
+        (!complianceFiltro || r.compliance === complianceFiltro) &&
+        (!pendenciasFiltro || r.docs_pendentes > 0)
+      ))
+    : registradoras;
+
   const toggleExpandida = (companyId) => setExpandidas((p) => ({ ...p, [companyId]: !p[companyId] }));
 
   return (
@@ -112,6 +133,24 @@ const Registradoras = () => {
           )}
         </div>
 
+        {(complianceFiltro || pendenciasFiltro) && (
+          <div className="flex items-center gap-2 text-sm bg-primary-500/10 border border-primary-500/20 rounded-lg px-4 py-2 w-fit">
+            <span className="text-primary-300">
+              Filtrando: {complianceFiltro && <span className="font-mono uppercase">compliance={complianceFiltro}</span>}
+              {complianceFiltro && pendenciasFiltro && ' · '}
+              {pendenciasFiltro && 'com documentos pendentes'}
+              {' '}({registradorasFiltradas.length} de {registradoras.length})
+            </span>
+            <button
+              type="button"
+              onClick={() => setSearchParams((prev) => { const p = new URLSearchParams(prev); p.delete('compliance'); p.delete('pendencias'); return p; })}
+              className="text-primary-400 hover:text-primary-200 underline text-xs"
+            >
+              limpar
+            </button>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
             <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
@@ -121,16 +160,20 @@ const Registradoras = () => {
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardContent className="p-12 text-center text-zinc-400">Selecione uma UF para ver as registradoras.</CardContent>
           </Card>
-        ) : registradoras.length === 0 ? (
+        ) : registradorasFiltradas.length === 0 ? (
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardContent className="p-12 text-center">
               <Building2 className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-400">Nenhuma registradora atuando em {estadoSigla} ainda.</p>
+              <p className="text-zinc-400">
+                {registradoras.length === 0
+                  ? `Nenhuma registradora atuando em ${estadoSigla} ainda.`
+                  : 'Nenhuma registradora corresponde a este filtro.'}
+              </p>
             </CardContent>
           </Card>
         ) : (
           <div className="space-y-4">
-            {registradoras.map((r) => {
+            {registradorasFiltradas.map((r) => {
               const expandida = !!expandidas[r.company_id];
               return (
                 <Card key={r.company_id} className="bg-zinc-900/50 border-zinc-800" data-testid={`registradora-card-${r.company_id}`}>
@@ -146,11 +189,17 @@ const Registradoras = () => {
                         </div>
                         <p className="text-sm text-zinc-400">{r.nome_fantasia}</p>
                         <p className="text-xs font-mono text-zinc-500 mt-0.5">CNPJ: {r.cnpj}</p>
+                        {(complianceFiltro || pendenciasFiltro) && r.compliance && (
+                          <div className="mt-1.5">{badge(COMPLIANCE_CFG, r.compliance)}</div>
+                        )}
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
                         <div className="text-right text-xs text-zinc-500">
                           <p>{r.total_portarias_respondidas} portaria(s) respondida(s)</p>
                           <p>{r.total_homologadas} homologada(s)</p>
+                          {(complianceFiltro || pendenciasFiltro) && (
+                            <p>{r.docs_pendentes} doc(s) pendente(s)</p>
+                          )}
                         </div>
                         {expandida ? <ChevronDown className="h-4 w-4 text-zinc-500" /> : <ChevronRight className="h-4 w-4 text-zinc-500" />}
                       </div>
