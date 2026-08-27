@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { BentoGrid, BentoCard } from '@/components/ui/bento-grid';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
@@ -25,6 +26,10 @@ const Editais = () => {
   const [editais, setEditais] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filtroUF, setFiltroUF] = useState('todos');
+  const [editalParaCandidatar, setEditalParaCandidatar] = useState(null);
+  const [empresasParaEscolher, setEmpresasParaEscolher] = useState([]);
+  const [empresaEscolhida, setEmpresaEscolhida] = useState('');
+  const [candidatando, setCandidatando] = useState(false);
   const navigate = useNavigate();
 
   const { user, initialized, getToken } = useAuth();
@@ -40,21 +45,42 @@ const Editais = () => {
     finally { setLoading(false); }
   };
 
+  const enviarCandidatura = async (edital, companyId) => {
+    setCandidatando(true);
+    try {
+      await axios.post(`${API}/solicitacoes`, {
+        edital_id: edital.edital_id,
+        company_id: companyId,
+        uf: edital.uf
+      });
+      toast.success('Candidatura realizada! Veja em Solicitações.');
+      setEditalParaCandidatar(null);
+      navigate('/solicitacoes');
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Erro ao candidatar');
+    } finally {
+      setCandidatando(false);
+    }
+  };
+
   const handleCandidatar = async (edital) => {
     try {
       const companies = await axios.get(`${API}/companies`);
-      if (!companies.data.length) {
+      const empresas = Array.isArray(companies.data) ? companies.data : [];
+      if (!empresas.length) {
         toast.error('Cadastre uma empresa primeiro');
         navigate('/registradoras-empresa');
         return;
       }
-      await axios.post(`${API}/solicitacoes`, {
-        edital_id: edital.edital_id,
-        company_id: companies.data[0].company_id,
-        uf: edital.uf
-      });
-      toast.success('Candidatura realizada! Veja em Solicitações.');
-      navigate('/solicitacoes');
+      if (empresas.length === 1) {
+        await enviarCandidatura(edital, empresas[0].company_id);
+        return;
+      }
+      // Mais de uma empresa na conta (ex: registradora + financeira) — não dá
+      // pra assumir qual delas está se candidatando, precisa escolher.
+      setEmpresasParaEscolher(empresas);
+      setEmpresaEscolhida('');
+      setEditalParaCandidatar(edital);
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Erro ao candidatar');
     }
@@ -138,6 +164,39 @@ const Editais = () => {
             })}
           </BentoGrid>
         )}
+
+        <Dialog open={!!editalParaCandidatar} onOpenChange={(open) => { if (!open) setEditalParaCandidatar(null); }}>
+          <DialogContent className="bg-zinc-900 border-zinc-700 text-white">
+            <DialogHeader>
+              <DialogTitle>Qual empresa está se candidatando?</DialogTitle>
+            </DialogHeader>
+            <p className="text-sm text-zinc-400">
+              Sua conta tem mais de uma empresa cadastrada. Selecione qual delas está se candidatando ao edital{editalParaCandidatar ? ` "${editalParaCandidatar.titulo}"` : ''}.
+            </p>
+            <Select value={empresaEscolhida} onValueChange={setEmpresaEscolhida}>
+              <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white">
+                <SelectValue placeholder="Selecione a empresa" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                {empresasParaEscolher.map((c) => (
+                  <SelectItem key={c.company_id} value={c.company_id}>
+                    {c.nome_fantasia || c.name || c.company_id}
+                    {c.tipo_empresa ? ` (${c.tipo_empresa})` : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <DialogFooter>
+              <Button
+                disabled={!empresaEscolhida || candidatando}
+                onClick={() => enviarCandidatura(editalParaCandidatar, empresaEscolhida)}
+                className="bg-orange-500 hover:bg-orange-600 text-white"
+              >
+                Confirmar candidatura
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

@@ -25,7 +25,7 @@ export default function PagamentoAguardando() {
           <span style={{ fontSize:"16px" }}></span> Incio
         </a>
         <span style={{ color:"rgba(255,255,255,0.15)" }}>|</span>
-        <span style={{ fontSize:"13px", color:"rgba(249,115,22,0.8)", fontWeight:600 }}>sigcr SIGCR</span>
+        <span style={{ fontSize:"13px", color:"rgba(33,150,243,0.8)", fontWeight:600 }}>sigcr SIGCR</span>
       </div>
       <div style={{ height:"48px" }} />
 
@@ -35,10 +35,10 @@ export default function PagamentoAguardando() {
           <>
             {/* Anel pulsante */}
             <div style={{ position: "relative", width: "120px", height: "120px", margin: "0 auto 28px" }}>
-              <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "rgba(249,115,22,0.1)", animation: "ping 1.5s cubic-bezier(0,0,0.2,1) infinite" }} />
-              <div style={{ position: "absolute", inset: "12px", borderRadius: "50%", background: "rgba(249,115,22,0.15)", animation: "ping 1.5s cubic-bezier(0,0,0.2,1) infinite 0.3s" }} />
-              <div style={{ position: "absolute", inset: "24px", borderRadius: "50%", background: "rgba(249,115,22,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Clock size={32} color="#f97316" />
+              <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "rgba(33,150,243,0.1)", animation: "ping 1.5s cubic-bezier(0,0,0.2,1) infinite" }} />
+              <div style={{ position: "absolute", inset: "12px", borderRadius: "50%", background: "rgba(33,150,243,0.15)", animation: "ping 1.5s cubic-bezier(0,0,0.2,1) infinite 0.3s" }} />
+              <div style={{ position: "absolute", inset: "24px", borderRadius: "50%", background: "rgba(33,150,243,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Clock size={32} color="#2196f3" />
               </div>
             </div>
 
@@ -50,13 +50,13 @@ export default function PagamentoAguardando() {
 
             {/* Timer */}
             <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px", marginBottom: "20px" }}>
-              <div style={{ fontSize: "38px", fontWeight: 900, color: "#f97316", fontVariantNumeric: "tabular-nums" }}>{fmt(segundos)}</div>
+              <div style={{ fontSize: "38px", fontWeight: 900, color: "#2196f3", fontVariantNumeric: "tabular-nums" }}>{fmt(segundos)}</div>
               <div style={{ fontSize: "12px", color: "#4B5563", marginTop: "4px" }}>aguardando confirmao</div>
             </div>
 
             {/* Barra de progresso pulsante */}
             <div style={{ height: "3px", background: "rgba(255,255,255,0.06)", borderRadius: "3px", marginBottom: "24px", overflow: "hidden" }}>
-              <div style={{ height: "100%", background: "linear-gradient(90deg,#f97316,#fb923c)", borderRadius: "3px", animation: "progress 2s ease-in-out infinite" }} />
+              <div style={{ height: "100%", background: "linear-gradient(90deg,#2196f3,#64b5f6)", borderRadius: "3px", animation: "progress 2s ease-in-out infinite" }} />
             </div>
 
             <button onClick={() => setStatus("aguardando")} style={{ display: "flex", alignItems: "center", gap: "8px", margin: "0 auto", background: "none", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "#9CA3AF", padding: "10px 20px", cursor: "pointer", fontSize: "13px" }}>
@@ -86,7 +86,7 @@ export default function PagamentoAguardando() {
                 </div>
               ))}
             </div>
-            <button onClick={() => navigate("/dashboard")} style={{ width: "100%", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#f97316,#ea580c)", color: "#fff", fontSize: "15px", fontWeight: 800, boxShadow: "0 4px 20px rgba(249,115,22,0.3)" }}>
+            <button onClick={() => navigate("/dashboard")} style={{ width: "100%", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#2196f3,#1e88e5)", color: "#fff", fontSize: "15px", fontWeight: 800, boxShadow: "0 4px 20px rgba(33,150,243,0.3)" }}>
               Acessar o painel 
             </button>
           </>

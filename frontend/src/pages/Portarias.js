@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { Search, Plus, FileText, Calendar, ExternalLink, Sparkles, Loader2, X, ListChecks } from 'lucide-react';
+import { Search, FileText, Calendar, ExternalLink, Sparkles, Loader2, Pencil, Trash2, ShieldOff, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,9 +12,10 @@ import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import QueridoDiarioBusca, { ESTADOS_IBGE } from '../components/QueridoDiarioBusca';
+import ChecklistCatalogoPicker from '../components/ChecklistCatalogoPicker';
 
 // Agrupamento de apresentação (não mexe em vínculo/hierarquia de aditivo —
 // isso é funcionalidade futura separada, ver PENDING_ACTIONS.md). Reaproveita
@@ -44,35 +45,23 @@ const TIPOS_PORTARIA = [
   { value: 'outro', label: 'Outro' },
 ];
 
-const emptyFormData = () => ({
-  title: '',
-  content: '',
-  source: '',
-  detran: '',
-  date: new Date().toISOString().split('T')[0],
-  numero: '',
-  orgao_emissor: '',
-  estado_sigla: '',
-  status: 'vigente',
-  link_pdf: '',
-  origem: 'manual',
-  querido_diario_url: '',
-  summary: '',
-  tipo: '',
+const emptyEditData = () => ({
+  title: '', numero: '', orgao_emissor: '', estado_sigla: '', tipo: '',
+  date: new Date().toISOString().split('T')[0], status: 'vigente',
+  summary: '', link_pdf: '',
 });
 
 const Portarias = () => {
   const { user, initialized, keycloak } = useAuth();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const statusFiltro = searchParams.get('status'); // ex: ?status=vigente, vindo do card "Portarias" do Dashboard
 
-  // Cadastro de portaria é restrito a sigcr_admin/detran/detran_admin — a
-  // registradora só pode visualizar (ex: pra saber se está credenciada em
-  // algum estado), nunca cadastrar. Espelha o require_perfil do backend em
-  // POST /portarias e /portarias/upload.
-  const podeCadastrar = ['sigcr_admin', 'detran', 'detran_admin'].includes(user?.perfil);
+  // Cadastro de portaria saiu daqui — quem cria é o wizard "Criar Evento"
+  // (/criar-evento). Aqui sobra visualização + edição de campos administrativos
+  // + revogar/excluir. Espelha o require_perfil do backend em PATCH/DELETE /portarias.
+  const podeGerenciar = ['sigcr_admin', 'detran', 'detran_admin'].includes(user?.perfil);
 
-  // ── Portarias internas ──
   const [portarias, setPortarias] = useState([]);
   const portariasFiltradas = React.useMemo(
     () => (statusFiltro ? portarias.filter((p) => p.status === statusFiltro) : portarias),
@@ -83,35 +72,16 @@ const Portarias = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [analyzeText, setAnalyzeText] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const [analyzeDialogOpen, setAnalyzeDialogOpen] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
-  const [formData, setFormData] = useState(emptyFormData());
-  const [anexarArquivo, setAnexarArquivo] = useState(false);
-  const [arquivoPdf, setArquivoPdf] = useState(null);
-  const [salvando, setSalvando] = useState(false);
-  const [companies, setCompanies] = useState([]);
-  const [empresasSelecionadas, setEmpresasSelecionadas] = useState([]);
 
-  // ── Checklist de exigências (fluxo de credenciamento por portaria) ──
-  const [checklistItens, setChecklistItens] = useState([]);
-  const [novoItemNome, setNovoItemNome] = useState('');
-  const [novoItemDescricao, setNovoItemDescricao] = useState('');
-  const [novoItemPerfil, setNovoItemPerfil] = useState('registradora');
-
-  const adicionarItemChecklist = () => {
-    if (!novoItemNome.trim()) { toast.error('Informe o nome do item do checklist'); return; }
-    setChecklistItens((prev) => [
-      ...prev,
-      { nome: novoItemNome.trim(), descricao: novoItemDescricao.trim() || null, perfil_alvo: novoItemPerfil },
-    ]);
-    setNovoItemNome('');
-    setNovoItemDescricao('');
-  };
-
-  const removerItemChecklist = (index) => {
-    setChecklistItens((prev) => prev.filter((_, i) => i !== index));
-  };
+  // ── Editar (dialog leve) ──
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editandoId, setEditandoId] = useState(null);
+  const [editData, setEditData] = useState(emptyEditData());
+  const [editChecklistSelecionados, setEditChecklistSelecionados] = useState(new Set());
+  const [editChecklistItens, setEditChecklistItens] = useState([]); // itens completos (nome/descricao/perfil_alvo/catalogo_item_id)
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
 
   const getToken = async () => {
     if (keycloak && keycloak.token) {
@@ -121,30 +91,9 @@ const Portarias = () => {
     }
   };
 
-  const fetchCompanies = async () => {
-    try {
-      // Portarias referenciam empresas credenciadas (registradora) — financeira
-      // não participa desse fluxo, independente do badge/perfil ativo do usuário.
-      const response = await axios.get(`${API}/companies`, {
-        withCredentials: true,
-        params: { tipo_empresa: 'registradora' },
-      });
-      setCompanies(Array.isArray(response.data) ? response.data : []);
-    } catch (error) {
-      console.error('Erro ao carregar empresas:', error);
-    }
-  };
-
-  const toggleEmpresaReferenciada = (companyId) => {
-    setEmpresasSelecionadas((prev) =>
-      prev.includes(companyId) ? prev.filter((id) => id !== companyId) : [...prev, companyId]
-    );
-  };
-
   useEffect(() => {
     if (!initialized || !user) return;
     fetchPortarias();
-    fetchCompanies();
   }, [initialized, user]);
 
   const fetchPortarias = async () => {
@@ -194,90 +143,21 @@ const Portarias = () => {
     }
   };
 
-  const resetFormData = () => {
-    setFormData(emptyFormData());
-    setAnexarArquivo(false);
-    setArquivoPdf(null);
-    setEmpresasSelecionadas([]);
-    setChecklistItens([]);
-    setNovoItemNome('');
-    setNovoItemDescricao('');
-    setNovoItemPerfil('registradora');
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (anexarArquivo && !arquivoPdf) {
-      toast.error('Selecione o arquivo PDF ou desmarque "Anexar PDF"');
-      return;
-    }
-    setSalvando(true);
-    try {
-      if (anexarArquivo) {
-        const fd = new FormData();
-        fd.append('title', formData.title);
-        fd.append('content', formData.content);
-        fd.append('source', formData.source || 'Manual');
-        fd.append('date', formData.date);
-        if (formData.detran) fd.append('detran', formData.detran);
-        if (formData.numero) fd.append('numero', formData.numero);
-        if (formData.orgao_emissor) fd.append('orgao_emissor', formData.orgao_emissor);
-        if (formData.estado_sigla) fd.append('estado_sigla', formData.estado_sigla);
-        fd.append('status', formData.status);
-        if (formData.summary) fd.append('summary', formData.summary);
-        fd.append('origem', formData.origem);
-        if (formData.querido_diario_url) fd.append('querido_diario_url', formData.querido_diario_url);
-        if (formData.tipo) fd.append('tipo', formData.tipo);
-        if (empresasSelecionadas.length > 0) fd.append('empresas_referenciadas', JSON.stringify(empresasSelecionadas));
-        if (checklistItens.length > 0) fd.append('checklist_itens', JSON.stringify(checklistItens));
-        fd.append('file', arquivoPdf);
-        await axios.post(`${API}/portarias/upload`, fd, {
-          withCredentials: true,
-          headers: { 'Content-Type': 'multipart/form-data' },
-        });
-      } else {
-        await axios.post(`${API}/portarias`, {
-          ...formData, empresas_referenciadas: empresasSelecionadas, checklist_itens: checklistItens,
-        }, { withCredentials: true });
-      }
-      toast.success('Portaria cadastrada com sucesso!');
-      setDialogOpen(false);
-      fetchPortarias();
-      resetFormData();
-    } catch (error) {
-      console.error('Erro ao cadastrar portaria:', error);
-      toast.error(error?.response?.data?.detail || 'Erro ao cadastrar portaria');
-    } finally {
-      setSalvando(false);
-    }
-  };
-
-  // Pré-preenche o cadastro a partir de uma sugestão do Querido Diário — o
-  // usuário ainda precisa revisar e clicar em "Cadastrar", nada é salvo sozinho.
+  // Deep-link pro wizard "Criar Evento" — o achado do Diário Oficial vira
+  // pré-preenchimento do passo Detalhes; o usuário revisa e conclui lá,
+  // não existe mais cadastro direto nesta tela.
   const handlePromover = (item, estadoSigla) => {
     const primeiroExcerto = (item.excerpts && item.excerpts[0]) || '';
     const textoLimpo = primeiroExcerto.replace(/<[^>]+>/g, '');
-    setFormData({
-      title: '',
-      content: textoLimpo,
-      source: 'Querido Diário',
-      detran: estadoSigla,
-      date: item.date ? item.date.split('T')[0] : new Date().toISOString().split('T')[0],
-      numero: '',
-      orgao_emissor: '',
-      estado_sigla: estadoSigla,
-      status: 'vigente',
-      link_pdf: item.url || '',
-      origem: 'querido_diario',
+    const params = new URLSearchParams({
+      titulo: '',
+      descricao: textoLimpo,
+      uf: estadoSigla || '',
+      data_abertura: item.date ? item.date.split('T')[0] : '',
       querido_diario_url: item.url || '',
-      summary: textoLimpo,
-      tipo: '',
     });
-    setAnexarArquivo(false);
-    setArquivoPdf(null);
-    setEmpresasSelecionadas([]);
-    setDialogOpen(true);
-    toast.info('Revise os dados e confirme o cadastro da portaria.');
+    toast.info('Revise os dados no wizard e conclua o cadastro.');
+    navigate(`/criar-evento?${params.toString()}`);
   };
 
   const handleDownloadPdf = async (portaria) => {
@@ -301,6 +181,90 @@ const Portarias = () => {
     } catch (error) {
       console.error('Erro ao baixar PDF da portaria:', error);
       toast.error('Erro ao baixar PDF da portaria');
+    }
+  };
+
+  const abrirEdicao = (portaria) => {
+    setEditandoId(portaria.portaria_id);
+    setEditData({
+      title: portaria.title || '',
+      numero: portaria.numero || '',
+      orgao_emissor: portaria.orgao_emissor || '',
+      estado_sigla: portaria.estado_sigla || '',
+      tipo: portaria.tipo || '',
+      date: portaria.date ? portaria.date.split('T')[0] : new Date().toISOString().split('T')[0],
+      status: portaria.status || 'vigente',
+      summary: portaria.summary || '',
+      link_pdf: portaria.link_pdf || '',
+    });
+    const itens = Array.isArray(portaria.checklist_itens) ? portaria.checklist_itens : [];
+    setEditChecklistItens(itens);
+    setEditChecklistSelecionados(new Set(itens.filter((i) => i.catalogo_item_id).map((i) => i.catalogo_item_id)));
+    setEditDialogOpen(true);
+  };
+
+  const toggleEditChecklistItem = (catalogItem) => {
+    setEditChecklistSelecionados((prev) => {
+      const next = new Set(prev);
+      if (next.has(catalogItem.item_id)) next.delete(catalogItem.item_id); else next.add(catalogItem.item_id);
+      return next;
+    });
+    setEditChecklistItens((prev) => {
+      const existe = prev.some((i) => i.catalogo_item_id === catalogItem.item_id);
+      if (existe) return prev.filter((i) => i.catalogo_item_id !== catalogItem.item_id);
+      return [...prev, {
+        nome: catalogItem.nome, descricao: catalogItem.descricao,
+        perfil_alvo: catalogItem.perfil_alvo, catalogo_item_id: catalogItem.item_id,
+      }];
+    });
+  };
+
+  const salvarEdicao = async () => {
+    if (!editData.title.trim()) { toast.error('Informe o título'); return; }
+    setSalvandoEdicao(true);
+    try {
+      await axios.patch(`${API}/portarias/${editandoId}`, {
+        ...editData,
+        checklist_itens: editChecklistItens,
+      }, { withCredentials: true });
+      toast.success('Portaria atualizada');
+      setEditDialogOpen(false);
+      fetchPortarias();
+    } catch (error) {
+      console.error('Erro ao atualizar portaria:', error);
+      toast.error(error?.response?.data?.detail || 'Erro ao atualizar portaria');
+    } finally {
+      setSalvandoEdicao(false);
+    }
+  };
+
+  // Portaria já publicada (pelo wizard) preserva o registro histórico —
+  // "excluir" vira revogar. Rascunho ou portaria cadastrada manualmente
+  // (nunca teve ciclo de publicação) segue com exclusão de fato.
+  const handleExcluirOuRevogar = async (portaria) => {
+    if (portaria.publicado_at) {
+      if (portaria.status === 'revogada') return;
+      if (!window.confirm(`Revogar a portaria "${portaria.title}"? Ela deixa de valer, mas o registro e as submissões continuam preservados.`)) return;
+      try {
+        await axios.patch(`${API}/portarias/${portaria.portaria_id}`, { status: 'revogada' }, { withCredentials: true });
+        toast.success('Portaria revogada');
+        fetchPortarias();
+      } catch (error) {
+        toast.error(error?.response?.data?.detail || 'Erro ao revogar portaria');
+      }
+      return;
+    }
+    if (!window.confirm(`Excluir a portaria "${portaria.title}"? Esta ação não pode ser desfeita.`)) return;
+    try {
+      await axios.delete(`${API}/portarias/${portaria.portaria_id}`, { withCredentials: true });
+      toast.success('Portaria excluída');
+      fetchPortarias();
+    } catch (error) {
+      if (error?.response?.status === 409) {
+        toast.error(error.response.data?.detail || 'Há submissões em andamento — revogue em vez de excluir.');
+      } else {
+        toast.error(error?.response?.data?.detail || 'Erro ao excluir portaria');
+      }
     }
   };
 
@@ -338,6 +302,13 @@ const Portarias = () => {
                   {portaria.empresas_referenciadas.length} empresa(s) referenciada(s)
                 </Badge>
               )}
+              {portaria.criado_via === 'wizard' && (
+                <Badge className={portaria.publicado_at
+                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-xs'
+                  : 'bg-zinc-700/50 text-zinc-400 border-zinc-600 text-xs'}>
+                  {portaria.publicado_at ? 'Publicado' : 'Rascunho'}
+                </Badge>
+              )}
               {portaria.status && (
                 <Badge className={portaria.status === 'revogada'
                   ? 'bg-red-500/10 text-red-400 border-red-500/20 text-xs'
@@ -355,16 +326,50 @@ const Portarias = () => {
       </CardHeader>
       <CardContent className="pt-0">
         <p className="text-sm text-zinc-400 line-clamp-2">{portaria.summary || portaria.content}</p>
-        {portaria.link_pdf && (
-          <button
-            type="button"
-            onClick={() => handleDownloadPdf(portaria)}
-            className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary-400 hover:text-primary-300"
-          >
-            <ExternalLink className="h-3 w-3" />
-            Ver PDF
-          </button>
-        )}
+        <div className="flex items-center gap-4 mt-3">
+          {portaria.link_pdf && (
+            <button
+              type="button"
+              onClick={() => handleDownloadPdf(portaria)}
+              className="inline-flex items-center gap-1.5 text-xs text-primary-400 hover:text-primary-300"
+            >
+              <ExternalLink className="h-3 w-3" />
+              Ver PDF
+            </button>
+          )}
+          {portaria.link_publico && portaria.publicado_at && (
+            <button
+              type="button"
+              onClick={() => { navigator.clipboard.writeText(portaria.link_publico); toast.success('Link copiado!'); }}
+              className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300"
+            >
+              <Link2 className="h-3 w-3" />
+              Copiar link público
+            </button>
+          )}
+          {podeGerenciar && (
+            <div className="ml-auto flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => abrirEdicao(portaria)}
+                className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white"
+              >
+                <Pencil className="h-3 w-3" />
+                Editar
+              </button>
+              {portaria.status !== 'revogada' && (
+                <button
+                  type="button"
+                  onClick={() => handleExcluirOuRevogar(portaria)}
+                  className="inline-flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"
+                >
+                  {portaria.publicado_at ? <ShieldOff className="h-3 w-3" /> : <Trash2 className="h-3 w-3" />}
+                  {portaria.publicado_at ? 'Revogar' : 'Excluir'}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
@@ -377,7 +382,7 @@ const Portarias = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-white">Portarias</h1>
-            <p className="text-zinc-400 text-sm mt-1">Gerencie e monitore portarias dos Diários Oficiais</p>
+            <p className="text-zinc-400 text-sm mt-1">Portarias publicadas via Criar Evento e Diários Oficiais monitorados</p>
           </div>
           <div className="flex gap-2">
             <Dialog open={analyzeDialogOpen} onOpenChange={setAnalyzeDialogOpen}>
@@ -418,216 +423,11 @@ const Portarias = () => {
               </DialogContent>
             </Dialog>
 
-            {podeCadastrar && (
-            <Dialog open={dialogOpen} onOpenChange={(open) => { setDialogOpen(open); if (!open) resetFormData(); }}>
-              <DialogTrigger asChild>
-                <Button className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
-                  <Plus className="h-4 w-4" />
-                  Nova Portaria
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Cadastrar Nova Portaria</DialogTitle>
-                </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <Label className="text-zinc-300">Título</Label>
-                    <Input value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-zinc-300">Número da Portaria</Label>
-                      <Input value={formData.numero} onChange={(e) => setFormData({ ...formData, numero: e.target.value })} placeholder="Ex: 1.452/2026" className="bg-zinc-800 border-zinc-700 text-white mt-1" />
-                    </div>
-                    <div>
-                      <Label className="text-zinc-300">Órgão Emissor</Label>
-                      <Input value={formData.orgao_emissor} onChange={(e) => setFormData({ ...formData, orgao_emissor: e.target.value })} placeholder="Ex: DETRAN-SP" className="bg-zinc-800 border-zinc-700 text-white mt-1" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-zinc-300">Fonte</Label>
-                      <Input value={formData.source} onChange={(e) => setFormData({ ...formData, source: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" />
-                    </div>
-                    <div>
-                      <Label className="text-zinc-300">DETRAN</Label>
-                      <Input value={formData.detran} onChange={(e) => setFormData({ ...formData, detran: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-zinc-300">UF (estado)</Label>
-                      <Input
-                        value={formData.estado_sigla}
-                        onChange={(e) => setFormData({ ...formData, estado_sigla: e.target.value.toUpperCase().slice(0, 2) })}
-                        placeholder="Ex: SP"
-                        maxLength={2}
-                        className="bg-zinc-800 border-zinc-700 text-white mt-1"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-zinc-300">Status</Label>
-                      <Select value={formData.status} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                        <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
-                          <SelectItem value="vigente">Vigente</SelectItem>
-                          <SelectItem value="revogada">Revogada</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-zinc-300">Data</Label>
-                      <Input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" />
-                    </div>
-                    <div>
-                      <Label className="text-zinc-300">Tipo</Label>
-                      <Select value={formData.tipo} onValueChange={(value) => setFormData({ ...formData, tipo: value })}>
-                        <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
-                          {TIPOS_PORTARIA.map((t) => (
-                            <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div>
-                    <Label className="text-zinc-300">Conteúdo</Label>
-                    <Textarea value={formData.content} onChange={(e) => setFormData({ ...formData, content: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1 min-h-[100px]" />
-                  </div>
-                  <div>
-                    <Label className="text-zinc-300">Empresa(s) credenciada(s) referenciada(s)</Label>
-                    <div className="mt-1 bg-zinc-800 border border-zinc-700 rounded-lg max-h-40 overflow-y-auto p-2 space-y-1">
-                      {companies.length === 0 ? (
-                        <p className="text-xs text-zinc-500 px-1 py-1">Nenhuma empresa disponível</p>
-                      ) : (
-                        companies.map((c) => (
-                          <label key={c.company_id} className="flex items-center gap-2 px-1 py-1 text-sm text-zinc-300 hover:bg-zinc-700/50 rounded cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={empresasSelecionadas.includes(c.company_id)}
-                              onChange={() => toggleEmpresaReferenciada(c.company_id)}
-                              className="rounded border-zinc-600"
-                            />
-                            {c.nome_fantasia || c.name}
-                          </label>
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="border-t border-zinc-800 pt-4">
-                    <Label className="text-zinc-300 flex items-center gap-2 mb-2">
-                      <ListChecks className="h-4 w-4 text-primary-400" />
-                      Checklist de exigências (credenciamento)
-                    </Label>
-                    <p className="text-xs text-zinc-500 mb-3">
-                      Itens que a Registradora e/ou as Financeiras vão precisar enviar em resposta a esta portaria.
-                    </p>
-
-                    {checklistItens.length > 0 && (
-                      <div className="space-y-2 mb-3">
-                        {checklistItens.map((item, index) => (
-                          <div key={index} className="flex items-start gap-2 bg-zinc-800/60 border border-zinc-700 rounded-lg px-3 py-2">
-                            <Badge className={item.perfil_alvo === 'registradora'
-                              ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 text-xs shrink-0'
-                              : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-xs shrink-0'}>
-                              {item.perfil_alvo === 'registradora' ? 'Registradora' : 'Financeira'}
-                            </Badge>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm text-zinc-200 truncate">{item.nome}</p>
-                              {item.descricao && <p className="text-xs text-zinc-500 truncate">{item.descricao}</p>}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => removerItemChecklist(index)}
-                              className="text-zinc-500 hover:text-red-400 shrink-0"
-                            >
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
-                      <div>
-                        <Label className="text-zinc-400 text-xs">Nome do item</Label>
-                        <Input
-                          value={novoItemNome}
-                          onChange={(e) => setNovoItemNome(e.target.value)}
-                          placeholder="Ex: Certidão Negativa Federal"
-                          className="bg-zinc-800 border-zinc-700 text-white mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-zinc-400 text-xs">Perfil</Label>
-                        <Select value={novoItemPerfil} onValueChange={setNovoItemPerfil}>
-                          <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
-                            <SelectItem value="registradora">Registradora</SelectItem>
-                            <SelectItem value="financeira">Financeira</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <Button type="button" onClick={adicionarItemChecklist} className="bg-zinc-700 hover:bg-zinc-600 text-white gap-1 shrink-0">
-                        <Plus className="h-4 w-4" />
-                        Item
-                      </Button>
-                    </div>
-                    <Input
-                      value={novoItemDescricao}
-                      onChange={(e) => setNovoItemDescricao(e.target.value)}
-                      placeholder="Descrição (opcional)"
-                      className="bg-zinc-800 border-zinc-700 text-white mt-2"
-                    />
-                  </div>
-
-                  <div className="border-t border-zinc-800 pt-4">
-                    <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer mb-3">
-                      <input
-                        type="checkbox"
-                        checked={anexarArquivo}
-                        onChange={(e) => setAnexarArquivo(e.target.checked)}
-                        className="rounded border-zinc-700"
-                      />
-                      Anexar PDF (upload real, em vez de só um link)
-                    </label>
-                    {anexarArquivo ? (
-                      <Input
-                        type="file"
-                        accept="application/pdf"
-                        onChange={(e) => setArquivoPdf(e.target.files?.[0] || null)}
-                        className="bg-zinc-800 border-zinc-700 text-white"
-                      />
-                    ) : (
-                      <div>
-                        <Label className="text-zinc-300">Link do PDF (opcional)</Label>
-                        <Input
-                          value={formData.link_pdf}
-                          onChange={(e) => setFormData({ ...formData, link_pdf: e.target.value })}
-                          placeholder="https://..."
-                          className="bg-zinc-800 border-zinc-700 text-white mt-1"
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  <Button type="submit" disabled={salvando} className="bg-primary-500 hover:bg-primary-600 text-white w-full">
-                    {salvando ? 'Cadastrando...' : 'Cadastrar'}
-                  </Button>
-                </form>
-              </DialogContent>
-            </Dialog>
+            {podeGerenciar && (
+              <Button onClick={() => navigate('/criar-evento')} className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
+                <Link2 className="h-4 w-4" />
+                Criar Evento
+              </Button>
             )}
           </div>
         </div>
@@ -666,7 +466,7 @@ const Portarias = () => {
           </div>
         )}
 
-        {/* ── Lista de Portarias Internas ── */}
+        {/* ── Lista de Portarias ── */}
         {loading ? (
           <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
             <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
@@ -681,12 +481,12 @@ const Portarias = () => {
               ) : (
                 <>
                   <p className="text-zinc-400 font-medium mb-1">Nenhuma portaria cadastrada</p>
-                  {podeCadastrar ? (
+                  {podeGerenciar ? (
                     <>
-                      <p className="text-zinc-600 text-sm mb-4">Cadastre portarias ou use o Querido Diário abaixo</p>
-                      <Button onClick={() => setDialogOpen(true)} className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
-                        <Plus className="h-4 w-4" />
-                        Cadastrar Primeira Portaria
+                      <p className="text-zinc-600 text-sm mb-4">Crie um evento de credenciamento ou use o Querido Diário abaixo</p>
+                      <Button onClick={() => navigate('/criar-evento')} className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
+                        <Link2 className="h-4 w-4" />
+                        Criar Evento
                       </Button>
                     </>
                   ) : (
@@ -721,9 +521,93 @@ const Portarias = () => {
 
         {/* ── SEÇÃO: QUERIDO DIÁRIO ── */}
         <div className="border-t border-zinc-800 pt-8">
-          <QueridoDiarioBusca onPromover={podeCadastrar ? handlePromover : undefined} />
+          <QueridoDiarioBusca onPromover={podeGerenciar ? handlePromover : undefined} />
         </div>
       </div>
+
+      {/* ── Dialog: Editar Portaria ── */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Portaria</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label className="text-zinc-300">Título</Label>
+              <Input value={editData.title} onChange={(e) => setEditData({ ...editData, title: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-zinc-300">Número da Portaria</Label>
+                <Input value={editData.numero} onChange={(e) => setEditData({ ...editData, numero: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+              </div>
+              <div>
+                <Label className="text-zinc-300">Órgão Emissor</Label>
+                <Input value={editData.orgao_emissor} onChange={(e) => setEditData({ ...editData, orgao_emissor: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-zinc-300">UF (estado)</Label>
+                <Input
+                  value={editData.estado_sigla}
+                  onChange={(e) => setEditData({ ...editData, estado_sigla: e.target.value.toUpperCase().slice(0, 2) })}
+                  maxLength={2}
+                  className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                />
+              </div>
+              <div>
+                <Label className="text-zinc-300">Status</Label>
+                <Select value={editData.status} onValueChange={(value) => setEditData({ ...editData, status: value })}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
+                    <SelectItem value="vigente">Vigente</SelectItem>
+                    <SelectItem value="revogada">Revogada</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-zinc-300">Data</Label>
+                <Input type="date" value={editData.date} onChange={(e) => setEditData({ ...editData, date: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+              </div>
+              <div>
+                <Label className="text-zinc-300">Tipo</Label>
+                <Select value={editData.tipo} onValueChange={(value) => setEditData({ ...editData, tipo: value })}>
+                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
+                    {TIPOS_PORTARIA.map((t) => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div>
+              <Label className="text-zinc-300">Resumo</Label>
+              <Textarea value={editData.summary} onChange={(e) => setEditData({ ...editData, summary: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1 min-h-[80px]" />
+            </div>
+            <div>
+              <Label className="text-zinc-300">Link do PDF</Label>
+              <Input value={editData.link_pdf} onChange={(e) => setEditData({ ...editData, link_pdf: e.target.value })} placeholder="https://..." className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+            </div>
+
+            <div className="border-t border-zinc-800 pt-4">
+              <Label className="text-zinc-300 mb-2 block">Checklist de exigências</Label>
+              <ChecklistCatalogoPicker selecionados={editChecklistSelecionados} onToggle={toggleEditChecklistItem} />
+            </div>
+
+            <Button onClick={salvarEdicao} disabled={salvandoEdicao} className="bg-primary-500 hover:bg-primary-600 text-white w-full">
+              {salvandoEdicao ? 'Salvando...' : 'Salvar alterações'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };

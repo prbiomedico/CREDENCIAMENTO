@@ -25,22 +25,37 @@ const createIcon = (color="blue") => L && new L.Icon({
   iconSize:[22,36], iconAnchor:[11,36], popupAnchor:[1,-30], shadowSize:[36,36]
 });
 
-const DETRANS = [
-  { id:1, estado:"DF", nome:"DETRAN-DF", position:[-15.7942,-47.8822], credenciadas:3, status:"ativo",    color:"orange" },
-  { id:2, estado:"SP", nome:"DETRAN-SP", position:[-23.5505,-46.6333], credenciadas:12,status:"ativo",    color:"green" },
-  { id:3, estado:"RJ", nome:"DETRAN-RJ", position:[-22.9068,-43.1729], credenciadas:8, status:"ativo",    color:"green" },
-  { id:4, estado:"MG", nome:"DETRAN-MG", position:[-19.9167,-43.9345], credenciadas:6, status:"ativo",    color:"green" },
-  { id:5, estado:"CE", nome:"DETRAN-CE", position:[-3.7172,-38.5433],  credenciadas:1, status:"pendente", color:"red" },
-  { id:6, estado:"RS", nome:"DETRAN-RS", position:[-30.0346,-51.2177], credenciadas:4, status:"ativo",    color:"green" },
-  { id:7, estado:"BA", nome:"DETRAN-BA", position:[-12.9714,-38.5014], credenciadas:5, status:"ativo",    color:"green" },
-  { id:8, estado:"PR", nome:"DETRAN-PR", position:[-25.4278,-49.2731], credenciadas:7, status:"ativo",    color:"green" },
-  { id:9, estado:"SC", nome:"DETRAN-SC", position:[-27.5969,-48.5495], credenciadas:3, status:"ativo",    color:"green" },
-  { id:10,estado:"GO", nome:"DETRAN-GO", position:[-16.6864,-49.2643], credenciadas:2, status:"ativo",    color:"green" },
-];
+// Coordenadas das capitais — só georreferenciamento pra plotar o marcador,
+// não é dado de negócio (esse vem sempre do GET /mapa-nacional via prop `data`).
+const UF_COORDS = {
+  AC:[-9.9750,-67.8243], AL:[-9.6498,-35.7089], AP:[0.0389,-51.0664], AM:[-3.1190,-60.0217],
+  BA:[-12.9714,-38.5014], CE:[-3.7172,-38.5433], DF:[-15.7942,-47.8822], ES:[-20.3155,-40.3128],
+  GO:[-16.6864,-49.2643], MA:[-2.5307,-44.3068], MT:[-15.6014,-56.0979], MS:[-20.4697,-54.6201],
+  MG:[-19.9167,-43.9345], PA:[-1.4558,-48.5044], PB:[-7.1195,-34.8450], PR:[-25.4284,-49.2733],
+  PE:[-8.0476,-34.8770], PI:[-5.0892,-42.8019], RJ:[-22.9068,-43.1729], RN:[-5.7945,-35.2110],
+  RS:[-30.0346,-51.2177], RO:[-8.7619,-63.9039], RR:[2.8235,-60.6758], SC:[-27.5969,-48.5495],
+  SP:[-23.5505,-46.6333], SE:[-10.9472,-37.0731], TO:[-10.1689,-48.3317],
+};
 
-export function MapaNacional({ onDetranClick, height = "100%" }) {
+const STATUS_MAPA_CFG = {
+  // Cores Berry: sucesso/aviso seguem o mesmo mapeamento do tailwind.config.js
+  // (green->sucesso, orange->aviso aqui — não primária — pra não colidir com
+  // o azul de "edital_aberto", que fica como estava). "gold" é o nome mais
+  // próximo de âmbar disponível no pacote de ícones leaflet-color-markers.
+  credenciada:   { color:"green",  hex:"#00e676", label:"Credenciada" },
+  edital_aberto: { color:"blue",   hex:"#3b82f6", label:"Edital aberto" },
+  em_processo:   { color:"gold",   hex:"#ffc107", label:"Em processo" },
+  sem_edital:    { color:"grey",   hex:"#6b7280", label:"Sem atividade" },
+};
+
+export function MapaNacional({ data = [], onDetranClick, height = "100%" }) {
   const [selected, setSelected] = useState(null);
   if (!MapContainer) return <div style={{ display:"flex",alignItems:"center",justifyContent:"center",height:"100%",color:"rgba(255,255,255,0.4)",fontSize:"14px" }}>Mapa no disponvel</div>;
+
+  const pontos = data
+    .filter(d => UF_COORDS[d.sigla])
+    .map(d => ({ ...d, position: UF_COORDS[d.sigla], cfg: STATUS_MAPA_CFG[d.status_mapa] || STATUS_MAPA_CFG.sem_edital }));
+
   return (
     <div style={{ height, width:"100%", borderRadius:"12px", overflow:"hidden" }}>
       <MapContainer center={[-15.7942,-47.8822]} zoom={4} style={{ height:"100%", width:"100%" }} scrollWheelZoom={true}>
@@ -48,15 +63,15 @@ export function MapaNacional({ onDetranClick, height = "100%" }) {
           attribution='&copy; <a href="https://www.openstreetmap.org">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {DETRANS.map(d => (
-          <React.Fragment key={d.id}>
-            <Circle center={d.position} radius={70000} pathOptions={{ color:d.status==="pendente"?"#f97316":"#22c55e", fillOpacity:0.1, weight:1.5 }} />
-            <Marker position={d.position} icon={createIcon(d.color)} eventHandlers={{ click:()=>{ setSelected(d); onDetranClick&&onDetranClick(d); } }}>
+        {pontos.map(d => (
+          <React.Fragment key={d.sigla}>
+            <Circle center={d.position} radius={70000} pathOptions={{ color:d.cfg.hex, fillOpacity:0.1, weight:1.5 }} />
+            <Marker position={d.position} icon={createIcon(d.cfg.color)} eventHandlers={{ click:()=>{ setSelected(d); onDetranClick&&onDetranClick(d); } }}>
               <Popup>
                 <div style={{ fontFamily:"system-ui",minWidth:"150px" }}>
-                  <strong style={{ color:"#1e40af",fontSize:"14px" }}>{d.nome}</strong><br/>
-                  <span style={{ fontSize:"12px",color:"#555" }}>{d.credenciadas} registradora(s) credenciada(s)</span>
-                  {d.status==="pendente"&&<div style={{ marginTop:"6px",padding:"3px 8px",background:"#fff7ed",borderRadius:"4px",fontSize:"11px",color:"#ea580c",border:"1px solid #fed7aa" }}> POC pendente</div>}
+                  <strong style={{ color:"#1e40af",fontSize:"14px" }}>DETRAN-{d.sigla}</strong><br/>
+                  <span style={{ fontSize:"12px",color:"#555" }}>{d.aprovadas} registradora(s) credenciada(s)</span>
+                  <div style={{ marginTop:"6px",padding:"3px 8px",background:"#f3f4f6",borderRadius:"4px",fontSize:"11px",color:d.cfg.hex,border:`1px solid ${d.cfg.hex}` }}>{d.cfg.label}</div>
                 </div>
               </Popup>
             </Marker>

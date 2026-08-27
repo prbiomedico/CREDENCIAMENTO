@@ -179,8 +179,8 @@ export default function SolicitacaoDetalhe() {
                 style={{
                   width: `${progresso}%`,
                   background: progresso === 100
-                    ? 'linear-gradient(90deg, #10b981, #34d399)'
-                    : 'linear-gradient(90deg, #f97316, #fb923c)'
+                    ? 'linear-gradient(90deg, #00c853, #00e676)'
+                    : 'linear-gradient(90deg, #ffc107, #ffca28)'
                 }}
               />
             </div>

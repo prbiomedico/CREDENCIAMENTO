@@ -28,7 +28,7 @@ const PLANOS = [
     periodo: "ms",
     descricao: "Para registradoras em expanso",
     destaque: true,
-    cor: "#f97316",
+    cor: "#2196f3",
     icone: <Star size={22} />,
     recursos: [
       "At 5 DETRANs",
@@ -74,19 +74,19 @@ export default function Planos() {
           <span style={{ fontSize:"16px" }}></span> Incio
         </a>
         <span style={{ color:"rgba(255,255,255,0.15)" }}>|</span>
-        <span style={{ fontSize:"13px", color:"rgba(249,115,22,0.8)", fontWeight:600 }}>sigcr SIGCR</span>
+        <span style={{ fontSize:"13px", color:"rgba(33,150,243,0.8)", fontWeight:600 }}>sigcr SIGCR</span>
       </div>
       <div style={{ height:"48px" }} />
 
       {/* Header */}
       <div style={{ textAlign: "center", maxWidth: "680px", margin: "0 auto 48px" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(249,115,22,0.1)", border: "1px solid rgba(249,115,22,0.3)", borderRadius: "20px", padding: "6px 16px", marginBottom: "20px" }}>
-          <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#f97316", animation: "pulse 2s infinite" }} />
-          <span style={{ fontSize: "12px", fontWeight: 700, color: "#f97316", textTransform: "uppercase", letterSpacing: "0.1em" }}>Escolha seu plano</span>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(33,150,243,0.1)", border: "1px solid rgba(33,150,243,0.3)", borderRadius: "20px", padding: "6px 16px", marginBottom: "20px" }}>
+          <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#2196f3", animation: "pulse 2s infinite" }} />
+          <span style={{ fontSize: "12px", fontWeight: 700, color: "#2196f3", textTransform: "uppercase", letterSpacing: "0.1em" }}>Escolha seu plano</span>
         </div>
         <h1 style={{ fontSize: "38px", fontWeight: 800, color: "#fff", margin: "0 0 12px", lineHeight: 1.15 }}>
           Comece a credenciar<br />
-          <span style={{ color: "#f97316" }}>em minutos</span>
+          <span style={{ color: "#2196f3" }}>em minutos</span>
         </h1>
         <p style={{ fontSize: "15px", color: "#6B7280", margin: "0 0 28px" }}>
           Pague com Pix ou Boleto. Sem carto de crdito obrigatrio.
@@ -96,7 +96,7 @@ export default function Planos() {
           {["mensal", "anual"].map(p => (
             <button key={p} onClick={() => setPeriodo(p)}
               style={{ padding: "8px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, transition: "all 0.2s",
-                background: periodo === p ? "#f97316" : "transparent",
+                background: periodo === p ? "#2196f3" : "transparent",
                 color: periodo === p ? "#fff" : "#6B7280",
               }}>
               {p === "mensal" ? "Mensal" : "Anual 15%"}
@@ -110,14 +110,14 @@ export default function Planos() {
         {PLANOS.map(plano => (
           <div key={plano.id} style={{
             flex: "1 1 280px", maxWidth: "320px",
-            background: plano.destaque ? "rgba(249,115,22,0.06)" : "rgba(255,255,255,0.02)",
-            border: plano.destaque ? "2px solid rgba(249,115,22,0.5)" : "1.5px solid rgba(255,255,255,0.07)",
+            background: plano.destaque ? "rgba(33,150,243,0.06)" : "rgba(255,255,255,0.02)",
+            border: plano.destaque ? "2px solid rgba(33,150,243,0.5)" : "1.5px solid rgba(255,255,255,0.07)",
             borderRadius: "20px", padding: "28px 24px",
             position: "relative",
-            boxShadow: plano.destaque ? "0 0 40px rgba(249,115,22,0.12)" : "none",
+            boxShadow: plano.destaque ? "0 0 40px rgba(33,150,243,0.12)" : "none",
           }}>
             {plano.destaque && (
-              <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#f97316,#ea580c)", color: "#fff", fontSize: "11px", fontWeight: 800, padding: "4px 16px", borderRadius: "20px", letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+              <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#2196f3,#1e88e5)", color: "#fff", fontSize: "11px", fontWeight: 800, padding: "4px 16px", borderRadius: "20px", letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
                  Mais popular
               </div>
             )}
@@ -137,7 +137,7 @@ export default function Planos() {
             <div style={{ marginBottom: "24px" }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
                 <span style={{ fontSize: "13px", color: "#6B7280" }}>R$</span>
-                <span style={{ fontSize: "40px", fontWeight: 900, color: plano.destaque ? "#f97316" : "#fff", lineHeight: 1 }}>
+                <span style={{ fontSize: "40px", fontWeight: 900, color: plano.destaque ? "#2196f3" : "#fff", lineHeight: 1 }}>
                   {Math.round(plano.preco * desconto).toLocaleString("pt-BR")}
                 </span>
                 <span style={{ fontSize: "13px", color: "#6B7280" }}>/{plano.periodo}</span>
@@ -167,10 +167,10 @@ export default function Planos() {
               style={{
                 width: "100%", padding: "13px",
                 borderRadius: "11px", border: "none", cursor: "pointer",
-                background: plano.destaque ? "linear-gradient(135deg,#f97316,#ea580c)" : "rgba(255,255,255,0.06)",
+                background: plano.destaque ? "linear-gradient(135deg,#2196f3,#1e88e5)" : "rgba(255,255,255,0.06)",
                 color: "#fff", fontSize: "14px", fontWeight: 700,
                 transition: "all 0.2s",
-                boxShadow: plano.destaque ? "0 4px 20px rgba(249,115,22,0.3)" : "none",
+                boxShadow: plano.destaque ? "0 4px 20px rgba(33,150,243,0.3)" : "none",
               }}>
               {plano.id === "enterprise" ? "Falar com Vendas" : "Assinar agora"}
             </button>

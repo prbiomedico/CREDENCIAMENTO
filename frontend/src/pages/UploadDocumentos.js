@@ -53,15 +53,15 @@ export default function UploadDocumentos() {
             <p style={{ fontSize:"13px", color:"#6B7280", margin:0 }}>Upload seguro para credenciamento DETRAN  Dados protegidos por LGPD</p>
           </div>
           <div style={{ display:"flex", gap:"10px" }}>
-            <div style={{ background:obrigPendentes===0?"rgba(34,197,94,0.1)":"rgba(249,115,22,0.1)", border:`1px solid ${obrigPendentes===0?"rgba(34,197,94,0.3)":"rgba(249,115,22,0.3)"}`, borderRadius:"10px", padding:"10px 16px", textAlign:"center" }}>
-              <div style={{ fontSize:"20px", fontWeight:800, color:obrigPendentes===0?"#22c55e":"#f97316" }}>{total}/{CATEGORIAS.length}</div>
+            <div style={{ background:obrigPendentes===0?"rgba(0,230,118,0.1)":"rgba(255,193,7,0.1)", border:`1px solid ${obrigPendentes===0?"rgba(0,230,118,0.3)":"rgba(255,193,7,0.3)"}`, borderRadius:"10px", padding:"10px 16px", textAlign:"center" }}>
+              <div style={{ fontSize:"20px", fontWeight:800, color:obrigPendentes===0?"#00e676":"#ffc107" }}>{total}/{CATEGORIAS.length}</div>
               <div style={{ fontSize:"10px", color:"#6B7280", textTransform:"uppercase" }}>Enviados</div>
             </div>
           </div>
         </div>
         {/* Barra de progresso */}
         <div style={{ marginTop:"16px", height:"4px", background:"rgba(255,255,255,0.06)", borderRadius:"4px", overflow:"hidden" }}>
-          <div style={{ height:"100%", width:`${(total/CATEGORIAS.length)*100}%`, background:"linear-gradient(90deg,#f97316,#22c55e)", borderRadius:"4px", transition:"width 0.5s" }}/>
+          <div style={{ height:"100%", width:`${(total/CATEGORIAS.length)*100}%`, background:"linear-gradient(90deg,#ffc107,#00e676)", borderRadius:"4px", transition:"width 0.5s" }}/>
         </div>
       </div>
 
@@ -84,27 +84,27 @@ export default function UploadDocumentos() {
               onDragOver={e => { e.preventDefault(); setDragOver(cat.id); }}
               onDragLeave={() => setDragOver(null)}
               onDrop={e => { e.preventDefault(); setDragOver(null); handleFile(cat.id, e.dataTransfer.files[0]); }}
-              style={{ background:isDrag?"rgba(249,115,22,0.06)":arq?"rgba(34,197,94,0.04)":"rgba(255,255,255,0.02)", border:`1.5px solid ${isDrag?"rgba(249,115,22,0.4)":arq?"rgba(34,197,94,0.25)":"rgba(255,255,255,0.07)"}`, borderRadius:"14px", padding:"18px", cursor:"pointer", transition:"all 0.2s" }}
+              style={{ background:isDrag?"rgba(33,150,243,0.06)":arq?"rgba(0,230,118,0.04)":"rgba(255,255,255,0.02)", border:`1.5px solid ${isDrag?"rgba(33,150,243,0.4)":arq?"rgba(0,230,118,0.25)":"rgba(255,255,255,0.07)"}`, borderRadius:"14px", padding:"18px", cursor:"pointer", transition:"all 0.2s" }}
               onClick={() => { if(!arq){ setCatSelecionada(cat.id); inputRef.current.click(); } }}
             >
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"12px" }}>
                 <div>
                   <div style={{ fontWeight:700, fontSize:"14px", color:"#E8EAF0" }}>{cat.label}</div>
-                  {cat.obrig && <span style={{ fontSize:"10px", color:"#f97316", background:"rgba(249,115,22,0.1)", padding:"2px 6px", borderRadius:"4px" }}>Obrigatrio</span>}
+                  {cat.obrig && <span style={{ fontSize:"10px", color:"#ffc107", background:"rgba(255,193,7,0.1)", padding:"2px 6px", borderRadius:"4px" }}>Obrigatrio</span>}
                 </div>
                 {arq && <button onClick={e => { e.stopPropagation(); setArquivos(p => { const n={...p}; delete n[cat.id]; return n; }); }} style={{ background:"none", border:"none", color:"#6B7280", cursor:"pointer", padding:"2px" }}><X size={14}/></button>}
               </div>
               {isUploading ? (
                 <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-                  <div style={{ width:"20px", height:"20px", border:"2px solid rgba(249,115,22,0.2)", borderTopColor:"#f97316", borderRadius:"50%", animation:"spin 0.8s linear infinite", flexShrink:0 }}/>
+                  <div style={{ width:"20px", height:"20px", border:"2px solid rgba(33,150,243,0.2)", borderTopColor:"#2196f3", borderRadius:"50%", animation:"spin 0.8s linear infinite", flexShrink:0 }}/>
                   <span style={{ fontSize:"12px", color:"#9CA3AF" }}>Enviando...</span>
                   <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
                 </div>
               ) : arq ? (
                 <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-                  <CheckCircle size={18} color="#22c55e"/>
+                  <CheckCircle size={18} color="#00e676"/>
                   <div>
-                    <div style={{ fontSize:"12px", color:"#22c55e", fontWeight:600 }}>{arq.nome}</div>
+                    <div style={{ fontSize:"12px", color:"#00e676", fontWeight:600 }}>{arq.nome}</div>
                     <div style={{ fontSize:"10px", color:"#6B7280" }}>{(arq.tamanho/1024).toFixed(0)} KB  Enviado</div>
                   </div>
                 </div>
@@ -125,7 +125,7 @@ export default function UploadDocumentos() {
       {/* Boto enviar */}
       {total > 0 && (
         <div style={{ position:"sticky", bottom:"24px", display:"flex", justifyContent:"center", marginTop:"28px" }}>
-          <button disabled={obrigPendentes>0} style={{ padding:"14px 40px", borderRadius:"12px", border:"none", cursor:obrigPendentes===0?"pointer":"not-allowed", background:obrigPendentes===0?"linear-gradient(135deg,#f97316,#ea580c)":"rgba(255,255,255,0.06)", color:obrigPendentes===0?"#fff":"#4B5563", fontSize:"15px", fontWeight:800, boxShadow:obrigPendentes===0?"0 4px 20px rgba(249,115,22,0.3)":"none" }}>
+          <button disabled={obrigPendentes>0} style={{ padding:"14px 40px", borderRadius:"12px", border:"none", cursor:obrigPendentes===0?"pointer":"not-allowed", background:obrigPendentes===0?"linear-gradient(135deg,#2196f3,#1e88e5)":"rgba(255,255,255,0.06)", color:obrigPendentes===0?"#fff":"#4B5563", fontSize:"15px", fontWeight:800, boxShadow:obrigPendentes===0?"0 4px 20px rgba(33,150,243,0.3)":"none" }}>
             {obrigPendentes===0 ? " Submeter documentos ao DETRAN" : `Faltam ${obrigPendentes} documento(s) obrigatrio(s)`}
           </button>
         </div>

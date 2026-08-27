@@ -53,7 +53,7 @@ export default function Checkout() {
           <span style={{ fontSize:"16px" }}></span> Incio
         </a>
         <span style={{ color:"rgba(255,255,255,0.15)" }}>|</span>
-        <span style={{ fontSize:"13px", color:"rgba(249,115,22,0.8)", fontWeight:600 }}>sigcr SIGCR</span>
+        <span style={{ fontSize:"13px", color:"rgba(33,150,243,0.8)", fontWeight:600 }}>sigcr SIGCR</span>
       </div>
       <div style={{ height:"48px" }} />
 
@@ -99,14 +99,14 @@ export default function Checkout() {
                     ].map(m => (
                       <div key={m.id} onClick={() => setMetodo(m.id)}
                         style={{
-                          flex: 1, border: metodo === m.id ? "2px solid #f97316" : "1.5px solid rgba(255,255,255,0.08)",
+                          flex: 1, border: metodo === m.id ? "2px solid #2196f3" : "1.5px solid rgba(255,255,255,0.08)",
                           borderRadius: "12px", padding: "12px", cursor: "pointer",
-                          background: metodo === m.id ? "rgba(249,115,22,0.08)" : "transparent",
+                          background: metodo === m.id ? "rgba(33,150,243,0.08)" : "transparent",
                           display: "flex", flexDirection: "column", alignItems: "center", gap: "6px",
                           transition: "all 0.2s",
                         }}>
-                        <div style={{ color: metodo === m.id ? "#f97316" : "#6B7280" }}>{m.icon}</div>
-                        <div style={{ fontWeight: 700, fontSize: "13px", color: metodo === m.id ? "#f97316" : "#9CA3AF" }}>{m.label}</div>
+                        <div style={{ color: metodo === m.id ? "#2196f3" : "#6B7280" }}>{m.icon}</div>
+                        <div style={{ fontWeight: 700, fontSize: "13px", color: metodo === m.id ? "#2196f3" : "#9CA3AF" }}>{m.label}</div>
                         <div style={{ fontSize: "10px", color: "#4B5563" }}>{m.sub}</div>
                       </div>
                     ))}
@@ -114,7 +114,7 @@ export default function Checkout() {
                 </div>
 
                 <button onClick={handlePagar}
-                  style={{ width: "100%", marginTop: "24px", padding: "14px", borderRadius: "11px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#f97316,#ea580c)", color: "#fff", fontSize: "15px", fontWeight: 800, boxShadow: "0 4px 20px rgba(249,115,22,0.3)" }}>
+                  style={{ width: "100%", marginTop: "24px", padding: "14px", borderRadius: "11px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#2196f3,#1e88e5)", color: "#fff", fontSize: "15px", fontWeight: 800, boxShadow: "0 4px 20px rgba(33,150,243,0.3)" }}>
                   Gerar {metodo === "pix" ? "QR Code Pix" : "Boleto"}
                 </button>
 
@@ -126,7 +126,7 @@ export default function Checkout() {
 
             {step === "processando" && (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "320px", gap: "16px" }}>
-                <div style={{ width: "52px", height: "52px", border: "3px solid rgba(249,115,22,0.2)", borderTopColor: "#f97316", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                <div style={{ width: "52px", height: "52px", border: "3px solid rgba(33,150,243,0.2)", borderTopColor: "#2196f3", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
                 <div style={{ fontWeight: 700, fontSize: "16px", color: "#fff" }}>Gerando cobrana...</div>
                 <div style={{ fontSize: "13px", color: "#6B7280" }}>Conectando ao Pagar.me</div>
                 <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
@@ -136,7 +136,7 @@ export default function Checkout() {
             {step === "pix" && (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: "13px", color: "#22c55e", fontWeight: 700, marginBottom: "4px" }}> Pix gerado com sucesso</div>
+                  <div style={{ fontSize: "13px", color: "#00e676", fontWeight: 700, marginBottom: "4px" }}> Pix gerado com sucesso</div>
                   <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#fff" }}>Escaneie ou copie o cdigo</h2>
                 </div>
                 {/* QR Code fake */}
@@ -146,14 +146,14 @@ export default function Checkout() {
                 <div style={{ width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "10px", padding: "12px", position: "relative" }}>
                   <div style={{ fontSize: "10px", color: "#6B7280", marginBottom: "6px", fontWeight: 700, textTransform: "uppercase" }}>Pix Copia e Cola</div>
                   <div style={{ fontSize: "11px", color: "#9CA3AF", wordBreak: "break-all", paddingRight: "32px" }}>{PIX_COPIA_COLA.slice(0, 60)}...</div>
-                  <button onClick={handleCopiar} style={{ position: "absolute", top: "12px", right: "12px", background: "none", border: "none", cursor: "pointer", color: copiado ? "#22c55e" : "#f97316" }}>
+                  <button onClick={handleCopiar} style={{ position: "absolute", top: "12px", right: "12px", background: "none", border: "none", cursor: "pointer", color: copiado ? "#00e676" : "#2196f3" }}>
                     {copiado ? <Check size={16} /> : <Copy size={16} />}
                   </button>
                 </div>
                 <div style={{ fontSize: "12px", color: "#6B7280", textAlign: "center" }}>
-                   Expira em <strong style={{ color: "#f97316" }}>30 minutos</strong>  Valor: <strong style={{ color: "#fff" }}>R$ {valor.toLocaleString("pt-BR")}</strong>
+                   Expira em <strong style={{ color: "#ffc107" }}>30 minutos</strong>  Valor: <strong style={{ color: "#fff" }}>R$ {valor.toLocaleString("pt-BR")}</strong>
                 </div>
-                <button onClick={() => navigate("/pagamento/aguardando")} style={{ width: "100%", padding: "13px", borderRadius: "11px", border: "1.5px solid rgba(249,115,22,0.3)", background: "transparent", color: "#f97316", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>
+                <button onClick={() => navigate("/pagamento/aguardando")} style={{ width: "100%", padding: "13px", borderRadius: "11px", border: "1.5px solid rgba(33,150,243,0.3)", background: "transparent", color: "#2196f3", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>
                   J paguei  verificar
                 </button>
               </div>
@@ -162,7 +162,7 @@ export default function Checkout() {
             {step === "boleto" && (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
                 <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: "13px", color: "#22c55e", fontWeight: 700, marginBottom: "4px" }}> Boleto gerado</div>
+                  <div style={{ fontSize: "13px", color: "#00e676", fontWeight: 700, marginBottom: "4px" }}> Boleto gerado</div>
                   <h2 style={{ fontSize: "20px", fontWeight: 800, color: "#fff" }}>Boleto disponvel</h2>
                 </div>
                 <div style={{ width: "100%", background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", padding: "16px" }}>
@@ -180,7 +180,7 @@ export default function Checkout() {
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: "10px", width: "100%" }}>
-                  <button style={{ flex: 1, padding: "13px", borderRadius: "11px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#f97316,#ea580c)", color: "#fff", fontSize: "14px", fontWeight: 700 }}>
+                  <button style={{ flex: 1, padding: "13px", borderRadius: "11px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#2196f3,#1e88e5)", color: "#fff", fontSize: "14px", fontWeight: 700 }}>
                      Baixar boleto
                   </button>
                   <button style={{ flex: 1, padding: "13px", borderRadius: "11px", border: "1.5px solid rgba(255,255,255,0.1)", background: "transparent", color: "#9CA3AF", fontSize: "14px", cursor: "pointer" }}>
@@ -195,7 +195,7 @@ export default function Checkout() {
           <div style={{ flex: "0 0 280px", display: "flex", flexDirection: "column", gap: "14px" }}>
             <div style={{ background: "rgba(255,255,255,0.02)", border: "1.5px solid rgba(255,255,255,0.07)", borderRadius: "16px", padding: "22px" }}>
               <div style={{ fontSize: "11px", fontWeight: 700, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "16px" }}>Resumo do pedido</div>
-              <div style={{ fontWeight: 800, fontSize: "16px", color: "#f97316", marginBottom: "4px" }}>Plano {plano.nome}</div>
+              <div style={{ fontWeight: 800, fontSize: "16px", color: "#2196f3", marginBottom: "4px" }}>Plano {plano.nome}</div>
               <div style={{ fontSize: "12px", color: "#6B7280", marginBottom: "20px" }}>Cobrana {periodo === "mensal" ? "mensal" : "anual"}</div>
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "16px", display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
                 <span style={{ fontSize: "13px", color: "#6B7280" }}>Total</span>
@@ -206,8 +206,8 @@ export default function Checkout() {
               </div>
             </div>
 
-            <div style={{ background: "rgba(34,197,94,0.04)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "14px", padding: "16px" }}>
-              <div style={{ fontWeight: 700, fontSize: "13px", color: "#22c55e", marginBottom: "8px" }}> O que voc recebe hoje</div>
+            <div style={{ background: "rgba(0,230,118,0.04)", border: "1px solid rgba(0,230,118,0.2)", borderRadius: "14px", padding: "16px" }}>
+              <div style={{ fontWeight: 700, fontSize: "13px", color: "#00e676", marginBottom: "8px" }}> O que voc recebe hoje</div>
               {["Acesso imediato ao painel", "Esteiras de credenciamento", "API REST completa", "Suporte tcnico ativo"].map((r, i) => (
                 <div key={i} style={{ fontSize: "12px", color: "#6B7280", marginBottom: "4px" }}> {r}</div>
               ))}
@@ -215,7 +215,7 @@ export default function Checkout() {
 
             <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "14px", padding: "14px", textAlign: "center" }}>
               <div style={{ fontSize: "12px", color: "#4B5563" }}>
-                Dvidas? <a href="mailto:comercial@sigcr.com.br" style={{ color: "#f97316", textDecoration: "none" }}>comercial@sigcr.com.br</a>
+                Dvidas? <a href="mailto:comercial@sigcr.com.br" style={{ color: "#2196f3", textDecoration: "none" }}>comercial@sigcr.com.br</a>
               </div>
             </div>
           </div>

@@ -27,10 +27,18 @@ const emptyCredForm = () => ({
   valor_total_registro: '', valor_detran: '', valor_registradora: '',
 });
 
+const TIPOS_PORTARIA = [
+  { value: 'credenciamento', label: 'Credenciamento' },
+  { value: 'descredenciamento', label: 'Descredenciamento' },
+  { value: 'renovacao', label: 'Renovação' },
+  { value: 'alteracao', label: 'Alteração' },
+  { value: 'outro', label: 'Outro' },
+];
+
 const emptyPortariaForm = (estadoSigla) => ({
   title: '', content: '', source: '', detran: estadoSigla, date: new Date().toISOString().split('T')[0],
   numero: '', orgao_emissor: '', estado_sigla: estadoSigla, status: 'vigente',
-  link_pdf: '', origem: 'manual', querido_diario_url: '', summary: '',
+  link_pdf: '', origem: 'manual', querido_diario_url: '', summary: '', tipo: '',
 });
 
 export default function EstadoDetalhe() {
@@ -59,6 +67,13 @@ export default function EstadoDetalhe() {
   const [anexarArquivo, setAnexarArquivo] = useState(false);
   const [arquivoPdf, setArquivoPdf] = useState(null);
   const [salvandoPortaria, setSalvandoPortaria] = useState(false);
+  const [empresasSelecionadas, setEmpresasSelecionadas] = useState([]);
+
+  const toggleEmpresaReferenciada = (companyId) => {
+    setEmpresasSelecionadas((prev) =>
+      prev.includes(companyId) ? prev.filter((id) => id !== companyId) : [...prev, companyId]
+    );
+  };
 
   const fetchEstadoInfo = useCallback(async () => {
     setLoading(true);
@@ -99,7 +114,12 @@ export default function EstadoDetalhe() {
 
   const fetchCompanies = useCallback(async () => {
     try {
-      const response = await axios.get(`${API}/companies`, { withCredentials: true });
+      // Credenciamento por estado é sempre por registradora — financeira não
+      // participa desse fluxo, independente do badge/perfil ativo do usuário.
+      const response = await axios.get(`${API}/companies`, {
+        withCredentials: true,
+        params: { tipo_empresa: 'registradora' },
+      });
       setCompanies(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Erro ao carregar empresas:', error);
@@ -224,6 +244,7 @@ export default function EstadoDetalhe() {
     setPortariaForm(emptyPortariaForm(siglaUpper));
     setAnexarArquivo(false);
     setArquivoPdf(null);
+    setEmpresasSelecionadas([]);
   };
 
   const handlePromoverPortaria = (item, estadoSigla) => {
@@ -234,9 +255,11 @@ export default function EstadoDetalhe() {
       date: item.date ? item.date.split('T')[0] : new Date().toISOString().split('T')[0],
       numero: '', orgao_emissor: '', estado_sigla: estadoSigla, status: 'vigente',
       link_pdf: item.url || '', origem: 'querido_diario', querido_diario_url: item.url || '', summary: textoLimpo,
+      tipo: '',
     });
     setAnexarArquivo(false);
     setArquivoPdf(null);
+    setEmpresasSelecionadas([]);
     setPortariaDialogOpen(true);
     toast.info('Revise os dados e confirme o cadastro da portaria.');
   };
@@ -253,10 +276,11 @@ export default function EstadoDetalhe() {
         const fd = new FormData();
         Object.entries(portariaForm).forEach(([k, v]) => { if (v) fd.append(k, v); });
         fd.append('source', portariaForm.source || 'Manual');
+        if (empresasSelecionadas.length > 0) fd.append('empresas_referenciadas', JSON.stringify(empresasSelecionadas));
         fd.append('file', arquivoPdf);
         await axios.post(`${API}/portarias/upload`, fd, { withCredentials: true, headers: { 'Content-Type': 'multipart/form-data' } });
       } else {
-        await axios.post(`${API}/portarias`, portariaForm, { withCredentials: true });
+        await axios.post(`${API}/portarias`, { ...portariaForm, empresas_referenciadas: empresasSelecionadas }, { withCredentials: true });
       }
       toast.success('Portaria cadastrada');
       setPortariaDialogOpen(false);
@@ -599,13 +623,48 @@ export default function EstadoDetalhe() {
                               </Select>
                             </div>
                           </div>
-                          <div>
-                            <Label className="text-zinc-300">Data</Label>
-                            <Input type="date" value={portariaForm.date} onChange={(e) => setPortariaForm((p) => ({ ...p, date: e.target.value }))} className="bg-zinc-950 border-zinc-800 text-white mt-2" />
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-zinc-300">Data</Label>
+                              <Input type="date" value={portariaForm.date} onChange={(e) => setPortariaForm((p) => ({ ...p, date: e.target.value }))} className="bg-zinc-950 border-zinc-800 text-white mt-2" />
+                            </div>
+                            <div>
+                              <Label className="text-zinc-300">Tipo</Label>
+                              <Select value={portariaForm.tipo} onValueChange={(v) => setPortariaForm((p) => ({ ...p, tipo: v }))}>
+                                <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white mt-2">
+                                  <SelectValue placeholder="Selecione..." />
+                                </SelectTrigger>
+                                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                                  {TIPOS_PORTARIA.map((t) => (
+                                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                           </div>
                           <div>
                             <Label className="text-zinc-300">Conteúdo</Label>
                             <Textarea value={portariaForm.content} onChange={(e) => setPortariaForm((p) => ({ ...p, content: e.target.value }))} className="bg-zinc-950 border-zinc-800 text-white mt-2 min-h-[100px]" />
+                          </div>
+                          <div>
+                            <Label className="text-zinc-300">Empresa(s) credenciada(s) referenciada(s)</Label>
+                            <div className="mt-2 bg-zinc-950 border border-zinc-800 rounded-lg max-h-40 overflow-y-auto p-2 space-y-1">
+                              {companies.length === 0 ? (
+                                <p className="text-xs text-zinc-500 px-1 py-1">Nenhuma empresa disponível</p>
+                              ) : (
+                                companies.map((c) => (
+                                  <label key={c.company_id} className="flex items-center gap-2 px-1 py-1 text-sm text-zinc-300 hover:bg-zinc-800/50 rounded cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={empresasSelecionadas.includes(c.company_id)}
+                                      onChange={() => toggleEmpresaReferenciada(c.company_id)}
+                                      className="rounded border-zinc-700"
+                                    />
+                                    {c.nome_fantasia || c.name}
+                                  </label>
+                                ))
+                              )}
+                            </div>
                           </div>
                           <div className="border-t border-zinc-800 pt-4">
                             <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer mb-3">
@@ -646,6 +705,16 @@ export default function EstadoDetalhe() {
                                 : 'bg-green-500/10 text-green-400 border-green-500/20 text-xs'}>
                                 {portaria.status === 'revogada' ? 'Revogada' : 'Vigente'}
                               </Badge>
+                              {portaria.tipo && (
+                                <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 text-xs">
+                                  {TIPOS_PORTARIA.find((t) => t.value === portaria.tipo)?.label || portaria.tipo}
+                                </Badge>
+                              )}
+                              {Array.isArray(portaria.empresas_referenciadas) && portaria.empresas_referenciadas.length > 0 && (
+                                <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 text-xs">
+                                  {portaria.empresas_referenciadas.length} empresa(s) referenciada(s)
+                                </Badge>
+                              )}
                               <span className="text-xs text-zinc-500">{new Date(portaria.date).toLocaleDateString('pt-BR')}</span>
                             </div>
                           </div>

@@ -6,39 +6,44 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import axios from 'axios';
-import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { usePerfilAtivo } from '../contexts/PerfilAtivoContext';
 import { toast } from 'sonner';
 import ChecklistContran from '../components/ChecklistContran';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
 
+// Tipos de empresa que este seletor sabe filtrar — o badge "DETRAN" não
+// corresponde a um tipo_empresa, então nesse caso não filtramos (a rota já
+// é restrita a registradora/financeira; ver App.js).
+const TIPO_EMPRESA_LABEL = { registradora: 'Registradora', financeira: 'Financeira' };
+
 const Documentos = () => {
   const { user, initialized, getToken } = useAuth();
-  const [searchParams] = useSearchParams();
-  // Deep-link do Dashboard (Item 1, 2026-08-27): ?status=pending -> pendências
-  // aguardando validação; ?compliance=vencido|vencendo|valido -> Semáforo.
-  const statusParam = searchParams.get('status');
-  const complianceParam = searchParams.get('compliance');
-  const filtroStatus = statusParam === 'pending' ? 'enviado' : null;
-  const filtroVencimento = ['vencido', 'vencendo', 'valido'].includes(complianceParam) ? complianceParam : null;
+  const { perfilAtivo } = usePerfilAtivo();
   const [companies, setCompanies] = useState([]);
   const [selectedCompany, setSelectedCompany] = useState('');
   const [sessaoExpirada, setSessaoExpirada] = useState(false);
 
-  useEffect(() => { if (!initialized || !user) return; fetchCompanies(); }, [initialized, user]);
+  const tipoEmpresaAtivo = TIPO_EMPRESA_LABEL[perfilAtivo] ? perfilAtivo : null;
+
+  useEffect(() => { if (!initialized || !user) return; fetchCompanies(); }, [initialized, user, perfilAtivo]);
 
   const fetchCompanies = async () => {
     try { await getToken(); } catch {}
     try {
-      const response = await axios.get(`${API}/companies`, { withCredentials: true });
+      const response = await axios.get(`${API}/companies`, {
+        withCredentials: true,
+        params: tipoEmpresaAtivo ? { tipo_empresa: tipoEmpresaAtivo } : {},
+      });
       const companies = Array.isArray(response.data) ? response.data : [];
       setCompanies(companies);
       setSessaoExpirada(false);
-      if (companies.length > 0) {
-        setSelectedCompany(companies[0].company_id);
-      }
+      // Sempre reseta pra primeira empresa da lista atual — evita manter
+      // selecionada uma empresa de um tipo_empresa diferente do badge após
+      // a troca de perfil (a lista antiga já não é mais válida aqui).
+      setSelectedCompany(companies.length > 0 ? companies[0].company_id : '');
     } catch (error) {
       console.error('Error fetching companies:', error);
       if (error?.response?.status === 401) {
@@ -59,7 +64,11 @@ const Documentos = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-heading font-bold tracking-tight mb-2">Documentos</h1>
-          <p className="text-zinc-400">Checklist de documentos exigidos pela Resolução CONTRAN 807</p>
+          <p className="text-zinc-400">
+            {user?.perfil === 'financeira'
+              ? 'Checklist de documentos exigidos pra credenciamento'
+              : 'Checklist de documentos exigidos pela Resolução CONTRAN 807'}
+          </p>
         </div>
 
         {sessaoExpirada ? (
@@ -77,7 +86,11 @@ const Documentos = () => {
           <Card className="bg-zinc-900/50 border-zinc-800">
             <CardContent className="p-12 text-center">
               <FileText className="h-16 w-16 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-400 mb-4">Nenhuma empresa cadastrada</p>
+              <p className="text-zinc-400 mb-4">
+                {tipoEmpresaAtivo
+                  ? `Nenhuma empresa do tipo ${TIPO_EMPRESA_LABEL[tipoEmpresaAtivo]} cadastrada ainda`
+                  : 'Nenhuma empresa cadastrada'}
+              </p>
               <p className="text-sm text-zinc-500">Cadastre uma empresa primeiro para gerenciar documentos</p>
             </CardContent>
           </Card>
@@ -105,7 +118,7 @@ const Documentos = () => {
               </CardContent>
             </Card>
 
-            <ChecklistContran companyId={selectedCompany} filtroStatus={filtroStatus} filtroVencimento={filtroVencimento} />
+            <ChecklistContran companyId={selectedCompany} />
           </>
         )}
       </div>

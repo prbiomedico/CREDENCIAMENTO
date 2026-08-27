@@ -16,7 +16,7 @@ export default function AppMobile() {
            Voltar ao painel
         </a>
         <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
-          <div style={{ width:"60px", height:"60px", background:"linear-gradient(135deg,#f97316,#ea580c)", borderRadius:"16px", display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ width:"60px", height:"60px", background:"linear-gradient(135deg,#2196f3,#1e88e5)", borderRadius:"16px", display:"flex", alignItems:"center", justifyContent:"center" }}>
             <Smartphone size={30} color="#fff"/>
           </div>
           <div>
@@ -51,17 +51,17 @@ export default function AppMobile() {
               </div>
             </div>
             {/* Aviso beta */}
-            <div style={{ background:"rgba(249,115,22,0.08)", border:"1px solid rgba(249,115,22,0.25)", borderRadius:"10px", padding:"12px 16px", display:"flex", gap:"10px", alignItems:"flex-start" }}>
+            <div style={{ background:"rgba(33,150,243,0.08)", border:"1px solid rgba(33,150,243,0.25)", borderRadius:"10px", padding:"12px 16px", display:"flex", gap:"10px", alignItems:"flex-start" }}>
               <span style={{ fontSize:"16px" }}></span>
               <div>
-                <div style={{ fontWeight:700, fontSize:"13px", color:"#f97316", marginBottom:"4px" }}>Programa de Beta Testers</div>
+                <div style={{ fontWeight:700, fontSize:"13px", color:"#2196f3", marginBottom:"4px" }}>Programa de Beta Testers</div>
                 <div style={{ fontSize:"12px", color:"#9CA3AF" }}>Cadastre seu e-mail para ser um dos primeiros a testar o aplicativo sigcr SIGCR Mobile.</div>
               </div>
             </div>
             {/* Form email */}
             <div style={{ display:"flex", gap:"8px", marginTop:"14px" }}>
               <input placeholder="E-mail corporativo" style={{ flex:1, background:"rgba(255,255,255,0.04)", border:"1.5px solid rgba(255,255,255,0.1)", borderRadius:"8px", color:"#E8EAF0", padding:"10px 14px", fontSize:"13px", outline:"none" }} />
-              <button style={{ background:"linear-gradient(135deg,#f97316,#ea580c)", border:"none", borderRadius:"8px", color:"#fff", padding:"10px 18px", fontSize:"13px", fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
+              <button style={{ background:"linear-gradient(135deg,#2196f3,#1e88e5)", border:"none", borderRadius:"8px", color:"#fff", padding:"10px 18px", fontSize:"13px", fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
                 Quero testar
               </button>
             </div>
@@ -74,7 +74,7 @@ export default function AppMobile() {
           <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
             {features.map((f, i) => (
               <div key={i} style={{ display:"flex", gap:"14px", alignItems:"flex-start", background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:"12px", padding:"16px" }}>
-                <div style={{ width:"38px", height:"38px", background:"rgba(249,115,22,0.1)", borderRadius:"10px", display:"flex", alignItems:"center", justifyContent:"center", color:"#f97316", flexShrink:0 }}>
+                <div style={{ width:"38px", height:"38px", background:"rgba(33,150,243,0.1)", borderRadius:"10px", display:"flex", alignItems:"center", justifyContent:"center", color:"#2196f3", flexShrink:0 }}>
                   {f.icon}
                 </div>
                 <div>
@@ -93,8 +93,8 @@ export default function AppMobile() {
             <div style={{ position:"absolute", top:"12px", width:"60px", height:"8px", background:"rgba(255,255,255,0.1)", borderRadius:"4px" }} />
             {/* Contedo mock */}
             <div style={{ width:"160px", padding:"0 8px" }}>
-              <div style={{ background:"rgba(249,115,22,0.15)", border:"1px solid rgba(249,115,22,0.3)", borderRadius:"10px", padding:"12px", marginBottom:"8px", textAlign:"center" }}>
-                <div style={{ fontSize:"10px", color:"#f97316", fontWeight:700 }}> DETRAN-CE</div>
+              <div style={{ background:"rgba(33,150,243,0.15)", border:"1px solid rgba(33,150,243,0.3)", borderRadius:"10px", padding:"12px", marginBottom:"8px", textAlign:"center" }}>
+                <div style={{ fontSize:"10px", color:"#2196f3", fontWeight:700 }}> DETRAN-CE</div>
                 <div style={{ fontSize:"9px", color:"#9CA3AF", marginTop:"3px" }}>POC convocada!</div>
               </div>
               <div style={{ background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:"10px", padding:"10px", marginBottom:"6px" }}>
@@ -102,13 +102,13 @@ export default function AppMobile() {
               </div>
               <div style={{ background:"rgba(255,255,255,0.04)", borderRadius:"8px", padding:"8px", display:"flex", justifyContent:"space-between" }}>
                 <span style={{ fontSize:"9px", color:"#6B7280" }}>Contratos</span>
-                <span style={{ fontSize:"9px", color:"#f97316", fontWeight:700 }}>2.847</span>
+                <span style={{ fontSize:"9px", color:"#2196f3", fontWeight:700 }}>2.847</span>
               </div>
             </div>
             <div style={{ fontSize:"10px", color:"#4B5563" }}>sigcr SIGCR</div>
           </div>
           <div style={{ display:"flex", gap:"4px" }}>
-            {[1,2,3,4,5].map(s => <Star key={s} size={14} color="#f97316" fill="#f97316"/>)}
+            {[1,2,3,4,5].map(s => <Star key={s} size={14} color="#2196f3" fill="#2196f3"/>)}
           </div>
           <div style={{ fontSize:"12px", color:"#6B7280", textAlign:"center" }}>Preview do app mobile</div>
         </div>
