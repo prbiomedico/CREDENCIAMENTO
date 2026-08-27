@@ -3040,6 +3040,17 @@ async def get_stats(scope: EffectiveScope = Depends(get_effective_scope)):
         filtro_empresa = {"user_id": scope.effective_user_id}
 
     total_companies = await db.companies.count_documents({**filtro_empresa, "deleted_at": None})
+    # Split por tipo (Item 1 do Dashboard, 2026-08-27): o card único "Empresas"
+    # virou 2 cards (Registradoras/Financeiras) pro sigcr_admin/DETRAN — a
+    # sobrescrita de tipo_empresa no spread abaixo funciona certo nos 3 branches
+    # de filtro_empresa acima (agregado, por-UF-do-DETRAN e por-ownership),
+    # porque dict unpacking deixa a chave literal depois do spread vencer.
+    total_registradoras = await db.companies.count_documents(
+        {**filtro_empresa, "tipo_empresa": "registradora", "deleted_at": None}
+    )
+    total_financeiras = await db.companies.count_documents(
+        {**filtro_empresa, "tipo_empresa": "financeira", "deleted_at": None}
+    )
     # Aceita vocabulário antigo e o novo (pós-migração Fase 0) durante a transição —
     # ver nota no default de Company.status.
     pending_companies = await db.companies.count_documents(
@@ -3078,6 +3089,8 @@ async def get_stats(scope: EffectiveScope = Depends(get_effective_scope)):
 
     return {
         "total_companies": total_companies,
+        "total_registradoras": total_registradoras,
+        "total_financeiras": total_financeiras,
         "pending_companies": pending_companies,
         "approved_companies": approved_companies,
         "total_portarias": total_portarias,
