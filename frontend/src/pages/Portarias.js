@@ -9,10 +9,28 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
-import QueridoDiarioBusca from '../components/QueridoDiarioBusca';
+import QueridoDiarioBusca, { ESTADOS_IBGE } from '../components/QueridoDiarioBusca';
+
+// Agrupamento de apresentação (não mexe em vínculo/hierarquia de aditivo —
+// isso é funcionalidade futura separada, ver PENDING_ACTIONS.md). Reaproveita
+// a mesma lista de UFs que o Querido Diário já usa, na mesma ordem regional.
+const ORDEM_UFS = [...ESTADOS_IBGE.map((e) => e.sigla), 'SEM_UF'];
+const nomeUf = (sigla) => ESTADOS_IBGE.find((e) => e.sigla === sigla)?.nome || 'Sem UF definida';
+
+function agruparPorUf(portarias) {
+  const porUf = new Map();
+  for (const p of portarias) {
+    const sigla = (p.estado_sigla || '').toUpperCase();
+    const chave = ESTADOS_IBGE.some((e) => e.sigla === sigla) ? sigla : 'SEM_UF';
+    if (!porUf.has(chave)) porUf.set(chave, []);
+    porUf.get(chave).push(p);
+  }
+  return ORDEM_UFS.filter((uf) => porUf.has(uf)).map((uf) => ({ uf, nome: nomeUf(uf), itens: porUf.get(uf) }));
+}
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
@@ -53,6 +71,7 @@ const Portarias = () => {
 
   // ── Portarias internas ──
   const [portarias, setPortarias] = useState([]);
+  const gruposPorUf = React.useMemo(() => agruparPorUf(portarias), [portarias]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [analyzeText, setAnalyzeText] = useState('');
@@ -277,6 +296,71 @@ const Portarias = () => {
       toast.error('Erro ao baixar PDF da portaria');
     }
   };
+
+  const renderPortariaCard = (portaria) => (
+    <Card key={portaria.portaria_id} className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors">
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <CardTitle className="text-base font-semibold text-white mb-2">
+              {portaria.numero ? `${portaria.numero} — ` : ''}{portaria.title}
+            </CardTitle>
+            <div className="flex gap-2 flex-wrap">
+              {portaria.source && (
+                <Badge className="bg-primary-500/10 text-primary-400 border-primary-500/20 font-mono text-xs">
+                  {portaria.source}
+                </Badge>
+              )}
+              {(portaria.estado_sigla || portaria.detran) && (
+                <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-mono text-xs">
+                  DETRAN {portaria.estado_sigla || portaria.detran}
+                </Badge>
+              )}
+              {portaria.orgao_emissor && (
+                <Badge className="bg-zinc-700/50 text-zinc-300 border-zinc-600 font-mono text-xs">
+                  {portaria.orgao_emissor}
+                </Badge>
+              )}
+              {portaria.tipo && (
+                <Badge className="bg-secondary-500/10 text-secondary-400 border-secondary-500/20 font-mono text-xs">
+                  {TIPOS_PORTARIA.find((t) => t.value === portaria.tipo)?.label || portaria.tipo}
+                </Badge>
+              )}
+              {Array.isArray(portaria.empresas_referenciadas) && portaria.empresas_referenciadas.length > 0 && (
+                <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 font-mono text-xs">
+                  {portaria.empresas_referenciadas.length} empresa(s) referenciada(s)
+                </Badge>
+              )}
+              {portaria.status && (
+                <Badge className={portaria.status === 'revogada'
+                  ? 'bg-red-500/10 text-red-400 border-red-500/20 text-xs'
+                  : 'bg-green-500/10 text-green-400 border-green-500/20 text-xs'}>
+                  {portaria.status === 'revogada' ? 'Revogada' : 'Vigente'}
+                </Badge>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-zinc-500 shrink-0">
+            <Calendar className="h-3.5 w-3.5" />
+            {new Date(portaria.date).toLocaleDateString('pt-BR')}
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <p className="text-sm text-zinc-400 line-clamp-2">{portaria.summary || portaria.content}</p>
+        {portaria.link_pdf && (
+          <button
+            type="button"
+            onClick={() => handleDownloadPdf(portaria)}
+            className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary-400 hover:text-primary-300"
+          >
+            <ExternalLink className="h-3 w-3" />
+            Ver PDF
+          </button>
+        )}
+      </CardContent>
+    </Card>
+  );
 
   return (
     <DashboardLayout>
@@ -584,72 +668,26 @@ const Portarias = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-3">
-            {portarias.map((portaria) => (
-              <Card key={portaria.portaria_id} className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors">
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <CardTitle className="text-base font-semibold text-white mb-2">
-                        {portaria.numero ? `${portaria.numero} — ` : ''}{portaria.title}
-                      </CardTitle>
-                      <div className="flex gap-2 flex-wrap">
-                        {portaria.source && (
-                          <Badge className="bg-primary-500/10 text-primary-400 border-primary-500/20 font-mono text-xs">
-                            {portaria.source}
-                          </Badge>
-                        )}
-                        {(portaria.estado_sigla || portaria.detran) && (
-                          <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-mono text-xs">
-                            DETRAN {portaria.estado_sigla || portaria.detran}
-                          </Badge>
-                        )}
-                        {portaria.orgao_emissor && (
-                          <Badge className="bg-zinc-700/50 text-zinc-300 border-zinc-600 font-mono text-xs">
-                            {portaria.orgao_emissor}
-                          </Badge>
-                        )}
-                        {portaria.tipo && (
-                          <Badge className="bg-secondary-500/10 text-secondary-400 border-secondary-500/20 font-mono text-xs">
-                            {TIPOS_PORTARIA.find((t) => t.value === portaria.tipo)?.label || portaria.tipo}
-                          </Badge>
-                        )}
-                        {Array.isArray(portaria.empresas_referenciadas) && portaria.empresas_referenciadas.length > 0 && (
-                          <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 font-mono text-xs">
-                            {portaria.empresas_referenciadas.length} empresa(s) referenciada(s)
-                          </Badge>
-                        )}
-                        {portaria.status && (
-                          <Badge className={portaria.status === 'revogada'
-                            ? 'bg-red-500/10 text-red-400 border-red-500/20 text-xs'
-                            : 'bg-green-500/10 text-green-400 border-green-500/20 text-xs'}>
-                            {portaria.status === 'revogada' ? 'Revogada' : 'Vigente'}
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-zinc-500 shrink-0">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {new Date(portaria.date).toLocaleDateString('pt-BR')}
-                    </div>
+          <Accordion type="multiple" className="space-y-2">
+            {gruposPorUf.map(({ uf, nome, itens }) => (
+              <AccordionItem key={uf} value={uf} className="bg-zinc-900/50 border border-zinc-800 rounded-lg px-4">
+                <AccordionTrigger className="hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-mono text-xs">
+                      {uf === 'SEM_UF' ? 'SEM UF' : uf}
+                    </Badge>
+                    <span className="text-sm font-medium text-white">{nome}</span>
+                    <span className="text-xs text-zinc-500">({itens.length})</span>
                   </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <p className="text-sm text-zinc-400 line-clamp-2">{portaria.summary || portaria.content}</p>
-                  {portaria.link_pdf && (
-                    <button
-                      type="button"
-                      onClick={() => handleDownloadPdf(portaria)}
-                      className="mt-2 inline-flex items-center gap-1.5 text-xs text-primary-400 hover:text-primary-300"
-                    >
-                      <ExternalLink className="h-3 w-3" />
-                      Ver PDF
-                    </button>
-                  )}
-                </CardContent>
-              </Card>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="space-y-3">
+                    {itens.map((portaria) => renderPortariaCard(portaria))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
             ))}
-          </div>
+          </Accordion>
         )}
 
         {/* ── SEÇÃO: QUERIDO DIÁRIO ── */}

@@ -45,7 +45,7 @@ const Editais = () => {
       const companies = await axios.get(`${API}/companies`);
       if (!companies.data.length) {
         toast.error('Cadastre uma empresa primeiro');
-        navigate('/empresas');
+        navigate('/registradoras-empresa');
         return;
       }
       await axios.post(`${API}/solicitacoes`, {

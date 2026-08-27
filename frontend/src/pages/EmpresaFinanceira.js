@@ -22,8 +22,12 @@ const detransOptions = [
   'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'
 ];
 
-const Empresas = () => {
-  const { user, initialized, keycloak, getToken } = useAuth();
+// Caminho próprio da Financeira — separado de EmpresaRegistradora.js (item 2
+// do pedido do Pedro). tipo_empresa é sempre 'financeira' aqui, e o vínculo
+// com a registradora (registradora_id) é obrigatório, igual já era no
+// componente compartilhado que existia antes (Empresas.js, removido).
+const EmpresaFinanceira = () => {
+  const { user, initialized, getToken } = useAuth();
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sessaoExpirada, setSessaoExpirada] = useState(false);
@@ -37,7 +41,6 @@ const Empresas = () => {
     endereco: '',
     whatsapp: '',
     detrans_atuacao: [],
-    tipo_empresa: 'registradora',
     registradora_id: ''
   });
   const [registradorasDisponiveis, setRegistradorasDisponiveis] = useState([]);
@@ -49,7 +52,6 @@ const Empresas = () => {
       .then((res) => setRegistradorasDisponiveis(Array.isArray(res.data) ? res.data : []))
       .catch(() => {});
   }, [initialized, user]);
-
 
   const [showEditModal, setShowEditModal] = React.useState(false);
   const [editingCompany, setEditingCompany] = React.useState(null);
@@ -92,11 +94,7 @@ const Empresas = () => {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      const { registradora_id, ...resto } = editFormData;
-      const payload = editingCompany.tipo_empresa === 'financeira' && registradora_id
-        ? { ...resto, registradora_id }
-        : resto;
-      await axios.patch(`${API}/companies/${editingCompany.company_id}`, payload, { withCredentials: true });
+      await axios.patch(`${API}/companies/${editingCompany.company_id}`, editFormData, { withCredentials: true });
       toast.success('Empresa atualizada com sucesso!');
       setShowEditModal(false);
       setEditingCompany(null);
@@ -120,7 +118,7 @@ const Empresas = () => {
   const fetchCompanies = async () => {
     try { await getToken(); } catch {}
     try {
-      const response = await axios.get(`${API}/companies`, { withCredentials: true });
+      const response = await axios.get(`${API}/companies`, { withCredentials: true, params: { tipo_empresa: 'financeira' } });
       setCompanies(Array.isArray(response.data) ? response.data : []);
       setSessaoExpirada(false);
     } catch (error) {
@@ -138,12 +136,12 @@ const Empresas = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.tipo_empresa === 'financeira' && !formData.registradora_id) {
+    if (!formData.registradora_id) {
       toast.error('Selecione a registradora à qual esta financeira está vinculada');
       return;
     }
     try {
-      await axios.post(`${API}/companies`, formData, { withCredentials: true });
+      await axios.post(`${API}/companies`, { ...formData, tipo_empresa: 'financeira' }, { withCredentials: true });
       toast.success('Empresa cadastrada com sucesso!');
       setDialogOpen(false);
       setFormData({
@@ -155,7 +153,6 @@ const Empresas = () => {
         endereco: '',
         whatsapp: '',
         detrans_atuacao: [],
-        tipo_empresa: 'registradora',
         registradora_id: ''
       });
       fetchCompanies();
@@ -195,12 +192,12 @@ const Empresas = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8" data-testid="empresas-page">
+      <div className="p-6 lg:p-8" data-testid="empresa-financeira-page">
         {/* Header */}
         <div className="mb-8 flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-heading font-bold tracking-tight mb-2">Empresas</h1>
-            <p className="text-zinc-400">Gerencie as empresas registradoras cadastradas</p>
+            <h1 className="text-4xl font-heading font-bold tracking-tight mb-2">Minha Empresa</h1>
+            <p className="text-zinc-400">Gerencie os dados da sua empresa financeira</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
@@ -214,7 +211,7 @@ const Empresas = () => {
             </DialogTrigger>
             <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="font-heading text-2xl">Cadastrar Nova Empresa</DialogTitle>
+                <DialogTitle className="font-heading text-2xl">Cadastrar Empresa Financeira</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                 <div className="grid md:grid-cols-2 gap-4">
@@ -241,35 +238,19 @@ const Empresas = () => {
                     />
                   </div>
                 </div>
-                
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-zinc-300">Tipo de Empresa</Label>
-                    <Select value={formData.tipo_empresa} onValueChange={(value) => setFormData({ ...formData, tipo_empresa: value, registradora_id: '' })}>
-                      <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white mt-2">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                        <SelectItem value="registradora">Registradora</SelectItem>
-                        <SelectItem value="financeira">Financeira</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {formData.tipo_empresa === 'financeira' && (
-                    <div>
-                      <Label className="text-zinc-300">Registradora Vinculada</Label>
-                      <Select value={formData.registradora_id} onValueChange={(value) => setFormData({ ...formData, registradora_id: value })}>
-                        <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white mt-2">
-                          <SelectValue placeholder="Selecione..." />
-                        </SelectTrigger>
-                        <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                          {registradorasDisponiveis.map((r) => (
-                            <SelectItem key={r.company_id} value={r.company_id}>{r.nome_fantasia || r.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+
+                <div>
+                  <Label className="text-zinc-300">Registradora Vinculada</Label>
+                  <Select value={formData.registradora_id} onValueChange={(value) => setFormData({ ...formData, registradora_id: value })}>
+                    <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white mt-2">
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                      {registradorasDisponiveis.map((r) => (
+                        <SelectItem key={r.company_id} value={r.company_id}>{r.nome_fantasia || r.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -404,21 +385,19 @@ const Empresas = () => {
                 </div>
               </div>
 
-              {editingCompany?.tipo_empresa === 'financeira' && (
-                <div>
-                  <Label className="text-zinc-300">Registradora Vinculada</Label>
-                  <Select value={editFormData.registradora_id} onValueChange={(value) => setEditFormData({ ...editFormData, registradora_id: value })}>
-                    <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white mt-2">
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                      {registradorasDisponiveis.map((r) => (
-                        <SelectItem key={r.company_id} value={r.company_id}>{r.nome_fantasia || r.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+              <div>
+                <Label className="text-zinc-300">Registradora Vinculada</Label>
+                <Select value={editFormData.registradora_id} onValueChange={(value) => setEditFormData({ ...editFormData, registradora_id: value })}>
+                  <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white mt-2">
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                    {registradorasDisponiveis.map((r) => (
+                      <SelectItem key={r.company_id} value={r.company_id}>{r.nome_fantasia || r.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
@@ -601,8 +580,6 @@ const Empresas = () => {
                   <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800" onClick={()=>{setEditingCompany(company);setShowEditModal(true);}}>Editar</Button>
                   <Button size="sm" className="bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900" onClick={()=>handleDelete(company.company_id)}>Excluir</Button>
                 </div>
-                <div style={{display:'none'}}>
-                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -613,4 +590,4 @@ const Empresas = () => {
   );
 };
 
-export default Empresas;
+export default EmpresaFinanceira;

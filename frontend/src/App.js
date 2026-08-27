@@ -15,7 +15,8 @@ import UploadDocumentos from './pages/UploadDocumentos';
 import { CookieBanner } from './components/ui/cookie-banner';
 import MapaNacional from './pages/MapaNacional';
 import Dashboard from './pages/Dashboard';
-import Empresas from './pages/Empresas';
+import EmpresaRegistradora from './pages/EmpresaRegistradora';
+import EmpresaFinanceira from './pages/EmpresaFinanceira';
 import Portarias from './pages/Portarias';
 import Documentos from './pages/Documentos';
 import Editais from './pages/Editais';
@@ -54,7 +55,8 @@ function AppRoutes() {
     <Routes>
         <Route path="/" element={b(<Landing />)} />
         <Route path="/dashboard" element={b(<RotaProtegida><Dashboard /></RotaProtegida>)} />
-        <Route path="/empresas" element={b(<RotaProtegida perfilPermitido={["registradora", "financeira"]}><Empresas /></RotaProtegida>)} />
+        <Route path="/registradoras-empresa" element={b(<RotaProtegida perfilPermitido="registradora"><EmpresaRegistradora /></RotaProtegida>)} />
+        <Route path="/financeiras-empresa" element={b(<RotaProtegida perfilPermitido="financeira"><EmpresaFinanceira /></RotaProtegida>)} />
         <Route path="/portarias" element={b(<RotaProtegida perfilPermitido={["registradora", "detran", "detran_admin"]}><Portarias /></RotaProtegida>)} />
         <Route path="/planos" element={b(<Planos />)} />
         <Route path="/cadastro" element={b(<CadastroPublico />)} />
