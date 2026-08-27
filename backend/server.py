@@ -2911,9 +2911,17 @@ async def update_system_user(system_user_id: str, updates: dict, current_user: U
 async def get_stats(scope: EffectiveScope = Depends(get_effective_scope)):
     """Get dashboard statistics. sigcr_admin sem 'ver como' ativo vê
     estatísticas agregadas de toda a plataforma; com view_as_company_id, vê
-    exatamente o que o dono daquela empresa veria."""
+    exatamente o que o dono daquela empresa veria.
+
+    detran/detran_admin (real ou via view_as_detran_uf) nunca são donos de
+    uma Company — o filtro por user_id sempre dava zero pra esse perfil,
+    bug real e pré-existente (não introduzido aqui). Escopa pela mesma
+    lógica já usada em GET /detran/registradoras: registradoras que atuam
+    na UF do DETRAN (scope.effective_detran_uf), não por ownership."""
     if scope.current_user.perfil == "sigcr_admin" and not scope.is_viewing_as:
         filtro_empresa = {}
+    elif scope.effective_detran_uf:
+        filtro_empresa = {"tipo_empresa": "registradora", "detrans_atuacao": scope.effective_detran_uf}
     else:
         filtro_empresa = {"user_id": scope.effective_user_id}
 
