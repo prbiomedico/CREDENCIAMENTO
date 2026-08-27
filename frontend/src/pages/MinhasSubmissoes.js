@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
@@ -34,6 +35,7 @@ const STATUS_ITEM_CFG = {
 
 const MinhasSubmissoes = () => {
   const { user, initialized } = useAuth();
+  const [searchParams] = useSearchParams();
   const [company, setCompany] = useState(null);
   const [portarias, setPortarias] = useState([]);
   const [submissoes, setSubmissoes] = useState([]);
@@ -80,6 +82,23 @@ const MinhasSubmissoes = () => {
   }, [user]);
 
   useEffect(() => { if (initialized) fetchTudo(); }, [initialized, fetchTudo]);
+
+  // Deep-link vindo de uma notificação ("checklist_inconforme"/"submissao_homologada",
+  // que carregam submissao_id, ou um link direto por portaria_id) — pré-seleciona
+  // a portaria certa assim que a lista carregar. Sem efeito se o id não existir
+  // na lista (portaria/submissão de outra UF/perfil, notificação stale etc.).
+  useEffect(() => {
+    if (loading || portariaAtiva) return;
+    const submissaoIdParam = searchParams.get('submissao_id');
+    const portariaIdParam = searchParams.get('portaria_id');
+    if (submissaoIdParam) {
+      const sub = submissoes.find((s) => s.submissao_id === submissaoIdParam);
+      if (sub) setPortariaAtiva(sub.portaria_id);
+    } else if (portariaIdParam) {
+      if (portarias.some((p) => p.portaria_id === portariaIdParam)) setPortariaAtiva(portariaIdParam);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, portarias, submissoes]);
 
   const submissaoDe = (portariaId) => submissoes.find((s) => s.portaria_id === portariaId) || null;
 

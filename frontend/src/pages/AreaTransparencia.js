@@ -82,6 +82,7 @@ const AreaTransparencia = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const statusFiltro = searchParams.get('status'); // ex: ?status=vigente, vindo do card "Portarias" do Dashboard
+  const portariaIdDestaque = searchParams.get('portaria_id'); // deep-link da notificação "novo_edital"
   const aba = searchParams.get('aba') === 'editais' ? 'editais' : 'portarias';
   const setAba = (valor) => setSearchParams((prev) => {
     const p = new URLSearchParams(prev);
@@ -102,6 +103,18 @@ const AreaTransparencia = () => {
   );
   const gruposPorUf = React.useMemo(() => agruparPorUf(portariasFiltradas), [portariasFiltradas]);
   const [loadingPortarias, setLoadingPortarias] = useState(true);
+  // Grupos de UF abertos no accordion — controlado (não uncontrolled/defaultValue)
+  // só pra poder forçar a abertura do grupo certo quando chega um deep-link
+  // (?portaria_id=, da notificação "novo_edital"); usuário continua livre pra
+  // abrir/fechar outros grupos manualmente por cima disso.
+  const [ufsAbertas, setUfsAbertas] = useState([]);
+  useEffect(() => {
+    if (!portariaIdDestaque || gruposPorUf.length === 0) return;
+    const grupo = gruposPorUf.find((g) => g.itens.some((p) => p.portaria_id === portariaIdDestaque));
+    if (grupo) setUfsAbertas((prev) => (prev.includes(grupo.uf) ? prev : [...prev, grupo.uf]));
+    const el = document.getElementById(`portaria-${portariaIdDestaque}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [portariaIdDestaque, gruposPorUf]);
   const [searchQuery, setSearchQuery] = useState('');
   const [analyzeText, setAnalyzeText] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
@@ -292,7 +305,13 @@ const AreaTransparencia = () => {
   };
 
   const renderPortariaCard = (portaria) => (
-    <Card key={portaria.portaria_id} className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors">
+    <Card
+      key={portaria.portaria_id}
+      id={`portaria-${portaria.portaria_id}`}
+      className={`bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors ${
+        portaria.portaria_id === portariaIdDestaque ? 'ring-2 ring-primary-500 border-primary-500/50' : ''
+      }`}
+    >
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
@@ -703,7 +722,7 @@ const AreaTransparencia = () => {
                 </CardContent>
               </Card>
             ) : (
-              <Accordion type="multiple" className="space-y-2">
+              <Accordion type="multiple" className="space-y-2" value={ufsAbertas} onValueChange={setUfsAbertas}>
                 {gruposPorUf.map(({ uf, nome, itens }) => (
                   <AccordionItem key={uf} value={uf} className="bg-zinc-900/50 border border-zinc-800 rounded-lg px-4">
                     <AccordionTrigger className="hover:no-underline">

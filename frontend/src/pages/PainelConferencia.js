@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
@@ -33,6 +34,7 @@ const STATUS_ITEM_CFG = {
 
 const PainelConferencia = () => {
   const { user, initialized } = useAuth();
+  const [searchParams] = useSearchParams();
   const [ufs, setUfs] = useState([]);
   const [estadoSigla, setEstadoSigla] = useState(user?.detran_uf || '');
   const [submissoes, setSubmissoes] = useState([]);
@@ -90,6 +92,32 @@ const PainelConferencia = () => {
   }, [estadoSigla]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { if (initialized) fetchSubmissoes(); }, [initialized, fetchSubmissoes]);
+
+  // Deep-link vindo da notificação "submissao_recebida" que o DETRAN recebe
+  // (ver PENDING_ACTIONS.md, ciclo Portaria→Submissão). detran/detran_admin
+  // já estão sempre na própria UF (estadoSigla parte de user.detran_uf e o
+  // backend nunca deixa passar outra — ver _perfil_pode_ver_estado em
+  // GET /submissoes), então o caso comum é só selecionar o id assim que a
+  // lista carregar. sigcr_admin é quem pode estar numa UF errada — busca a
+  // submissão avulsa pra descobrir a UF certa e trocar o filtro.
+  useEffect(() => {
+    const submissaoIdParam = searchParams.get('submissao_id');
+    if (!submissaoIdParam || submissaoAtivaId === submissaoIdParam) return;
+    const jaNaLista = submissoes.some((s) => s.submissao_id === submissaoIdParam);
+    if (jaNaLista) {
+      setSubmissaoAtivaId(submissaoIdParam);
+    } else if (ehAdmin && !loading) {
+      axios.get(`${API}/submissoes/${submissaoIdParam}`, { withCredentials: true })
+        .then((res) => {
+          if (res.data?.estado_sigla && res.data.estado_sigla !== estadoSigla) {
+            setEstadoSigla(res.data.estado_sigla);
+          }
+          setSubmissaoAtivaId(submissaoIdParam);
+        })
+        .catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, submissoes, loading, ehAdmin]);
 
   const submissaoAtiva = submissoes.find((s) => s.submissao_id === submissaoAtivaId) || null;
 

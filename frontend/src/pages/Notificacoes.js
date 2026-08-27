@@ -5,7 +5,22 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+
+// Ciclo central Portaria→Submissão (ver PENDING_ACTIONS.md, levantamento do
+// fluxo "carro chefe"): cada tipo abaixo carrega o id certo em `dados` desde
+// sempre (criar_notificacao já grava portaria_id/submissao_id), só nunca
+// tinha sido usado pra navegar. Deliberadamente só os 4 tipos deste ciclo —
+// tipos do sistema antigo Editais+Solicitações (nova_solicitacao etc.) e os
+// de vencimento/registro continuam só marcando como lida, sem rota própria,
+// pra não misturar os dois fluxos.
+const ROTA_POR_TIPO = {
+  novo_edital: (dados) => dados?.portaria_id ? `/portarias?portaria_id=${dados.portaria_id}` : null,
+  submissao_recebida: (dados) => dados?.submissao_id ? `/detran/conferencia?submissao_id=${dados.submissao_id}` : null,
+  checklist_inconforme: (dados) => dados?.submissao_id ? `/credenciamento-portaria?submissao_id=${dados.submissao_id}` : null,
+  submissao_homologada: (dados) => dados?.submissao_id ? `/credenciamento-portaria?submissao_id=${dados.submissao_id}` : null,
+};
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
@@ -29,6 +44,7 @@ const Notificacoes = () => {
   const [loading, setLoading] = useState(true);
 
   const { user, initialized, getToken } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => { if (!initialized || !user) return; fetchNotifs(); }, [initialized, user]);
 
@@ -44,6 +60,12 @@ const Notificacoes = () => {
   const marcarLida = async (id) => {
     await axios.patch(`${API}/notificacoes/${id}/lida`);
     setNotifs(prev => prev.map(n => n.notificacao_id === id ? { ...n, lida: true } : n));
+  };
+
+  const abrirNotificacao = (notif) => {
+    if (!notif.lida) marcarLida(notif.notificacao_id);
+    const rota = ROTA_POR_TIPO[notif.tipo]?.(notif.dados);
+    if (rota) navigate(rota);
   };
 
   const marcarTodasLidas = async () => {
@@ -92,7 +114,7 @@ const Notificacoes = () => {
               const cfg = TIPO_CONFIG[notif.tipo] || TIPO_CONFIG.status_atualizado;
               const Icon = cfg.icon;
               return (
-                <div key={notif.notificacao_id} onClick={() => !notif.lida && marcarLida(notif.notificacao_id)}
+                <div key={notif.notificacao_id} onClick={() => abrirNotificacao(notif)}
                   className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer ${notif.lida ? 'bg-zinc-900/30 border-zinc-800/50 opacity-60' : 'bg-zinc-900/70 border-zinc-700 hover:border-zinc-600'}`}>
                   <div className={`w-9 h-9 rounded-lg bg-${cfg.color}-500/10 border border-${cfg.color}-500/20 flex items-center justify-center shrink-0`}>
                     <Icon className={`h-4 w-4 text-${cfg.color}-400`} />
