@@ -1940,3 +1940,31 @@ Rota `/financeiras`, nav "Financeiras" adicionado em `NAV_DETRAN` (seção "DETR
 Backend: commit incluído no deploy isolado (mesma técnica — HEAD confirmado idêntico à produção via `docker exec cat`, lote pendente posto de lado, deployado, restaurado depois). Rollback: `sigcr-backend:pre-deploy-rollback-20260827-0109`. Frontend: release `releases/20260827-financeiras-view`, rollback pra `20260827-dashboard-empresa-clicavel`.
 
 **Próxima fatia**: infraestrutura de filtro por query param nas telas de destino (Documentos, Portarias, telas DETRAN) — maior escopo, mapeamento por perfil a reportar antes de codar.
+
+
+## 46. Infraestrutura de filtro por query param (Documentos/Portarias/Registradoras) — ✅ DEPLOYADO (2026-08-27)
+
+Terceira fatia combinada do Item 1, autonomia total confirmada pelo Pedro pra terminar a demanda sem pausar de novo pra cada mapeamento. Filtro REAL (decisão do Pedro), não só navegação:
+
+- **`Portarias.js`**: `?status=vigente|revogada` filtra a lista antes de agrupar por UF (Item 3). Chip "Filtrando por status: X" com botão limpar.
+- **`Documentos.js`/`ChecklistContran.js`**: `?status=pending` (mapeado pro vocabulário do checklist: `pending` → item com status `enviado`, que é o que `pending_validations` do `/stats` realmente conta — documento enviado aguardando validação, não "nunca enviado"); `?compliance=vencido|vencendo|valido` filtra por status de vencimento do documento (`getVencimentoStatus`, já existia, só ganhou uma chave normalizada). Banner "N item(ns) aguardando validação/vencidos/vencendo/em dia".
+- **`Registradoras.js` + `GET /detran/registradoras`**: não existia nenhuma tela de "documentos" pro lado DETRAN que fizesse sentido (`/credenciamento/documentos` é outra coisa — `documentos_gov`, não os documentos de credenciamento de empresa que `/stats` conta). Em vez de construir uma tela nova do zero, a lista de registradoras (já o escopo certo pós-fix do item 44) ganhou 3 campos novos por empresa (`total_documentos`, `docs_pendentes`, `compliance`) e um filtro `?compliance=X`/`?pendencias=1` — badge de compliance só aparece quando o filtro está ativo (aparência default 100% preservada).
+
+**Teste**: 18 checks via Playwright reais (não só screenshot) contra os 3 componentes — clica/navega e confirma via `textContent` que o item certo aparece/some, contagens batem, chip de filtro aparece só quando esperado, aparência sem filtro fica idêntica à anterior. 2 armadilhas do próprio teste corrigidas achadas no processo: (1) Radix Accordion mantém grupos colapsados por padrão — precisa expandir antes de checar texto interno; (2) classe CSS `uppercase` muda só a renderização visual, não o `textContent` real (contém minúsculas) — checar sempre o texto real, não o que aparece na tela.
+
+Backend (`/detran/registradoras`) e frontend (`Portarias.js`, `Documentos.js`, `ChecklistContran.js`, `Registradoras.js`) deployados isolados do lote pendente (mesma técnica de sempre). Rollback backend: `sigcr-backend:pre-deploy-rollback-20260827-0213`. Frontend: release `releases/20260827-filtros-documentos-portarias-registradoras`, rollback pra `20260827-financeiras-view`.
+
+## 47. Dashboard clicável — conectado ponta a ponta, Item 1 completo — ✅ DEPLOYADO (2026-08-27)
+
+Última fatia do Item 1. Duas partes:
+
+1. **`GET /stats` ganhou `total_registradoras`/`total_financeiras`** (além do `total_companies` já existente) — dict unpacking com override de `tipo_empresa` funciona certo nos 3 branches de escopo (agregado sigcr_admin, por-UF do DETRAN, por-ownership), testado nos 3.
+2. **`Dashboard.js` conectado**: card único "Empresas" virou 2 cards reais ("Registradoras"/"Financeiras", contagem real, clique pra `/registradoras`/`/financeiras`) pro sigcr_admin/DETRAN — pro registradora/financeira continua o card único "Minha Registradora"/"Minha Financeira" (item 43). Documentos/Pendências/Portarias/Semáforo conectados com a infra do item 46: registradora/financeira → `/documentos` com filtro; sigcr_admin/DETRAN → `/registradoras` com filtro (não existe visão de "financeiras" com compliance ainda — decisão consciente de escopo, sinalizada, não construída sem necessidade concreta). Achado tratado com cuidado: card "Portarias" aparece hoje pro perfil financeira no dashboard compartilhado (ver achado do item 43 — `DashboardFinanceira` ainda não está em produção), mas financeira não tem acesso à rota `/portarias` — esse card fica estático só pra esse perfil específico, os outros 3 continuam clicáveis.
+
+**Teste**: 19 + 3 checks via Playwright cobrindo os 4 perfis (registradora, financeira, DETRAN, sigcr_admin) — cada card testado por clique real (não só presença de texto), URL de destino confirmada, contagens reais conferidas, card estático (financeira/Portarias) confirmado SEM `cursor-pointer`.
+
+**Achado de ambiente registrado pra próxima vez**: `docker run` pra um container novo é bloqueado pelo classifier de auto-modo desta sessão (ver item 44/45) — não afeta `docker exec` em container já existente nem `docker build`/`deploy.sh` (que só faz `docker stop`+`rm`+`run` do MESMO nome já autorizado). Rodar `httpx.AsyncClient(transport=ASGITransport(app=app))` dentro do container `sigcr-backend` via `docker exec` continua sendo o caminho real de teste de backend nesta sessão.
+
+Backend: rollback `sigcr-backend:pre-deploy-rollback-20260827-0307`. Frontend: release `releases/20260827-dashboard-clicks-completo`, rollback pra `20260827-filtros-documentos-portarias-registradoras`.
+
+**Item 1 (Dashboard clicável) está completo**: as 4 fatias (fix do bug de `/stats`, Financeiras.js, infra de filtro, conexão dos cliques) foram todas reportadas, testadas isoladamente e deployadas na mesma sessão, 2026-08-27, com autonomia total confirmada pelo Pedro a partir da fatia 3.
