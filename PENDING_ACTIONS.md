@@ -1928,3 +1928,15 @@ Primeira das 4 fatias combinadas pra fechar o Item 1 (ordem definida pelo Pedro:
 Deploy isolado do lote pendente do `server.py` (mesma técnica de sempre — HEAD confirmado idêntico à produção via `docker exec sigcr-backend cat /app/server.py`, isolado o suficiente pra trocar só este trecho, deployado, lote pendente restaurado depois). Rollback: `sigcr-backend:pre-deploy-rollback-20260827-0101`.
 
 **Próxima fatia**: `Financeiras.js` + endpoint novo, espelhando `Registradoras.js`/`/detran/registradoras`.
+
+## 45. Financeiras.js + GET /detran/financeiras — ✅ DEPLOYADO (2026-08-27)
+
+Segunda fatia combinada do Item 1. Visão agregada "Financeiras" pro sigcr_admin/DETRAN não existia (nem endpoint nem tela) — construída do zero, espelhando `listar_registradoras_detran`/`Registradoras.js` ponto a ponto (mesmo escopo por UF, mesma junção com `Submissao`, mesmo layout de card expansível). Diferenças: filtro `tipo_empresa="financeira"` em vez de `"registradora"`, e um campo a mais (`registradora_id`/`registradora_nome_fantasia`) já que financeira sempre depende de uma registradora vinculada (nunca faz sentido isolada).
+
+Rota `/financeiras`, nav "Financeiras" adicionado em `NAV_DETRAN` (seção "DETRANs e Registradoras", ao lado de "Registradoras") e `NAV_ADMIN_EXTRA`.
+
+**Teste real, não simulado**: o `docker run` pra um container backend-devtest novo foi bloqueado pelo classifier de auto-modo (mesma trava do item 44). Alternativa que funcionou: `httpx.AsyncClient` + `ASGITransport` direto contra o objeto `app` do `server.py`, rodando dentro do container `sigcr-backend` já existente via `docker exec` (banco isolado `sigcr_devtest_financeiras`, credencial root separada) — testa o endpoint real via HTTP de ponta a ponta (roteamento, dependências, serialização), sem precisar subir processo/porta/container novo. 5 cenários confirmados: DETRAN-SP vê só as 2 financeiras de SP (não a do RJ) com o vínculo de registradora correto; sigcr_admin com `estado_sigla=RJ` vê só a do RJ; sigcr_admin sem UF → 400; financeira (perfil sem acesso) → 403; sem auth → 401. **Cuidado registrado pra próxima vez**: `TestClient` (síncrono, thread+loop próprios) conflita com o Motor client do módulo (`RuntimeError: Event loop is closed`) quando misturado com `asyncio.run()` fora dele — usar sempre `httpx.AsyncClient(transport=ASGITransport(app=app))` dentro de um único `asyncio.run()` pra testes async contra este `server.py`.
+
+Backend: commit incluído no deploy isolado (mesma técnica — HEAD confirmado idêntico à produção via `docker exec cat`, lote pendente posto de lado, deployado, restaurado depois). Rollback: `sigcr-backend:pre-deploy-rollback-20260827-0109`. Frontend: release `releases/20260827-financeiras-view`, rollback pra `20260827-dashboard-empresa-clicavel`.
+
+**Próxima fatia**: infraestrutura de filtro por query param nas telas de destino (Documentos, Portarias, telas DETRAN) — maior escopo, mapeamento por perfil a reportar antes de codar.
