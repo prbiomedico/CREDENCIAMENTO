@@ -1882,3 +1882,37 @@ Terceira e última fatia da Fase 4. Escopo pedido: Minhas Submissões, Fila de R
 **Sem deploy**: nada mudou no código, então não há release nova pra esta fatia.
 
 **Fase 4 completa**: as 3 fatias (sigcr_admin, DETRAN, Registradora/Financeira) cobriram as ~15 telas por perfil pedidas. Achados principais da fase inteira: "Auditoria" não existe (item 38), padding ausente em 5 telas cross-cutting corrigido de uma vez (item 39), 2 telas ganharam BentoGrid real (Editais.js, GestaoEditais.js), 2 achados de laranja hardcoded fora do escopo original sinalizados mas não corrigidos por estarem em código pendente do Pedro (Dashboard.js's `DashboardFinanceira`, item 36; `Editais.js`'s diálogo de escolha de empresa, item 38).
+
+## 41. Empresa dividida em Registradora/Financeira — ✅ DEPLOYADO (2026-08-27)
+
+Pedido do Pedro: `/empresas` (`Empresas.js`) era um componente único compartilhado por registradora e financeira. Dividido em dois caminhos de verdade: `EmpresaRegistradora.js` (rota `/registradoras-empresa`, `tipo_empresa` fixo, sem seletor) e `EmpresaFinanceira.js` (rota `/financeiras-empresa`, `tipo_empresa` fixo + `registradora_id` obrigatório com seletor de vínculo). `Empresas.js` removido. Nav (`DashboardLayout.js`) renomeado pra "Minha Empresa" nos dois perfis. Backend intocado — escopo por `user_id` já bastava, mudança 100% estrutural. `Editais.js` tinha um fallback `navigate('/empresas')` (só alcançável por registradora), atualizado pra `/registradoras-empresa`.
+
+Testado com Playwright real (Chromium cacheado no ambiente, `/root/.cache/ms-playwright/chromium-1140`) + bypass temporário de auth (só nos worktrees de teste) — screenshots antes/depois confirmando título, formulário (financeira ganha seletor de registradora vinculada, registradora não tem seletor de tipo) e dados renderizando certo em cada caminho.
+
+**Achado de processo**: `Portarias.js` e `Editais.js` tinham um lote pendente grande e não commitado (ver item 36+ e `project_sigcr_dashboard_session_fixes_20260819` na memória) misturado no mesmo arquivo. Confirmado via bundle de produção que esse lote ainda não está no ar. Deploy isolado (HEAD + só a mudança deste item, lote pendente posto de lado via `git stash push -- <paths>` e depois restaurado) pra não levar código não testado de terceiros junto.
+
+Deploy: commit `afc7a69`, release `releases/20260827-empresa-portarias-uf`. Rollback: release anterior `fase4-detran-conferencia-e-padding`.
+
+## 42. Portarias agrupadas por UF — ✅ DEPLOYADO (2026-08-27)
+
+Pedido do Pedro: lista de Portarias (60 itens, flat) agrupada por UF. Implementado com `Accordion` (componente já existia no projeto, nunca tinha sido usado — `tailwind.config.js` não tinha os keyframes `accordion-down`/`accordion-up`, adicionados). Agrupamento por `estado_sigla`, ordem regional de `ESTADOS_IBGE` (já exportado por `QueridoDiarioBusca.js`, reaproveitado em vez de duplicar a lista de UFs uma terceira vez).
+
+Dados reais confirmados direto no Mongo: 27 UFs populadas (26 estados + DF), 60 portarias, 1-4 por UF — o pedido original mencionou "28 grupos", mas 26+DF=27; sinalizado, não bloqueante. Grupo "SEM_UF" existe como fallback defensivo, sem caso real hoje. Vínculo/hierarquia de aditivo explicitamente não implementado — funcionalidade futura.
+
+Mesmo deploy do item 41 (mesmo commit/release), mesma técnica de isolamento do lote pendente.
+
+## 43. Dashboard clicável — Item "Minha Empresa" ✅ DEPLOYADO; resto AGUARDANDO mapeamento (2026-08-27)
+
+Pedido do Pedro (Item 1): tornar clicáveis os 4 cards de métrica + 3 do Semáforo de Compliance no Dashboard, levando pra tela/filtro correspondente. Pedro pediu mapeamento de rota por perfil antes de codar.
+
+**Achado que mudou a análise**: o `Dashboard.js` com `DashboardFinanceira` separado (que Pedro citou como "já existente hoje") **não está em produção** — é o mesmo lote pendente não commitado de sempre (já sinalizado no item 40 como achado de laranja hardcoded fora do escopo, mas o alcance real do achado — que a tela inteira não está no ar — não tinha sido destacado com essa clareza antes). Produção hoje mostra o MESMO Dashboard (4 cards + Semáforo) pra sigcr_admin, DETRAN, registradora E financeira.
+
+**Fatia implementada agora** (a única sem ambiguidade): pro perfil real (`user.perfil`, não o badge de "ver como") registradora, o card "Empresas" virou "Minha Registradora" (clica → `/registradoras-empresa`); pro perfil financeira, virou "Minha Financeira" (clica → `/financeiras-empresa`). sigcr_admin/detran/detran_admin: card "Empresas" mantido exatamente como estava (sem clique) — o split em cards separados "Registradoras"/"Financeiras" pra esses perfis depende de uma visão agregada de Financeiras que ainda não existe (ver abaixo), não implementado ainda.
+
+**Aguardando confirmação de Pedro pro resto** (perguntas feitas, não respondidas ainda nesta sessão):
+1. Visão agregada "Financeiras" (equivalente a `Registradoras.js`/`GET /detran/registradoras`, pro card "FINANCEIRAS" de sigcr_admin/DETRAN) não existe — nem endpoint nem tela. Precisa ser construída do zero, espelhando exatamente o padrão de `/detran/registradoras` (escopo por UF).
+2. `GET /stats` escopa `total_documents`/`pending_validations`/`compliance_*` por `user_id` dono da empresa — pra DETRAN (`detran`/`detran_admin`) isso é **sempre zero**, porque DETRAN nunca é dono de uma `Company`. Bug pré-existente, não introduzido por este pedido, mas trava a implementação de "filtro real" (decisão do Pedro) pros cards DOCUMENTOS/PENDÊNCIAS/Semáforo do lado DETRAN — precisa de um `/stats` escopado por UF de atuação (`detrans_atuacao`), não por ownership, mesma lógica já usada em `/detran/registradoras`.
+3. Zero tela hoje (`Documentos.js`, `DocumentosEstadoTab.js`/`DocumentosGov.js`, `PainelConferencia.js`, `Portarias.js`) tem qualquer filtro por query param — "filtro real" (decisão do Pedro, não só navegação) significa adicionar essa infraestrutura em cada uma, escopo relevante, não é só um `onClick`.
+4. Mapeamento completo de destino por perfil pra DOCUMENTOS/PENDÊNCIAS/PORTARIAS/Semáforo ainda não fechado — depende das respostas acima.
+
+Deploy desta fatia: commit `628d978`, release `releases/20260827-dashboard-empresa-clicavel`. Rollback: release anterior `20260827-empresa-portarias-uf`.
