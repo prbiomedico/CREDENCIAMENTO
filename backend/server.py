@@ -207,6 +207,127 @@ CHECKLIST_CONTRAN_807 = [
 
 CHECKLIST_CONTRAN_807_IDS = {item["item_id"] for item in CHECKLIST_CONTRAN_807}
 
+# ============ Checklist DETRAN-DF Edital nº 003/2022 (Financeira) ============
+# Credenciamento como Agente Arrecadador. Mesmo catálogo fixo de propósito
+# que o CONTRAN 807 acima — item_id estável, nunca via uuid.
+
+CHECKLIST_DETRAN_DF_003_2022_BLOCOS = {
+    1: "Habilitação Jurídica",
+    2: "Regularidade Fiscal e Trabalhista",
+    3: "Qualificação Técnica",
+    4: "Declaratórias",
+}
+
+CHECKLIST_DETRAN_DF_003_2022 = [
+    # Bloco 1
+    {"item_id": "fin_b1_ato_constitutivo", "bloco": 1, "nome": "Ato Constitutivo/Contrato Social",
+     "descricao": "Sociedade comercial, com ata de eleição da diretoria se S/A."},
+    {"item_id": "fin_b1_inscricao_ato_constitutivo", "bloco": 1, "nome": "Inscrição do Ato Constitutivo",
+     "descricao": "Sociedades civis, com designação de diretoria."},
+    # Bloco 2
+    {"item_id": "fin_b2_cnpj", "bloco": 2, "nome": "Inscrição no CNPJ", "descricao": None},
+    {"item_id": "fin_b2_inscricao_estadual_municipal", "bloco": 2, "nome": "Inscrição Estadual/Municipal", "descricao": None},
+    {"item_id": "fin_b2_certidao_fiscal_federal", "bloco": 2, "nome": "Certidão de Regularidade Fiscal Federal", "descricao": None},
+    {"item_id": "fin_b2_certidao_fiscal_estadual", "bloco": 2, "nome": "Certidão de Regularidade Fiscal Estadual/Distrital", "descricao": None},
+    {"item_id": "fin_b2_certidao_fiscal_municipal", "bloco": 2, "nome": "Certidão de Regularidade Fiscal Municipal", "descricao": None},
+    {"item_id": "fin_b2_inss_fgts", "bloco": 2, "nome": "Regularidade relativa ao INSS e FGTS", "descricao": None},
+    {"item_id": "fin_b2_cndt", "bloco": 2, "nome": "CNDT — Certidão Negativa de Débitos Trabalhistas", "descricao": None},
+    # Bloco 3
+    {"item_id": "fin_b3_autorizacao_bacen", "bloco": 3, "nome": "Comprovação de Autorização do Banco Central do Brasil",
+     "descricao": "Banco Comercial, Banco Múltiplo ou Cooperativa de Crédito."},
+    # Bloco 4
+    {"item_id": "fin_b4_termo_compromisso", "bloco": 4, "nome": "Termo de Compromisso Assinado",
+     "descricao": "Equivalente ao Anexo I."},
+    {"item_id": "fin_b4_aceite_contrato_credenciamento", "bloco": 4, "nome": "Aceite das Condições do Contrato de Credenciamento", "descricao": None},
+]
+
+CHECKLIST_DETRAN_DF_003_2022_IDS = {item["item_id"] for item in CHECKLIST_DETRAN_DF_003_2022}
+
+# ============ Catálogo reutilizável de checklist — fluxo de portaria ============
+# Diferente dos catálogos fixos acima (CHECKLIST_CONTRAN_807 etc.), este vive
+# na coleção db.checklist_catalogo_portaria: o DETRAN pode adicionar itens
+# novos em runtime pela UI de Nova Portaria. Os itens não têm perfil_alvo
+# fixo — são exigências genéricas de habilitação de empresa; quem decide se
+# um item vale pra Registradora, Financeira ou ambos é o DETRAN, item a item,
+# no momento em que monta o checklist de uma portaria específica (ver
+# PortariaChecklistItem.perfil_alvo).
+
+BLOCO_PORTARIA_NOMES = {
+    1: "Habilitação Jurídica, Fiscal e Trabalhista",
+    2: "Qualificação Econômico-Financeira",
+    3: "Qualificação Técnica",
+}
+
+CHECKLIST_CATALOGO_PORTARIA_SEED = [
+    # Bloco I
+    {"item_id": "cat_b1_ato_constitutivo", "bloco": 1, "nome": "Ato constitutivo/estatuto/contrato social vigente", "descricao": None, "perfil_alvo": "registradora"},
+    {"item_id": "cat_b1_alvara_funcionamento", "bloco": 1, "nome": "Licença/alvará de funcionamento", "descricao": None, "perfil_alvo": "registradora"},
+    {"item_id": "cat_b1_cnpj", "bloco": 1, "nome": "Comprovante de inscrição no CNPJ", "descricao": "Situação ativa.", "perfil_alvo": "registradora"},
+    {"item_id": "cat_b1_regularidade_fiscal", "bloco": 1, "nome": "Prova de regularidade fiscal", "descricao": "Federal/Estadual ou Distrital/Municipal.", "perfil_alvo": "registradora"},
+    {"item_id": "cat_b1_seguridade_fgts", "bloco": 1, "nome": "Prova de regularidade com Seguridade Social e FGTS", "descricao": None, "perfil_alvo": "registradora"},
+    {"item_id": "cat_b1_declaracao_unica", "bloco": 1, "nome": "Declaração única de regularidade",
+     "descricao": "Documento único cobrindo: (1) não envolvimento do proprietário/sócios em atividades conflitantes, (2) não suspensão de direitos pra licitar/contratar com a administração pública, (3) não inidoneidade junto ao TCU.", "perfil_alvo": "registradora"},
+    # Bloco II
+    {"item_id": "cat_b2_balanco", "bloco": 2, "nome": "Balanço patrimonial e demonstrações contábeis", "descricao": "Último exercício.", "perfil_alvo": "registradora"},
+    {"item_id": "cat_b2_certidao_falencia", "bloco": 2, "nome": "Certidão negativa de falência/concordata ou execução patrimonial", "descricao": None, "perfil_alvo": "registradora"},
+    # Bloco III
+    {"item_id": "cat_b3_atestado_capacidade_dados", "bloco": 3, "nome": "Atestado de capacidade técnica para tratamento de dados",
+     "descricao": "Cobrindo: avaliação de impacto na privacidade, controle de acesso, transparência/direitos dos titulares, criptografia/segurança, gestão de incidentes.", "perfil_alvo": "registradora"},
+    {"item_id": "cat_b3_iso27701", "bloco": 3, "nome": "Certificação ISO/IEC 27701", "descricao": None, "perfil_alvo": "registradora"},
+    {"item_id": "cat_b3_compliance", "bloco": 3, "nome": "Comprovação de programa de integridade/compliance", "descricao": None, "perfil_alvo": "registradora"},
+    {"item_id": "cat_b3_sac", "bloco": 3, "nome": "Declaração de manutenção de SAC", "descricao": "Serviço de Atendimento ao Cliente.", "perfil_alvo": "registradora"},
+    {"item_id": "cat_b3_iso27001", "bloco": 3, "nome": "Certificação ISO/IEC 27001", "descricao": "Cobrindo também menções a ITIL/COBIT/CISSP como parte do mesmo documento.", "perfil_alvo": "registradora"},
+]
+
+
+class ChecklistCatalogoItem(BaseModel):
+    """Item reutilizável do catálogo de checklist de portaria. perfil_alvo é
+    fixo no item do catálogo (ao contrário de PortariaChecklistItem, que
+    também tem perfil_alvo mas é o snapshot copiado daqui pra uma portaria
+    específica) — os itens seed são todos "registradora" porque é a única
+    spec verificada até agora; "financeira" fica pra quando existir spec real.
+    item_id é estável de propósito: gerado uma única vez na criação, nunca
+    regenerado, pra PortariaChecklistItem.catalogo_item_id não perder o
+    vínculo."""
+    item_id: str = Field(default_factory=lambda: f"cat_{uuid.uuid4().hex[:10]}")
+    bloco: int
+    nome: str
+    descricao: Optional[str] = None
+    perfil_alvo: Literal["registradora", "financeira"]
+    ativo: bool = True
+    created_by: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class ChecklistCatalogoItemCreate(BaseModel):
+    bloco: int
+    nome: str
+    descricao: Optional[str] = None
+    perfil_alvo: Literal["registradora", "financeira"]
+
+
+class ChecklistCatalogoItemUpdate(BaseModel):
+    bloco: Optional[int] = None
+    nome: Optional[str] = None
+    descricao: Optional[str] = None
+    perfil_alvo: Optional[Literal["registradora", "financeira"]] = None
+
+
+# Fase A: checklist parametrizado por tipo_empresa. "registradora" usa a
+# Resolução CONTRAN 807; "financeira" usa o Edital DETRAN-DF nº 003/2022
+# (credenciamento como Agente Arrecadador).
+CHECKLISTS_POR_TIPO_EMPRESA = {
+    "registradora": CHECKLIST_CONTRAN_807,
+    "financeira": CHECKLIST_DETRAN_DF_003_2022,
+}
+CHECKLISTS_BLOCOS_POR_TIPO_EMPRESA = {
+    "registradora": CHECKLIST_CONTRAN_807_BLOCOS,
+    "financeira": CHECKLIST_DETRAN_DF_003_2022_BLOCOS,
+}
+CHECKLISTS_IDS_POR_TIPO_EMPRESA = {
+    tipo: {item["item_id"] for item in itens} for tipo, itens in CHECKLISTS_POR_TIPO_EMPRESA.items()
+}
+
 
 # ============ Models ============
 
@@ -269,6 +390,10 @@ class Company(BaseModel):
     # ativo_contrato_assinado/rejeitado) e a atualização de quem lê esse default acontece na
     # Fase 1, junto com a camada de autorização por status — trocar aqui sem isso quebraria
     # silenciosamente as contagens de /stats pra empresas novas criadas entre as duas fases.
+    # 2026-08-12: achado durante o merge da fatia 2 que o lote pendente já tinha essa troca
+    # feita (pra "pendente_aprovacao"), mas não commitada — mantido "pending" aqui de propósito
+    # (é o que está rodando em produção agora) até essa mudança ser revisada e deployada
+    # separadamente; ver PENDING_ACTIONS.md item 19.
     status: str = "pending"  # legado: pending/approved/rejected. Migrados: pendente_aprovacao/aprovado_acesso_limitado/ativo_contrato_assinado/rejeitado
     responsavel: Optional[Responsavel] = None
     contrato_social_path: Optional[str] = None
@@ -366,11 +491,13 @@ class DocumentUpload(BaseModel):
 class PortariaChecklistItem(BaseModel):
     """Item do checklist de exigências gerado pelo cadastro de uma portaria —
     fluxo de credenciamento por portaria (Passo A), paralelo ao checklist fixo
-    de cadastro-base (CHECKLIST_CONTRAN_807), que não é alterado por isto."""
+    de cadastro-base (CHECKLIST_CONTRAN_807/CHECKLIST_DETRAN_DF_003_2022), que
+    não é alterado por isto."""
     item_id: str = Field(default_factory=lambda: f"pci_{uuid.uuid4().hex[:8]}")
     nome: str
     descricao: Optional[str] = None
     perfil_alvo: Literal["registradora", "financeira"]
+    catalogo_item_id: Optional[str] = None  # vincula a um ChecklistCatalogoItem quando selecionado do catálogo; None em itens antigos/livres, mantém compatibilidade com portarias já cadastradas
 
 
 class Portaria(BaseModel):
@@ -387,13 +514,24 @@ class Portaria(BaseModel):
     numero: Optional[str] = None
     orgao_emissor: Optional[str] = None
     estado_sigla: Optional[str] = None  # validado contra UF_VALIDAS quando presente
-    status: str = "vigente"  # vigente, revogada
+    status: str = "vigente"  # vigente, revogada — força legal do ato, eixo independente de publicado_at
     link_pdf: Optional[str] = None  # path de arquivo enviado via /portarias/upload OU URL externa
     origem: str = "manual"  # manual, querido_diario
     querido_diario_url: Optional[str] = None
     tipo: Optional[str] = None  # credenciamento, descredenciamento, renovacao, alteracao, outro
     empresas_referenciadas: List[str] = []  # company_ids credenciados/afetados por esta portaria
     checklist_itens: List[PortariaChecklistItem] = []  # checklist de exigências desta portaria, por perfil (fluxo de credenciamento)
+    # Campos do wizard "Criar Evento" — fusão Evento/Portaria (ver memória
+    # project-sigcr-criar-evento-integracao). Todos opcionais/aditivos: uma
+    # portaria cadastrada manualmente (criado_via='manual') nunca os preenche.
+    template: Optional[str] = None  # 'credenciamento' etc — só quando criado_via='wizard'
+    timeline: List[dict] = []  # legado — mais ninguém popula (etapas calculadas removidas 2026-08-08, ver PENDING_ACTIONS.md); campo mantido só pra não quebrar portarias antigas que já têm o array salvo
+    data_abertura: Optional[str] = None
+    data_encerramento: Optional[str] = None
+    publicado_at: Optional[str] = None  # None = rascunho do wizard; setado = publicado. Independente de `status`
+    token_publico: Optional[str] = None
+    link_publico: Optional[str] = None
+    criado_via: str = "manual"  # manual, wizard, querido_diario
     created_by: Optional[str] = None
     updated_at: Optional[datetime] = None
     deleted_at: Optional[str] = None
@@ -403,9 +541,13 @@ class Portaria(BaseModel):
 
 class PortariaCreate(BaseModel):
     title: str
-    content: str
-    source: str
-    date: datetime
+    # content/source/date eram obrigatórios pensando só no caso "transcrevi um
+    # ato oficial" — o wizard não produz naturalmente um texto de lei nem uma
+    # data de publicação, então viram opcionais com default aplicado na rota
+    # quando criado_via='wizard' (ver criar_portaria).
+    content: Optional[str] = None
+    source: Optional[str] = None
+    date: Optional[datetime] = None
     detran: Optional[str] = None
     numero: Optional[str] = None
     orgao_emissor: Optional[str] = None
@@ -418,6 +560,11 @@ class PortariaCreate(BaseModel):
     tipo: Optional[str] = None
     empresas_referenciadas: List[str] = []
     checklist_itens: List[PortariaChecklistItem] = []
+    template: Optional[str] = None
+    timeline: List[dict] = []
+    data_abertura: Optional[str] = None
+    data_encerramento: Optional[str] = None
+    criado_via: str = "manual"
 
 
 class PortariaUpdate(BaseModel):
@@ -434,6 +581,9 @@ class PortariaUpdate(BaseModel):
     tipo: Optional[str] = None
     empresas_referenciadas: Optional[List[str]] = None
     checklist_itens: Optional[List[PortariaChecklistItem]] = None
+    timeline: Optional[List[dict]] = None
+    data_abertura: Optional[str] = None
+    data_encerramento: Optional[str] = None
 
 
 class AnalyzeRequest(BaseModel):
@@ -1072,8 +1222,9 @@ async def get_companies(tipo_empresa: Optional[str] = None, scope: EffectiveScop
     como" no frontend); com view_as_company_id, vê só a(s) empresa(s) do dono
     daquela empresa (mimetiza exatamente o que o dono veria). tipo_empresa
     opcional filtra por segmento (registradora/financeira) — usado pelo seletor
-    de vínculo (Empresas.js) e pelo seletor de empresa solicitante (fila de
-    registro de contrato).
+    de vínculo (Empresas.js), pelo seletor de empresa solicitante (fila de
+    registro de contrato) e pelo badge de perfil do admin pra não misturar
+    tipos no seletor "Selecionar Empresa".
 
     Caso especial: perfil financeira pedindo tipo_empresa=registradora não é
     escopado por ownership (nunca seria dono de uma registradora) — precisa
@@ -1098,8 +1249,10 @@ async def get_companies(tipo_empresa: Optional[str] = None, scope: EffectiveScop
 
 async def _validar_tipo_e_vinculo_empresa(tipo_empresa: str, registradora_id: Optional[str]) -> None:
     """Regras da Fase A pro par (tipo_empresa, registradora_id), compartilhadas
-    entre POST /companies (admin) e PATCH /companies/{id} (correção posterior
-    do vínculo)."""
+    entre POST /companies (autenticado), PATCH /companies/{id} (correção
+    posterior do vínculo) e POST /public/cadastro (autocadastro). Autocadastro
+    só cria registradora ou financeira — DETRAN continua exclusivamente
+    admin-created (GestaoUsuarios)."""
     if tipo_empresa not in ("registradora", "financeira"):
         raise HTTPException(status_code=400, detail="tipo_empresa deve ser 'registradora' ou 'financeira'")
     if tipo_empresa == "financeira":
@@ -1534,8 +1687,11 @@ async def upload_document(
     valor inválido, e não o 422 padrão do FastAPI pra Form ausente."""
     scope = await _autorizar_acesso_empresa(company_id, current_user, exigir_nao_deletada=False)
 
-    if not checklist_item_id or checklist_item_id not in CHECKLIST_CONTRAN_807_IDS:
-        raise HTTPException(status_code=400, detail="checklist_item_id é obrigatório e precisa ser um item válido do checklist CONTRAN 807")
+    company_doc = await db.companies.find_one({"company_id": company_id}, {"_id": 0, "tipo_empresa": 1})
+    tipo_empresa = (company_doc or {}).get("tipo_empresa", "registradora")
+    ids_validos = CHECKLISTS_IDS_POR_TIPO_EMPRESA.get(tipo_empresa, set())
+    if not checklist_item_id or checklist_item_id not in ids_validos:
+        raise HTTPException(status_code=400, detail="checklist_item_id é obrigatório e precisa ser um item válido do checklist deste tipo de empresa")
 
     # Generate unique filename
     file_extension = Path(file.filename).suffix if file.filename else ""
@@ -1676,6 +1832,11 @@ async def get_checklist_contran(
             raise HTTPException(status_code=404, detail="Nenhuma empresa encontrada pra montar o checklist")
         target_company_id = empresas[0]["company_id"]
 
+    company_doc = await db.companies.find_one({"company_id": target_company_id}, {"_id": 0, "tipo_empresa": 1})
+    tipo_empresa = (company_doc or {}).get("tipo_empresa", "registradora")
+    checklist_itens = CHECKLISTS_POR_TIPO_EMPRESA.get(tipo_empresa, [])
+    checklist_blocos_nomes = CHECKLISTS_BLOCOS_POR_TIPO_EMPRESA.get(tipo_empresa, {})
+
     docs = await db.documents.find(
         {"company_id": target_company_id, "checklist_item_id": {"$ne": None}, "deleted_at": None},
         {"_id": 0},
@@ -1689,10 +1850,10 @@ async def get_checklist_contran(
 
     status_por_document_status = {"pending": "enviado", "approved": "aprovado", "rejected": "rejeitado"}
 
-    blocos = {n: {"numero": n, "nome": nome, "itens": []} for n, nome in CHECKLIST_CONTRAN_807_BLOCOS.items()}
+    blocos = {n: {"numero": n, "nome": nome, "itens": []} for n, nome in checklist_blocos_nomes.items()}
     resumo = {"total": 0, "pendentes": 0, "enviados": 0, "aprovados": 0, "rejeitados": 0}
 
-    for item in CHECKLIST_CONTRAN_807:
+    for item in checklist_itens:
         doc = doc_por_item.get(item["item_id"])
         status = status_por_document_status.get(doc["status"], "pendente") if doc else "pendente"
         blocos[item["bloco"]]["itens"].append({
@@ -1799,7 +1960,15 @@ async def get_portarias(
     if not incluir_removidos:
         query["deleted_at"] = None
     if current_user.perfil in ("registradora", "financeira"):
+        # Duas fontes de rascunho independentes, as duas precisam passar:
+        # (1) importação em lote sem PDF ainda anexado (link_pdf vazio —
+        # ver migrations/2026_08_12_import_portarias_historicas.py);
+        # (2) rascunho do wizard "Criar Evento" (criado_via='wizard', ainda
+        # sem publicar — portarias legadas/manuais, sem esse campo, sempre
+        # passam nesta condição). Combinado com AND: as duas guardas
+        # precisam ser satisfeitas pra aparecer.
         query["link_pdf"] = {"$nin": [None, ""]}
+        query["$or"] = [{"criado_via": {"$ne": "wizard"}}, {"publicado_at": {"$ne": None}}]
     portarias = await db.portarias.find(query, {"_id": 0}).sort("date", -1).to_list(1000)
     return portarias
 
@@ -1815,6 +1984,17 @@ async def create_portaria(portaria_data: PortariaCreate, current_user: User = De
         await _checar_permissao_escrita_estado(current_user, dados["estado_sigla"])
         if not dados.get("detran"):
             dados["detran"] = dados["estado_sigla"]
+
+    # content/source/date são obrigatórios no modelo Portaria (pensados pro
+    # caso "transcrevi um ato oficial"), mas o wizard "Criar Evento" não
+    # produz naturalmente um texto de lei nem uma data de ato — preenche com
+    # defaults sensatos só quando vieram vazios.
+    if not dados.get("content"):
+        dados["content"] = dados.get("summary") or ""
+    if not dados.get("source"):
+        dados["source"] = "SIGCR" if dados.get("criado_via") == "wizard" else "Manual"
+    if not dados.get("date"):
+        dados["date"] = datetime.now(timezone.utc)
 
     portaria = Portaria(**dados, created_by=current_user.user_id)
 
@@ -1911,6 +2091,61 @@ async def upload_portaria(
     return portaria
 
 
+@api_router.get("/checklist-catalogo", response_model=List[ChecklistCatalogoItem])
+async def get_checklist_catalogo(perfil_alvo: Optional[str] = None, incluir_inativos: bool = False, current_user: User = Depends(get_current_user)):
+    """Lista o catálogo reutilizável de itens de checklist de portaria — usado pra popular os checkboxes em Nova Portaria."""
+    query = {} if incluir_inativos else {"ativo": True}
+    if perfil_alvo:
+        if perfil_alvo not in ("registradora", "financeira"):
+            raise HTTPException(status_code=400, detail="perfil_alvo deve ser 'registradora' ou 'financeira'")
+        query["perfil_alvo"] = perfil_alvo
+    itens = await db.checklist_catalogo_portaria.find(query, {"_id": 0}).sort("bloco", 1).to_list(1000)
+    return itens
+
+
+@api_router.post("/checklist-catalogo", response_model=ChecklistCatalogoItem)
+async def create_checklist_catalogo_item(item_data: ChecklistCatalogoItemCreate, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
+    """Cria item novo no catálogo — usado tanto por uma eventual tela de gestão quanto pelo '+ criar item novo' inline em Nova Portaria."""
+    if item_data.bloco not in BLOCO_PORTARIA_NOMES:
+        raise HTTPException(status_code=400, detail=f"bloco inválido, deve ser um de {sorted(BLOCO_PORTARIA_NOMES)}")
+    item = ChecklistCatalogoItem(**item_data.model_dump(), created_by=current_user.user_id)
+    doc = item.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    await db.checklist_catalogo_portaria.insert_one(doc)
+    await registrar_auditoria(current_user, "criar_item_catalogo_portaria", "checklist_catalogo_portaria", item.item_id, {"bloco": item.bloco, "nome": item.nome})
+    return item
+
+
+@api_router.patch("/checklist-catalogo/{item_id}", response_model=ChecklistCatalogoItem)
+async def update_checklist_catalogo_item(item_id: str, item_data: ChecklistCatalogoItemUpdate, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
+    """Edita nome/descricao/bloco de um item do catálogo. Não afeta portarias que já referenciam esse item via catalogo_item_id — o snapshot embutido nelas não muda retroativamente."""
+    existente = await db.checklist_catalogo_portaria.find_one({"item_id": item_id})
+    if not existente:
+        raise HTTPException(status_code=404, detail="Item de catálogo não encontrado")
+    updates = {k: v for k, v in item_data.model_dump(exclude_unset=True).items() if v is not None}
+    if "bloco" in updates and updates["bloco"] not in BLOCO_PORTARIA_NOMES:
+        raise HTTPException(status_code=400, detail=f"bloco inválido, deve ser um de {sorted(BLOCO_PORTARIA_NOMES)}")
+    if updates:
+        await db.checklist_catalogo_portaria.update_one({"item_id": item_id}, {"$set": updates})
+    await registrar_auditoria(current_user, "editar_item_catalogo_portaria", "checklist_catalogo_portaria", item_id, updates)
+    atualizado = await db.checklist_catalogo_portaria.find_one({"item_id": item_id}, {"_id": 0})
+    return atualizado
+
+
+@api_router.delete("/checklist-catalogo/{item_id}")
+async def desativar_checklist_catalogo_item(item_id: str, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
+    """Soft-disable — nunca deleta de verdade. Bloqueia se o item já estiver em uso em alguma portaria (catalogo_item_id), pra não deixar pendurada uma referência morta."""
+    existente = await db.checklist_catalogo_portaria.find_one({"item_id": item_id})
+    if not existente:
+        raise HTTPException(status_code=404, detail="Item de catálogo não encontrado")
+    em_uso = await db.portarias.find_one({"checklist_itens.catalogo_item_id": item_id, "deleted_at": None})
+    if em_uso:
+        raise HTTPException(status_code=409, detail="Item em uso em pelo menos uma portaria — não pode ser desativado")
+    await db.checklist_catalogo_portaria.update_one({"item_id": item_id}, {"$set": {"ativo": False}})
+    await registrar_auditoria(current_user, "desativar_item_catalogo_portaria", "checklist_catalogo_portaria", item_id, {})
+    return {"message": "Item de catálogo desativado"}
+
+
 @api_router.post("/portarias/analyze")
 async def analyze_portaria(analyze_data: AnalyzeRequest, current_user: User = Depends(get_current_user)):
     """Analyze portaria text with AI"""
@@ -1920,14 +2155,19 @@ async def analyze_portaria(analyze_data: AnalyzeRequest, current_user: User = De
 @api_router.get("/portarias/search")
 async def search_portarias(q: str, current_user: User = Depends(get_current_user)):
     """Search portarias by keyword"""
-    portarias = await db.portarias.find(
-        {"$or": [
+    query = {
+        "$or": [
             {"title": {"$regex": q, "$options": "i"}},
             {"content": {"$regex": q, "$options": "i"}},
             {"detran": {"$regex": q, "$options": "i"}}
-        ]},
-        {"_id": 0}
-    ).to_list(100)
+        ],
+        "deleted_at": None,
+    }
+    if current_user.perfil not in ("sigcr_admin", "detran", "detran_admin"):
+        # Mesma regra de GET /portarias: rascunho do wizard não aparece pra
+        # fora do DETRAN/admin, nem por busca.
+        query["$and"] = [{"$or": [{"criado_via": {"$ne": "wizard"}}, {"publicado_at": {"$ne": None}}]}]
+    portarias = await db.portarias.find(query, {"_id": 0}).to_list(100)
     return portarias
 
 
@@ -1976,6 +2216,33 @@ async def buscar_portarias_queridodiario(
         raise HTTPException(status_code=502, detail=f"Erro ao consultar Querido Diario: {str(e)}")
 
 
+@api_router.get("/portarias/publico/{token}")
+async def get_portaria_publica(token: str):
+    """Preview público (sem autenticação) de uma portaria publicada — destino
+    do link_publico compartilhado no Diário Oficial. Checklist devolvido sem
+    filtro de perfil (a empresa ainda não está logada nesse ponto). Precisa
+    vir ANTES de GET /portarias/{portaria_id} nesta ordem de declaração,
+    senão o FastAPI casaria "publico" como se fosse um portaria_id."""
+    portaria = await db.portarias.find_one(
+        {"token_publico": token, "publicado_at": {"$ne": None}, "deleted_at": None},
+        {"_id": 0}
+    )
+    if not portaria:
+        raise HTTPException(status_code=404, detail="Portaria não encontrada")
+    return {
+        "portaria_id": portaria["portaria_id"],
+        "title": portaria["title"],
+        "summary": portaria.get("summary"),
+        "estado_sigla": portaria.get("estado_sigla"),
+        "tipo": portaria.get("tipo"),
+        "template": portaria.get("template"),
+        "checklist_itens": portaria.get("checklist_itens", []),
+        "data_abertura": portaria.get("data_abertura"),
+        "data_encerramento": portaria.get("data_encerramento"),
+        "publicado_at": portaria.get("publicado_at"),
+    }
+
+
 @api_router.get("/portarias/{portaria_id}", response_model=Portaria)
 async def get_portaria(portaria_id: str, scope: EffectiveScope = Depends(get_effective_scope)):
     """Detalhe de uma portaria (permite ver mesmo se removida — mesma convenção de GET /documentos/{id}).
@@ -1993,7 +2260,10 @@ async def get_portaria(portaria_id: str, scope: EffectiveScope = Depends(get_eff
     portaria = await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
     if not portaria:
         raise HTTPException(status_code=404, detail="Portaria não encontrada")
-    if current_user.perfil in ("registradora", "financeira") and not portaria.get("link_pdf"):
+    eh_registradora_ou_financeira = current_user.perfil in ("registradora", "financeira")
+    sem_pdf_anexado = not portaria.get("link_pdf")
+    eh_rascunho_de_wizard = portaria.get("criado_via") == "wizard" and not portaria.get("publicado_at")
+    if eh_registradora_ou_financeira and (sem_pdf_anexado or eh_rascunho_de_wizard):
         raise HTTPException(status_code=404, detail="Portaria não encontrada")
     if portaria.get("estado_sigla"):
         empresa = await _empresa_do_usuario(current_user)
@@ -2044,7 +2314,7 @@ async def download_portaria_pdf(portaria_id: str, scope: EffectiveScope = Depend
 
 
 @api_router.patch("/portarias/{portaria_id}", response_model=Portaria)
-async def atualizar_portaria(portaria_id: str, updates: PortariaUpdate, current_user: User = Depends(get_current_user)):
+async def atualizar_portaria(portaria_id: str, updates: PortariaUpdate, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
     portaria = await db.portarias.find_one({"portaria_id": portaria_id, "deleted_at": None}, {"_id": 0})
     if not portaria:
         raise HTTPException(status_code=404, detail="Portaria não encontrada ou removida")
@@ -2067,13 +2337,78 @@ async def atualizar_portaria(portaria_id: str, updates: PortariaUpdate, current_
     return await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
 
 
+@api_router.patch("/portarias/{portaria_id}/publicar", response_model=Portaria)
+async def publicar_portaria(portaria_id: str, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
+    """Publica uma portaria criada pelo wizard "Criar Evento": sai de rascunho
+    (publicado_at=None) para publicada, gera link público e notifica só as
+    empresas registradora/financeira que atuam na UF da portaria (corrige o
+    comportamento antigo de /eventos/{id}/publicar, que notificava TODAS as
+    registradoras sem filtro de UF)."""
+    portaria = await db.portarias.find_one({"portaria_id": portaria_id, "deleted_at": None}, {"_id": 0})
+    if not portaria:
+        raise HTTPException(status_code=404, detail="Portaria não encontrada ou removida")
+    if portaria.get("estado_sigla"):
+        await _checar_permissao_escrita_estado(current_user, portaria["estado_sigla"])
+    if portaria.get("publicado_at"):
+        return portaria
+
+    token_publico = portaria.get("token_publico") or uuid.uuid4().hex[:16]
+    link_publico = portaria.get("link_publico") or f"https://sigcr.com.br/portarias/publico/{token_publico}"
+    campos = {
+        "publicado_at": datetime.now(timezone.utc).isoformat(),
+        "token_publico": token_publico,
+        "link_publico": link_publico,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.portarias.update_one({"portaria_id": portaria_id}, {"$set": campos})
+
+    if portaria.get("estado_sigla"):
+        # Só notifica quem tem algo a fazer: empresa cujo tipo_empresa bate com
+        # o perfil_alvo de pelo menos 1 item do checklist desta portaria. Sem
+        # isso, uma portaria com checklist só pra registradora notificava
+        # financeiras da mesma UF do mesmo jeito (achado do levantamento do
+        # ciclo Portaria→Submissão, PENDING_ACTIONS.md).
+        perfis_com_checklist = {
+            i.get("perfil_alvo") for i in (portaria.get("checklist_itens") or [])
+            if i.get("perfil_alvo")
+        }
+        if perfis_com_checklist:
+            empresas = await db.companies.find(
+                {
+                    "detrans_atuacao": portaria["estado_sigla"],
+                    "deleted_at": None,
+                    "tipo_empresa": {"$in": list(perfis_com_checklist)},
+                },
+                {"_id": 0, "user_id": 1}
+            ).to_list(1000)
+            for empresa in empresas:
+                if empresa.get("user_id"):
+                    await criar_notificacao(
+                        empresa["user_id"], "novo_edital",
+                        f"Novo Credenciamento — DETRAN-{portaria['estado_sigla']}",
+                        f"Portaria publicada: {portaria['title']}",
+                        {"portaria_id": portaria_id}
+                    )
+
+    await registrar_auditoria(current_user, "publicar_portaria", "portaria", portaria_id, {
+        "estado_sigla": portaria.get("estado_sigla")
+    })
+    return await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
+
+
 @api_router.delete("/portarias/{portaria_id}")
-async def remover_portaria(portaria_id: str, current_user: User = Depends(get_current_user)):
+async def remover_portaria(portaria_id: str, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
     portaria = await db.portarias.find_one({"portaria_id": portaria_id, "deleted_at": None}, {"_id": 0})
     if not portaria:
         raise HTTPException(status_code=404, detail="Portaria não encontrada ou já removida")
     if portaria.get("estado_sigla"):
         await _checar_permissao_escrita_estado(current_user, portaria["estado_sigla"])
+    em_uso = await db.submissoes.find_one({"portaria_id": portaria_id})
+    if em_uso:
+        raise HTTPException(
+            status_code=409,
+            detail="Não é possível excluir: há submissões em andamento para esta portaria. Revogue-a em vez de excluir."
+        )
 
     await db.portarias.update_one(
         {"portaria_id": portaria_id},
@@ -2611,6 +2946,10 @@ async def criar_submissao(portaria_id: str, current_user: User = Depends(get_cur
 
     portaria = await db.portarias.find_one({"portaria_id": portaria_id, "deleted_at": None}, {"_id": 0})
     if not portaria:
+        raise HTTPException(status_code=404, detail="Portaria não encontrada")
+    if portaria.get("criado_via") == "wizard" and not portaria.get("publicado_at"):
+        # Defesa em profundidade: mesmo que o portaria_id vaze por algum outro
+        # caminho, um rascunho do wizard não pode virar submissão antes de publicado.
         raise HTTPException(status_code=404, detail="Portaria não encontrada")
     estado_sigla = portaria.get("estado_sigla")
     if not estado_sigla or estado_sigla not in (empresa.get("detrans_atuacao") or []):
@@ -3189,11 +3528,17 @@ class NovoUsuarioPayload(BaseModel):
 @api_router.post("/admin/usuarios")
 async def criar_usuario(payload: NovoUsuarioPayload, current_user: User = Depends(require_perfil("sigcr_admin"))):
     # Hierarquia LGPD — cada perfil só pode criar abaixo do seu nível
+    # "registradora" não aparece como criador de ninguém aqui — chegou a
+    # modelar "financeira" como sub-conta criada por registradora, mas esse
+    # endpoint sempre foi sigcr_admin-only (ver o Depends abaixo), então essa
+    # entrada nunca foi alcançável. Decisão da Fase A (2026-08-02): Financeira
+    # nasce só por autocadastro público (POST /public/cadastro), não por
+    # convite de registradora — removida daqui em vez de deixar código morto
+    # sugerindo um caminho que não existe.
     CRIACAO_PERMITIDA = {
         "sigcr_admin":   ["registradora", "detran", "detran_admin", "financeira", "sigcr_admin"],
         "detran_admin":  ["registradora", "detran"],
         "detran":        ["registradora"],
-        "registradora":  ["financeira"],
         "financeira":    [],
     }
     perfil_criador = current_user.perfil or "financeira"
@@ -3841,6 +4186,10 @@ async def get_solicitacoes(scope: EffectiveScope = Depends(get_effective_scope))
 @api_router.post("/solicitacoes")
 async def create_solicitacao(request: Request, current_user: User = Depends(require_acesso_total)):
     body = await request.json()
+    company_id = body.get("company_id")
+    if not company_id:
+        raise HTTPException(status_code=400, detail="company_id é obrigatório")
+    await _autorizar_acesso_empresa(company_id, current_user)
     sol = {
         "solicitacao_id": f"sol_{uuid.uuid4().hex[:12]}",
         "edital_id": body.get("edital_id"),
@@ -4254,16 +4603,6 @@ TEMPLATES_EVENTO = {
             "Certidão Trabalhista", "Contrato Social", "Alvará Municipal",
             "ISO 27001", "Atestado Técnico", "Balanço Patrimonial"
         ],
-        "timeline_padrao": [
-            {"etapa": "Publicação", "dias_corridos": 0},
-            {"etapa": "Prazo de Impugnação", "dias_corridos": 5},
-            {"etapa": "Abertura de Inscrições", "dias_corridos": 10},
-            {"etapa": "Encerramento de Inscrições", "dias_corridos": 30},
-            {"etapa": "Análise Documental", "dias_corridos": 45},
-            {"etapa": "Resultado Preliminar", "dias_corridos": 55},
-            {"etapa": "Recursos", "dias_corridos": 60},
-            {"etapa": "Homologação", "dias_corridos": 70},
-        ]
     },
     "licitacao": {
         "nome": "Licitação",
@@ -4274,16 +4613,6 @@ TEMPLATES_EVENTO = {
             "CNPJ", "Certidão Fiscal Federal", "Certidão FGTS",
             "Certidão Trabalhista", "Proposta Comercial", "Garantia de Proposta"
         ],
-        "timeline_padrao": [
-            {"etapa": "Publicação do Edital", "dias_corridos": 0},
-            {"etapa": "Prazo de Impugnação", "dias_corridos": 3},
-            {"etapa": "Sessão de Abertura", "dias_corridos": 15},
-            {"etapa": "Fase de Lances", "dias_corridos": 15},
-            {"etapa": "Julgamento", "dias_corridos": 16},
-            {"etapa": "Habilitação", "dias_corridos": 20},
-            {"etapa": "Resultado Definitivo", "dias_corridos": 25},
-            {"etapa": "Homologação", "dias_corridos": 30},
-        ]
     },
     "dispensa": {
         "nome": "Dispensa Eletrônica",
@@ -4293,12 +4622,6 @@ TEMPLATES_EVENTO = {
         "documentos_padrao": [
             "CNPJ", "Certidão Fiscal Federal", "Proposta Comercial"
         ],
-        "timeline_padrao": [
-            {"etapa": "Publicação", "dias_corridos": 0},
-            {"etapa": "Recebimento de Propostas", "dias_corridos": 3},
-            {"etapa": "Julgamento", "dias_corridos": 5},
-            {"etapa": "Contratação", "dias_corridos": 7},
-        ]
     },
     "chamamento": {
         "nome": "Chamamento Público",
@@ -4309,15 +4632,6 @@ TEMPLATES_EVENTO = {
             "CNPJ", "Certidão Fiscal Federal", "Estatuto Social",
             "Plano de Trabalho", "Certidão de Regularidade"
         ],
-        "timeline_padrao": [
-            {"etapa": "Publicação", "dias_corridos": 0},
-            {"etapa": "Prazo de Inscrição", "dias_corridos": 20},
-            {"etapa": "Análise das Propostas", "dias_corridos": 35},
-            {"etapa": "Resultado Preliminar", "dias_corridos": 40},
-            {"etapa": "Recursos", "dias_corridos": 45},
-            {"etapa": "Resultado Final", "dias_corridos": 50},
-            {"etapa": "Celebração", "dias_corridos": 60},
-        ]
     }
 }
 
@@ -4325,61 +4639,6 @@ TEMPLATES_EVENTO = {
 @api_router.get("/eventos/templates")
 async def get_templates(current_user: User = Depends(get_current_user)):
     return TEMPLATES_EVENTO
-
-
-@api_router.post("/eventos")
-async def criar_evento(request: Request, current_user: User = Depends(require_perfil("detran", "detran_admin"))):
-    body = await request.json()
-    template_key = body.get("template", "credenciamento")
-    template = TEMPLATES_EVENTO.get(template_key, TEMPLATES_EVENTO["credenciamento"])
-    token_publico = uuid.uuid4().hex[:16]
-    evento_id = f"evt_{uuid.uuid4().hex[:12]}"
-
-    # Calcula datas da timeline baseado na data de abertura
-    data_abertura_str = body.get("data_abertura")
-    timeline_calculada = []
-    if data_abertura_str:
-        try:
-            from datetime import timedelta
-            data_base = datetime.fromisoformat(data_abertura_str.replace('Z', '+00:00'))
-            for item in body.get("timeline", template["timeline_padrao"]):
-                data_etapa = data_base + timedelta(days=item.get("dias_corridos", 0))
-                timeline_calculada.append({
-                    "etapa": item["etapa"],
-                    "dias_corridos": item.get("dias_corridos", 0),
-                    "data": data_etapa.isoformat(),
-                    "concluida": False
-                })
-        except:
-            timeline_calculada = body.get("timeline", template["timeline_padrao"])
-
-    evento = {
-        "evento_id": evento_id,
-        "titulo": body.get("titulo"),
-        "descricao": body.get("descricao", template["descricao"]),
-        "template": template_key,
-        "template_nome": template["nome"],
-        "uf": body.get("uf"),
-        "orgao": body.get("orgao", ""),
-        "status": "rascunho",
-        "documentos_obrigatorios": body.get("documentos_obrigatorios", template["documentos_padrao"]),
-        "timeline": timeline_calculada,
-        "data_abertura": body.get("data_abertura"),
-        "data_encerramento": body.get("data_encerramento"),
-        "token_publico": token_publico,
-        "link_publico": f"https://sigcr.com.br/evento-publico/{token_publico}",
-        "criado_por": current_user.user_id,
-        "criado_por_nome": current_user.name,
-        "created_at": datetime.now(timezone.utc).isoformat(),
-        "publicado_at": None,
-    }
-
-    await db.eventos.insert_one(evento)
-    evento.pop("_id", None)  # insert_one adiciona _id (ObjectId) de volta no dict por efeito colateral
-    await registrar_auditoria(current_user, "criar_evento", "evento", evento_id, {
-        "titulo": evento["titulo"], "template": template_key
-    })
-    return evento
 
 
 @api_router.get("/eventos")
@@ -5225,6 +5484,27 @@ async def selo_publico(company_id: str, request: Request):
         "detrans_atuacao": comp.get("detrans_atuacao", []),
         "verificado_em": datetime.now(timezone.utc).isoformat(),
     }
+
+
+@app.on_event("startup")
+async def seed_checklist_catalogo_portaria():
+    """Popula os 12 itens iniciais do catálogo de checklist de portaria (Bloco I/II/III) na primeira execução."""
+    if await db.checklist_catalogo_portaria.count_documents({}) > 0:
+        return
+    docs = []
+    for item in CHECKLIST_CATALOGO_PORTARIA_SEED:
+        docs.append({
+            "item_id": item["item_id"],
+            "bloco": item["bloco"],
+            "nome": item["nome"],
+            "descricao": item["descricao"],
+            "perfil_alvo": item["perfil_alvo"],
+            "ativo": True,
+            "created_by": None,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        })
+    await db.checklist_catalogo_portaria.insert_many(docs)
+    logger.info("Seed: 12 itens do catálogo de checklist de portaria inseridos em checklist_catalogo_portaria")
 
 
 app.include_router(api_router)
