@@ -40,7 +40,8 @@ code {
         --border: 227 32% 24%;             /* level2 #29314f */
         --input: 227 32% 24%;              /* level2 #29314f */
         --ring: 207 90% 54%;
-        --radius: 0.5rem;
+        --radius: 0.8rem;                  /* raio padrão (botões, inputs, popovers) */
+        --card-radius: 1rem;               /* raio de cards — levemente maior que o padrão */
     }
 }
 

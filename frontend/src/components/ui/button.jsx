@@ -9,17 +9,23 @@ import { cn } from "@/lib/utils"
 // não `motion`, de propósito — Button é usado com `asChild` (Radix Slot) em
 // vários lugares (ex: `<Button asChild><Link>`), e envolver isso num
 // componente `motion.*` quebraria esse contrato sem necessidade real.
+//
+// Refinamento de raio/sombra (2026-08-27): `rounded-md` deriva de `--radius`
+// (0.8rem, index.css) — não é mais um valor Tailwind fixo. `shadow-sm
+// shadow-black/5` dá uma elevação de repouso quase imperceptível (mesmo
+// padrão nas 3 variantes coloridas: default/destructive/outline); o glow
+// colorido de hover já existente continua sendo o destaque visual forte.
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-gradient-to-br from-primary to-primary-600 text-primary-foreground shadow hover:shadow-[0_0_24px_-4px_hsl(var(--primary)/0.6)] hover:brightness-110",
+          "bg-gradient-to-br from-primary to-primary-600 text-primary-foreground shadow-sm shadow-black/5 hover:shadow-[0_0_24px_-4px_hsl(var(--primary)/0.6)] hover:brightness-110",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm hover:shadow-[0_0_20px_-4px_hsl(var(--destructive)/0.55)] hover:brightness-110",
+          "bg-destructive text-destructive-foreground shadow-sm shadow-black/5 hover:shadow-[0_0_20px_-4px_hsl(var(--destructive)/0.55)] hover:brightness-110",
         outline:
-          "border border-input shadow-sm hover:border-primary/40 hover:bg-accent hover:text-accent-foreground",
+          "border border-input shadow-sm shadow-black/5 hover:border-primary/40 hover:bg-accent hover:text-accent-foreground",
         secondary:
           "bg-gradient-to-br from-secondary to-secondary-600 text-secondary-foreground shadow-sm hover:shadow-[0_0_20px_-4px_hsl(var(--secondary)/0.55)] hover:brightness-110",
         ghost: "hover:bg-accent hover:text-accent-foreground",
