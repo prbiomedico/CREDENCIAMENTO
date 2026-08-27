@@ -4,7 +4,7 @@ import VaporizeTextCycle from '../components/ui/vapour-text-effect';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
-import { Building2, FileText, Search, TrendingUp, Shield, CheckCircle, Clock, AlertCircle, CalendarClock } from 'lucide-react';
+import { Building2, CreditCard, FileText, Search, TrendingUp, Shield, CheckCircle, Clock, AlertCircle, CalendarClock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BentoGrid, BentoCard } from '@/components/ui/bento-grid';
 import { useAuth } from '../contexts/AuthContext';
@@ -55,28 +55,54 @@ const Dashboard = () => {
     }
   };
 
-  const SEMAFORO = [
-    { label: 'Conformes', value: stats?.compliance_verde || 0, color: 'emerald', icon: CheckCircle },
-    { label: 'Atenção', value: stats?.compliance_amarelo || 0, color: 'amber', icon: Clock },
-    { label: 'Crítico', value: stats?.compliance_vermelho || 0, color: 'red', icon: AlertCircle },
-  ];
+  // Item 1 do Dashboard (2026-08-27): cada card leva pra tela/filtro real
+  // que corresponde ao número mostrado. Mapeamento por perfil:
+  // - registradora/financeira (dona de 1 empresa própria): "Minha X" +
+  //   Documentos/Pendências/Semáforo apontam pra própria tela de Documentos,
+  //   com filtro por status/compliance (infra construída nas fatias
+  //   anteriores desta mesma sessão).
+  // - sigcr_admin/detran/detran_admin: Empresas virou 2 cards reais
+  //   (Registradoras/Financeiras, visão agregada por UF) em vez do card
+  //   único; Documentos/Pendências/Semáforo apontam pra Registradoras
+  //   (mesmo escopo que GET /stats passou a usar pro DETRAN depois do fix
+  //   do bug de ownership) com o filtro correspondente — não existe uma
+  //   tela de "documentos" própria pro lado DETRAN (a existente,
+  //   /credenciamento/documentos, é outra coisa: documentos_gov, não
+  //   documentos de credenciamento de empresa).
+  const isEmpresaSelf = user?.perfil === 'registradora' || user?.perfil === 'financeira';
+  const isDetranOuAdmin = ['sigcr_admin', 'detran', 'detran_admin'].includes(user?.perfil);
 
-  // Card "Empresas" vira o atalho pra própria empresa só pra quem tem uma
-  // empresa própria (registradora/financeira) — sigcr_admin/detran/detran_admin
-  // mantêm o card genérico como estava (o split em REGISTRADORAS/FINANCEIRAS
-  // pra esses perfis é uma fatia futura, depende de uma visão agregada de
-  // Financeiras que ainda não existe).
-  const empresaCard = user?.perfil === 'registradora'
-    ? { label: 'Minha Registradora', value: stats?.total_companies || 0, icon: Building2, color: 'blue', to: '/registradoras-empresa' }
+  const empresaCards = user?.perfil === 'registradora'
+    ? [{ label: 'Minha Registradora', value: stats?.total_companies || 0, icon: Building2, color: 'blue', to: '/registradoras-empresa' }]
     : user?.perfil === 'financeira'
-    ? { label: 'Minha Financeira', value: stats?.total_companies || 0, icon: Building2, color: 'blue', to: '/financeiras-empresa' }
-    : { label: 'Empresas', value: stats?.total_companies || 0, icon: Building2, color: 'blue' };
+    ? [{ label: 'Minha Financeira', value: stats?.total_companies || 0, icon: Building2, color: 'blue', to: '/financeiras-empresa' }]
+    : isDetranOuAdmin
+    ? [
+        { label: 'Registradoras', value: stats?.total_registradoras || 0, icon: Building2, color: 'blue', to: '/registradoras' },
+        { label: 'Financeiras', value: stats?.total_financeiras || 0, icon: CreditCard, color: 'blue', to: '/financeiras' },
+      ]
+    : [{ label: 'Empresas', value: stats?.total_companies || 0, icon: Building2, color: 'blue' }];
+
+  const documentosTo = isEmpresaSelf ? '/documentos' : (isDetranOuAdmin ? '/registradoras' : undefined);
+  const pendenciasTo = isEmpresaSelf ? '/documentos?status=pending' : (isDetranOuAdmin ? '/registradoras?pendencias=1' : undefined);
+  // financeira não tem acesso à rota /portarias (nem no nav nem autorizado no
+  // backend) — card fica estático só pra esse perfil, mesmo ele aparecendo
+  // hoje no dashboard compartilhado (achado sinalizado no item 43).
+  const portariasTo = user?.perfil === 'financeira' ? undefined : '/portarias?status=vigente';
 
   const CARDS = [
-    empresaCard,
-    { label: 'Documentos', value: stats?.total_documents || 0, icon: FileText, color: 'primary' },
-    { label: 'Pendências', value: stats?.pending_validations || 0, icon: Clock, color: 'yellow' },
-    { label: 'Portarias', value: stats?.active_portarias || 0, icon: Search, color: 'emerald' },
+    ...empresaCards,
+    { label: 'Documentos', value: stats?.total_documents || 0, icon: FileText, color: 'primary', to: documentosTo },
+    { label: 'Pendências', value: stats?.pending_validations || 0, icon: Clock, color: 'yellow', to: pendenciasTo },
+    { label: 'Portarias', value: stats?.active_portarias || 0, icon: Search, color: 'emerald', to: portariasTo },
+  ];
+
+  const semaforoTo = (bucket) => (isEmpresaSelf ? `/documentos?compliance=${bucket}` : (isDetranOuAdmin ? `/registradoras?compliance=${bucket}` : undefined));
+
+  const SEMAFORO = [
+    { label: 'Conformes', value: stats?.compliance_verde || 0, color: 'emerald', icon: CheckCircle, to: semaforoTo('valido') },
+    { label: 'Atenção', value: stats?.compliance_amarelo || 0, color: 'amber', icon: Clock, to: semaforoTo('vencendo') },
+    { label: 'Crítico', value: stats?.compliance_vermelho || 0, color: 'red', icon: AlertCircle, to: semaforoTo('vencido') },
   ];
 
   return (
@@ -147,8 +173,12 @@ const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-3 gap-4">
-                    {SEMAFORO.map(({ label, value, color, icon: Icon }) => (
-                      <div key={label} className={`p-4 rounded-xl bg-${color}-500/10 border border-${color}-500/20 text-center`}>
+                    {SEMAFORO.map(({ label, value, color, icon: Icon, to }) => (
+                      <div
+                        key={label}
+                        onClick={to ? () => navigate(to) : undefined}
+                        className={`p-4 rounded-xl bg-${color}-500/10 border border-${color}-500/20 text-center${to ? ' cursor-pointer hover:brightness-125 transition-[filter]' : ''}`}
+                      >
                         <Icon className={`h-6 w-6 text-${color}-400 mx-auto mb-2`} />
                         <p className={`text-2xl font-bold font-mono text-${color}-400`}>{value}</p>
                         <p className="text-xs text-zinc-500 mt-1">{label}</p>
