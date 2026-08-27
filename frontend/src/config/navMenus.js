@@ -43,6 +43,8 @@ export const NAV_FINANCEIRA = [
   { path: '/financeiras-empresa', icon: Building2, label: 'Minha Empresa' },
   { path: '/documentos',    icon: FileText,        label: 'Documentos', destaque: true },
   { path: '/registro-contrato', icon: FileCheck,   label: 'Registro de Contrato', destaque: true },
+  { path: '/editais',       icon: Folder,          label: 'Editais Abertos' },
+  { path: '/portarias',     icon: Search,          label: 'Portarias' },
   { path: '/credenciamento-portaria', icon: ListChecks, label: 'Credenciamento por Portaria' },
   { path: '/notificacoes',  icon: Bell,            label: 'Notificações', destaque: true },
 ];

@@ -57,7 +57,7 @@ function AppRoutes() {
         <Route path="/dashboard" element={b(<RotaProtegida><Dashboard /></RotaProtegida>)} />
         <Route path="/registradoras-empresa" element={b(<RotaProtegida perfilPermitido="registradora"><EmpresaRegistradora /></RotaProtegida>)} />
         <Route path="/financeiras-empresa" element={b(<RotaProtegida perfilPermitido="financeira"><EmpresaFinanceira /></RotaProtegida>)} />
-        <Route path="/portarias" element={b(<RotaProtegida perfilPermitido={["registradora", "detran", "detran_admin"]}><Portarias /></RotaProtegida>)} />
+        <Route path="/portarias" element={b(<RotaProtegida perfilPermitido={["registradora", "financeira", "detran", "detran_admin"]}><Portarias /></RotaProtegida>)} />
         <Route path="/planos" element={b(<Planos />)} />
         <Route path="/cadastro" element={b(<CadastroPublico />)} />
         <Route path="/selo/:companyId" element={b(<SeloPublico />)} />
@@ -79,7 +79,7 @@ function AppRoutes() {
           <Route path="/financeiras" element={b(<RotaProtegida perfilPermitido={["sigcr_admin", "detran", "detran_admin"]}><Financeiras /></RotaProtegida>)} />
           <Route path="/estados/:sigla" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><EstadoDetalhe /></RotaProtegida>)} />
         <Route path="/mapa" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><MapaNacional /></RotaProtegida>)} />
-        <Route path="/editais" element={b(<RotaProtegida perfilPermitido={["registradora", "detran", "detran_admin"]}><Editais /></RotaProtegida>)} />
+        <Route path="/editais" element={b(<RotaProtegida perfilPermitido={["registradora", "financeira", "detran", "detran_admin"]}><Editais /></RotaProtegida>)} />
         <Route path="/solicitacoes" element={b(<RotaProtegida perfilPermitido={["registradora", "detran", "detran_admin"]}><Solicitacoes /></RotaProtegida>)} />
         <Route path="/notificacoes" element={b(<RotaProtegida><Notificacoes /></RotaProtegida>)} />
         <Route path="/criar-evento" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><CriarEvento /></RotaProtegida>)} />
