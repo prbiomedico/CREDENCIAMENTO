@@ -2352,6 +2352,101 @@ async def listar_registradoras_detran(estado_sigla: Optional[str] = None, curren
     return resultado
 
 
+@api_router.get("/detran/financeiras")
+async def listar_financeiras_detran(estado_sigla: Optional[str] = None, current_user: User = Depends(get_current_user)):
+    """Visão agregada 'Financeiras' do DETRAN — espelha listar_registradoras_detran
+    acima ponto a ponto (mesmo escopo por UF, mesma junção com Submissao),
+    só troca tipo_empresa='registradora' por 'financeira'. Existe porque o
+    Dashboard (Item 1 do pedido do Pedro, 2026-08-27) precisa de um card
+    "Financeiras" pro sigcr_admin/DETRAN tão real quanto o "Registradoras"
+    já existente — antes desta rota, não havia nenhuma visão agregada de
+    financeiras fora da própria conta da financeira. Único campo a mais:
+    registradora_id, pra DETRAN saber a qual registradora cada financeira
+    está vinculada (financeira não faz sentido isolada, sempre depende de
+    uma registradora com contrato ativo — ver _validar_tipo_e_vinculo_empresa)."""
+    if current_user.perfil == "sigcr_admin":
+        if not estado_sigla:
+            raise HTTPException(status_code=400, detail="estado_sigla é obrigatório para este perfil")
+        uf = estado_sigla.upper()
+    elif current_user.perfil in ("detran", "detran_admin"):
+        if not current_user.detran_uf:
+            raise HTTPException(status_code=403, detail="Usuário sem UF configurada")
+        uf = current_user.detran_uf
+    else:
+        raise HTTPException(status_code=403, detail="Perfil sem acesso a esta visão")
+    if uf not in UF_VALIDAS:
+        raise HTTPException(status_code=400, detail="UF inválida")
+
+    empresas = await db.companies.find(
+        {"tipo_empresa": "financeira", "detrans_atuacao": uf, "deleted_at": None}, {"_id": 0}
+    ).sort("nome_fantasia", 1).to_list(500)
+
+    company_ids = [e["company_id"] for e in empresas]
+    submissoes = await db.submissoes.find(
+        {"company_id": {"$in": company_ids}, "estado_sigla": uf, "deleted_at": None}, {"_id": 0}
+    ).to_list(1000) if company_ids else []
+
+    portaria_ids = list({s["portaria_id"] for s in submissoes})
+    portarias = await db.portarias.find(
+        {"portaria_id": {"$in": portaria_ids}}, {"_id": 0, "portaria_id": 1, "title": 1, "numero": 1}
+    ).to_list(500) if portaria_ids else []
+    portarias_por_id = {p["portaria_id"]: p for p in portarias}
+
+    subs_por_empresa = {}
+    for s in submissoes:
+        subs_por_empresa.setdefault(s["company_id"], []).append(s)
+
+    registradora_ids = list({e["registradora_id"] for e in empresas if e.get("registradora_id")})
+    registradoras = await db.companies.find(
+        {"company_id": {"$in": registradora_ids}}, {"_id": 0, "company_id": 1, "nome_fantasia": 1}
+    ).to_list(500) if registradora_ids else []
+    registradoras_por_id = {r["company_id"]: r for r in registradoras}
+
+    resultado = []
+    for e in empresas:
+        subs_resumo = []
+        for s in subs_por_empresa.get(e["company_id"], []):
+            itens = s.get("itens", [])
+            portaria = portarias_por_id.get(s["portaria_id"], {})
+            subs_resumo.append({
+                "submissao_id": s["submissao_id"],
+                "portaria_id": s["portaria_id"],
+                "portaria_titulo": portaria.get("title"),
+                "portaria_numero": portaria.get("numero"),
+                "status": s["status"],
+                "total_itens": len(itens),
+                "itens_conforme": sum(1 for i in itens if i.get("status") == "conforme"),
+                "itens_inconforme": sum(1 for i in itens if i.get("status") == "inconforme"),
+                "itens_pendentes": sum(1 for i in itens if i.get("status") in ("pendente", "enviado")),
+                "homologado_em": s.get("homologado_em"),
+                "itens": [
+                    {"item_id": i.get("item_id"), "nome": i.get("nome"), "status": i.get("status"),
+                     "justificativa": i.get("justificativa")}
+                    for i in itens
+                ],
+            })
+        registradora_vinculada = registradoras_por_id.get(e.get("registradora_id"))
+        resultado.append({
+            "company_id": e["company_id"],
+            "name": e["name"],
+            "nome_fantasia": e["nome_fantasia"],
+            "cnpj": e["cnpj"],
+            "email_comercial": e.get("email_comercial"),
+            "gestor_contrato": e.get("gestor_contrato"),
+            "endereco": e.get("endereco"),
+            "whatsapp": e.get("whatsapp"),
+            "detrans_atuacao": e.get("detrans_atuacao", []),
+            "status": e.get("status"),
+            "created_at": e.get("created_at"),
+            "registradora_id": e.get("registradora_id"),
+            "registradora_nome_fantasia": registradora_vinculada.get("nome_fantasia") if registradora_vinculada else None,
+            "submissoes": subs_resumo,
+            "total_portarias_respondidas": len(subs_resumo),
+            "total_homologadas": sum(1 for s in subs_resumo if s["status"] == "homologado"),
+        })
+    return resultado
+
+
 @api_router.post("/estados/{sigla}/credenciamentos", response_model=CredenciamentoDetalhes)
 async def criar_credenciamento(sigla: str, dados: CredenciamentoDetalhesCreate, current_user: User = Depends(get_current_user)):
     sigla = sigla.upper()
