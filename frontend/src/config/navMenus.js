@@ -1,5 +1,5 @@
 import {
-  LayoutDashboard, Building2, FileText, Search, Folder, Bell,
+  LayoutDashboard, Building2, FileText, Search, Bell,
   ChevronRight, Plus, Map, Archive, Landmark, CreditCard,
   Settings, UserCog, FileCheck, Inbox, ListChecks,
 } from 'lucide-react';
@@ -12,13 +12,16 @@ import {
 // `destaque: true` marca os itens mais usados por perfil — só afeta o
 // AppMenuBar (que mostra esses soltos na barra e agrupa o resto em "Mais",
 // ver buildNavStructure), a sidebar ignora a flag e continua listando tudo.
+// `/portarias` é o ambiente único "Transparência" (fusão de Portarias +
+// Editais, PENDING_ACTIONS.md fatia 3) — abas internas (Portarias/Editais)
+// substituem os 2 itens de menu separados que existiam antes. `/editais`
+// continua existindo só como redirect (ver App.js), não como item de menu.
 export const NAV_REGISTRADORA = [
   { path: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard', destaque: true },
-  { path: '/editais',       icon: Folder,          label: 'Editais Abertos', destaque: true },
   { path: '/solicitacoes',  icon: ChevronRight,    label: 'Minhas Solicitações' },
   { path: '/registradoras-empresa', icon: Building2, label: 'Minha Empresa' },
   { path: '/documentos',    icon: FileText,        label: 'Documentos' },
-  { path: '/portarias',     icon: Search,          label: 'Portarias', destaque: true },
+  { path: '/portarias',     icon: Search,          label: 'Transparência', destaque: true },
   { path: '/fila-registros', icon: Inbox,          label: 'Registro de Contrato' },
   { path: '/credenciamento-portaria', icon: ListChecks, label: 'Credenciamento por Portaria' },
   { path: '/notificacoes',  icon: Bell,            label: 'Notificações', destaque: true },
@@ -27,9 +30,8 @@ export const NAV_REGISTRADORA = [
 export const NAV_DETRAN = [
   { path: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard', destaque: true },
   { path: '/criar-evento',  icon: Plus,            label: 'Criar Evento' },
-  { path: '/editais',       icon: Folder,          label: 'Editais', destaque: true },
   { path: '/mapa',          icon: Map,             label: 'Mapa Nacional' },
-  { path: '/portarias',     icon: Search,          label: 'Portarias', destaque: true },
+  { path: '/portarias',     icon: Search,          label: 'Transparência', destaque: true },
   { path: '/credenciamento/documentos', icon: Archive, label: 'Dossiê Credenciamento' },
   { path: '/detran/conferencia', icon: ListChecks, label: 'Painel de Conferência' },
   { path: '/notificacoes',  icon: Bell,            label: 'Notificações', destaque: true },
@@ -43,8 +45,7 @@ export const NAV_FINANCEIRA = [
   { path: '/financeiras-empresa', icon: Building2, label: 'Minha Empresa' },
   { path: '/documentos',    icon: FileText,        label: 'Documentos', destaque: true },
   { path: '/registro-contrato', icon: FileCheck,   label: 'Registro de Contrato', destaque: true },
-  { path: '/editais',       icon: Folder,          label: 'Editais Abertos' },
-  { path: '/portarias',     icon: Search,          label: 'Portarias' },
+  { path: '/portarias',     icon: Search,          label: 'Transparência' },
   { path: '/credenciamento-portaria', icon: ListChecks, label: 'Credenciamento por Portaria' },
   { path: '/notificacoes',  icon: Bell,            label: 'Notificações', destaque: true },
 ];
