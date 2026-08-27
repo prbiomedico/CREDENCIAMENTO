@@ -2310,6 +2310,17 @@ async def listar_registradoras_detran(estado_sigla: Optional[str] = None, curren
     for s in submissoes:
         subs_por_empresa.setdefault(s["company_id"], []).append(s)
 
+    # Compliance de documentos por empresa (Item 1 do Dashboard, 2026-08-27:
+    # os cards DOCUMENTOS/PENDÊNCIAS/Semáforo do DETRAN precisam de um destino
+    # real — a lista de registradoras já existente ganha esses 2 campos a
+    # mais em vez de construir uma tela nova de "documentos" que não existia).
+    # Mesma lógica de cálculo por-empresa que GET /stats usa.
+    docs_por_empresa = {}
+    if company_ids:
+        docs = await db.documents.find({"company_id": {"$in": company_ids}}, {"_id": 0}).to_list(5000)
+        for d in docs:
+            docs_por_empresa.setdefault(d["company_id"], []).append(d)
+
     resultado = []
     for e in empresas:
         subs_resumo = []
@@ -2333,6 +2344,11 @@ async def listar_registradoras_detran(estado_sigla: Optional[str] = None, curren
                     for i in itens
                 ],
             })
+        docs_empresa = docs_por_empresa.get(e["company_id"], [])
+        docs_pendentes = sum(1 for d in docs_empresa if d.get("status") == "pending")
+        vencidos = sum(1 for d in docs_empresa if calcular_status_documento(d) == "vencido")
+        vencendo = sum(1 for d in docs_empresa if calcular_status_documento(d) == "vencendo")
+        compliance = "vencido" if vencidos > 0 else "vencendo" if vencendo > 0 else "valido"
         resultado.append({
             "company_id": e["company_id"],
             "name": e["name"],
@@ -2348,6 +2364,9 @@ async def listar_registradoras_detran(estado_sigla: Optional[str] = None, curren
             "submissoes": subs_resumo,
             "total_portarias_respondidas": len(subs_resumo),
             "total_homologadas": sum(1 for s in subs_resumo if s["status"] == "homologado"),
+            "total_documentos": len(docs_empresa),
+            "docs_pendentes": docs_pendentes,
+            "compliance": compliance,
         })
     return resultado
 
