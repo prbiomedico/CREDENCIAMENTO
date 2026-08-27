@@ -3,12 +3,11 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfilAtivo } from '../contexts/PerfilAtivoContext';
 import { useViewContext } from '../contexts/ViewContext';
-import {LayoutDashboard, Building2, FileText, Search, LogOut, Shield,
-  Menu, X, Map, Folder, Bell, ChevronRight, Plus,
-  ChevronDown, Users, Landmark, CreditCard, Settings, UserCog, Home, Archive,
-  FileCheck, Inbox, ListChecks} from 'lucide-react';
+import {Building2, FileText, Search, LogOut, Shield,
+  Menu, X, Bell, ChevronDown, Landmark, CreditCard} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { buildNavStructure } from '../config/navMenus';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
@@ -37,60 +36,6 @@ const PERFIS = {
     badge: 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400',
     icon: CreditCard,
   },
-};
-
-// Menus por perfil
-const NAV_REGISTRADORA = [
-  { path: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/editais',       icon: Folder,          label: 'Editais Abertos' },
-  { path: '/solicitacoes',  icon: ChevronRight,    label: 'Minhas Solicitações' },
-  { path: '/registradoras-empresa', icon: Building2, label: 'Minha Empresa' },
-  { path: '/documentos',    icon: FileText,        label: 'Documentos' },
-  { path: '/portarias',     icon: Search,          label: 'Portarias' },
-  { path: '/fila-registros', icon: Inbox,          label: 'Registro de Contrato' },
-  { path: '/credenciamento-portaria', icon: ListChecks, label: 'Credenciamento por Portaria' },
-  { path: '/notificacoes',  icon: Bell,            label: 'Notificações' },
-];
-
-const NAV_DETRAN = [
-  { path: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/criar-evento',  icon: Plus,            label: 'Criar Evento' },
-  { path: '/editais',       icon: Folder,          label: 'Editais' },
-  { path: '/gestao-editais', icon: FileText,       label: 'Gestão de Editais' },
-  { path: '/mapa',          icon: Map,             label: 'Mapa Nacional' },
-  { path: '/portarias',     icon: Search,          label: 'Portarias' },
-  { path: '/credenciamento/documentos', icon: Archive, label: 'Dossiê Credenciamento' },
-  { path: '/detran/conferencia', icon: ListChecks, label: 'Painel de Conferência' },
-  { path: '/notificacoes',  icon: Bell,            label: 'Notificações' },
-  { path: '/estados',       icon: Landmark,        label: 'Estados',       section: 'DETRANs e Registradoras' },
-  { path: '/registradoras', icon: Building2,       label: 'Registradoras', section: 'DETRANs e Registradoras' },
-  { path: '/financeiras',   icon: CreditCard,      label: 'Financeiras',   section: 'DETRANs e Registradoras' },
-];
-
-const NAV_FINANCEIRA = [
-  { path: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
-  { path: '/financeiras-empresa', icon: Building2, label: 'Minha Empresa' },
-  { path: '/documentos',    icon: FileText,        label: 'Documentos' },
-  { path: '/registro-contrato', icon: FileCheck,   label: 'Registro de Contrato' },
-  { path: '/credenciamento-portaria', icon: ListChecks, label: 'Credenciamento por Portaria' },
-  { path: '/notificacoes',  icon: Bell,            label: 'Notificações' },
-];
-
-const NAV_ADMIN_EXTRA = [
-  { path: '/credenciamento/documentos', icon: Archive, label: 'Dossiê Credenciamento' },
-  { path: '/estados',       icon: Landmark,        label: 'Estados' },
-  { path: '/registradoras', icon: Building2,       label: 'Registradoras' },
-  { path: '/financeiras',   icon: CreditCard,      label: 'Financeiras' },
-  { path: '/gestao-editais', icon: FileText,       label: 'Gestão de Editais' },
-  { path: '/detran/conferencia', icon: ListChecks, label: 'Painel de Conferência' },
-  { path: '/usuarios',      icon: UserCog,         label: 'Gestão de Usuários' },
-  { path: '/configuracoes', icon: Settings,        label: 'Configurações' },
-];
-
-const MENUS = {
-  registradora: NAV_REGISTRADORA,
-  detran: NAV_DETRAN,
-  financeira: NAV_FINANCEIRA,
 };
 
 // UFs pro seletor de simulação "ver como DETRAN de <UF>" do sigcr_admin —
@@ -221,30 +166,10 @@ const DashboardLayout = ({ children }) => {
   const cfg = PERFIS[perfilAtivo] || PERFIS.registradora;
   const PerfilIcon = cfg.icon;
 
-  const todosItens = MENUS[perfilAtivo] || NAV_REGISTRADORA;
-  // Seção "Administração" só lista o que ainda NÃO aparece no menu do badge
-  // ativo (em qualquer sub-seção). NAV_ADMIN_EXTRA e NAV_DETRAN compartilham
-  // paths (Dossiê Credenciamento, Estados, Registradoras, Gestão de
-  // Editais) — sem esse filtro, um sigcr_admin via cada um deles 2x: uma vez
-  // no menu do perfil/badge, outra de novo aqui embaixo, incondicional.
-  // Itens exclusivamente administrativos (Gestão de Usuários, Configurações)
-  // não colidem com nenhum NAV_* de badge, então sempre aparecem em
-  // Administração, badge que for.
-  const pathsDoBadge = new Set(todosItens.map((item) => item.path));
-  const navAdminExtra = isAdmin ? NAV_ADMIN_EXTRA.filter((item) => !pathsDoBadge.has(item.path)) : [];
-
-  // Itens sem `section` ficam soltos no topo do menu, como sempre. Itens com
-  // `section` (ex: "DETRANs e Registradoras") são agrupados por label numa
-  // sub-lista própria, mesmo tratamento visual do bloco "Administração"
-  // abaixo — permite reaproveitar o mesmo componente de bloco pros dois.
-  const navItems = todosItens.filter((item) => !item.section);
-  const navSecoes = [];
-  todosItens.forEach((item) => {
-    if (!item.section) return;
-    let grupo = navSecoes.find((g) => g.label === item.section);
-    if (!grupo) { grupo = { label: item.section, items: [] }; navSecoes.push(grupo); }
-    grupo.items.push(item);
-  });
+  // Deriva os itens/seções/admin-extra pro perfil ativo — lógica
+  // centralizada em navMenus.js pra ser reaproveitada pelo AppMenuBar do
+  // Dashboard sem duplicar as regras de dedupe (ver comentário lá).
+  const { navItems, navSecoes, navAdminExtra } = buildNavStructure(perfilAtivo, isAdmin);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
