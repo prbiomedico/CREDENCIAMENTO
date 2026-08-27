@@ -1916,3 +1916,15 @@ Pedido do Pedro (Item 1): tornar clicáveis os 4 cards de métrica + 3 do Semáf
 4. Mapeamento completo de destino por perfil pra DOCUMENTOS/PENDÊNCIAS/PORTARIAS/Semáforo ainda não fechado — depende das respostas acima.
 
 Deploy desta fatia: commit `628d978`, release `releases/20260827-dashboard-empresa-clicavel`. Rollback: release anterior `20260827-empresa-portarias-uf`.
+
+## 44. Fix GET /stats — DETRAN sempre via zero (bug real, pré-existente) — ✅ DEPLOYADO (2026-08-27)
+
+Primeira das 4 fatias combinadas pra fechar o Item 1 (ordem definida pelo Pedro: fix do bug → Financeiras.js → infra de filtro → conectar cliques). `GET /stats` escopava `total_documents`/`pending_validations`/`compliance_*` por `{"user_id": scope.effective_user_id}` pra qualquer perfil que não fosse sigcr_admin sem "ver como" — mas `detran`/`detran_admin` nunca são donos de uma `Company` (só registradora/financeira são), então esse filtro sempre dava zero resultado pra eles. Bug pré-existente, não introduzido por nenhum item desta rodada, só ficou visível ao planejar o Item 1.
+
+**Fix**: nova branch `elif scope.effective_detran_uf: filtro_empresa = {"tipo_empresa": "registradora", "detrans_atuacao": scope.effective_detran_uf}` — mesma lógica de escopo já usada e validada em `GET /detran/registradoras` (`scope.effective_detran_uf` já existia no `EffectiveScope`, populado tanto pro detran/detran_admin real quanto pro `view_as_detran_uf` do sigcr_admin — bônus, agora a simulação "ver como DETRAN-UF" também acerta o dashboard). Escopo por `tipo_empresa=registradora` (não conta financeiras), espelhando exatamente o filtro de `/detran/registradoras` — se o Pedro quiser financeiras contadas também no Documentos/Semáforo do DETRAN, isso é uma decisão separada, não assumida aqui.
+
+**Teste**: sem devtest com container novo (o `docker run` pra um container backend-devtest isolado foi bloqueado pelo classifier de auto-modo da sessão) — testado direto contra um banco Mongo isolado (`sigcr_devtest_stats`, mesmo mongod, credencial root separada, zero risco ao banco real) via um script Python standalone rodado dentro do container `sigcr-backend` já existente (`docker exec ... python3`), replicando exatamente a query nova. 4 cenários confirmados: (1) comportamento antigo reproduzido e confirmado zerado, (2) novo filtro DETRAN-SP conta só a registradora de SP (exclui registradora do RJ e financeira de SP), (3) sigcr_admin agregado não regrediu (continua vendo as 3 empresas), (4) registradora dona (ownership) não regrediu.
+
+Deploy isolado do lote pendente do `server.py` (mesma técnica de sempre — HEAD confirmado idêntico à produção via `docker exec sigcr-backend cat /app/server.py`, isolado o suficiente pra trocar só este trecho, deployado, lote pendente restaurado depois). Rollback: `sigcr-backend:pre-deploy-rollback-20260827-0101`.
+
+**Próxima fatia**: `Financeiras.js` + endpoint novo, espelhando `Registradoras.js`/`/detran/registradoras`.
