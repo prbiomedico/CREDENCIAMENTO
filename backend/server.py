@@ -246,49 +246,38 @@ CHECKLIST_DETRAN_DF_003_2022_IDS = {item["item_id"] for item in CHECKLIST_DETRAN
 # ============ Catálogo reutilizável de checklist — fluxo de portaria ============
 # Diferente dos catálogos fixos acima (CHECKLIST_CONTRAN_807 etc.), este vive
 # na coleção db.checklist_catalogo_portaria: o DETRAN pode adicionar itens
-# novos em runtime pela UI de Nova Portaria. Os itens não têm perfil_alvo
-# fixo — são exigências genéricas de habilitação de empresa; quem decide se
-# um item vale pra Registradora, Financeira ou ambos é o DETRAN, item a item,
-# no momento em que monta o checklist de uma portaria específica (ver
-# PortariaChecklistItem.perfil_alvo).
-
-BLOCO_PORTARIA_NOMES = {
-    1: "Habilitação Jurídica, Fiscal e Trabalhista",
-    2: "Qualificação Econômico-Financeira",
-    3: "Qualificação Técnica",
+# novos em runtime pela UI de Nova Portaria. Cada item tem perfil_alvo fixo
+# (registradora ou financeira) — é o DETRAN quem decide, ao montar o
+# checklist de uma portaria específica, quais itens do catálogo (de um perfil
+# ou de outro) entram (ver PortariaChecklistItem.perfil_alvo).
+#
+# 2026-08-29 (pedido do Pedro): trocado o catálogo reduzido inicial (12 itens
+# genéricos, só registradora) pelos dois catálogos oficiais completos —
+# CONTRAN 807 pra registradora, Edital DETRAN-DF 003/2022 pra financeira —
+# reaproveitando as mesmas listas já usadas pelo checklist de cadastro-base
+# (CHECKLIST_CONTRAN_807/CHECKLIST_DETRAN_DF_003_2022 acima), pra não ter
+# duas fontes de verdade divergentes pro mesmo texto regulatório. Cada perfil
+# tem sua própria numeração de bloco (1-6 pra registradora, 1-4 pra
+# financeira) — não são comparáveis entre si, por isso a validação de bloco
+# abaixo é sempre condicionada ao perfil_alvo do item.
+BLOCO_PORTARIA_NOMES_POR_PERFIL = {
+    "registradora": CHECKLIST_CONTRAN_807_BLOCOS,
+    "financeira": CHECKLIST_DETRAN_DF_003_2022_BLOCOS,
 }
 
-CHECKLIST_CATALOGO_PORTARIA_SEED = [
-    # Bloco I
-    {"item_id": "cat_b1_ato_constitutivo", "bloco": 1, "nome": "Ato constitutivo/estatuto/contrato social vigente", "descricao": None, "perfil_alvo": "registradora"},
-    {"item_id": "cat_b1_alvara_funcionamento", "bloco": 1, "nome": "Licença/alvará de funcionamento", "descricao": None, "perfil_alvo": "registradora"},
-    {"item_id": "cat_b1_cnpj", "bloco": 1, "nome": "Comprovante de inscrição no CNPJ", "descricao": "Situação ativa.", "perfil_alvo": "registradora"},
-    {"item_id": "cat_b1_regularidade_fiscal", "bloco": 1, "nome": "Prova de regularidade fiscal", "descricao": "Federal/Estadual ou Distrital/Municipal.", "perfil_alvo": "registradora"},
-    {"item_id": "cat_b1_seguridade_fgts", "bloco": 1, "nome": "Prova de regularidade com Seguridade Social e FGTS", "descricao": None, "perfil_alvo": "registradora"},
-    {"item_id": "cat_b1_declaracao_unica", "bloco": 1, "nome": "Declaração única de regularidade",
-     "descricao": "Documento único cobrindo: (1) não envolvimento do proprietário/sócios em atividades conflitantes, (2) não suspensão de direitos pra licitar/contratar com a administração pública, (3) não inidoneidade junto ao TCU.", "perfil_alvo": "registradora"},
-    # Bloco II
-    {"item_id": "cat_b2_balanco", "bloco": 2, "nome": "Balanço patrimonial e demonstrações contábeis", "descricao": "Último exercício.", "perfil_alvo": "registradora"},
-    {"item_id": "cat_b2_certidao_falencia", "bloco": 2, "nome": "Certidão negativa de falência/concordata ou execução patrimonial", "descricao": None, "perfil_alvo": "registradora"},
-    # Bloco III
-    {"item_id": "cat_b3_atestado_capacidade_dados", "bloco": 3, "nome": "Atestado de capacidade técnica para tratamento de dados",
-     "descricao": "Cobrindo: avaliação de impacto na privacidade, controle de acesso, transparência/direitos dos titulares, criptografia/segurança, gestão de incidentes.", "perfil_alvo": "registradora"},
-    {"item_id": "cat_b3_iso27701", "bloco": 3, "nome": "Certificação ISO/IEC 27701", "descricao": None, "perfil_alvo": "registradora"},
-    {"item_id": "cat_b3_compliance", "bloco": 3, "nome": "Comprovação de programa de integridade/compliance", "descricao": None, "perfil_alvo": "registradora"},
-    {"item_id": "cat_b3_sac", "bloco": 3, "nome": "Declaração de manutenção de SAC", "descricao": "Serviço de Atendimento ao Cliente.", "perfil_alvo": "registradora"},
-    {"item_id": "cat_b3_iso27001", "bloco": 3, "nome": "Certificação ISO/IEC 27001", "descricao": "Cobrindo também menções a ITIL/COBIT/CISSP como parte do mesmo documento.", "perfil_alvo": "registradora"},
-]
+CHECKLIST_CATALOGO_PORTARIA_SEED = (
+    [{**item, "perfil_alvo": "registradora"} for item in CHECKLIST_CONTRAN_807]
+    + [{**item, "perfil_alvo": "financeira"} for item in CHECKLIST_DETRAN_DF_003_2022]
+)
 
 
 class ChecklistCatalogoItem(BaseModel):
     """Item reutilizável do catálogo de checklist de portaria. perfil_alvo é
     fixo no item do catálogo (ao contrário de PortariaChecklistItem, que
     também tem perfil_alvo mas é o snapshot copiado daqui pra uma portaria
-    específica) — os itens seed são todos "registradora" porque é a única
-    spec verificada até agora; "financeira" fica pra quando existir spec real.
-    item_id é estável de propósito: gerado uma única vez na criação, nunca
-    regenerado, pra PortariaChecklistItem.catalogo_item_id não perder o
-    vínculo."""
+    específica). item_id é estável de propósito: gerado uma única vez na
+    criação, nunca regenerado, pra PortariaChecklistItem.catalogo_item_id
+    não perder o vínculo."""
     item_id: str = Field(default_factory=lambda: f"cat_{uuid.uuid4().hex[:10]}")
     bloco: int
     nome: str
@@ -2099,15 +2088,16 @@ async def get_checklist_catalogo(perfil_alvo: Optional[str] = None, incluir_inat
         if perfil_alvo not in ("registradora", "financeira"):
             raise HTTPException(status_code=400, detail="perfil_alvo deve ser 'registradora' ou 'financeira'")
         query["perfil_alvo"] = perfil_alvo
-    itens = await db.checklist_catalogo_portaria.find(query, {"_id": 0}).sort("bloco", 1).to_list(1000)
+    itens = await db.checklist_catalogo_portaria.find(query, {"_id": 0}).sort([("perfil_alvo", 1), ("bloco", 1)]).to_list(1000)
     return itens
 
 
 @api_router.post("/checklist-catalogo", response_model=ChecklistCatalogoItem)
 async def create_checklist_catalogo_item(item_data: ChecklistCatalogoItemCreate, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
     """Cria item novo no catálogo — usado tanto por uma eventual tela de gestão quanto pelo '+ criar item novo' inline em Nova Portaria."""
-    if item_data.bloco not in BLOCO_PORTARIA_NOMES:
-        raise HTTPException(status_code=400, detail=f"bloco inválido, deve ser um de {sorted(BLOCO_PORTARIA_NOMES)}")
+    blocos_validos = BLOCO_PORTARIA_NOMES_POR_PERFIL[item_data.perfil_alvo]
+    if item_data.bloco not in blocos_validos:
+        raise HTTPException(status_code=400, detail=f"bloco inválido pra perfil_alvo={item_data.perfil_alvo}, deve ser um de {sorted(blocos_validos)}")
     item = ChecklistCatalogoItem(**item_data.model_dump(), created_by=current_user.user_id)
     doc = item.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
@@ -2123,8 +2113,11 @@ async def update_checklist_catalogo_item(item_id: str, item_data: ChecklistCatal
     if not existente:
         raise HTTPException(status_code=404, detail="Item de catálogo não encontrado")
     updates = {k: v for k, v in item_data.model_dump(exclude_unset=True).items() if v is not None}
-    if "bloco" in updates and updates["bloco"] not in BLOCO_PORTARIA_NOMES:
-        raise HTTPException(status_code=400, detail=f"bloco inválido, deve ser um de {sorted(BLOCO_PORTARIA_NOMES)}")
+    if "bloco" in updates:
+        perfil_alvo_efetivo = updates.get("perfil_alvo", existente["perfil_alvo"])
+        blocos_validos = BLOCO_PORTARIA_NOMES_POR_PERFIL[perfil_alvo_efetivo]
+        if updates["bloco"] not in blocos_validos:
+            raise HTTPException(status_code=400, detail=f"bloco inválido pra perfil_alvo={perfil_alvo_efetivo}, deve ser um de {sorted(blocos_validos)}")
     if updates:
         await db.checklist_catalogo_portaria.update_one({"item_id": item_id}, {"$set": updates})
     await registrar_auditoria(current_user, "editar_item_catalogo_portaria", "checklist_catalogo_portaria", item_id, updates)
@@ -5488,7 +5481,7 @@ async def selo_publico(company_id: str, request: Request):
 
 @app.on_event("startup")
 async def seed_checklist_catalogo_portaria():
-    """Popula os 12 itens iniciais do catálogo de checklist de portaria (Bloco I/II/III) na primeira execução."""
+    """Popula o catálogo de checklist de portaria (CONTRAN 807 + Edital DETRAN-DF 003/2022) na primeira execução — coleção vazia."""
     if await db.checklist_catalogo_portaria.count_documents({}) > 0:
         return
     docs = []
@@ -5504,7 +5497,7 @@ async def seed_checklist_catalogo_portaria():
             "created_at": datetime.now(timezone.utc).isoformat(),
         })
     await db.checklist_catalogo_portaria.insert_many(docs)
-    logger.info("Seed: 12 itens do catálogo de checklist de portaria inseridos em checklist_catalogo_portaria")
+    logger.info(f"Seed: {len(docs)} itens do catálogo de checklist de portaria inseridos em checklist_catalogo_portaria")
 
 
 app.include_router(api_router)
