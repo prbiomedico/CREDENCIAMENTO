@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import axios from 'axios';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useViewContext } from '../contexts/ViewContext';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
@@ -57,6 +58,7 @@ const badge = (cfg, key, extra = '') => {
 
 const Registradoras = () => {
   const { user, initialized } = useAuth();
+  const { viewingAs } = useViewContext();
   const [searchParams, setSearchParams] = useSearchParams();
   // Deep-link do Dashboard (Item 1, 2026-08-27): DOCUMENTOS/PENDÊNCIAS/Semáforo
   // do DETRAN não tinham destino real — viraram um filtro nesta mesma tela
@@ -70,7 +72,11 @@ const Registradoras = () => {
   const [loading, setLoading] = useState(false);
   const [expandidas, setExpandidas] = useState({});
 
-  const ehAdmin = user?.perfil === 'sigcr_admin';
+  // Quando sigcr_admin está simulando uma empresa (Registradora/Financeira)
+  // via Trocar Visão, o seletor de UF (ação de admin) some mesmo com o JWT
+  // real ainda sendo sigcr_admin — a simulação precisa refletir exatamente
+  // o que a empresa vê.
+  const ehAdmin = user?.perfil === 'sigcr_admin' && viewingAs?.tipo !== 'empresa';
 
   useEffect(() => {
     if (!ehAdmin) return;

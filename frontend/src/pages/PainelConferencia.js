@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { useViewContext } from '../contexts/ViewContext';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -34,6 +35,7 @@ const STATUS_ITEM_CFG = {
 
 const PainelConferencia = () => {
   const { user, initialized } = useAuth();
+  const { viewingAs } = useViewContext();
   const [searchParams] = useSearchParams();
   const [ufs, setUfs] = useState([]);
   const [estadoSigla, setEstadoSigla] = useState(user?.detran_uf || '');
@@ -47,7 +49,15 @@ const PainelConferencia = () => {
   const [analisando, setAnalisando] = useState(null);
   const [homologando, setHomologando] = useState(false);
 
-  const ehAdmin = user?.perfil === 'sigcr_admin';
+  // Quando sigcr_admin está simulando uma empresa (Registradora/Financeira)
+  // via Trocar Visão, nenhuma ação de gestão/admin deste painel (seletor de
+  // UF, marcar item conforme/inconforme, homologar) pode aparecer — mesmo
+  // com o JWT real ainda sendo sigcr_admin, a simulação precisa refletir
+  // exatamente o que a empresa vê (que nunca confere/homologa a própria
+  // submissão, isso é sempre papel do DETRAN).
+  const simulandoEmpresa = viewingAs?.tipo === 'empresa';
+  const ehAdmin = user?.perfil === 'sigcr_admin' && !simulandoEmpresa;
+  const podeConferir = ['sigcr_admin', 'detran', 'detran_admin'].includes(user?.perfil) && !simulandoEmpresa;
 
   useEffect(() => {
     if (!ehAdmin) return;
@@ -274,7 +284,7 @@ const PainelConferencia = () => {
                   <Button onClick={() => baixarComprovante(submissaoAtiva.submissao_id)} className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
                     <Download className="h-4 w-4" /> Comprovante
                   </Button>
-                ) : (
+                ) : podeConferir ? (
                   <Button
                     onClick={homologar}
                     disabled={!todasConformes || homologando}
@@ -283,14 +293,14 @@ const PainelConferencia = () => {
                   >
                     {homologando ? 'Homologando...' : 'Homologar'}
                   </Button>
-                )}
+                ) : null}
               </div>
             </div>
 
             <div className="space-y-3">
               {submissaoAtiva.itens.map((item) => {
                 const cfg = STATUS_ITEM_CFG[item.status];
-                const podeAnalisar = item.status === 'enviado';
+                const podeAnalisar = podeConferir && item.status === 'enviado';
                 return (
                   <Card key={item.item_id} className="bg-zinc-900/50 border-zinc-800">
                     <CardContent className="p-4 space-y-3">

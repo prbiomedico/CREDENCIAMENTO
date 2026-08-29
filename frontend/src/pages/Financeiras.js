@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { useViewContext } from '../contexts/ViewContext';
 import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
@@ -54,13 +55,18 @@ const badge = (cfg, key, extra = '') => {
 // de registradora vinculada, que só existe pra financeira.
 const Financeiras = () => {
   const { user, initialized } = useAuth();
+  const { viewingAs } = useViewContext();
   const [ufs, setUfs] = useState([]);
   const [estadoSigla, setEstadoSigla] = useState(user?.detran_uf || '');
   const [financeiras, setFinanceiras] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expandidas, setExpandidas] = useState({});
 
-  const ehAdmin = user?.perfil === 'sigcr_admin';
+  // Quando sigcr_admin está simulando uma empresa (Registradora/Financeira)
+  // via Trocar Visão, o seletor de UF (ação de admin) some mesmo com o JWT
+  // real ainda sendo sigcr_admin — a simulação precisa refletir exatamente
+  // o que a empresa vê.
+  const ehAdmin = user?.perfil === 'sigcr_admin' && viewingAs?.tipo !== 'empresa';
 
   useEffect(() => {
     if (!ehAdmin) return;

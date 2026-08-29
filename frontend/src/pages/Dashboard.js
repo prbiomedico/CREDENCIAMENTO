@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BentoGrid, BentoCard } from '@/components/ui/bento-grid';
 import { useAuth } from '../contexts/AuthContext';
+import { useViewContext } from '../contexts/ViewContext';
 import { useApi } from '../hooks/useApi';
 import { toast } from 'sonner';
 
@@ -107,6 +108,7 @@ const Dashboard = () => {
   const [vencimentoResumo, setVencimentoResumo] = useState({ vencendo: [], vencidos: [] });
   const [loading, setLoading] = useState(true);
   const { user, initialized } = useAuth();
+  const { viewingAs } = useViewContext();
   const api = useApi();
   const navigate = useNavigate();
 
@@ -159,7 +161,12 @@ const Dashboard = () => {
   //   (mesmo escopo que GET /stats passou a usar pro DETRAN depois do fix
   //   do bug de ownership) com o filtro correspondente.
   const isEmpresaSelf = user?.perfil === 'registradora';
-  const isDetranOuAdmin = ['sigcr_admin', 'detran', 'detran_admin'].includes(user?.perfil);
+  // Quando sigcr_admin está simulando uma empresa (Registradora/Financeira)
+  // via Trocar Visão, os cards/atalhos de gestão do DETRAN (Registradoras,
+  // Financeiras, visão agregada por UF) somem — mesmo com o JWT real ainda
+  // sendo sigcr_admin, a simulação precisa refletir exatamente o que a
+  // empresa vê.
+  const isDetranOuAdmin = ['sigcr_admin', 'detran', 'detran_admin'].includes(user?.perfil) && viewingAs?.tipo !== 'empresa';
 
   const empresaCards = user?.perfil === 'registradora'
     ? [{ label: 'Minha Registradora', value: stats?.total_companies || 0, icon: Building2, color: 'blue', to: '/registradoras-empresa' }]

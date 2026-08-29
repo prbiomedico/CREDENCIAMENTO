@@ -17,6 +17,7 @@ import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
+import { useViewContext } from '../contexts/ViewContext';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import QueridoDiarioBusca, { ESTADOS_IBGE } from '../components/QueridoDiarioBusca';
@@ -79,6 +80,7 @@ const emptyFormDataEdital = () => ({
 
 const AreaTransparencia = () => {
   const { user, initialized, keycloak, getToken: getTokenCtx } = useAuth();
+  const { viewingAs } = useViewContext();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const statusFiltro = searchParams.get('status'); // ex: ?status=vigente, vindo do card "Portarias" do Dashboard
@@ -92,8 +94,11 @@ const AreaTransparencia = () => {
 
   // Mesmo padrão contextual nas duas abas: ações de gestão (criar/editar
   // portaria, criar/editar edital) só aparecem pra quem já tinha acesso às
-  // rotas de escrita no backend.
-  const podeGerenciar = ['sigcr_admin', 'detran', 'detran_admin'].includes(user?.perfil);
+  // rotas de escrita no backend. Quando sigcr_admin está "vendo como" uma
+  // empresa (Registradora/Financeira) via Trocar Visão, essas ações somem
+  // mesmo que o perfil real do JWT continue sendo sigcr_admin — a simulação
+  // precisa refletir exatamente o que a empresa vê.
+  const podeGerenciar = ['sigcr_admin', 'detran', 'detran_admin'].includes(user?.perfil) && viewingAs?.tipo !== 'empresa';
 
   // ══════════════ ABA PORTARIAS ══════════════
   const [portarias, setPortarias] = useState([]);
