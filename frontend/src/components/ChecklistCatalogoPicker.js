@@ -10,26 +10,47 @@ import { toast } from 'sonner';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
 
-export const BLOCO_PORTARIA_NOMES = {
-  1: 'Bloco I — Habilitação Jurídica, Fiscal e Trabalhista',
-  2: 'Bloco II — Qualificação Econômico-Financeira',
-  3: 'Bloco III — Qualificação Técnica',
+// Espelha server.py (CHECKLIST_CONTRAN_807_BLOCOS/CHECKLIST_DETRAN_DF_003_2022_BLOCOS)
+// — cada perfil_alvo tem sua própria numeração de bloco, não comparável entre
+// si (bloco 1 de registradora != bloco 1 de financeira). 2026-08-29 (pedido
+// do Pedro): troca do catálogo reduzido de 12 itens genéricos pelos dois
+// catálogos oficiais completos.
+export const BLOCOS_POR_PERFIL = {
+  registradora: {
+    1: 'Habilitação Jurídica e Regularidade Fiscal e Trabalhista',
+    2: 'Qualificação Econômico-Financeira',
+    3: 'Qualificação Técnica e de Pessoal',
+    4: 'Infraestrutura, Segurança e Tecnologia',
+    5: 'Segurança da Informação e LGPD',
+    6: 'Declaratórias Gerais',
+  },
+  financeira: {
+    1: 'Habilitação Jurídica',
+    2: 'Regularidade Fiscal e Trabalhista',
+    3: 'Qualificação Técnica',
+    4: 'Declaratórias',
+  },
 };
-export const BLOCO_PORTARIA_ROMANO = { 1: 'I', 2: 'II', 3: 'III' };
+
+const PERFIL_SECAO = {
+  registradora: { label: 'Registradora', fonte: 'Resolução CONTRAN 807', badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  financeira: { label: 'Financeira', fonte: 'Edital DETRAN-DF nº 003/2022', badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
+};
 
 // Seletor de itens do catálogo de checklist (GET/POST /checklist-catalogo),
-// agrupado por bloco, com "+ Criar item novo" embutido. Extraído de
-// Portarias.js — o form "Nova Portaria" de onde veio foi removido de lá;
-// hoje quem cria portaria/checklist é o wizard Criar Evento (passo Documentos).
-// `selecionados` é o Set<catalogo_item_id> vindo do form do chamador;
-// `onToggle(item)` recebe o item completo do catálogo — quem decide como
-// adicionar/remover do payload final é o chamador.
+// agrupado por perfil_alvo e depois por bloco (cada perfil com sua própria
+// numeração/nomenclatura de bloco), com "+ Criar item novo" embutido.
+// `selecionados` é o Set<catalogo_item_id> vindo do form do chamador (itens
+// de qualquer um dos dois perfis podem estar selecionados ao mesmo tempo —
+// uma portaria tipicamente exige checklist tanto de registradora quanto de
+// financeira); `onToggle(item)` recebe o item completo do catálogo — quem
+// decide como adicionar/remover do payload final é o chamador.
 const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
   const [catalogo, setCatalogo] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [novoItemAberto, setNovoItemAberto] = useState(false);
-  const [novoItemBloco, setNovoItemBloco] = useState(1);
   const [novoItemPerfil, setNovoItemPerfil] = useState('registradora');
+  const [novoItemBloco, setNovoItemBloco] = useState(1);
   const [novoItemNome, setNovoItemNome] = useState('');
   const [novoItemDescricao, setNovoItemDescricao] = useState('');
   const [criando, setCriando] = useState(false);
@@ -47,6 +68,14 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
       }
     })();
   }, []);
+
+  // Bloco selecionado no form de "novo item" precisa ser válido pro perfil
+  // atual — ao trocar de perfil, se o bloco atual não existir mais na nova
+  // numeração, volta pro bloco 1 (sempre existe nos dois catálogos).
+  const trocarNovoItemPerfil = (perfil) => {
+    setNovoItemPerfil(perfil);
+    if (!BLOCOS_POR_PERFIL[perfil][novoItemBloco]) setNovoItemBloco(1);
+  };
 
   const criarItemCatalogo = async () => {
     if (!novoItemNome.trim()) { toast.error('Informe o nome do item'); return; }
@@ -74,46 +103,56 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
 
   return (
     <div>
-      <div className="space-y-4">
-        {Object.entries(BLOCO_PORTARIA_NOMES).map(([blocoNum, blocoNome]) => {
-          const itensDoBloco = catalogo.filter((it) => it.bloco === Number(blocoNum));
-          if (itensDoBloco.length === 0) return null;
+      <div className="space-y-6">
+        {Object.entries(PERFIL_SECAO).map(([perfil, secao]) => {
+          const itensDoPerfil = catalogo.filter((it) => it.perfil_alvo === perfil);
+          const blocosNomes = BLOCOS_POR_PERFIL[perfil];
           return (
-            <div key={blocoNum}>
-              <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-1.5">{blocoNome}</p>
-              <div className="space-y-1.5">
-                {itensDoBloco.map((item) => (
-                  <label
-                    key={item.item_id}
-                    className="flex items-start gap-3 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-2 cursor-pointer hover:border-zinc-700"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selecionados.has(item.item_id)}
-                      onChange={() => onToggle(item)}
-                      className="rounded border-zinc-600 mt-0.5 shrink-0"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm text-zinc-200">{item.nome}</p>
-                      {item.descricao && <p className="text-xs text-zinc-500 mt-0.5">{item.descricao}</p>}
-                    </div>
-                    <Badge className={item.perfil_alvo === 'registradora'
-                      ? 'bg-blue-500/10 text-blue-400 border-blue-500/20 text-xs shrink-0'
-                      : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-xs shrink-0'}>
-                      {item.perfil_alvo === 'registradora' ? 'Registradora' : 'Financeira'}
-                    </Badge>
-                  </label>
-                ))}
+            <div key={perfil}>
+              <div className="flex items-center gap-2 mb-2">
+                <Badge className={`${secao.badge} text-xs shrink-0`}>{secao.label}</Badge>
+                <p className="text-[11px] text-zinc-500">{secao.fonte}</p>
               </div>
+              {itensDoPerfil.length === 0 ? (
+                <p className="text-xs text-zinc-500 mb-2">Nenhum item cadastrado pra este perfil ainda.</p>
+              ) : (
+                <div className="space-y-4">
+                  {Object.entries(blocosNomes).map(([blocoNum, blocoNome]) => {
+                    const itensDoBloco = itensDoPerfil.filter((it) => it.bloco === Number(blocoNum));
+                    if (itensDoBloco.length === 0) return null;
+                    return (
+                      <div key={blocoNum}>
+                        <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-1.5">{blocoNome}</p>
+                        <div className="space-y-1.5">
+                          {itensDoBloco.map((item) => (
+                            <label
+                              key={item.item_id}
+                              className="flex items-start gap-3 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-2 cursor-pointer hover:border-zinc-700"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={selecionados.has(item.item_id)}
+                                onChange={() => onToggle(item)}
+                                className="rounded border-zinc-600 mt-0.5 shrink-0"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-zinc-200">{item.nome}</p>
+                                {item.descricao && <p className="text-xs text-zinc-500 mt-0.5">{item.descricao}</p>}
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           );
         })}
-        {catalogo.length === 0 && (
-          <p className="text-xs text-zinc-500">Catálogo ainda vazio — crie o primeiro item abaixo.</p>
-        )}
       </div>
 
-      <div className="mt-3">
+      <div className="mt-4">
         {novoItemAberto ? (
           <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-3 space-y-2">
             <Input
@@ -123,23 +162,23 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
               className="bg-zinc-950 border-zinc-800 text-white"
             />
             <div className="grid grid-cols-2 gap-2">
-              <Select value={String(novoItemBloco)} onValueChange={(v) => setNovoItemBloco(Number(v))}>
-                <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
-                  {Object.keys(BLOCO_PORTARIA_NOMES).map((num) => (
-                    <SelectItem key={num} value={num}>{`Bloco ${BLOCO_PORTARIA_ROMANO[num]}`}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={novoItemPerfil} onValueChange={setNovoItemPerfil}>
+              <Select value={novoItemPerfil} onValueChange={trocarNovoItemPerfil}>
                 <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
                   <SelectItem value="registradora">Registradora</SelectItem>
                   <SelectItem value="financeira">Financeira</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={String(novoItemBloco)} onValueChange={(v) => setNovoItemBloco(Number(v))}>
+                <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                  {Object.entries(BLOCOS_POR_PERFIL[novoItemPerfil]).map(([num, nome]) => (
+                    <SelectItem key={num} value={num}>{nome}</SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
