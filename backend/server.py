@@ -277,12 +277,19 @@ class ChecklistCatalogoItem(BaseModel):
     também tem perfil_alvo mas é o snapshot copiado daqui pra uma portaria
     específica). item_id é estável de propósito: gerado uma única vez na
     criação, nunca regenerado, pra PortariaChecklistItem.catalogo_item_id
-    não perder o vínculo."""
+    não perder o vínculo.
+
+    Fatia 2 (modelo Credencia-CE): perfil_alvo era Literal["registradora",
+    "financeira"] — virou `str` livre, validado em runtime contra
+    TipoCredenciamento.tipo_id (ver `_validar_perfil_alvo_ativo`) em vez de
+    travado em tempo de tipo. Precisa ser `str`, não Literal, porque o
+    conjunto de categorias válidas agora vem do banco (catálogo extensível),
+    não é mais conhecido em tempo de compilação."""
     item_id: str = Field(default_factory=lambda: f"cat_{uuid.uuid4().hex[:10]}")
     bloco: int
     nome: str
     descricao: Optional[str] = None
-    perfil_alvo: Literal["registradora", "financeira"]
+    perfil_alvo: str
     ativo: bool = True
     created_by: Optional[str] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -292,14 +299,14 @@ class ChecklistCatalogoItemCreate(BaseModel):
     bloco: int
     nome: str
     descricao: Optional[str] = None
-    perfil_alvo: Literal["registradora", "financeira"]
+    perfil_alvo: str
 
 
 class ChecklistCatalogoItemUpdate(BaseModel):
     bloco: Optional[int] = None
     nome: Optional[str] = None
     descricao: Optional[str] = None
-    perfil_alvo: Optional[Literal["registradora", "financeira"]] = None
+    perfil_alvo: Optional[str] = None
 
 
 # Fase A: checklist parametrizado por tipo_empresa. "registradora" usa a
@@ -456,6 +463,10 @@ class CompanyUpdate(BaseModel):
     # na criação, não muda por aqui) — permite corrigir/setar o vínculo depois
     # sem precisar recriar a empresa. Validado em update_company.
     registradora_id: Optional[str] = None
+    # Fatia 2 (modelo Credencia-CE): lista completa nova de categorias — PATCH
+    # substitui a lista inteira (não é um "adicionar 1 item"), validada contra
+    # o catálogo TipoCredenciamento em update_company.
+    categorias_credenciamento: Optional[List[str]] = None
 
 
 class TipoCredenciamento(BaseModel):
@@ -530,7 +541,7 @@ class PortariaChecklistItem(BaseModel):
     item_id: str = Field(default_factory=lambda: f"pci_{uuid.uuid4().hex[:8]}")
     nome: str
     descricao: Optional[str] = None
-    perfil_alvo: Literal["registradora", "financeira"]
+    perfil_alvo: str  # Fatia 2: era Literal["registradora","financeira"], agora qualquer TipoCredenciamento.tipo_id ativo
     catalogo_item_id: Optional[str] = None  # vincula a um ChecklistCatalogoItem quando selecionado do catálogo; None em itens antigos/livres, mantém compatibilidade com portarias já cadastradas
 
 
@@ -656,6 +667,12 @@ class CredenciamentoDetalhes(BaseModel):
     credenciamento_id: str = Field(default_factory=lambda: f"cred_{uuid.uuid4().hex[:12]}")
     company_id: str
     estado_sigla: str
+    # Fatia 2 (modelo Credencia-CE): chave de unicidade de negócio passa a ser
+    # (company_id, estado_sigla, categoria) — antes era só (company_id,
+    # estado_sigla), o que impedia uma empresa ter credenciamentos distintos
+    # em categorias diferentes na mesma UF. None preserva os registros criados
+    # antes desta fatia (não retroagimos categoria em credenciamento antigo).
+    categoria: Optional[str] = None
     extrato_contrato: str
     status: str = "ativo"  # ativo, sem_efeito, pendente — estado de NEGÓCIO, distinto do soft delete
     validade: Optional[datetime] = None
@@ -672,6 +689,7 @@ class CredenciamentoDetalhes(BaseModel):
 
 class CredenciamentoDetalhesCreate(BaseModel):
     company_id: str
+    categoria: Optional[str] = None
     extrato_contrato: str
     status: str = "ativo"
     validade: Optional[datetime] = None
@@ -699,7 +717,7 @@ class SubmissaoItem(BaseModel):
     item_id: str
     nome: str
     descricao: Optional[str] = None
-    perfil_alvo: Literal["registradora", "financeira"]
+    perfil_alvo: str  # Fatia 2: era Literal["registradora","financeira"], agora qualquer TipoCredenciamento.tipo_id ativo
     status: Literal["pendente", "enviado", "conforme", "inconforme"] = "pendente"
     document_id: Optional[str] = None
     justificativa: Optional[str] = None  # obrigatória quando status == inconforme
@@ -716,7 +734,7 @@ class Submissao(BaseModel):
     portaria_id: str
     estado_sigla: str
     company_id: str
-    perfil_empresa: Literal["registradora", "financeira"]
+    perfil_empresa: str  # Fatia 2: era Literal["registradora","financeira"] — agora É a categoria de credenciamento (TipoCredenciamento.tipo_id) desta submissão, não só um "perfil"
     status: Literal["rascunho", "submetido", "em_analise", "em_diligencia", "homologado"] = "rascunho"
     itens: List[SubmissaoItem] = []
     submetido_em: Optional[str] = None
@@ -1303,6 +1321,59 @@ async def _validar_tipo_e_vinculo_empresa(tipo_empresa: str, registradora_id: Op
         raise HTTPException(status_code=400, detail="registradora_id só se aplica a tipo_empresa='financeira'")
 
 
+async def _validar_perfil_alvo_ativo(perfil_alvo: str) -> None:
+    """Fatia 2 (modelo Credencia-CE): perfil_alvo deixou de ser um Literal
+    fixo — precisa validar em runtime contra o catálogo TipoCredenciamento.
+    Usada nos pontos de entrada que aceitam perfil_alvo como texto livre
+    vindo do cliente (catálogo de checklist; checklist_itens de portaria
+    valida via _validar_checklist_itens_portaria, abaixo, que reusa esta)."""
+    tipo = await db.tipos_credenciamento.find_one({"tipo_id": perfil_alvo, "ativo": True})
+    if not tipo:
+        raise HTTPException(status_code=400, detail=f"perfil_alvo '{perfil_alvo}' não é uma categoria de credenciamento ativa")
+
+
+async def _validar_checklist_itens_portaria(itens: List["PortariaChecklistItem"]) -> None:
+    """Valida perfil_alvo de cada item de checklist de uma portaria contra o
+    catálogo — mesma regra de _validar_perfil_alvo_ativo, mas em lote (evita
+    N idas ao banco quando o mesmo perfil_alvo se repete em vários itens,
+    comum: uma portaria tipicamente tem vários itens por categoria)."""
+    perfis = {i.perfil_alvo for i in itens}
+    if not perfis:
+        return
+    ativos = {
+        t["tipo_id"] for t in await db.tipos_credenciamento.find(
+            {"tipo_id": {"$in": list(perfis)}, "ativo": True}, {"_id": 0, "tipo_id": 1}
+        ).to_list(100)
+    }
+    invalidos = perfis - ativos
+    if invalidos:
+        raise HTTPException(status_code=400, detail=f"checklist_itens com perfil_alvo inválido/inativo: {sorted(invalidos)}")
+
+
+async def _validar_categorias_credenciamento(categorias: List[str]) -> None:
+    """Valida Company.categorias_credenciamento contra o catálogo
+    TipoCredenciamento (Fatia 2). Categoria com `exige_vinculo_com` setado
+    exige que a categoria-pai também esteja na mesma lista — interpretação
+    mínima do "vínculo" pra categorias independentes; um mecanismo de
+    vínculo empresa-a-empresa (como financeira->registradora_id hoje) fica
+    fora do escopo desta fatia, deliberadamente."""
+    if not categorias:
+        return
+    tipos = await db.tipos_credenciamento.find(
+        {"tipo_id": {"$in": categorias}, "ativo": True}, {"_id": 0}
+    ).to_list(100)
+    encontrados = {t["tipo_id"] for t in tipos}
+    faltando = set(categorias) - encontrados
+    if faltando:
+        raise HTTPException(status_code=400, detail=f"categorias_credenciamento inválida(s) ou inativa(s): {sorted(faltando)}")
+    for t in tipos:
+        if t.get("exige_vinculo_com") and t["exige_vinculo_com"] not in categorias:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Categoria '{t['nome']}' exige também a categoria '{t['exige_vinculo_com']}' na mesma lista"
+            )
+
+
 @api_router.post("/companies", response_model=Company)
 async def create_company(company_data: CompanyCreate, current_user: User = Depends(get_current_user)):
     """Create new company"""
@@ -1470,6 +1541,8 @@ async def update_company(company_id: str, updates: CompanyUpdate, current_user: 
         # tipo_empresa é definido só na criação (não está em CompanyUpdate) —
         # aqui só corrige/seta o vínculo de uma empresa que já é financeira.
         await _validar_tipo_e_vinculo_empresa(company.get("tipo_empresa"), campos["registradora_id"])
+    if "categorias_credenciamento" in campos:
+        await _validar_categorias_credenciamento(campos["categorias_credenciamento"])
     antes = {k: company.get(k) for k in campos}
     campos["updated_at"] = datetime.now(timezone.utc).isoformat()
 
@@ -1958,6 +2031,18 @@ async def _empresa_do_usuario(user: User) -> Optional[dict]:
     return await db.companies.find_one({"user_id": user.user_id, "deleted_at": None}, {"_id": 0})
 
 
+def _categorias_da_empresa(empresa: dict) -> set:
+    """Fatia 2 (modelo Credencia-CE): todas as categorias de credenciamento
+    que uma empresa detém — categorias_credenciamento (novo, N:N) UNIÃO
+    tipo_empresa (legado, sempre 1 valor). A união, não substituição, cobre
+    o caso defensivo de uma empresa que por algum motivo ainda não passou
+    pelo backfill da Fatia 1 e teria categorias_credenciamento vazio."""
+    categorias = set(empresa.get("categorias_credenciamento") or [])
+    if empresa.get("tipo_empresa"):
+        categorias.add(empresa["tipo_empresa"])
+    return categorias
+
+
 # ============ Portaria Routes ============
 
 @api_router.get("/portarias", response_model=List[Portaria])
@@ -2010,6 +2095,8 @@ async def get_portarias(
 @api_router.post("/portarias", response_model=Portaria)
 async def create_portaria(portaria_data: PortariaCreate, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
     """Create new portaria (sem arquivo — link externo, ex. promoção de sugestão do Querido Diário)."""
+    if portaria_data.checklist_itens:
+        await _validar_checklist_itens_portaria(portaria_data.checklist_itens)
     dados = portaria_data.model_dump()
     if dados.get("estado_sigla"):
         dados["estado_sigla"] = dados["estado_sigla"].upper()
@@ -2087,6 +2174,7 @@ async def upload_portaria(
             checklist_lista = [PortariaChecklistItem(**item) for item in json.loads(checklist_itens)]
         except (json.JSONDecodeError, TypeError, ValueError) as e:
             raise HTTPException(status_code=400, detail=f"checklist_itens inválido: {e}")
+        await _validar_checklist_itens_portaria(checklist_lista)
 
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Apenas arquivos PDF são aceitos para portarias")
@@ -2253,8 +2341,13 @@ async def get_checklist_catalogo(perfil_alvo: Optional[str] = None, incluir_inat
 @api_router.post("/checklist-catalogo", response_model=ChecklistCatalogoItem)
 async def create_checklist_catalogo_item(item_data: ChecklistCatalogoItemCreate, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
     """Cria item novo no catálogo — usado tanto por uma eventual tela de gestão quanto pelo '+ criar item novo' inline em Nova Portaria."""
-    blocos_validos = BLOCO_PORTARIA_NOMES_POR_PERFIL[item_data.perfil_alvo]
-    if item_data.bloco not in blocos_validos:
+    await _validar_perfil_alvo_ativo(item_data.perfil_alvo)
+    # BLOCO_PORTARIA_NOMES_POR_PERFIL só tem taxonomia de bloco pros 2 perfis
+    # legados (CONTRAN 807/Edital 003) — uma categoria nova (Fatia 2) ainda
+    # não tem nomes de bloco definidos, então a validação de bloco é
+    # permissiva pra perfil_alvo fora desse dict (aceita qualquer inteiro).
+    blocos_validos = BLOCO_PORTARIA_NOMES_POR_PERFIL.get(item_data.perfil_alvo)
+    if blocos_validos and item_data.bloco not in blocos_validos:
         raise HTTPException(status_code=400, detail=f"bloco inválido pra perfil_alvo={item_data.perfil_alvo}, deve ser um de {sorted(blocos_validos)}")
     item = ChecklistCatalogoItem(**item_data.model_dump(), created_by=current_user.user_id)
     doc = item.model_dump()
@@ -2271,10 +2364,12 @@ async def update_checklist_catalogo_item(item_id: str, item_data: ChecklistCatal
     if not existente:
         raise HTTPException(status_code=404, detail="Item de catálogo não encontrado")
     updates = {k: v for k, v in item_data.model_dump(exclude_unset=True).items() if v is not None}
+    if "perfil_alvo" in updates:
+        await _validar_perfil_alvo_ativo(updates["perfil_alvo"])
     if "bloco" in updates:
         perfil_alvo_efetivo = updates.get("perfil_alvo", existente["perfil_alvo"])
-        blocos_validos = BLOCO_PORTARIA_NOMES_POR_PERFIL[perfil_alvo_efetivo]
-        if updates["bloco"] not in blocos_validos:
+        blocos_validos = BLOCO_PORTARIA_NOMES_POR_PERFIL.get(perfil_alvo_efetivo)
+        if blocos_validos and updates["bloco"] not in blocos_validos:
             raise HTTPException(status_code=400, detail=f"bloco inválido pra perfil_alvo={perfil_alvo_efetivo}, deve ser um de {sorted(blocos_validos)}")
     if updates:
         await db.checklist_catalogo_portaria.update_one({"item_id": item_id}, {"$set": updates})
@@ -2422,9 +2517,9 @@ async def get_portaria(portaria_id: str, scope: EffectiveScope = Depends(get_eff
         if not _perfil_pode_ver_estado(current_user, portaria["estado_sigla"]) and not empresa_atua:
             raise HTTPException(status_code=403, detail="Perfil sem acesso a esta portaria")
         if empresa:
-            tipo_empresa = empresa.get("tipo_empresa", "registradora")
+            categorias_empresa = _categorias_da_empresa(empresa)
             portaria["checklist_itens"] = [
-                i for i in (portaria.get("checklist_itens") or []) if i.get("perfil_alvo") == tipo_empresa
+                i for i in (portaria.get("checklist_itens") or []) if i.get("perfil_alvo") in categorias_empresa
             ]
     return portaria
 
@@ -2475,6 +2570,8 @@ async def atualizar_portaria(portaria_id: str, updates: PortariaUpdate, current_
     campos = {k: v for k, v in updates.model_dump().items() if v is not None}
     if not campos:
         return portaria
+    if "checklist_itens" in campos:
+        await _validar_checklist_itens_portaria(updates.checklist_itens)
     if isinstance(campos.get("date"), datetime):
         campos["date"] = campos["date"].isoformat()
     antes = {k: portaria.get(k) for k in campos}
@@ -2524,11 +2621,18 @@ async def publicar_portaria(portaria_id: str, current_user: User = Depends(requi
             if i.get("perfil_alvo")
         }
         if perfis_com_checklist:
+            # Fatia 2: uma empresa pode ter uma categoria via
+            # categorias_credenciamento sem que bata com tipo_empresa (ex:
+            # registradora que também tem uma categoria nova) — o $or cobre
+            # os dois eixos, união não substituição.
             empresas = await db.companies.find(
                 {
                     "detrans_atuacao": portaria["estado_sigla"],
                     "deleted_at": None,
-                    "tipo_empresa": {"$in": list(perfis_com_checklist)},
+                    "$or": [
+                        {"tipo_empresa": {"$in": list(perfis_com_checklist)}},
+                        {"categorias_credenciamento": {"$in": list(perfis_com_checklist)}},
+                    ],
                 },
                 {"_id": 0, "user_id": 1}
             ).to_list(1000)
@@ -3088,9 +3192,17 @@ async def get_submissao(submissao_id: str, current_user: User = Depends(get_curr
 
 
 @api_router.post("/submissoes", response_model=Submissao)
-async def criar_submissao(portaria_id: str, current_user: User = Depends(get_current_user)):
+async def criar_submissao(portaria_id: str, categoria: Optional[str] = None, current_user: User = Depends(get_current_user)):
     """Get-or-create idempotente: se a empresa já tem uma submissão (não
-    removida) pra esta portaria, devolve ela em vez de criar duplicata."""
+    removida) pra esta portaria NESTA categoria, devolve ela em vez de criar
+    duplicata — o get-or-create agora é por (portaria, empresa, categoria),
+    não só (portaria, empresa), pra uma empresa com várias categorias poder
+    ter uma submissão por categoria numa portaria multi-categoria (Fatia 2,
+    modelo Credencia-CE).
+
+    `categoria` é opcional por retrocompatibilidade: quando omitido, cai no
+    comportamento anterior à Fatia 2 (usa o tipo_empresa da empresa) —
+    exatamente o mesmo resultado que todo caller existente já produzia."""
     empresa = await _empresa_do_usuario(current_user)
     if not empresa:
         raise HTTPException(status_code=403, detail="Apenas registradora/financeira podem criar uma submissão")
@@ -3106,13 +3218,21 @@ async def criar_submissao(portaria_id: str, current_user: User = Depends(get_cur
     if not estado_sigla or estado_sigla not in (empresa.get("detrans_atuacao") or []):
         raise HTTPException(status_code=403, detail="Empresa não atua na UF desta portaria")
 
-    tipo_empresa = empresa.get("tipo_empresa", "registradora")
-    itens_portaria = [i for i in (portaria.get("checklist_itens") or []) if i.get("perfil_alvo") == tipo_empresa]
+    categorias_empresa = _categorias_da_empresa(empresa)
+    if categoria:
+        if categoria not in categorias_empresa:
+            raise HTTPException(status_code=403, detail="Empresa não possui esta categoria de credenciamento")
+        categoria_efetiva = categoria
+    else:
+        categoria_efetiva = empresa.get("tipo_empresa", "registradora")
+
+    itens_portaria = [i for i in (portaria.get("checklist_itens") or []) if i.get("perfil_alvo") == categoria_efetiva]
     if not itens_portaria:
-        raise HTTPException(status_code=400, detail="Esta portaria não define checklist para o perfil da sua empresa")
+        raise HTTPException(status_code=400, detail="Esta portaria não define checklist para esta categoria")
 
     existente = await db.submissoes.find_one({
-        "portaria_id": portaria_id, "company_id": empresa["company_id"], "deleted_at": None
+        "portaria_id": portaria_id, "company_id": empresa["company_id"],
+        "perfil_empresa": categoria_efetiva, "deleted_at": None
     }, {"_id": 0})
     if existente:
         return existente
@@ -3121,9 +3241,9 @@ async def criar_submissao(portaria_id: str, current_user: User = Depends(get_cur
         portaria_id=portaria_id,
         estado_sigla=estado_sigla,
         company_id=empresa["company_id"],
-        perfil_empresa=tipo_empresa,
+        perfil_empresa=categoria_efetiva,
         itens=[
-            SubmissaoItem(item_id=i["item_id"], nome=i["nome"], descricao=i.get("descricao"), perfil_alvo=tipo_empresa)
+            SubmissaoItem(item_id=i["item_id"], nome=i["nome"], descricao=i.get("descricao"), perfil_alvo=categoria_efetiva)
             for i in itens_portaria
         ],
         created_by=current_user.user_id,
@@ -3337,8 +3457,18 @@ async def homologar_submissao(
     }})
     await registrar_auditoria(current_user, "homologar_submissao", "submissao", submissao_id, {"estado_sigla": submissao["estado_sigla"]})
 
+    # Fatia 2 (modelo Credencia-CE): chave de dedup do credenciamento passa a
+    # incluir a categoria — uma empresa pode ter credenciamentos distintos
+    # na mesma UF, um por categoria. Credenciamentos criados antes desta
+    # fatia não têm o campo `categoria` (migração 2026-09-XX faz o backfill
+    # pros 22 reais existentes, todos company_hdregistros/registradora) —
+    # não deveria mais existir doc sem categoria em produção, mas o dict de
+    # busca é explícito sobre isso pra não silenciar o caso.
     credenciamento_existente = await db.credenciamentos.find_one(
-        {"company_id": submissao["company_id"], "estado_sigla": submissao["estado_sigla"], "deleted_at": None}, {"_id": 0}
+        {
+            "company_id": submissao["company_id"], "estado_sigla": submissao["estado_sigla"],
+            "categoria": submissao["perfil_empresa"], "deleted_at": None,
+        }, {"_id": 0}
     )
     if credenciamento_existente:
         await db.credenciamentos.update_one(
@@ -3352,6 +3482,7 @@ async def homologar_submissao(
             extrato += f" (nº {portaria['numero']})"
         credenciamento = CredenciamentoDetalhes(
             company_id=submissao["company_id"], estado_sigla=submissao["estado_sigla"],
+            categoria=submissao["perfil_empresa"],
             extrato_contrato=extrato, status="ativo", created_by=current_user.user_id,
         )
         cred_doc = credenciamento.model_dump()
