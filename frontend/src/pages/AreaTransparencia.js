@@ -100,6 +100,14 @@ const AreaTransparencia = () => {
   // precisa refletir exatamente o que a empresa vê.
   const podeGerenciar = ['sigcr_admin', 'detran', 'detran_admin'].includes(user?.perfil) && viewingAs?.tipo !== 'empresa';
 
+  // Inverso de podeGerenciar: só registradora/financeira (nunca DETRAN/admin)
+  // veem "Credenciar-se". Mesma lógica de viewingAs — sigcr_admin "vendo
+  // como" uma empresa precisa ver exatamente o que a empresa vê, incluindo
+  // este botão; um DETRAN/admin real, ou o próprio sigcr_admin sem simulação
+  // ativa, nunca veem.
+  const podeCredenciar = viewingAs?.tipo === 'empresa'
+    || (!viewingAs && ['registradora', 'financeira'].includes(user?.perfil));
+
   // ══════════════ ABA PORTARIAS ══════════════
   const [portarias, setPortarias] = useState([]);
   const portariasFiltradas = React.useMemo(
@@ -120,6 +128,7 @@ const AreaTransparencia = () => {
     const el = document.getElementById(`portaria-${portariaIdDestaque}`);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }, [portariaIdDestaque, gruposPorUf]);
+  const [credenciandoId, setCredenciandoId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [analyzeText, setAnalyzeText] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
@@ -227,6 +236,27 @@ const AreaTransparencia = () => {
       link.parentNode.removeChild(link);
     } catch (error) {
       toast.error('Erro ao baixar PDF da portaria');
+    }
+  };
+
+  // Ponte visual Transparência → Credenciamento por Portaria (antes só
+  // acessível pela tela separada MinhasSubmissoes.js). POST /submissoes é
+  // get-or-create idempotente — clicar de novo numa portaria já iniciada só
+  // retoma a submissão existente, não duplica. Reaproveita o deep-link
+  // ?submissao_id= que MinhasSubmissoes.js já lê (mesma infra usada pelas
+  // notificações), sem precisar de nenhuma mudança no backend.
+  const iniciarCredenciamento = async (portaria) => {
+    setCredenciandoId(portaria.portaria_id);
+    try {
+      const res = await axios.post(`${API}/submissoes`, null, {
+        withCredentials: true,
+        params: { portaria_id: portaria.portaria_id },
+      });
+      navigate(`/credenciamento-portaria?submissao_id=${res.data.submissao_id}`);
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || 'Erro ao iniciar credenciamento');
+    } finally {
+      setCredenciandoId(null);
     }
   };
 
@@ -424,6 +454,23 @@ const AreaTransparencia = () => {
                 <Button variant="destructive-ghost" size="sm" onClick={() => handleExcluirOuRevogarPortaria(portaria)} className="gap-1.5">
                   {portaria.publicado_at ? <ShieldOff className="h-3 w-3" /> : <Trash2 className="h-3 w-3" />}
                   {portaria.publicado_at ? 'Revogar' : 'Excluir'}
+                </Button>
+              )}
+            </div>
+          )}
+          {podeCredenciar && (
+            <div className="ml-auto">
+              {portaria.link_pdf ? (
+                <Button
+                  size="sm"
+                  onClick={() => iniciarCredenciamento(portaria)}
+                  disabled={credenciandoId === portaria.portaria_id}
+                >
+                  {credenciandoId === portaria.portaria_id ? 'Iniciando...' : 'Credenciar-se'}
+                </Button>
+              ) : (
+                <Button size="sm" disabled title="PDF pendente de publicação">
+                  PDF pendente de publicação
                 </Button>
               )}
             </div>
