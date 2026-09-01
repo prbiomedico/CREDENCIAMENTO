@@ -2051,6 +2051,8 @@ async def upload_portaria(
         raise HTTPException(status_code=400, detail="Arquivo vazio")
     if len(conteudo) > MAX_PORTARIA_PDF_SIZE:
         raise HTTPException(status_code=400, detail="Arquivo excede o limite de 20MB")
+    if not conteudo.startswith(b"%PDF-"):
+        raise HTTPException(status_code=400, detail="Arquivo não é um PDF válido (assinatura inválida)")
 
     try:
         data_parsed = datetime.fromisoformat(date)
@@ -2078,6 +2080,55 @@ async def upload_portaria(
         "estado_sigla": portaria.estado_sigla, "origem": portaria.origem
     })
     return portaria
+
+
+@api_router.post("/portarias/{portaria_id}/pdf", response_model=Portaria)
+async def anexar_pdf_portaria(
+    portaria_id: str,
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin")),
+):
+    """Anexa/substitui o PDF de uma portaria já existente — usado pelo modal
+    'Editar Portaria' (AreaTransparencia.js) e pelo wizard 'Criar Evento',
+    como alternativa ao campo de URL manual (link_pdf continua aceitando um
+    link externo digitado à mão, sem exigir upload). Mesma regra de permissão
+    de Editar/Excluir: require_perfil + _checar_permissao_escrita_estado pela
+    UF da portaria.
+
+    Validação por magic bytes (assinatura %PDF-), não só Content-Type — o
+    Content-Type de um multipart é declarado pelo cliente e é trivialmente
+    falsificável. Sem antivírus (ClamAV) disponível neste ambiente ainda —
+    mesmo gap já sinalizado para /portarias/upload e /documentos/upload;
+    este endpoint herda o mesmo risco residual, não o introduz."""
+    portaria = await db.portarias.find_one({"portaria_id": portaria_id, "deleted_at": None}, {"_id": 0})
+    if not portaria:
+        raise HTTPException(status_code=404, detail="Portaria não encontrada ou removida")
+    if portaria.get("estado_sigla"):
+        await _checar_permissao_escrita_estado(current_user, portaria["estado_sigla"])
+
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Apenas arquivos PDF são aceitos para portarias")
+
+    conteudo = await file.read()
+    if not conteudo:
+        raise HTTPException(status_code=400, detail="Arquivo vazio")
+    if len(conteudo) > MAX_PORTARIA_PDF_SIZE:
+        raise HTTPException(status_code=400, detail="Arquivo excede o limite de 20MB")
+    if not conteudo.startswith(b"%PDF-"):
+        raise HTTPException(status_code=400, detail="Arquivo não é um PDF válido (assinatura inválida)")
+
+    portarias_dir = UPLOAD_DIR / "portarias"
+    portarias_dir.mkdir(exist_ok=True)
+    file_path = portarias_dir / f"{uuid.uuid4().hex}.pdf"
+    async with aiofiles.open(file_path, "wb") as f:
+        await f.write(conteudo)
+
+    campos = {"link_pdf": str(file_path), "updated_at": datetime.now(timezone.utc).isoformat()}
+    await db.portarias.update_one({"portaria_id": portaria_id}, {"$set": campos})
+    await registrar_auditoria(current_user, "anexar_pdf_portaria", "portaria", portaria_id, {
+        "estado_sigla": portaria.get("estado_sigla")
+    })
+    return await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
 
 
 @api_router.get("/checklist-catalogo", response_model=List[ChecklistCatalogoItem])
