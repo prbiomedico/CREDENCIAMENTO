@@ -37,10 +37,16 @@ const MinhasSubmissoes = () => {
   const { user, initialized } = useAuth();
   const [searchParams] = useSearchParams();
   const [company, setCompany] = useState(null);
+  const [tipos, setTipos] = useState([]);
   const [portarias, setPortarias] = useState([]);
   const [submissoes, setSubmissoes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [portariaAtiva, setPortariaAtiva] = useState(null);
+  // Fatia 2 (modelo Credencia-CE): uma empresa pode ter mais de uma
+  // categoria de credenciamento agora — uma portaria selecionada sozinha
+  // não identifica mais a submissão de forma única se a empresa tiver 2+
+  // categorias relevantes pra ela, por isso portaria+categoria juntos.
+  const [categoriaAtiva, setCategoriaAtiva] = useState(null);
   const [criandoSubmissao, setCriandoSubmissao] = useState(false);
   const [submetendo, setSubmetendo] = useState(false);
   const [itemUpload, setItemUpload] = useState(null);
@@ -67,9 +73,15 @@ const MinhasSubmissoes = () => {
         axios.get(`${API}/submissoes`, { withCredentials: true }),
       ]);
       const atuacao = minhaEmpresa.detrans_atuacao || [];
+      // Fatia 2: união de categorias_credenciamento (novo, N:N) com
+      // tipo_empresa (legado, sempre presente) — mesma lógica do backend
+      // (_categorias_da_empresa em server.py), pra uma empresa com
+      // categoria nova enxergar as portarias relevantes pra ela também,
+      // não só as do seu tipo_empresa original.
+      const categoriasParaFiltro = new Set([...(minhaEmpresa.categorias_credenciamento || []), minhaEmpresa.tipo_empresa].filter(Boolean));
       const relevantes = (Array.isArray(portariasRes.data) ? portariasRes.data : []).filter((p) =>
         p.estado_sigla && atuacao.includes(p.estado_sigla) &&
-        (p.checklist_itens || []).some((i) => i.perfil_alvo === minhaEmpresa.tipo_empresa)
+        (p.checklist_itens || []).some((i) => categoriasParaFiltro.has(i.perfil_alvo))
       );
       setPortarias(relevantes);
       setSubmissoes(Array.isArray(submissoesRes.data) ? submissoesRes.data : []);
@@ -83,6 +95,18 @@ const MinhasSubmissoes = () => {
 
   useEffect(() => { if (initialized) fetchTudo(); }, [initialized, fetchTudo]);
 
+  // Só pra resolver tipo_id -> nome de exibição quando a empresa tem mais de
+  // 1 categoria relevante numa mesma portaria (Fatia 2) — independente do
+  // resto do fetch, não precisa bloquear loading.
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await axios.get(`${API}/tipos-credenciamento`, { withCredentials: true });
+        setTipos(Array.isArray(res.data) ? res.data : []);
+      } catch { /* não crítico -- só perde o nome bonito, cai pro tipo_id cru */ }
+    })();
+  }, []);
+
   // Deep-link vindo de uma notificação ("checklist_inconforme"/"submissao_homologada",
   // que carregam submissao_id, ou um link direto por portaria_id) — pré-seleciona
   // a portaria certa assim que a lista carregar. Sem efeito se o id não existir
@@ -93,24 +117,41 @@ const MinhasSubmissoes = () => {
     const portariaIdParam = searchParams.get('portaria_id');
     if (submissaoIdParam) {
       const sub = submissoes.find((s) => s.submissao_id === submissaoIdParam);
-      if (sub) setPortariaAtiva(sub.portaria_id);
+      if (sub) { setPortariaAtiva(sub.portaria_id); setCategoriaAtiva(sub.perfil_empresa); }
     } else if (portariaIdParam) {
-      if (portarias.some((p) => p.portaria_id === portariaIdParam)) setPortariaAtiva(portariaIdParam);
+      const portaria = portarias.find((p) => p.portaria_id === portariaIdParam);
+      if (portaria) {
+        // Deep-link sem categoria explícita (ex: notificação antiga) — usa a
+        // primeira categoria relevante da empresa pra essa portaria. Pra
+        // quem só tem 1 categoria (todo mundo hoje) é a única opção mesmo.
+        const cats = categoriasDaPortaria(portaria);
+        setPortariaAtiva(portariaIdParam);
+        setCategoriaAtiva(cats[0] || null);
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, portarias, submissoes]);
 
-  const submissaoDe = (portariaId) => submissoes.find((s) => s.portaria_id === portariaId) || null;
+  const categoriasEmpresa = React.useMemo(
+    () => new Set([...(company?.categorias_credenciamento || []), company?.tipo_empresa].filter(Boolean)),
+    [company]
+  );
+  const categoriasDaPortaria = (portaria) =>
+    [...categoriasEmpresa].filter((cat) => (portaria.checklist_itens || []).some((i) => i.perfil_alvo === cat));
 
-  const iniciarSubmissao = async (portariaId) => {
+  const submissaoDe = (portariaId, categoria) =>
+    submissoes.find((s) => s.portaria_id === portariaId && s.perfil_empresa === categoria) || null;
+
+  const iniciarSubmissao = async (portariaId, categoria) => {
     setCriandoSubmissao(true);
     try {
       const res = await axios.post(`${API}/submissoes`, null, {
         withCredentials: true,
-        params: { portaria_id: portariaId },
+        params: { portaria_id: portariaId, categoria },
       });
       setSubmissoes((prev) => [...prev.filter((s) => s.submissao_id !== res.data.submissao_id), res.data]);
       setPortariaAtiva(portariaId);
+      setCategoriaAtiva(categoria);
     } catch (error) {
       console.error('Erro ao iniciar submissão:', error);
       toast.error(error?.response?.data?.detail || 'Erro ao iniciar submissão');
@@ -186,7 +227,7 @@ const MinhasSubmissoes = () => {
   };
 
   const portariaSelecionada = portarias.find((p) => p.portaria_id === portariaAtiva) || null;
-  const submissaoSelecionada = portariaAtiva ? submissaoDe(portariaAtiva) : null;
+  const submissaoSelecionada = portariaAtiva ? submissaoDe(portariaAtiva, categoriaAtiva) : null;
 
   return (
     <DashboardLayout>
@@ -219,39 +260,48 @@ const MinhasSubmissoes = () => {
         ) : !portariaAtiva ? (
           <div className="space-y-3">
             {portarias.map((portaria) => {
-              const sub = submissaoDe(portaria.portaria_id);
-              const cfg = sub ? STATUS_SUBMISSAO_CFG[sub.status] : null;
-              return (
-                <Card
-                  key={portaria.portaria_id}
-                  className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors cursor-pointer"
-                  onClick={() => setPortariaAtiva(portaria.portaria_id)}
-                >
-                  <CardContent className="p-5 flex items-center justify-between gap-4">
-                    <div>
-                      <p className="text-white font-semibold">{portaria.numero ? `${portaria.numero} — ` : ''}{portaria.title}</p>
-                      <p className="text-xs text-zinc-500 mt-1">
-                        UF {portaria.estado_sigla} · {portaria.checklist_itens?.length || 0} item(ns) no checklist
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      {cfg ? (
-                        <Badge className={`${cfg.className} font-mono uppercase text-[10px] px-2 py-0.5`}>
-                          {cfg.icon && <cfg.icon className="h-3 w-3 mr-1" />}{cfg.label}
-                        </Badge>
-                      ) : (
-                        <Badge className="bg-zinc-800 text-zinc-500 border-zinc-700 text-[10px]">Não iniciado</Badge>
-                      )}
-                      <ChevronRight className="h-4 w-4 text-zinc-600" />
-                    </div>
-                  </CardContent>
-                </Card>
-              );
+              const cats = categoriasDaPortaria(portaria);
+              // Quase sempre 1 categoria (todo mundo hoje) — mesma linha,
+              // mesmo visual de antes da Fatia 2. Só vira mais de uma linha
+              // (uma por categoria) quando a empresa realmente acumula
+              // categorias que essa portaria cobre.
+              return cats.map((cat) => {
+                const sub = submissaoDe(portaria.portaria_id, cat);
+                const cfg = sub ? STATUS_SUBMISSAO_CFG[sub.status] : null;
+                const tipoInfo = tipos.find((t) => t.tipo_id === cat);
+                return (
+                  <Card
+                    key={`${portaria.portaria_id}__${cat}`}
+                    className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors cursor-pointer"
+                    onClick={() => { setPortariaAtiva(portaria.portaria_id); setCategoriaAtiva(cat); }}
+                  >
+                    <CardContent className="p-5 flex items-center justify-between gap-4">
+                      <div>
+                        <p className="text-white font-semibold">{portaria.numero ? `${portaria.numero} — ` : ''}{portaria.title}</p>
+                        <p className="text-xs text-zinc-500 mt-1">
+                          UF {portaria.estado_sigla} · {portaria.checklist_itens?.length || 0} item(ns) no checklist
+                          {cats.length > 1 && <> · categoria <span className="text-zinc-400">{tipoInfo?.nome || cat}</span></>}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        {cfg ? (
+                          <Badge className={`${cfg.className} font-mono uppercase text-[10px] px-2 py-0.5`}>
+                            {cfg.icon && <cfg.icon className="h-3 w-3 mr-1" />}{cfg.label}
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-zinc-800 text-zinc-500 border-zinc-700 text-[10px]">Não iniciado</Badge>
+                        )}
+                        <ChevronRight className="h-4 w-4 text-zinc-600" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              });
             })}
           </div>
         ) : (
           <div className="space-y-6">
-            <Button variant="link" size="sm" onClick={() => setPortariaAtiva(null)} className="h-auto p-0 text-zinc-400 hover:text-white">
+            <Button variant="link" size="sm" onClick={() => { setPortariaAtiva(null); setCategoriaAtiva(null); }} className="h-auto p-0 text-zinc-400 hover:text-white">
               ← Voltar pra lista de portarias
             </Button>
 
@@ -267,7 +317,7 @@ const MinhasSubmissoes = () => {
                 <CardContent className="p-8 text-center">
                   <p className="text-zinc-400 mb-4">Você ainda não iniciou o envio pra esta portaria.</p>
                   <Button
-                    onClick={() => iniciarSubmissao(portariaSelecionada.portaria_id)}
+                    onClick={() => iniciarSubmissao(portariaSelecionada.portaria_id, categoriaAtiva)}
                     disabled={criandoSubmissao}
                     className="bg-primary-500 hover:bg-primary-600 text-white"
                   >

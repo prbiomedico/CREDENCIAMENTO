@@ -48,6 +48,16 @@ const PainelConferencia = () => {
   const [mostrarJustificativa, setMostrarJustificativa] = useState({});
   const [analisando, setAnalisando] = useState(null);
   const [homologando, setHomologando] = useState(false);
+  // Fatia 2 (modelo Credencia-CE): perfil_empresa agora pode ser qualquer
+  // categoria do catálogo, não só "registradora"/"financeira" — resolve o
+  // tipo_id pro nome de exibição em vez de mostrar o id cru.
+  const [tipos, setTipos] = useState([]);
+  useEffect(() => {
+    axios.get(`${API}/tipos-credenciamento`, { withCredentials: true })
+      .then((res) => setTipos(Array.isArray(res.data) ? res.data : []))
+      .catch(() => {});
+  }, []);
+  const nomeCategoria = (tipoId) => tipos.find((t) => t.tipo_id === tipoId)?.nome || tipoId;
 
   // Quando sigcr_admin está simulando uma empresa (Registradora/Financeira)
   // via Trocar Visão, nenhuma ação de gestão/admin deste painel (seletor de
@@ -253,7 +263,7 @@ const PainelConferencia = () => {
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
                       <Badge className="bg-zinc-800 text-zinc-400 border-zinc-700 text-[10px] font-mono uppercase">
-                        {sub.perfil_empresa}
+                        {nomeCategoria(sub.perfil_empresa)}
                       </Badge>
                       <Badge className={`${cfg.className} font-mono uppercase text-[10px] px-2 py-0.5`}>
                         {cfg.icon && <cfg.icon className="h-3 w-3 mr-1" />}{cfg.label}
