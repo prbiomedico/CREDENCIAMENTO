@@ -367,6 +367,14 @@ class Company(BaseModel):
     logo_url: Optional[str] = None
     detrans_atuacao: List[str] = []
     tipo_empresa: str = "registradora"  # registradora, financeira, detran
+    # Fatia 1 (modelo Credencia-CE, ver PENDING_ACTIONS.md): catálogo de
+    # categorias de credenciamento que esta empresa detém — referencia
+    # TipoCredenciamento.tipo_id, N:N (uma empresa pode ter várias). Ainda
+    # sem nenhum consumidor além do backfill da migração — `tipo_empresa`
+    # continua sendo o campo estrutural/legado (decide o vínculo
+    # financeira→registradora); `categorias_credenciamento` é o novo eixo,
+    # ortogonal, que a Fatia 2 passa a usar de verdade pra checklist/submissão.
+    categorias_credenciamento: List[str] = []
     # Fase A: vínculo 1:N — uma registradora tem várias financeiras; só
     # preenchido quando tipo_empresa == "financeira". Validado contra uma
     # registradora ativa de verdade tanto na criação quanto numa atualização
@@ -448,6 +456,43 @@ class CompanyUpdate(BaseModel):
     # na criação, não muda por aqui) — permite corrigir/setar o vínculo depois
     # sem precisar recriar a empresa. Validado em update_company.
     registradora_id: Optional[str] = None
+
+
+class TipoCredenciamento(BaseModel):
+    """Fatia 1 do modelo Credencia-CE (ver PENDING_ACTIONS.md e a investigação
+    Fase 1 aprovada por Pedro): catálogo de categorias de credenciamento —
+    substitui o par fixo "registradora"/"financeira" por um conjunto
+    extensível (Instituição Credora, Regravadoras de Chassi, Despachante,
+    etc). `exige_vinculo_com` modela como DADO a regra que hoje é hardcoded
+    em `_validar_tipo_e_vinculo_empresa` (financeira exige uma registradora
+    com contrato ativo) — categorias novas nascem independentes (sem
+    vínculo) por padrão, decisão B1 da Fase 1; só quem explicitamente
+    setar esse campo herda esse tipo de exigência.
+
+    Fatia 1 é deliberadamente só o catálogo — nenhum código ainda VALIDA
+    contra ele (perfil_alvo/tipo_empresa continuam Literal/hardcoded como
+    hoje). Isso é trabalho da Fatia 2."""
+    model_config = ConfigDict(extra="ignore")
+    tipo_id: str = Field(default_factory=lambda: f"tipocred_{uuid.uuid4().hex[:10]}")
+    nome: str
+    descricao: Optional[str] = None
+    exige_vinculo_com: Optional[str] = None  # tipo_id de outra categoria da qual esta depende (ex: "financeira" -> "registradora")
+    ativo: bool = True
+    created_by: Optional[str] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+
+class TipoCredenciamentoCreate(BaseModel):
+    nome: str
+    descricao: Optional[str] = None
+    exige_vinculo_com: Optional[str] = None
+
+
+class TipoCredenciamentoUpdate(BaseModel):
+    nome: Optional[str] = None
+    descricao: Optional[str] = None
+    exige_vinculo_com: Optional[str] = None
+    ativo: Optional[bool] = None
 
 
 class Document(BaseModel):
@@ -2129,6 +2174,68 @@ async def anexar_pdf_portaria(
         "estado_sigla": portaria.get("estado_sigla")
     })
     return await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
+
+
+@api_router.get("/tipos-credenciamento", response_model=List[TipoCredenciamento])
+async def get_tipos_credenciamento(incluir_inativos: bool = False, current_user: User = Depends(get_current_user)):
+    """Lista o catálogo de categorias de credenciamento. Login basta pra ler
+    (mesmo padrão de GET /checklist-catalogo) — é a lista que qualquer tela,
+    inclusive de empresa, precisa pra popular um seletor de categoria."""
+    query = {} if incluir_inativos else {"ativo": True}
+    itens = await db.tipos_credenciamento.find(query, {"_id": 0}).sort("nome", 1).to_list(1000)
+    return itens
+
+
+@api_router.post("/tipos-credenciamento", response_model=TipoCredenciamento)
+async def create_tipo_credenciamento(tipo_data: TipoCredenciamentoCreate, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
+    if tipo_data.exige_vinculo_com:
+        pai = await db.tipos_credenciamento.find_one({"tipo_id": tipo_data.exige_vinculo_com, "ativo": True})
+        if not pai:
+            raise HTTPException(status_code=400, detail="exige_vinculo_com deve referenciar um tipo de credenciamento ativo existente")
+    tipo = TipoCredenciamento(**tipo_data.model_dump(), created_by=current_user.user_id)
+    doc = tipo.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    await db.tipos_credenciamento.insert_one(doc)
+    await registrar_auditoria(current_user, "criar_tipo_credenciamento", "tipo_credenciamento", tipo.tipo_id, {"nome": tipo.nome})
+    return tipo
+
+
+@api_router.patch("/tipos-credenciamento/{tipo_id}", response_model=TipoCredenciamento)
+async def update_tipo_credenciamento(tipo_id: str, tipo_data: TipoCredenciamentoUpdate, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
+    existente = await db.tipos_credenciamento.find_one({"tipo_id": tipo_id})
+    if not existente:
+        raise HTTPException(status_code=404, detail="Tipo de credenciamento não encontrado")
+    updates = {k: v for k, v in tipo_data.model_dump(exclude_unset=True).items() if v is not None}
+    if updates.get("exige_vinculo_com"):
+        if updates["exige_vinculo_com"] == tipo_id:
+            raise HTTPException(status_code=400, detail="Um tipo de credenciamento não pode depender de si mesmo")
+        pai = await db.tipos_credenciamento.find_one({"tipo_id": updates["exige_vinculo_com"], "ativo": True})
+        if not pai:
+            raise HTTPException(status_code=400, detail="exige_vinculo_com deve referenciar um tipo de credenciamento ativo existente")
+    if updates:
+        await db.tipos_credenciamento.update_one({"tipo_id": tipo_id}, {"$set": updates})
+    await registrar_auditoria(current_user, "editar_tipo_credenciamento", "tipo_credenciamento", tipo_id, updates)
+    atualizado = await db.tipos_credenciamento.find_one({"tipo_id": tipo_id}, {"_id": 0})
+    return atualizado
+
+
+@api_router.delete("/tipos-credenciamento/{tipo_id}")
+async def desativar_tipo_credenciamento(tipo_id: str, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
+    """Soft-disable — nunca apaga. Bloqueia se alguma empresa já tiver essa
+    categoria (categorias_credenciamento) ou se outra categoria ativa
+    depender dela via exige_vinculo_com, pra não deixar referência morta."""
+    existente = await db.tipos_credenciamento.find_one({"tipo_id": tipo_id})
+    if not existente:
+        raise HTTPException(status_code=404, detail="Tipo de credenciamento não encontrado")
+    em_uso = await db.companies.find_one({"categorias_credenciamento": tipo_id, "deleted_at": None})
+    if em_uso:
+        raise HTTPException(status_code=409, detail="Tipo de credenciamento em uso por pelo menos uma empresa — não pode ser desativado")
+    dependente = await db.tipos_credenciamento.find_one({"exige_vinculo_com": tipo_id, "ativo": True})
+    if dependente:
+        raise HTTPException(status_code=409, detail=f"Outro tipo de credenciamento (\"{dependente['nome']}\") depende deste — desative-o primeiro")
+    await db.tipos_credenciamento.update_one({"tipo_id": tipo_id}, {"$set": {"ativo": False}})
+    await registrar_auditoria(current_user, "desativar_tipo_credenciamento", "tipo_credenciamento", tipo_id, {})
+    return {"message": "Tipo de credenciamento desativado"}
 
 
 @api_router.get("/checklist-catalogo", response_model=List[ChecklistCatalogoItem])
