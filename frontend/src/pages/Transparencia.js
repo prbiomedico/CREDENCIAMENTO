@@ -128,14 +128,14 @@ export default function Transparencia() {
                       <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-800">
                         {e.termo_adesao_download_url && (
                           <a href={`${BACKEND_URL}${e.termo_adesao_download_url}`} target="_blank" rel="noreferrer">
-                            <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 hover:text-white">
+                            <Button size="sm" variant="outline">
                               <Download className="h-3.5 w-3.5 mr-2" /> Termo de Adesão
                             </Button>
                           </a>
                         )}
                         {e.anexos.map((a, i) => (
                           <a key={i} href={`${BACKEND_URL}${a.download_url}`} target="_blank" rel="noreferrer">
-                            <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 hover:text-white">
+                            <Button size="sm" variant="outline">
                               <Paperclip className="h-3.5 w-3.5 mr-2" /> {a.nome}
                             </Button>
                           </a>

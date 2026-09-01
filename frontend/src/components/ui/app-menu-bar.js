@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePerfilAtivo } from '../../contexts/PerfilAtivoContext';
 import { buildNavStructure } from '../../config/navMenus';
 import { cn } from '@/lib/utils';
+import { buttonVariants } from '@/components/ui/button';
 import {
   Menubar,
   MenubarMenu,
@@ -47,12 +48,18 @@ const AppMenuBar = () => {
     navSecoes.some((secao) => grupoAtivo(secao.items)) ||
     grupoAtivo(navAdminExtra);
 
+  // buttonVariants({ variant: "tab" }) já cobre cor/raio/tipografia — a MESMA
+  // classe que ui/tabs.jsx usa pro par Portarias|Editais, unificando os dois
+  // (Fase 3). MenubarTrigger não expõe `data-[state=active]` pra rota atual
+  // (seu `data-state` é só sobre o próprio submenu estar aberto), então o
+  // estado "ativo" continua vindo do booleano já calculado aqui — só a cor
+  // aplicada é que agora é a mesma classe, aplicada via className condicional
+  // em vez de reimplementada à mão.
   const triggerClass = (active) =>
     cn(
-      'flex shrink-0 cursor-pointer select-none items-center gap-1.5 whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium outline-none transition-colors',
-      active
-        ? 'bg-primary-500/15 text-primary-400'
-        : 'text-zinc-400 hover:bg-zinc-800/70 hover:text-white focus:bg-zinc-800/70 focus:text-white data-[state=open]:bg-zinc-800/70 data-[state=open]:text-white'
+      buttonVariants({ variant: 'tab' }),
+      'shrink-0 cursor-pointer',
+      active && 'bg-primary-500/15 text-primary-400'
     );
 
   const itemClass = (active) =>

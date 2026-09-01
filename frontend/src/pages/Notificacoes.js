@@ -91,7 +91,7 @@ const Notificacoes = () => {
             </div>
           </div>
           {naoLidas > 0 && (
-            <Button onClick={marcarTodasLidas} variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 text-sm">
+            <Button onClick={marcarTodasLidas} variant="outline" size="sm">
               <CheckCheck className="h-4 w-4 mr-2" /> Marcar todas como lidas
             </Button>
           )}

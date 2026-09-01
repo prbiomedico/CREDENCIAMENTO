@@ -533,8 +533,8 @@ const EmpresaRegistradora = () => {
                     Cadastrado em: {new Date(company.created_at).toLocaleDateString('pt-BR')}
                 </div>
                 <div className="flex gap-2 mt-3">
-                  <Button size="sm" variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800" onClick={()=>{setEditingCompany(company);setShowEditModal(true);}}>Editar</Button>
-                  <Button size="sm" className="bg-red-900/30 text-red-400 border border-red-800 hover:bg-red-900" onClick={()=>handleDelete(company.company_id)}>Excluir</Button>
+                  <Button size="sm" variant="outline" onClick={()=>{setEditingCompany(company);setShowEditModal(true);}}>Editar</Button>
+                  <Button size="sm" variant="destructive-outline" onClick={()=>handleDelete(company.company_id)}>Excluir</Button>
                 </div>
                 </CardContent>
               </Card>

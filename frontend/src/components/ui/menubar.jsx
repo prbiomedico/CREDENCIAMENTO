@@ -45,11 +45,17 @@ const Menubar = React.forwardRef(({ className, ...props }, ref) => (
 ))
 Menubar.displayName = MenubarPrimitive.Root.displayName
 
+// Raio/padding/cor de texto NÃO ficam mais fixos aqui — vêm de
+// `buttonVariants({ variant: "tab" })`, aplicado pelo caller via `className`
+// (ver app-menu-bar.js), pro raio/tipografia baterem com o resto dos
+// clicáveis do sistema (Fase 3, unificação botões/tabs). Só o que é
+// específico de "gatilho de menu" (cursor, foco, estado de submenu aberto)
+// continua aqui.
 const MenubarTrigger = React.forwardRef(({ className, ...props }, ref) => (
   <MenubarPrimitive.Trigger
     ref={ref}
     className={cn(
-      "flex cursor-default select-none items-center rounded-sm px-3 py-1 text-sm font-medium outline-none focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
+      "flex cursor-default select-none items-center outline-none focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground",
       className
     )}
     {...props} />

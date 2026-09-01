@@ -251,9 +251,9 @@ const MinhasSubmissoes = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            <button onClick={() => setPortariaAtiva(null)} className="text-sm text-zinc-400 hover:text-white">
+            <Button variant="link" size="sm" onClick={() => setPortariaAtiva(null)} className="h-auto p-0 text-zinc-400 hover:text-white">
               ← Voltar pra lista de portarias
-            </button>
+            </Button>
 
             <div>
               <h2 className="text-lg font-semibold text-white">

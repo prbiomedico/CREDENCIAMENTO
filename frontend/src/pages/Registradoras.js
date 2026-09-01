@@ -4,6 +4,7 @@ import {
   Building2, Loader2, CheckCircle, XCircle, Clock, ChevronDown, ChevronRight,
   FileText, ListChecks,
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -147,13 +148,13 @@ const Registradoras = () => {
               {pendenciasFiltro && 'com documentos pendentes'}
               {' '}({registradorasFiltradas.length} de {registradoras.length})
             </span>
-            <button
-              type="button"
+            <Button
+              variant="link" size="sm"
               onClick={() => setSearchParams((prev) => { const p = new URLSearchParams(prev); p.delete('compliance'); p.delete('pendencias'); return p; })}
-              className="text-primary-400 hover:text-primary-200 underline text-xs"
+              className="h-auto p-0"
             >
               limpar
-            </button>
+            </Button>
           </div>
         )}
 

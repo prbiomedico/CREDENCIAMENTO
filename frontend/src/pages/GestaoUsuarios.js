@@ -300,10 +300,10 @@ export default function GestaoUsuarios() {
                       placeholder="Mnimo 8 caracteres"
                       className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-primary-500/60 pr-10"
                     />
-                    <button onClick={() => setShowSenha(!showSenha)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
+                    <Button type="button" variant="ghost" size="icon" onClick={() => setShowSenha(!showSenha)}
+                      className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-zinc-500 hover:text-zinc-300">
                       {showSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -382,12 +382,10 @@ export default function GestaoUsuarios() {
                       {u.uf && <Badge className="bg-zinc-800 text-zinc-400 border-zinc-700 text-xs font-mono">{u.uf}</Badge>}
                       {isConfirmDelete ? (
                         <div className="flex gap-1">
-                          <Button size="sm" onClick={() => handleDeletar(u.id, u.username)}
-                            className="bg-red-600 hover:bg-red-700 text-white h-7 px-2 text-xs">
+                          <Button size="sm" variant="destructive" onClick={() => handleDeletar(u.id, u.username)}>
                             Confirmar
                           </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setDeletando(null)}
-                            className="text-zinc-400 h-7 px-2">
+                          <Button size="sm" variant="ghost" onClick={() => setDeletando(null)}>
                             <X className="h-3.5 w-3.5" />
                           </Button>
                         </div>
@@ -473,9 +471,8 @@ export default function GestaoUsuarios() {
                                 className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 px-3 text-xs">
                                 <ThumbsUp className="h-3.5 w-3.5 mr-1.5" /> Aprovar
                               </Button>
-                              <Button size="sm" variant="outline" disabled={processando === c.company_id}
-                                onClick={() => { setRejeicaoAlvo(c); setMotivoRejeicao(''); }}
-                                className="border-red-800 text-red-400 hover:bg-red-950 h-8 px-3 text-xs">
+                              <Button size="sm" variant="destructive-outline" disabled={processando === c.company_id}
+                                onClick={() => { setRejeicaoAlvo(c); setMotivoRejeicao(''); }}>
                                 <ThumbsDown className="h-3.5 w-3.5 mr-1.5" /> Rejeitar
                               </Button>
                             </div>
@@ -515,12 +512,10 @@ export default function GestaoUsuarios() {
                   <p className="text-[11px] text-zinc-600 mt-1">O responsável poderá corrigir os dados e reenviar o cadastro.</p>
                 </div>
                 <div className="flex gap-2 justify-end pt-1">
-                  <Button variant="outline" onClick={() => setRejeicaoAlvo(null)}
-                    className="border-zinc-700 text-zinc-400">
+                  <Button variant="outline" onClick={() => setRejeicaoAlvo(null)}>
                     Cancelar
                   </Button>
-                  <Button onClick={handleRejeitar} disabled={processando === rejeicaoAlvo.company_id}
-                    className="bg-red-600 hover:bg-red-700 text-white">
+                  <Button variant="destructive" onClick={handleRejeitar} disabled={processando === rejeicaoAlvo.company_id}>
                     {processando === rejeicaoAlvo.company_id
                       ? <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />Rejeitando...</>
                       : <><ThumbsDown className="h-4 w-4 mr-2" />Confirmar Rejeição</>}

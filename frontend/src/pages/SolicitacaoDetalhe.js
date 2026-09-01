@@ -305,9 +305,8 @@ export default function SolicitacaoDetalhe() {
                             <CheckCircle className="h-4 w-4 mr-2" /> Aprovar
                           </Button>
                           <Button
-                            variant="outline"
-                            onClick={() => setShowMotivoInput(p => ({ ...p, [docNome]: !p[docNome] }))}
-                            className="border-red-700 text-red-400 hover:bg-red-900/30">
+                            variant="destructive-outline"
+                            onClick={() => setShowMotivoInput(p => ({ ...p, [docNome]: !p[docNome] }))}>
                             <XCircle className="h-4 w-4 mr-2" /> Reprovar
                           </Button>
                         </div>
@@ -321,8 +320,9 @@ export default function SolicitacaoDetalhe() {
                               rows={3}
                             />
                             <Button
+                              variant="destructive"
                               onClick={() => handleReprovar(docNome)}
-                              className="bg-red-600 hover:bg-red-700 text-white w-full">
+                              className="w-full">
                               <Send className="h-4 w-4 mr-2" /> Confirmar Reprovao e Notificar Empresa
                             </Button>
                           </div>

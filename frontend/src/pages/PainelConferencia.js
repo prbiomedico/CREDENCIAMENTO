@@ -267,9 +267,9 @@ const PainelConferencia = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            <button onClick={() => setSubmissaoAtivaId(null)} className="text-sm text-zinc-400 hover:text-white">
+            <Button variant="link" size="sm" onClick={() => setSubmissaoAtivaId(null)} className="h-auto p-0 text-zinc-400 hover:text-white">
               ← Voltar pra lista de submissões
-            </button>
+            </Button>
 
             <div className="flex items-start justify-between gap-4">
               <div>
@@ -330,8 +330,8 @@ const PainelConferencia = () => {
                             className="bg-emerald-600 hover:bg-emerald-700 text-white h-8 gap-1">
                             <Check className="h-3.5 w-3.5" /> Conforme
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => setMostrarJustificativa((p) => ({ ...p, [item.item_id]: !p[item.item_id] }))}
-                            className="border-red-500/30 text-red-400 hover:bg-red-500/10 h-8 gap-1">
+                          <Button size="sm" variant="destructive-outline" onClick={() => setMostrarJustificativa((p) => ({ ...p, [item.item_id]: !p[item.item_id] }))}
+                            className="gap-1">
                             <XIcon className="h-3.5 w-3.5" /> Inconforme
                           </Button>
                         </div>
@@ -345,8 +345,7 @@ const PainelConferencia = () => {
                             onChange={(e) => setJustificativas((p) => ({ ...p, [item.item_id]: e.target.value }))}
                             className="bg-zinc-800 border-zinc-700 text-white text-sm min-h-[70px]"
                           />
-                          <Button size="sm" onClick={() => analisarItem(item.item_id, 'inconforme')} disabled={analisando === item.item_id}
-                            className="bg-red-600 hover:bg-red-700 text-white h-8">
+                          <Button size="sm" variant="destructive" onClick={() => analisarItem(item.item_id, 'inconforme')} disabled={analisando === item.item_id}>
                             Confirmar Inconformidade
                           </Button>
                         </div>

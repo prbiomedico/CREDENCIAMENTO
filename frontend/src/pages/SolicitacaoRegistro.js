@@ -326,7 +326,7 @@ const SolicitacaoRegistro = () => {
                         <p className="text-xs text-zinc-600 mt-1">Enviado em {new Date(sol.created_at).toLocaleDateString('pt-BR')}</p>
                       </div>
                       <div className="flex flex-col gap-2 shrink-0">
-                        <Button variant="outline" size="sm" className="border-zinc-700 text-zinc-300 gap-2" onClick={() => baixarArquivo(sol.solicitacao_registro_id, 'contrato')}>
+                        <Button variant="outline" size="sm" className="gap-2" onClick={() => baixarArquivo(sol.solicitacao_registro_id, 'contrato')}>
                           <Download className="h-3.5 w-3.5" /> Contrato
                         </Button>
                         {sol.status === 'concluido' && (

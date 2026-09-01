@@ -24,12 +24,32 @@ const buttonVariants = cva(
           "bg-gradient-to-br from-primary to-primary-600 text-primary-foreground shadow-sm shadow-black/5 hover:shadow-[0_0_24px_-4px_hsl(var(--primary)/0.6)] hover:brightness-110",
         destructive:
           "bg-destructive text-destructive-foreground shadow-sm shadow-black/5 hover:shadow-[0_0_20px_-4px_hsl(var(--destructive)/0.55)] hover:brightness-110",
+        // Padrão único de "Fase 3" (SIGCR-Design-System, item de unificação
+        // de clicáveis): antes desta variante, cada tela reescrevia sua
+        // própria versão de "ação destrutiva secundária" à mão — pelo menos
+        // 4 tons de vermelho diferentes coexistiam. `destructive-outline` é
+        // pra ação destrutiva que não é a principal da tela (ex: "Revogar"
+        // num card de lista); `destructive-ghost` é pra ação inline sem
+        // moldura nenhuma (ex: "Excluir" ao lado de "Editar" numa linha).
+        "destructive-outline":
+          "border border-destructive/40 text-destructive shadow-sm shadow-black/5 hover:bg-destructive/10 hover:border-destructive/60",
+        "destructive-ghost":
+          "text-destructive hover:text-destructive hover:bg-destructive/10",
         outline:
           "border border-input shadow-sm shadow-black/5 hover:border-primary/40 hover:bg-accent hover:text-accent-foreground",
         secondary:
           "bg-gradient-to-br from-secondary to-secondary-600 text-secondary-foreground shadow-sm hover:shadow-[0_0_20px_-4px_hsl(var(--secondary)/0.55)] hover:brightness-110",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline active:scale-100",
+        // Pill de navegação (tabs/menubar) — mesmo raio (`rounded-md`, herdado
+        // da base) e mesma família tipográfica dos botões, só muda a forma.
+        // `data-[state=active]` é o atributo que o Radix Tabs já expõe no
+        // TabsTrigger nativamente; MenubarTrigger não tem esse conceito (seu
+        // `data-state` é sobre o próprio submenu estar aberto, não sobre rota
+        // ativa), então app-menu-bar.js aplica a mesma cor via className
+        // condicional em vez de depender do atributo — ver comentário lá.
+        tab:
+          "text-muted-foreground shadow-none hover:text-foreground hover:bg-accent/60 data-[state=active]:bg-primary-500/15 data-[state=active]:text-primary-400 data-[state=active]:shadow-sm",
       },
       size: {
         default: "h-9 px-4 py-2",

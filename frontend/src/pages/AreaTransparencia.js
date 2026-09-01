@@ -399,44 +399,32 @@ const AreaTransparencia = () => {
         <p className="text-sm text-zinc-400 line-clamp-2">{portaria.summary || portaria.content}</p>
         <div className="flex items-center gap-4 mt-3">
           {portaria.link_pdf && (
-            <button
-              type="button"
-              onClick={() => handleDownloadPdf(portaria)}
-              className="inline-flex items-center gap-1.5 text-xs text-primary-400 hover:text-primary-300"
-            >
+            <Button variant="link" size="sm" onClick={() => handleDownloadPdf(portaria)} className="gap-1.5">
               <ExternalLink className="h-3 w-3" />
               Ver PDF
-            </button>
+            </Button>
           )}
           {portaria.link_publico && portaria.publicado_at && (
-            <button
-              type="button"
+            <Button
+              variant="link" size="sm"
               onClick={() => { navigator.clipboard.writeText(portaria.link_publico); toast.success('Link copiado!'); }}
-              className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300"
+              className="gap-1.5"
             >
               <Link2 className="h-3 w-3" />
               Copiar link público
-            </button>
+            </Button>
           )}
           {podeGerenciar && (
             <div className="ml-auto flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => abrirEdicaoPortaria(portaria)}
-                className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white"
-              >
+              <Button variant="ghost" size="sm" onClick={() => abrirEdicaoPortaria(portaria)} className="gap-1.5">
                 <Pencil className="h-3 w-3" />
                 Editar
-              </button>
+              </Button>
               {portaria.status !== 'revogada' && (
-                <button
-                  type="button"
-                  onClick={() => handleExcluirOuRevogarPortaria(portaria)}
-                  className="inline-flex items-center gap-1.5 text-xs text-red-400 hover:text-red-300"
-                >
+                <Button variant="destructive-ghost" size="sm" onClick={() => handleExcluirOuRevogarPortaria(portaria)} className="gap-1.5">
                   {portaria.publicado_at ? <ShieldOff className="h-3 w-3" /> : <Trash2 className="h-3 w-3" />}
                   {portaria.publicado_at ? 'Revogar' : 'Excluir'}
-                </button>
+                </Button>
               )}
             </div>
           )}
@@ -644,7 +632,7 @@ const AreaTransparencia = () => {
               <div className="flex gap-2">
                 <Dialog open={analyzeDialogOpen} onOpenChange={setAnalyzeDialogOpen}>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 gap-2">
+                    <Button variant="outline" className="gap-2">
                       <Sparkles className="h-4 w-4 text-secondary-400" />
                       Analisar com IA
                     </Button>
@@ -711,13 +699,13 @@ const AreaTransparencia = () => {
                 <span className="text-primary-300">
                   Filtrando por status: <span className="font-mono uppercase">{statusFiltro}</span>
                 </span>
-                <button
-                  type="button"
+                <Button
+                  variant="link" size="sm"
                   onClick={() => setSearchParams((prev) => { const p = new URLSearchParams(prev); p.delete('status'); return p; })}
-                  className="text-primary-400 hover:text-primary-200 underline text-xs"
+                  className="h-auto p-0"
                 >
                   limpar
-                </button>
+                </Button>
               </div>
             )}
 
@@ -855,7 +843,7 @@ const AreaTransparencia = () => {
                               placeholder="Ex: Contrato Social"
                               className="bg-zinc-800 border-zinc-700 text-white"
                             />
-                            <Button type="button" onClick={adicionarDocumento} variant="outline" className="border-zinc-700 text-zinc-300 shrink-0">
+                            <Button type="button" onClick={adicionarDocumento} variant="outline" className="shrink-0">
                               Adicionar
                             </Button>
                           </div>
@@ -964,14 +952,14 @@ const AreaTransparencia = () => {
                             )}
                           </div>
                           {podeGerenciar && (
-                            <button
-                              type="button"
+                            <Button
+                              variant="ghost" size="icon"
                               onClick={() => abrirEdicaoEdital(edital)}
                               title="Editar"
-                              className="text-zinc-500 hover:text-white shrink-0"
+                              className="h-8 w-8 shrink-0"
                             >
                               <Pencil className="h-4 w-4" />
-                            </button>
+                            </Button>
                           )}
                         </div>
                         <h3 className="text-lg font-semibold text-white mb-1">{edital.titulo}</h3>

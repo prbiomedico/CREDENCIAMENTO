@@ -169,7 +169,7 @@ const FilaRegistros = () => {
                         <p className="text-xs text-zinc-600">Enviado em {new Date(sol.created_at).toLocaleDateString('pt-BR')}</p>
                       </div>
                       <div className="flex flex-col gap-2 shrink-0 w-40">
-                        <Button variant="outline" size="sm" className="border-zinc-700 text-zinc-300 gap-2" onClick={() => baixarContrato(sol.solicitacao_registro_id)}>
+                        <Button variant="outline" size="sm" className="gap-2" onClick={() => baixarContrato(sol.solicitacao_registro_id)}>
                           <Download className="h-3.5 w-3.5" /> Contrato
                         </Button>
                         {pendenteOuProcessando && (
@@ -177,7 +177,7 @@ const FilaRegistros = () => {
                             <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => abrirConcluir(sol)}>
                               Concluir
                             </Button>
-                            <Button size="sm" variant="outline" className="border-red-800 text-red-400 hover:bg-red-950" onClick={() => setRejeitarAlvo(sol)}>
+                            <Button size="sm" variant="destructive-outline" onClick={() => setRejeitarAlvo(sol)}>
                               Rejeitar
                             </Button>
                           </>
@@ -230,7 +230,7 @@ const FilaRegistros = () => {
                 <Label className="text-zinc-300">Motivo (opcional)</Label>
                 <Textarea value={motivoRejeicao} onChange={(e) => setMotivoRejeicao(e.target.value)} className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="Explique por que a solicitação está sendo rejeitada" />
               </div>
-              <Button type="submit" disabled={processando} className="bg-red-600 hover:bg-red-700 text-white w-full">
+              <Button type="submit" variant="destructive" disabled={processando} className="w-full">
                 {processando ? 'Rejeitando...' : 'Confirmar Rejeição'}
               </Button>
             </form>

@@ -293,11 +293,11 @@ const ChecklistContran = ({ companyId }) => {
           <Download className="h-3.5 w-3.5" />
         </Button>
         {deletando === doc.document_id ? (
-          <Button size="sm" variant="ghost" onClick={() => handleDelete(doc.document_id)}
-            className="h-7 text-red-500 hover:text-red-400 hover:bg-red-500/10 px-2">Confirmar</Button>
+          <Button size="sm" variant="destructive-ghost" onClick={() => handleDelete(doc.document_id)}
+            className="px-2">Confirmar</Button>
         ) : (
-          <Button size="sm" variant="ghost" onClick={() => handleDelete(doc.document_id)}
-            className="h-7 w-7 p-0 text-zinc-500 hover:text-red-400 hover:bg-red-500/10">
+          <Button size="sm" variant="destructive-ghost" onClick={() => handleDelete(doc.document_id)}
+            className="h-7 w-7 p-0">
             <Trash2 className="h-3.5 w-3.5" />
           </Button>
         )}
@@ -497,12 +497,12 @@ const ChecklistContran = ({ companyId }) => {
                       </button>
                       {menuAberto === doc.document_id && (
                         <div className="absolute right-0 mt-1 w-36 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl z-10 py-1">
-                          <button onClick={() => { handleDownload(doc.document_id, doc.file_name); setMenuAberto(null); }}
-                            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800"><Download className="h-3.5 w-3.5" /> Baixar</button>
-                          <button onClick={() => { abrirEdicaoVencimento(doc); setMenuAberto(null); }}
-                            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-zinc-300 hover:bg-zinc-800"><Pencil className="h-3.5 w-3.5" /> Vencimento</button>
-                          <button onClick={() => { handleDelete(doc.document_id); setMenuAberto(null); }}
-                            className="w-full flex items-center gap-2 px-3 py-1.5 text-xs text-red-400 hover:bg-zinc-800"><Trash2 className="h-3.5 w-3.5" /> Excluir</button>
+                          <Button variant="ghost" size="sm" onClick={() => { handleDownload(doc.document_id, doc.file_name); setMenuAberto(null); }}
+                            className="w-full justify-start gap-2 h-auto px-3 py-1.5 text-xs font-normal"><Download className="h-3.5 w-3.5" /> Baixar</Button>
+                          <Button variant="ghost" size="sm" onClick={() => { abrirEdicaoVencimento(doc); setMenuAberto(null); }}
+                            className="w-full justify-start gap-2 h-auto px-3 py-1.5 text-xs font-normal"><Pencil className="h-3.5 w-3.5" /> Vencimento</Button>
+                          <Button variant="destructive-ghost" size="sm" onClick={() => { handleDelete(doc.document_id); setMenuAberto(null); }}
+                            className="w-full justify-start gap-2 h-auto px-3 py-1.5 text-xs font-normal"><Trash2 className="h-3.5 w-3.5" /> Excluir</Button>
                         </div>
                       )}
                     </div>

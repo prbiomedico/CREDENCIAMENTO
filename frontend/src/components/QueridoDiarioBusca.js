@@ -215,15 +215,15 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
 
           {/* Filtros avançados (colapsáveis) */}
           <div>
-            <button
-              type="button"
+            <Button
+              variant="ghost" size="sm"
               onClick={() => setQdFiltrosAbertos(!qdFiltrosAbertos)}
-              className="flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+              className="h-auto p-0 gap-1.5 text-zinc-500 hover:text-zinc-300 hover:bg-transparent"
             >
               <Filter className="h-3.5 w-3.5" />
               Filtros avançados
               <ChevronDown className={`h-3.5 w-3.5 transition-transform ${qdFiltrosAbertos ? 'rotate-180' : ''}`} />
-            </button>
+            </Button>
 
             {qdFiltrosAbertos && (
               <div className="mt-3 flex flex-col sm:flex-row gap-3">
@@ -297,13 +297,13 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
               <span className="text-zinc-300 font-medium">{qdEstado.nome}</span>{' '}
               para <span className="text-zinc-300">"{qdQuery}"</span>
             </p>
-            <button
-              type="button"
+            <Button
+              variant="link" size="sm"
               onClick={() => setQdResults(null)}
-              className="text-xs text-zinc-600 hover:text-zinc-400 flex items-center gap-1"
+              className="h-auto p-0 gap-1 text-zinc-600 hover:text-zinc-400"
             >
               <X className="h-3 w-3" /> Limpar
-            </button>
+            </Button>
           </div>
 
           {qdResults.resultados && qdResults.resultados.length === 0 && (

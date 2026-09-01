@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -28,12 +29,9 @@ class ErrorBoundary extends React.Component {
             <AlertTriangle className="h-10 w-10 text-primary-500 mx-auto" />
             <p className="text-zinc-200 text-sm font-medium">Ocorreu um erro ao carregar esta tela.</p>
             <p className="text-zinc-500 text-xs">Isso não afeta seus dados. Tente voltar ao dashboard.</p>
-            <button
-              onClick={this.handleReload}
-              className="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm rounded-md"
-            >
+            <Button onClick={this.handleReload}>
               Voltar ao Dashboard
-            </button>
+            </Button>
           </div>
         </div>
       );

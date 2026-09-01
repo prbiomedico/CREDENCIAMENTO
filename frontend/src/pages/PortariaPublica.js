@@ -111,7 +111,7 @@ const PortariaPublica = () => {
                   <Button onClick={() => navigate('/credenciamento-portaria')} className="bg-orange-500 hover:bg-orange-600 text-white gap-2 flex-1">
                     Já tenho cadastro — enviar documentação <ArrowRight className="h-4 w-4" />
                   </Button>
-                  <Button onClick={() => navigate('/cadastro')} variant="outline" className="border-zinc-700 text-zinc-300 gap-2 flex-1">
+                  <Button onClick={() => navigate('/cadastro')} variant="outline" className="gap-2 flex-1">
                     <UserPlus className="h-4 w-4" />
                     Cadastrar minha empresa
                   </Button>

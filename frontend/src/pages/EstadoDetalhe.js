@@ -432,7 +432,7 @@ export default function EstadoDetalhe() {
                           Salvar observações
                         </Button>
                         {estadoInfo?.estado?.deleted_at ? (
-                          <Button onClick={reativarEstado} variant="outline" className="border-zinc-700 text-zinc-300 gap-2">
+                          <Button onClick={reativarEstado} variant="outline" className="gap-2">
                             <RotateCcw className="h-4 w-4" />
                             Reativar estado
                           </Button>

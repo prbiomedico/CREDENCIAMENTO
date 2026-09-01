@@ -232,7 +232,7 @@ const CriarEvento = () => {
               <div><Label className="text-zinc-300 text-sm mb-1.5 block">Abertura</Label><Input type="datetime-local" value={form.data_abertura} onChange={e => setForm(f => ({...f, data_abertura: e.target.value}))} className="bg-zinc-950 border-zinc-800 text-white" /></div>
               <div><Label className="text-zinc-300 text-sm mb-1.5 block">Encerramento</Label><Input type="datetime-local" value={form.data_encerramento} onChange={e => setForm(f => ({...f, data_encerramento: e.target.value}))} className="bg-zinc-950 border-zinc-800 text-white" /></div>
             </div>
-            <div className="flex gap-3"><Button variant="outline" onClick={() => setStep(0)} className="border-zinc-700 text-zinc-300">Voltar</Button><Button onClick={() => setStep(2)} disabled={!form.titulo || !form.uf} className="bg-primary-500 hover:bg-primary-600 text-white">Próximo <ChevronRight className="h-4 w-4 ml-1" /></Button></div>
+            <div className="flex gap-3"><Button variant="outline" onClick={() => setStep(0)}>Voltar</Button><Button onClick={() => setStep(2)} disabled={!form.titulo || !form.uf} className="bg-primary-500 hover:bg-primary-600 text-white">Próximo <ChevronRight className="h-4 w-4 ml-1" /></Button></div>
           </div>
         )}
 
@@ -241,7 +241,7 @@ const CriarEvento = () => {
             <p className="text-zinc-400 text-sm">Selecione os itens do catálogo de checklist exigidos para este evento — os mesmos usados pela conferência do DETRAN e pelas submissões das empresas.</p>
             <ChecklistCatalogoPicker selecionados={selecionadosCatalogo} onToggle={toggleChecklistItem} />
             <div className="bg-zinc-900/30 rounded-lg p-3 border border-zinc-800"><p className="text-xs text-zinc-500 mb-2">{form.checklist_itens.length} selecionado(s)</p><div className="flex flex-wrap gap-1">{form.checklist_itens.map(d => <span key={d.catalogo_item_id || d.nome} className="text-[10px] bg-primary-500/10 text-primary-300 px-2 py-0.5 rounded-full font-mono">{d.nome}</span>)}</div></div>
-            <div className="flex gap-3"><Button variant="outline" onClick={() => setStep(1)} className="border-zinc-700 text-zinc-300">Voltar</Button><Button onClick={() => setStep(3)} className="bg-primary-500 hover:bg-primary-600 text-white">Revisar <ChevronRight className="h-4 w-4 ml-1" /></Button></div>
+            <div className="flex gap-3"><Button variant="outline" onClick={() => setStep(1)}>Voltar</Button><Button onClick={() => setStep(3)} className="bg-primary-500 hover:bg-primary-600 text-white">Revisar <ChevronRight className="h-4 w-4 ml-1" /></Button></div>
           </div>
         )}
 
@@ -272,8 +272,8 @@ const CriarEvento = () => {
               </CardContent>
             </Card>
             <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setStep(2)} className="border-zinc-700 text-zinc-300">Voltar</Button>
-              <Button onClick={() => handleSalvar(false)} disabled={saving} variant="outline" className="border-zinc-700 text-zinc-300">{saving ? 'Salvando...' : 'Salvar Rascunho'}</Button>
+              <Button variant="outline" onClick={() => setStep(2)}>Voltar</Button>
+              <Button onClick={() => handleSalvar(false)} disabled={saving} variant="outline">{saving ? 'Salvando...' : 'Salvar Rascunho'}</Button>
               <Button onClick={() => handleSalvar(true)} disabled={saving} className="bg-primary-500 hover:bg-primary-600 text-white flex-1">{saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Globe className="h-4 w-4 mr-2" />}{saving ? 'Publicando...' : 'Publicar e Gerar Link'}</Button>
             </div>
           </div>
@@ -297,7 +297,7 @@ const CriarEvento = () => {
               </Card>
             )}
             <div className="flex gap-3 justify-center">
-              <Button variant="outline" onClick={() => { setStep(0); setForm(formInicial()); setEventoSalvo(null); setPdfFile(null); }} className="border-zinc-700 text-zinc-300">Criar Novo</Button>
+              <Button variant="outline" onClick={() => { setStep(0); setForm(formInicial()); setEventoSalvo(null); setPdfFile(null); }}>Criar Novo</Button>
               <Button onClick={() => navigate('/portarias')} className="bg-primary-500 hover:bg-primary-600 text-white">Ver Eventos</Button>
             </div>
           </div>
