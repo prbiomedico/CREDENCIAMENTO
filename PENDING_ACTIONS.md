@@ -2198,3 +2198,51 @@ Primeira fatia de 5 do modelo aprovado por Pedro (investigação Fase 1, ver a d
 **Explicitamente NÃO fiz nesta fatia** (é a Fatia 2): não toquei `perfil_alvo`/`perfil_empresa` (continuam `Literal["registradora","financeira"]` nos 4 modelos), não toquei `_validar_tipo_e_vinculo_empresa`, não toquei `criar_submissao`, `CredenciamentoDetalhes` continua sem campo `categoria`. Zero comportamento existente mudou — só dado novo, sem consumidor.
 
 **Próximo passo**: Fatia 2 (religar checklist/submissão pro catálogo novo) é onde o comportamento real muda — combinado com Pedro confirmar explicitamente antes de começar, não é autonomia default aqui.
+
+
+## 61. Modelo Credencia-CE — Fatia 2: checklist/submissão religados ao catálogo TipoCredenciamento (comportamento real muda) — ✅ DEPLOYADO (2026-09-01)
+
+Segunda fatia de 5, autorizada explicitamente por Pedro após confirmar a Fatia 1. Esta é a fatia que Pedro marcou como maior risco do plano — cobertura de teste documentada abaixo em detalhe, como pedido.
+
+**Modelos**: `perfil_alvo` (`ChecklistCatalogoItem`, `ChecklistCatalogoItemCreate/Update`, `PortariaChecklistItem`, `SubmissaoItem`) e `perfil_empresa` (`Submissao`) deixam de ser `Literal["registradora","financeira"]` e viram `str`, validada em runtime contra o catálogo `TipoCredenciamento` (helpers novos `_validar_perfil_alvo_ativo`/`_validar_checklist_itens_portaria`). `perfil_empresa` de uma `Submissao` agora É a categoria de credenciamento daquela submissão, não só um "perfil" — mesmo campo, sentido mais amplo, zero rename no banco. `CredenciamentoDetalhes` ganha campo `categoria` — chave de unicidade de negócio passa de (empresa, UF) pra (empresa, UF, categoria), permitindo uma empresa ter credenciamentos distintos na mesma UF em categorias diferentes.
+
+**`POST /submissoes`** ganha parâmetro `categoria` opcional — omitido, cai no comportamento anterior (usa `tipo_empresa` da empresa, resultado idêntico a antes da fatia); informado, valida que a empresa tem essa categoria (`categorias_credenciamento` ∪ `tipo_empresa`, novo helper `_categorias_da_empresa`) e cria/recupera a submissão **daquela categoria especificamente** — o get-or-create idempotente agora inclui `perfil_empresa` na chave de busca, não só (portaria, empresa), pra uma empresa com 2+ categorias poder ter uma submissão por categoria numa portaria que cobre várias.
+
+**`PATCH /companies/{id}`** ganha `categorias_credenciamento` (lista completa, substitui — não é "adicionar 1 item"), validada pelo novo `_validar_categorias_credenciamento`: cada categoria precisa existir e estar ativa no catálogo; categoria com `exige_vinculo_com` setado exige que a categoria-pai esteja na mesma lista (interpretação mínima do "vínculo" pra categorias independentes — um mecanismo de vínculo empresa-a-empresa como `financeira->registradora_id` fica fora do escopo desta fatia, deliberadamente).
+
+**`GET /portarias/{id}`** e a notificação de `publicar_portaria` (`novo_edital`) trocaram o filtro de "só a `tipo_empresa` da empresa" por "qualquer categoria que a empresa tenha" (`_categorias_da_empresa`, união com `tipo_empresa`) — sem isso, uma empresa com uma categoria nova (diferente do seu `tipo_empresa` original) nunca veria o checklist nem seria notificada de portarias relevantes pra ela.
+
+**`BLOCO_PORTARIA_NOMES_POR_PERFIL`** (taxonomia de nomes de bloco) só existe pros 2 perfis legados — categoria nova sem taxonomia definida faz a validação de bloco virar permissiva (aceita qualquer inteiro) em vez de excluir a categoria nova de poder ter checklist.
+
+**Frontend**: `ChecklistCatalogoPicker.js` reescrito pra buscar `GET /tipos-credenciamento` e montar as seções dinamicamente (antes: 2 seções hardcoded, registradora/financeira) — sem isso não haveria como montar checklist pra uma categoria nova pela UI real. `MinhasSubmissoes.js`: filtro de portarias relevantes agora usa a união de categorias da empresa (não só `tipo_empresa`); `submissaoDe`/`iniciarSubmissao` passam a considerar (portaria, categoria) — pra empresa com só 1 categoria relevante (100% dos casos reais hoje) a tela é visualmente idêntica a antes; quando há mais de uma categoria relevante pra uma mesma portaria, a lista mostra uma linha por categoria em vez de uma só. `PainelConferencia.js` resolve `perfil_empresa` pro nome de exibição da categoria via `GET /tipos-credenciamento` em vez de mostrar o `tipo_id` cru.
+
+**Deliberadamente NÃO fiz nesta fatia**: `AreaTransparencia.js`'s botão "Credenciar-se" continua sem seletor de categoria — cai no comportamento retrocompatível (usa `tipo_empresa`), correto pra toda empresa real hoje (só 1 categoria cada), mas uma empresa multi-categoria clicando ali pegaria só a categoria-fallback, não uma escolha explícita. Fica como gap conhecido até a Fatia 5 (filtro de categoria em Transparência), quando a tela ganha consciência de categoria de qualquer jeito. Não construí nenhuma UI de autosserviço pra empresa gerenciar suas próprias `categorias_credenciamento` — pro teste E2E usei `PATCH /companies` direto; uma tela de "minhas categorias" fica como possível follow-up, não pedido nesta fatia.
+
+**Cobertura de teste — regressão (obrigatória, comportamento idêntico a antes)**:
+- `httpx.AsyncClient(transport=ASGITransport(app=srv.app))` contra `sigcr-mongodb-devtest`, candidato como `server_candidate.py` (nunca sobrescreveu o `server.py` real rodando).
+- Fluxo completo registradora, **sem passar `categoria`** (simulando todo caller existente hoje): `GET /portarias/{id}` só mostra o item dela (não o de financeira, mesma portaria) → `POST /submissoes` → `perfil_empresa=="registradora"` idêntico a antes → get-or-create idempotente (2ª chamada devolve a mesma submissão) → upload de item → submeter → DETRAN marca conforme → homologar → `CredenciamentoDetalhes` criado com `categoria="registradora"` → confirmado que existe **exatamente 1** credenciamento pra (empresa, UF), sem duplicata.
+- `checklist-catalogo`: bloco inválido pra perfil legado ainda dá 400 (validação de bloco intacta), criar item válido pra registradora ainda dá 200.
+- Financeira: fluxo sem categoria também dá `perfil_empresa=="financeira"`, idêntico a antes.
+- 15 checagens de regressão, todas passaram.
+
+**Cobertura de teste — capacidade nova (categoria sintética "Despachante", ponta a ponta)**:
+1. `POST /tipos-credenciamento` cria "Despachante" (independente, sem `exige_vinculo_com`) — 200.
+2. `POST /checklist-catalogo` com `perfil_alvo="despachante_id"`, bloco sem taxonomia definida — 200 (permissivo, não travou a categoria nova por falta de nomenclatura de bloco).
+3. Empresa **sem** a categoria tenta submeter — 403 (bloqueio correto).
+4. Empresa se vincula via `PATCH /companies` (`categorias_credenciamento`) — 200, persistido corretamente.
+5. `GET /portarias/{id}` agora mostra o item da categoria nova pra essa empresa.
+6. `POST /submissoes` com `categoria="despachante_id"` — 200, `perfil_empresa` bate com o `tipo_id` da categoria nova (não um valor hardcoded).
+7. Upload de item → submeter → DETRAN analisa (conforme) → DETRAN homologa — 200 em cada passo.
+8. `CredenciamentoDetalhes` criado com `categoria="despachante_id"` correto.
+9. **Multi-categoria na mesma empresa**: mesma empresa acumula 2ª categoria (`registradora`) sem perder a 1ª; portaria cobrindo as duas categorias — `GET /portarias/{id}` mostra os itens das DUAS; `POST /submissoes` com cada categoria cria **2 submissões distintas** (IDs diferentes, cada uma só com o item da sua própria categoria) — prova que o get-or-create por (portaria, empresa, categoria) não colide.
+10. `exige_vinculo_com`: criar categoria dependente ("Sub-Despachante" exige "Despachante") — `PATCH /companies` tentando adicionar só a dependente sem a categoria-pai dá 400; adicionando as duas juntas dá 200.
+11. Query de notificação (`publicar_portaria`) confirmada encontrando a empresa pela categoria nova via `categorias_credenciamento`, não só `tipo_empresa`.
+- 22 checagens de capacidade nova, todas passaram. **Total: 37/37 passaram.**
+
+**Migração** (`migrations/2026_09_01_tipo_credenciamento_religacao.py`, idempotente): backfill de `categoria` nos `CredenciamentoDetalhes` que existiam antes desta fatia (22 reais em produção, todos `company_hdregistros`/`registradora` — sem esse backfill, a próxima homologação numa dessas 22 UFs criaria um credenciamento duplicado em vez de atualizar o existente, já que a nova chave de busca inclui `categoria`). Testada com clone real de produção (22 credenciamentos + 1 empresa) + 1 caso sintético órfão (empresa inexistente, pra confirmar que cai no ramo de revisão manual em vez de quebrar): `--dry-run` bateu exatamente com o plano, real aplicou, 2ª rodada confirmou idempotência (0 credenciamentos pendentes).
+
+**Deploy**: backend commit `2c93eb6`, rollback `sigcr-backend:pre-deploy-rollback-20260901-1944`. Migração rodada em produção logo após o deploy: `--dry-run` bateu com a checagem prévia (22 credenciamentos, todos `registradora`), real aplicou, 2ª rodada confirmou idempotência (0 pendentes). Health check: `/api/` 200, `/api/tipos-credenciamento` e `/api/companies` 401 sem token, sem erro nos logs do container. Frontend commit `05dfcb4`, release `releases/20260901-fatia2-religacao-checklist-submissao`. Site 200 pós-swap.
+
+**Ainda não confirmado por humano**: clique real no navegador — build+testes isolados provam a lógica, não substituem uma confirmação visual do Pedro no fluxo real (Criar Evento montando checklist de uma categoria nova, MinhasSubmissoes mostrando 2 linhas quando a empresa tem 2 categorias relevantes pra mesma portaria).
+
+**Próximo passo**: Fatia 3 (stepper de status — A1/A2/A3) precisa de confirmação explícita antes de começar, mesmo padrão desta fatia.
