@@ -132,6 +132,7 @@ const AreaTransparencia = () => {
   const [editChecklistSelecionados, setEditChecklistSelecionados] = useState(new Set());
   const [editChecklistItens, setEditChecklistItens] = useState([]);
   const [salvandoEdicaoPortaria, setSalvandoEdicaoPortaria] = useState(false);
+  const [enviandoPdfPortaria, setEnviandoPdfPortaria] = useState(false);
 
   const getToken = async () => {
     if (keycloak && keycloak.token) {
@@ -279,6 +280,29 @@ const AreaTransparencia = () => {
       toast.error(error?.response?.data?.detail || 'Erro ao atualizar portaria');
     } finally {
       setSalvandoEdicaoPortaria(false);
+    }
+  };
+
+  const handleUploadPdfPortaria = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || !editandoIdPortaria) return;
+    setEnviandoPdfPortaria(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const res = await axios.post(`${API}/portarias/${editandoIdPortaria}/pdf`, fd, {
+        withCredentials: true,
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      // Preenche o campo de URL manual com o path do arquivo salvo — o
+      // usuário ainda pode sobrescrever digitando um link externo por cima.
+      setEditDataPortaria((prev) => ({ ...prev, link_pdf: res.data.link_pdf }));
+      toast.success('PDF anexado');
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || 'Erro ao enviar PDF');
+    } finally {
+      setEnviandoPdfPortaria(false);
+      e.target.value = '';
     }
   };
 
@@ -1043,6 +1067,11 @@ const AreaTransparencia = () => {
             <div>
               <Label className="text-zinc-300">Link do PDF</Label>
               <Input value={editDataPortaria.link_pdf} onChange={(e) => setEditDataPortaria({ ...editDataPortaria, link_pdf: e.target.value })} placeholder="https://..." className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+              <div className="mt-2 flex items-center gap-2">
+                <span className="text-xs text-zinc-500 shrink-0">ou envie o arquivo:</span>
+                <Input type="file" accept="application/pdf" onChange={handleUploadPdfPortaria} disabled={enviandoPdfPortaria} className="bg-zinc-800 border-zinc-700 text-white" />
+                {enviandoPdfPortaria && <Loader2 className="h-4 w-4 animate-spin text-primary-400 shrink-0" />}
+              </div>
             </div>
 
             <div className="border-t border-zinc-800 pt-4">

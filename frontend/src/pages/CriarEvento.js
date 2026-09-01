@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { Plus, Shield, Zap, Users, Copy, Check, ChevronRight, Globe, Lock } from 'lucide-react';
+import { Plus, Shield, Zap, Users, Copy, Check, ChevronRight, Globe, Lock, Loader2, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -51,6 +51,7 @@ const CriarEvento = () => {
   const [eventoSalvo, setEventoSalvo] = useState(null);
   const [copiado, setCopiado] = useState(false);
   const [form, setForm] = useState(formInicial());
+  const [pdfFile, setPdfFile] = useState(null);
   const prefillAplicado = useRef(false);
 
   useEffect(() => { if (!initialized || !user) return; fetchTemplates(); }, [initialized, user]);
@@ -127,6 +128,19 @@ const CriarEvento = () => {
       };
       const res = await axios.post(`${API}/portarias`, payload, { withCredentials: true });
       let portaria = res.data;
+      if (pdfFile) {
+        try {
+          const fd = new FormData();
+          fd.append('file', pdfFile);
+          const pdfRes = await axios.post(`${API}/portarias/${portaria.portaria_id}/pdf`, fd, {
+            withCredentials: true,
+            headers: { 'Content-Type': 'multipart/form-data' },
+          });
+          portaria = pdfRes.data;
+        } catch (pdfError) {
+          toast.error(pdfError?.response?.data?.detail || 'Evento salvo, mas o PDF não pôde ser anexado — anexe depois em Transparência > Editar');
+        }
+      }
       if (publicar) {
         const pubRes = await axios.patch(`${API}/portarias/${portaria.portaria_id}/publicar`, {}, { withCredentials: true });
         portaria = pubRes.data;
@@ -242,12 +256,25 @@ const CriarEvento = () => {
                 <p className="text-sm text-zinc-400">{form.descricao}</p>
                 <div><p className="text-xs text-zinc-500 mb-2 font-mono uppercase">Checklist ({form.checklist_itens.length})</p><div className="flex flex-wrap gap-1">{form.checklist_itens.map(d => <span key={d.catalogo_item_id || d.nome} className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-mono">{d.nome}</span>)}</div></div>
                 <div><p className="text-xs text-zinc-500 mb-2 font-mono uppercase">Prazo</p><p className="text-sm text-zinc-300">{formatarData(form.data_abertura) || formatarData(form.data_encerramento) ? `${formatarData(form.data_abertura) || '—'} até ${formatarData(form.data_encerramento) || '—'}` : 'Não definido'}</p></div>
+                <div>
+                  <p className="text-xs text-zinc-500 mb-2 font-mono uppercase">PDF da Portaria (opcional)</p>
+                  <Input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+                    className="bg-zinc-950 border-zinc-800 text-white"
+                  />
+                  {pdfFile && (
+                    <p className="text-xs text-zinc-400 mt-1.5 flex items-center gap-1.5"><Paperclip className="h-3 w-3" /> {pdfFile.name}</p>
+                  )}
+                  <p className="text-xs text-zinc-600 mt-1.5">Pode ser anexado depois em Transparência {'>'} Editar, se preferir.</p>
+                </div>
               </CardContent>
             </Card>
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep(2)} className="border-zinc-700 text-zinc-300">Voltar</Button>
               <Button onClick={() => handleSalvar(false)} disabled={saving} variant="outline" className="border-zinc-700 text-zinc-300">{saving ? 'Salvando...' : 'Salvar Rascunho'}</Button>
-              <Button onClick={() => handleSalvar(true)} disabled={saving} className="bg-primary-500 hover:bg-primary-600 text-white flex-1"><Globe className="h-4 w-4 mr-2" />{saving ? 'Publicando...' : 'Publicar e Gerar Link'}</Button>
+              <Button onClick={() => handleSalvar(true)} disabled={saving} className="bg-primary-500 hover:bg-primary-600 text-white flex-1">{saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Globe className="h-4 w-4 mr-2" />}{saving ? 'Publicando...' : 'Publicar e Gerar Link'}</Button>
             </div>
           </div>
         )}
@@ -270,7 +297,7 @@ const CriarEvento = () => {
               </Card>
             )}
             <div className="flex gap-3 justify-center">
-              <Button variant="outline" onClick={() => { setStep(0); setForm(formInicial()); setEventoSalvo(null); }} className="border-zinc-700 text-zinc-300">Criar Novo</Button>
+              <Button variant="outline" onClick={() => { setStep(0); setForm(formInicial()); setEventoSalvo(null); setPdfFile(null); }} className="border-zinc-700 text-zinc-300">Criar Novo</Button>
               <Button onClick={() => navigate('/portarias')} className="bg-primary-500 hover:bg-primary-600 text-white">Ver Eventos</Button>
             </div>
           </div>
