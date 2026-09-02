@@ -5,8 +5,6 @@ import {
   Folder, Plus, ChevronRight, Clock, CheckCircle, XCircle, Paperclip, X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BentoGrid, BentoCard } from '@/components/ui/bento-grid';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,6 +20,8 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import QueridoDiarioBusca, { ESTADOS_IBGE } from '../components/QueridoDiarioBusca';
 import ChecklistCatalogoPicker from '../components/ChecklistCatalogoPicker';
+import { PageContainer, PageHeader, StatusBadge, TableToolbar, EmptyState } from '../design-system';
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 
 // Ambiente único "Transparência" — fusão de Portarias.js + Editais.js (ver
 // PENDING_ACTIONS.md, fatia 3 da fusão pedida pelo Pedro). Duas coleções
@@ -56,9 +56,9 @@ const TIPOS_PORTARIA = [
 ];
 
 const STATUS_EDITAL = {
-  aberto: { label: 'Aberto', bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: CheckCircle },
-  em_analise: { label: 'Em Análise', bg: 'bg-primary-500/10', text: 'text-primary-400', icon: Clock },
-  encerrado: { label: 'Encerrado', bg: 'bg-zinc-800', text: 'text-zinc-400', icon: XCircle },
+  aberto: { label: 'Aberto', tone: 'success', icon: CheckCircle },
+  em_analise: { label: 'Em Análise', tone: 'analysis', icon: Clock },
+  encerrado: { label: 'Encerrado', tone: 'neutral', icon: XCircle },
 };
 
 const emptyEditDataPortaria = () => ({
@@ -364,103 +364,82 @@ const AreaTransparencia = () => {
   };
 
   const renderPortariaCard = (portaria) => (
-    <Card
+    <article
       key={portaria.portaria_id}
       id={`portaria-${portaria.portaria_id}`}
-      className={`bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors ${
-        portaria.portaria_id === portariaIdDestaque ? 'ring-2 ring-primary-500 border-primary-500/50' : ''
+      className={`grid min-w-[760px] grid-cols-[minmax(260px,1fr)_150px_120px_minmax(220px,auto)] items-center gap-4 border-b border-border px-4 py-3 last:border-b-0 hover:bg-muted/30 ${
+        portaria.portaria_id === portariaIdDestaque ? 'bg-primary-500/10 ring-1 ring-inset ring-primary-500/60' : ''
       }`}
     >
-      <CardHeader className="pb-2">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <CardTitle className="text-base font-semibold text-white mb-2">
-              {portaria.numero ? `${portaria.numero} — ` : ''}{portaria.title}
-            </CardTitle>
-            <div className="flex gap-2 flex-wrap">
+      <div className="min-w-0">
+        <h3 className="truncate text-sm font-semibold text-foreground">
+          {portaria.numero ? `${portaria.numero} — ` : ''}{portaria.title}
+        </h3>
+        <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{portaria.summary || portaria.content}</p>
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
               {portaria.source && (
-                <Badge className="bg-primary-500/10 text-primary-400 border-primary-500/20 font-mono text-xs">
-                  {portaria.source}
-                </Badge>
-              )}
-              {(portaria.estado_sigla || portaria.detran) && (
-                <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-mono text-xs">
-                  DETRAN {portaria.estado_sigla || portaria.detran}
-                </Badge>
+            <span className="font-mono text-primary-300">{portaria.source}</span>
               )}
               {portaria.orgao_emissor && (
-                <Badge className="bg-zinc-700/50 text-zinc-300 border-zinc-600 font-mono text-xs">
-                  {portaria.orgao_emissor}
-                </Badge>
+            <span>{portaria.orgao_emissor}</span>
               )}
               {portaria.tipo && (
-                <Badge className="bg-secondary-500/10 text-secondary-400 border-secondary-500/20 font-mono text-xs">
-                  {TIPOS_PORTARIA.find((t) => t.value === portaria.tipo)?.label || portaria.tipo}
-                </Badge>
+            <span>{TIPOS_PORTARIA.find((t) => t.value === portaria.tipo)?.label || portaria.tipo}</span>
               )}
               {Array.isArray(portaria.empresas_referenciadas) && portaria.empresas_referenciadas.length > 0 && (
-                <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 font-mono text-xs">
-                  {portaria.empresas_referenciadas.length} empresa(s) referenciada(s)
-                </Badge>
+            <span>{portaria.empresas_referenciadas.length} empresa(s)</span>
               )}
+        </div>
+      </div>
+      <div className="text-xs text-muted-foreground">
+        <span className="font-mono text-foreground">{portaria.estado_sigla || portaria.detran || '—'}</span>
+        <span className="mt-0.5 block">{nomeUf((portaria.estado_sigla || portaria.detran || '').toUpperCase())}</span>
+      </div>
+      <div className="space-y-1.5">
               {portaria.criado_via === 'wizard' && (
-                <Badge className={portaria.publicado_at
-                  ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 text-xs'
-                  : 'bg-zinc-700/50 text-zinc-400 border-zinc-600 text-xs'}>
+          <StatusBadge tone={portaria.publicado_at ? 'approved' : 'neutral'}>
                   {portaria.publicado_at ? 'Publicado' : 'Rascunho'}
-                </Badge>
+          </StatusBadge>
               )}
               {portaria.status && (
-                <Badge className={portaria.status === 'revogada'
-                  ? 'bg-red-500/10 text-red-400 border-red-500/20 text-xs'
-                  : 'bg-green-500/10 text-green-400 border-green-500/20 text-xs'}>
+          <StatusBadge tone={portaria.status === 'revogada' ? 'revoked' : 'approved'}>
                   {portaria.status === 'revogada' ? 'Revogada' : 'Vigente'}
-                </Badge>
+          </StatusBadge>
               )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-xs text-zinc-500 shrink-0">
-            <Calendar className="h-3.5 w-3.5" />
+      </div>
+      <div className="flex items-center justify-end gap-1.5">
+        <span className="mr-2 flex items-center gap-1 text-xs text-muted-foreground">
+          <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
             {new Date(portaria.date).toLocaleDateString('pt-BR')}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        <p className="text-sm text-zinc-400 line-clamp-2">{portaria.summary || portaria.content}</p>
-        <div className="flex items-center gap-4 mt-3">
+        </span>
           {portaria.link_pdf && (
-            <Button variant="link" size="sm" onClick={() => handleDownloadPdf(portaria)} className="gap-1.5">
+          <Button variant="ghost" size="sm" onClick={() => handleDownloadPdf(portaria)} title="Ver PDF">
               <ExternalLink className="h-3 w-3" />
-              Ver PDF
             </Button>
           )}
           {portaria.link_publico && portaria.publicado_at && (
             <Button
-              variant="link" size="sm"
+            variant="ghost" size="sm" title="Copiar link público"
               onClick={() => { navigator.clipboard.writeText(portaria.link_publico); toast.success('Link copiado!'); }}
-              className="gap-1.5"
             >
               <Link2 className="h-3 w-3" />
-              Copiar link público
             </Button>
           )}
           {podeGerenciar && (
-            <div className="ml-auto flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => abrirEdicaoPortaria(portaria)} className="gap-1.5">
+          <>
+            <Button variant="outline" size="sm" onClick={() => abrirEdicaoPortaria(portaria)}>
                 <Pencil className="h-3 w-3" />
                 Editar
               </Button>
               {portaria.status !== 'revogada' && (
-                <Button variant="destructive-ghost" size="sm" onClick={() => handleExcluirOuRevogarPortaria(portaria)} className="gap-1.5">
+              <Button variant="destructive-ghost" size="icon" onClick={() => handleExcluirOuRevogarPortaria(portaria)} title={portaria.publicado_at ? 'Revogar' : 'Excluir'}>
                   {portaria.publicado_at ? <ShieldOff className="h-3 w-3" /> : <Trash2 className="h-3 w-3" />}
-                  {portaria.publicado_at ? 'Revogar' : 'Excluir'}
                 </Button>
               )}
-            </div>
+          </>
           )}
           {podeCredenciar && (
-            <div className="ml-auto">
-              {portaria.link_pdf ? (
+            portaria.link_pdf ? (
                 <Button
                   size="sm"
                   onClick={() => iniciarCredenciamento(portaria)}
@@ -470,14 +449,12 @@ const AreaTransparencia = () => {
                 </Button>
               ) : (
                 <Button size="sm" disabled title="PDF pendente de publicação">
-                  PDF pendente de publicação
+                PDF pendente
                 </Button>
-              )}
-            </div>
+              )
           )}
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+    </article>
   );
 
   // ══════════════ ABA EDITAIS ══════════════
@@ -660,11 +637,25 @@ const AreaTransparencia = () => {
 
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8 space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Transparência</h1>
-          <p className="text-zinc-400 text-sm mt-1">Portarias e editais de credenciamento, por estado</p>
-        </div>
+      <PageContainer className="space-y-5">
+        <Breadcrumb>
+          <BreadcrumbList>
+            <BreadcrumbItem><BreadcrumbLink href="/dashboard">Início</BreadcrumbLink></BreadcrumbItem>
+            <BreadcrumbSeparator />
+            <BreadcrumbItem><BreadcrumbPage>Portarias e editais</BreadcrumbPage></BreadcrumbItem>
+          </BreadcrumbList>
+        </Breadcrumb>
+
+        <PageHeader
+          eyebrow="Transparência"
+          title="Portarias e editais"
+          description="Consulte e gerencie os atos e processos de credenciamento publicados pelos DETRANs."
+          actions={podeGerenciar ? (
+            <Button onClick={() => navigate('/criar-evento')} className="bg-primary-600 text-white hover:bg-primary-700">
+              <Plus className="h-4 w-4" /> Criar evento
+            </Button>
+          ) : undefined}
+        />
 
         <Tabs value={aba} onValueChange={setAba}>
           <TabsList>
@@ -673,10 +664,26 @@ const AreaTransparencia = () => {
           </TabsList>
 
           {/* ── ABA: PORTARIAS ── */}
-          <TabsContent value="portarias" className="space-y-8 mt-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <p className="text-zinc-500 text-sm">Portarias publicadas via Criar Evento e Diários Oficiais monitorados</p>
-              <div className="flex gap-2">
+          <TabsContent value="portarias" className="space-y-5 mt-5">
+            <TableToolbar
+              primary={(
+                <div className="relative max-w-2xl">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+                  <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    placeholder="Buscar por título, conteúdo ou DETRAN..."
+                    aria-label="Buscar portarias"
+                    className="pl-9"
+                  />
+                </div>
+              )}
+              actions={(
+                <>
+                  <Button onClick={handleSearch} variant="outline">
+                    <Search className="h-4 w-4" /> Buscar
+                  </Button>
                 <Dialog open={analyzeDialogOpen} onOpenChange={setAnalyzeDialogOpen}>
                   <DialogTrigger asChild>
                     <Button variant="outline" className="gap-2">
@@ -684,7 +691,7 @@ const AreaTransparencia = () => {
                       Analisar com IA
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-w-2xl">
+                  <DialogContent overlayClassName="bg-black/60 backdrop-blur-none" className="max-w-2xl border-border bg-card text-foreground shadow-lg">
                     <DialogHeader>
                       <DialogTitle className="flex items-center gap-2">
                         <Sparkles className="h-5 w-5 text-secondary-400" />
@@ -701,13 +708,13 @@ const AreaTransparencia = () => {
                       <Button
                         onClick={handleAnalyze}
                         disabled={analyzing}
-                        className="bg-secondary-600 hover:bg-secondary-700 text-white w-full gap-2"
+                        className="w-full gap-2 bg-primary-600 text-white hover:bg-primary-700"
                       >
                         {analyzing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                         {analyzing ? 'Analisando...' : 'Analisar'}
                       </Button>
                       {analysisResult && (
-                        <div className="bg-zinc-800 rounded-lg p-4 text-sm text-zinc-300 whitespace-pre-wrap border border-zinc-700">
+                        <div className="border border-border bg-muted p-4 text-sm text-foreground whitespace-pre-wrap">
                           {analysisResult}
                         </div>
                       )}
@@ -715,31 +722,9 @@ const AreaTransparencia = () => {
                   </DialogContent>
                 </Dialog>
 
-                {podeGerenciar && (
-                  <Button onClick={() => navigate('/criar-evento')} className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
-                    <Link2 className="h-4 w-4" />
-                    Criar Evento
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
-                <Input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  placeholder="Buscar por título, conteúdo ou DETRAN..."
-                  className="pl-9 bg-zinc-900 border-zinc-700 text-white"
-                />
-              </div>
-              <Button onClick={handleSearch} className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
-                <Search className="h-4 w-4" />
-                Buscar
-              </Button>
-            </div>
+                </>
+              )}
+            />
 
             {statusFiltro && (
               <div className="flex items-center gap-2 text-sm bg-primary-500/10 border border-primary-500/20 rounded-lg px-4 py-2 w-fit">
@@ -762,44 +747,30 @@ const AreaTransparencia = () => {
                 <span>Carregando portarias...</span>
               </div>
             ) : portariasFiltradas.length === 0 ? (
-              <Card className="bg-zinc-900/50 border-zinc-800">
-                <CardContent className="flex flex-col items-center justify-center py-16 text-center">
-                  <FileText className="h-12 w-12 text-zinc-700 mb-4" />
-                  {statusFiltro ? (
-                    <p className="text-zinc-400 font-medium mb-1">Nenhuma portaria com status "{statusFiltro}"</p>
-                  ) : (
-                    <>
-                      <p className="text-zinc-400 font-medium mb-1">Nenhuma portaria cadastrada</p>
-                      {podeGerenciar ? (
-                        <>
-                          <p className="text-zinc-600 text-sm mb-4">Crie um evento de credenciamento ou use o Querido Diário abaixo</p>
-                          <Button onClick={() => navigate('/criar-evento')} className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
-                            <Link2 className="h-4 w-4" />
-                            Criar Evento
-                          </Button>
-                        </>
-                      ) : (
-                        <p className="text-zinc-600 text-sm">Use o Querido Diário abaixo para consultar Diários Oficiais</p>
-                      )}
-                    </>
-                  )}
-                </CardContent>
-              </Card>
+              <EmptyState
+                icon={FileText}
+                title={statusFiltro ? `Nenhuma portaria com status “${statusFiltro}”` : 'Nenhuma portaria cadastrada'}
+                description={!statusFiltro ? (podeGerenciar ? 'Crie um evento de credenciamento ou consulte os Diários Oficiais.' : 'Consulte os Diários Oficiais abaixo.') : undefined}
+                action={!statusFiltro && podeGerenciar ? <Button onClick={() => navigate('/criar-evento')} className="bg-primary-600 text-white hover:bg-primary-700"><Plus className="h-4 w-4" /> Criar evento</Button> : undefined}
+              />
             ) : (
-              <Accordion type="multiple" className="space-y-2" value={ufsAbertas} onValueChange={setUfsAbertas}>
+              <Accordion type="multiple" className="border border-border" value={ufsAbertas} onValueChange={setUfsAbertas}>
                 {gruposPorUf.map(({ uf, nome, itens }) => (
-                  <AccordionItem key={uf} value={uf} className="bg-zinc-900/50 border border-zinc-800 rounded-lg px-4">
-                    <AccordionTrigger className="hover:no-underline">
+                  <AccordionItem key={uf} value={uf} className="border-b border-border px-4 last:border-b-0">
+                    <AccordionTrigger className="py-3 hover:no-underline">
                       <div className="flex items-center gap-3">
-                        <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-mono text-xs">
+                        <span className="w-12 font-mono text-xs font-semibold text-primary-300">
                           {uf === 'SEM_UF' ? 'SEM UF' : uf}
-                        </Badge>
-                        <span className="text-sm font-medium text-white">{nome}</span>
-                        <span className="text-xs text-zinc-500">({itens.length})</span>
+                        </span>
+                        <span className="text-sm font-medium text-foreground">{nome}</span>
+                        <span className="text-xs text-muted-foreground">{itens.length} registro(s)</span>
                       </div>
                     </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="space-y-3">
+                    <AccordionContent className="overflow-x-auto pb-0">
+                      <div className="border-t border-border">
+                        <div className="grid min-w-[760px] grid-cols-[minmax(260px,1fr)_150px_120px_minmax(220px,auto)] gap-4 bg-muted/40 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                          <span>Portaria</span><span>UF / órgão</span><span>Status</span><span className="text-right">Publicação e ações</span>
+                        </div>
                         {itens.map((portaria) => renderPortariaCard(portaria))}
                       </div>
                     </AccordionContent>
@@ -835,7 +806,7 @@ const AreaTransparencia = () => {
                         Novo Edital
                       </Button>
                     </DialogTrigger>
-                    <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-h-[90vh] overflow-y-auto">
+                    <DialogContent overlayClassName="bg-black/60 backdrop-blur-none" className="max-h-[90vh] overflow-y-auto border-border bg-card text-foreground shadow-lg">
                       <DialogHeader>
                         <DialogTitle>{editandoIdEdital ? 'Editar Edital' : 'Cadastrar Novo Edital'}</DialogTitle>
                       </DialogHeader>
@@ -958,83 +929,53 @@ const AreaTransparencia = () => {
                 <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : editaisFiltrados.length === 0 ? (
-              <Card className="bg-zinc-900/50 border-zinc-800">
-                <CardContent className="p-12 text-center">
-                  <Folder className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-                  <p className="text-zinc-400">Nenhum edital encontrado</p>
-                  {podeGerenciar ? (
-                    <Button onClick={abrirNovoEdital} className="bg-primary-500 hover:bg-primary-600 text-white gap-2 mt-4">
-                      <Plus className="h-4 w-4" />
-                      Cadastrar Primeiro Edital
-                    </Button>
-                  ) : (
-                    <p className="text-sm text-zinc-600 mt-1">Aguarde editais dos DETRANs</p>
-                  )}
-                </CardContent>
-              </Card>
+              <EmptyState
+                icon={Folder}
+                title="Nenhum edital encontrado"
+                description={podeGerenciar ? 'Cadastre o primeiro processo de credenciamento.' : 'Aguarde a publicação de editais pelos DETRANs.'}
+                action={podeGerenciar ? <Button onClick={abrirNovoEdital} className="bg-primary-600 text-white hover:bg-primary-700"><Plus className="h-4 w-4" /> Cadastrar edital</Button> : undefined}
+              />
             ) : (
-              <BentoGrid>
+              <div className="overflow-x-auto border border-border">
+                <div className="grid min-w-[760px] grid-cols-[100px_minmax(280px,1fr)_150px_150px_130px] gap-4 bg-muted/40 px-4 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  <span>UF</span><span>Edital</span><span>Status</span><span>Encerramento</span><span className="text-right">Ações</span>
+                </div>
                 {editaisFiltrados.map((edital) => {
                   const cfg = STATUS_EDITAL[edital.status] || STATUS_EDITAL.encerrado;
                   const Icon = cfg.icon;
                   const dias = Math.ceil((new Date(edital.data_encerramento) - new Date()) / (1000*60*60*24));
                   return (
-                    <BentoCard key={edital.edital_id} size="2x1" interactive className="bg-zinc-900/50 border-zinc-800">
-                      <CardContent className="p-6 h-full flex flex-col">
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                          <div className="flex items-center gap-3 flex-wrap">
-                            <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-mono text-xs">DETRAN-{edital.uf}</Badge>
-                            <Badge className={`${cfg.bg} ${cfg.text} text-xs font-mono`}>
-                              <Icon className="h-3 w-3 mr-1" />{cfg.label}
-                            </Badge>
-                            {Array.isArray(edital.anexos) && edital.anexos.length > 0 && (
-                              <Badge className="bg-amber-500/10 text-amber-400 border-amber-500/20 font-mono text-xs">
-                                {edital.anexos.length} anexo(s)
-                              </Badge>
-                            )}
-                            {edital.termo_adesao_path && (
-                              <Badge className="bg-secondary-500/10 text-secondary-400 border-secondary-500/20 font-mono text-xs">
-                                Termo de adesão
-                              </Badge>
-                            )}
-                          </div>
-                          {podeGerenciar && (
-                            <Button
-                              variant="ghost" size="icon"
-                              onClick={() => abrirEdicaoEdital(edital)}
-                              title="Editar"
-                              className="h-8 w-8 shrink-0"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                        <h3 className="text-lg font-semibold text-white mb-1">{edital.titulo}</h3>
-                        <p className="text-sm text-zinc-400 line-clamp-2 mb-3">{edital.descricao}</p>
-                        <div className="flex items-center gap-4 text-xs text-zinc-500 mb-4">
-                          <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Encerra {new Date(edital.data_encerramento).toLocaleDateString('pt-BR')}</span>
-                          {edital.status === 'aberto' && dias > 0 && (
-                            <span className={`font-mono font-semibold ${dias <= 7 ? 'text-red-400' : dias <= 15 ? 'text-primary-400' : 'text-zinc-400'}`}>{dias} dias restantes</span>
-                          )}
-                        </div>
-                        {!podeGerenciar && edital.status === 'aberto' && (
-                          <Button onClick={() => handleCandidatar(edital)} className="bg-primary-500 hover:bg-primary-600 text-white text-sm h-9 px-4 mt-auto self-start">
-                            Candidatar-se <ChevronRight className="h-4 w-4 ml-1" />
-                          </Button>
-                        )}
-                      </CardContent>
-                    </BentoCard>
+                    <article key={edital.edital_id} className="grid min-w-[760px] grid-cols-[100px_minmax(280px,1fr)_150px_150px_130px] items-center gap-4 border-t border-border px-4 py-3 hover:bg-muted/30">
+                      <span className="font-mono text-xs font-semibold text-primary-300">{edital.uf}</span>
+                      <div className="min-w-0">
+                        <h3 className="truncate text-sm font-semibold text-foreground">{edital.titulo}</h3>
+                        <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">{edital.descricao}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {Array.isArray(edital.anexos) && edital.anexos.length > 0 ? `${edital.anexos.length} anexo(s)` : 'Sem anexos'}
+                          {edital.termo_adesao_path ? ' · Termo de adesão' : ''}
+                        </p>
+                      </div>
+                      <StatusBadge tone={cfg.tone}><Icon className="mr-1 h-3 w-3" />{cfg.label}</StatusBadge>
+                      <div className="text-xs text-muted-foreground">
+                        <span className="block text-foreground">{new Date(edital.data_encerramento).toLocaleDateString('pt-BR')}</span>
+                        {edital.status === 'aberto' && dias > 0 && <span className={dias <= 7 ? 'text-red-300' : ''}>{dias} dias restantes</span>}
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        {podeGerenciar && <Button variant="outline" size="sm" onClick={() => abrirEdicaoEdital(edital)}><Pencil className="h-4 w-4" /> Editar</Button>}
+                        {!podeGerenciar && edital.status === 'aberto' && <Button size="sm" onClick={() => handleCandidatar(edital)}>Candidatar-se <ChevronRight className="h-4 w-4" /></Button>}
+                      </div>
+                    </article>
                   );
                 })}
-              </BentoGrid>
+              </div>
             )}
           </TabsContent>
         </Tabs>
-      </div>
+      </PageContainer>
 
       {/* ── Dialog: Editar Portaria ── */}
       <Dialog open={editDialogOpenPortaria} onOpenChange={setEditDialogOpenPortaria}>
-        <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-h-[90vh] overflow-y-auto">
+        <DialogContent overlayClassName="bg-black/60 backdrop-blur-none" className="max-h-[90vh] overflow-y-auto border-border bg-card text-foreground shadow-lg">
           <DialogHeader>
             <DialogTitle>Editar Portaria</DialogTitle>
           </DialogHeader>
@@ -1123,7 +1064,7 @@ const AreaTransparencia = () => {
 
       {/* ── Dialog: Escolher empresa pra candidatura ── */}
       <Dialog open={!!editalParaCandidatar} onOpenChange={(open) => { if (!open) setEditalParaCandidatar(null); }}>
-        <DialogContent className="bg-zinc-900 border-zinc-700 text-white">
+        <DialogContent overlayClassName="bg-black/60 backdrop-blur-none" className="border-border bg-card text-foreground shadow-lg">
           <DialogHeader>
             <DialogTitle>Qual empresa está se candidatando?</DialogTitle>
           </DialogHeader>

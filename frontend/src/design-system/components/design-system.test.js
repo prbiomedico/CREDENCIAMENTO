@@ -3,6 +3,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { PageContainer } from './PageContainer';
 import { PageHeader } from './PageHeader';
 import { StatusBadge } from './StatusBadge';
+import { TableToolbar } from './TableToolbar';
+import { EmptyState } from './EmptyState';
 
 describe('SIGCR Design System V2 foundation', () => {
   test('PageContainer renders the standard content boundary', () => {
@@ -25,5 +27,19 @@ describe('SIGCR Design System V2 foundation', () => {
   test('StatusBadge uses semantic tone and neutral fallback', () => {
     expect(renderToStaticMarkup(<StatusBadge tone="approved">Aprovado</StatusBadge>)).toContain('bg-emerald-500/10');
     expect(renderToStaticMarkup(<StatusBadge tone="unknown">Outro</StatusBadge>)).toContain('bg-zinc-800');
+  });
+
+  test('TableToolbar keeps search, filters and actions in predictable regions', () => {
+    const html = renderToStaticMarkup(<TableToolbar primary={<input aria-label="Busca" />} filters={<span>UF</span>} actions={<button>Novo</button>} />);
+    expect(html).toContain('aria-label="Busca"');
+    expect(html).toContain('UF');
+    expect(html).toContain('Novo');
+  });
+
+  test('EmptyState exposes title, guidance and action', () => {
+    const html = renderToStaticMarkup(<EmptyState title="Sem registros" description="Revise os filtros" action={<button>Limpar</button>} />);
+    expect(html).toContain('Sem registros');
+    expect(html).toContain('Revise os filtros');
+    expect(html).toContain('Limpar');
   });
 });
