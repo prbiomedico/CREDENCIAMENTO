@@ -4220,6 +4220,17 @@ async def registrar_auditoria(
     await db.auditoria.insert_one(log)
 
 
+def _filtro_visibilidade_auditoria(current_user: User) -> dict:
+    """Filtro único da política já adotada por GET /auditoria."""
+    if current_user.perfil == "sigcr_admin":
+        return {}
+    if current_user.perfil == "detran_admin":
+        if not current_user.detran_uf:
+            raise HTTPException(status_code=403, detail="Usuário detran_admin sem UF configurada")
+        return {"detalhes.estado_sigla": current_user.detran_uf}
+    return {"user_id": current_user.user_id}
+
+
 @api_router.get("/auditoria")
 async def get_auditoria(
     entidade: Optional[str] = None,
@@ -4229,13 +4240,7 @@ async def get_auditoria(
 ):
     """Retorna log de auditoria — sigcr_admin vê tudo; detran_admin vê só o próprio estado
     (via detalhes.estado_sigla); demais perfis veem só as próprias ações."""
-    query = {}
-    if current_user.perfil == "detran_admin":
-        if not current_user.detran_uf:
-            raise HTTPException(status_code=403, detail="Usuário detran_admin sem UF configurada")
-        query["detalhes.estado_sigla"] = current_user.detran_uf
-    elif current_user.perfil != "sigcr_admin":
-        query["user_id"] = current_user.user_id
+    query = _filtro_visibilidade_auditoria(current_user)
     if entidade:
         query["entidade"] = entidade
     if entidade_id:
@@ -4249,9 +4254,11 @@ async def get_auditoria_entidade(
     entidade_id: str,
     current_user: User = Depends(get_current_user)
 ):
-    """Histórico completo de uma entidade específica"""
+    """Histórico de uma entidade, limitado à mesma visão de GET /auditoria."""
+    query = _filtro_visibilidade_auditoria(current_user)
+    query["entidade_id"] = entidade_id
     logs = await db.auditoria.find(
-        {"entidade_id": entidade_id},
+        query,
         {"_id": 0}
     ).sort("created_at", -1).to_list(500)
     return logs
@@ -4490,27 +4497,68 @@ async def create_solicitacao(request: Request, current_user: User = Depends(requ
     return sol
 
 @api_router.post("/solicitacoes/{solicitacao_id}/submeter")
-async def submeter_solicitacao(solicitacao_id: str, current_user: User = Depends(get_current_user)):
+async def submeter_solicitacao(
+    solicitacao_id: str,
+    scope: EffectiveScope = Depends(get_effective_scope),
+):
+    query = {"solicitacao_id": solicitacao_id}
+    if not (scope.current_user.perfil == "sigcr_admin" and not scope.is_viewing_as):
+        if scope.effective_perfil not in ("registradora", "financeira"):
+            raise HTTPException(status_code=404, detail="Solicitação não encontrada")
+        query["user_id"] = scope.effective_user_id
+        if scope.effective_company_id:
+            query["company_id"] = scope.effective_company_id
+
+    solicitacao = await db.solicitacoes.find_one(query, {"_id": 0})
+    if not solicitacao:
+        raise HTTPException(status_code=404, detail="Solicitação não encontrada")
+
     result = await db.solicitacoes.update_one(
-        {"solicitacao_id": solicitacao_id},
+        query,
         {"$set": {"status": "submetida", "etapa_atual": "Análise DETRAN", "progresso": 40}}
     )
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Solicitação não encontrada")
-    await registrar_auditoria(current_user, "submeter_solicitacao", "solicitacao", solicitacao_id)
+    await registrar_auditoria(
+        scope.current_user, "submeter_solicitacao", "solicitacao", solicitacao_id,
+        {"estado_sigla": solicitacao.get("uf")},
+        atuando_como_empresa=scope.effective_company_id if scope.is_viewing_as else None,
+    )
     return {"message": "Solicitação submetida ao DETRAN"}
 
 @api_router.patch("/solicitacoes/{solicitacao_id}/status")
-async def atualizar_status_solicitacao(solicitacao_id: str, request: Request, current_user: User = Depends(get_current_user)):
+async def atualizar_status_solicitacao(
+    solicitacao_id: str,
+    request: Request,
+    scope: EffectiveScope = Depends(get_effective_scope),
+):
+    query = {"solicitacao_id": solicitacao_id}
+    if not (scope.current_user.perfil == "sigcr_admin" and not scope.is_viewing_as):
+        if scope.effective_perfil not in ("detran", "detran_admin"):
+            raise HTTPException(status_code=403, detail="Perfil sem permissão para analisar solicitações")
+        if not scope.effective_detran_uf:
+            raise HTTPException(status_code=403, detail="Usuário DETRAN sem UF configurada")
+        query["uf"] = scope.effective_detran_uf
+
+    solicitacao = await db.solicitacoes.find_one(query, {"_id": 0})
+    if not solicitacao:
+        raise HTTPException(status_code=404, detail="Solicitação não encontrada")
+
     body = await request.json()
     status = body.get("status")
     obs = body.get("observacoes")
     progresso = {"em_analise": 60, "aprovada": 100, "rejeitada": 0}.get(status, 50)
-    await db.solicitacoes.update_one(
-        {"solicitacao_id": solicitacao_id},
+    result = await db.solicitacoes.update_one(
+        query,
         {"$set": {"status": status, "observacoes_detran": obs, "progresso": progresso}}
     )
-    await registrar_auditoria(current_user, f"status_{status}", "solicitacao", solicitacao_id, {"observacoes": obs})
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Solicitação não encontrada")
+    await registrar_auditoria(
+        scope.current_user, f"status_{status}", "solicitacao", solicitacao_id,
+        {"observacoes": obs, "estado_sigla": solicitacao.get("uf")},
+        atuando_como_detran=scope.effective_detran_uf if scope.is_viewing_as else None,
+    )
     return {"message": f"Status atualizado para {status}"}
 
 
