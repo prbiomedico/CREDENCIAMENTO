@@ -139,7 +139,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
       </div>
 
       {/* Painel de busca principal */}
-      <Card className="bg-zinc-900/60 border-zinc-800 mb-4">
+      <Card className="bg-card border-border mb-4">
         <CardContent className="p-5 space-y-4">
 
           {/* Linha 1: Estado + Palavra-chave + Buscar */}
@@ -149,7 +149,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
             <div className="sm:w-56">
               <Label className="text-zinc-400 text-xs mb-1.5 block">Estado</Label>
               {estadoFixo ? (
-                <div className="w-full flex items-center gap-2 px-3 py-2 bg-zinc-800/50 border border-zinc-700 rounded-md text-sm">
+                <div className="w-full flex items-center gap-2 px-3 py-2 bg-zinc-800/50 border border-input rounded-md text-sm">
                   <span className="text-primary-400 font-mono font-bold text-xs">{qdEstado.sigla}</span>
                   <span className="text-zinc-300">{qdEstado.nome}</span>
                 </div>
@@ -158,7 +158,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
                   <button
                     type="button"
                     onClick={() => setQdEstadoDropdown(!qdEstadoDropdown)}
-                    className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-md text-white text-sm hover:border-zinc-600 transition-colors"
+                    className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-zinc-800 border border-input rounded-md text-white text-sm hover:border-zinc-600 transition-colors"
                   >
                     <span className="flex items-center gap-2">
                       <span className="text-primary-400 font-mono font-bold text-xs">{qdEstado.sigla}</span>
@@ -167,7 +167,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
                     <ChevronDown className="h-4 w-4 text-zinc-500 shrink-0" />
                   </button>
                   {qdEstadoDropdown && (
-                    <div className="absolute z-50 top-full mt-1 w-full bg-zinc-800 border border-zinc-700 rounded-md shadow-xl max-h-60 overflow-y-auto">
+                    <div className="absolute z-50 top-full mt-1 w-full bg-zinc-800 border border-input rounded-md shadow-xl max-h-60 overflow-y-auto">
                       {ESTADOS_IBGE.map((estado) => (
                         <button
                           key={estado.sigla}
@@ -196,7 +196,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
                     onChange={(e) => setQdQuery(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && buscarQueridoDiario()}
                     placeholder="Ex: portaria credenciamento registradora"
-                    className="pl-9 bg-zinc-800 border-zinc-700 text-white"
+                    className="pl-9 bg-zinc-800 border-input text-white"
                   />
                 </div>
                 <Button
@@ -233,7 +233,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
                     type="date"
                     value={qdDataInicio}
                     onChange={(e) => setQdDataInicio(e.target.value)}
-                    className="bg-zinc-800 border-zinc-700 text-white text-sm"
+                    className="bg-zinc-800 border-input text-white text-sm"
                   />
                 </div>
                 <div className="flex-1">
@@ -242,7 +242,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
                     type="date"
                     value={qdDataFim}
                     onChange={(e) => setQdDataFim(e.target.value)}
-                    className="bg-zinc-800 border-zinc-700 text-white text-sm"
+                    className="bg-zinc-800 border-input text-white text-sm"
                   />
                 </div>
                 {(qdDataInicio || qdDataFim) && (
@@ -270,7 +270,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
                   key={termo}
                   type="button"
                   onClick={() => { setQdQuery(termo); }}
-                  className="text-xs px-2.5 py-1 rounded-full bg-zinc-800 border border-zinc-700 text-zinc-400 hover:border-primary-500/40 hover:text-primary-400 transition-colors"
+                  className="text-xs px-2.5 py-1 rounded-full bg-zinc-800 border border-input text-zinc-400 hover:border-primary-500/40 hover:text-primary-400 transition-colors"
                 >
                   {termo}
                 </button>
@@ -307,7 +307,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
           </div>
 
           {qdResults.resultados && qdResults.resultados.length === 0 && (
-            <Card className="bg-zinc-900/50 border-zinc-800">
+            <Card className="bg-card border-border">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                 <BookOpen className="h-10 w-10 text-zinc-700 mb-3" />
                 <p className="text-zinc-400 font-medium mb-1">Nenhum resultado encontrado</p>
@@ -322,7 +322,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
           {Array.isArray(qdResults.resultados) && qdResults.resultados.map((item, idx) => (
             <Card
               key={idx}
-              className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors"
+              className="bg-card border-border hover:border-primary-500/30 transition-colors"
             >
               <CardContent className="p-5">
                 <div className="flex items-start justify-between gap-4">
@@ -337,7 +337,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
                           Edição {item.edition}
                         </Badge>
                       )}
-                      <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-mono text-xs">
+                      <Badge className="bg-sky-500/10 text-sky-400 border-sky-500/20 font-mono text-xs">
                         {qdEstado.sigla}
                       </Badge>
                     </div>

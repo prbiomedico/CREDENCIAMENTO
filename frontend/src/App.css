@@ -6,7 +6,7 @@
    orange-500 de VERDADE do Tailwind, não a versão remapeada Berry) até este
    fix. primary #2196f3 = rgb(33,150,243); secondary #7c4dff = rgb(124,77,255). */
 .hero-glow {
-  background: linear-gradient(to top right, rgba(33, 150, 243, 0.2), rgba(30, 136, 229, 0.1), transparent);
+  background: linear-gradient(to top right, hsl(var(--sigcr-accent) / 0.12), hsl(var(--sigcr-accent) / 0.04), transparent);
 }
 
 .card-hover:hover {
@@ -14,7 +14,7 @@
 }
 
 .text-highlight {
-  background: linear-gradient(to right, rgb(33, 150, 243), rgb(124, 77, 255));
+  background: linear-gradient(to right, hsl(var(--sigcr-accent)), hsl(var(--foreground)));
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -28,11 +28,11 @@
 }
 
 .glow-primary {
-  box-shadow: 0 0 50px -12px rgba(33, 150, 243, 0.5);
+  box-shadow: none;
 }
 
 .button-shadow {
-  box-shadow: 0 0 15px -3px rgba(33, 150, 243, 0.4);
+  box-shadow: none;
 }
 
 /* Smooth transitions for interactive elements */

@@ -20,7 +20,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.
 const API = `${BACKEND_URL}/api`;
 
 const STATUS_CFG = {
-  pendente: { label: 'Pendente', icon: Clock, className: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
+  pendente: { label: 'Pendente', icon: Clock, className: 'bg-zinc-800 text-zinc-400 border-input' },
   enviado: { label: 'Enviado', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   aprovado: { label: 'Aprovado', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
   rejeitado: { label: 'Rejeitado', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
@@ -267,7 +267,7 @@ const ChecklistContran = ({ companyId }) => {
 
   if (blocos.length === 0) {
     return (
-      <Card className="bg-zinc-900/50 border-zinc-800">
+      <Card className="bg-card border-border">
         <CardContent className="p-12 text-center">
           <p className="text-zinc-400 mb-2">Checklist ainda não definido para este tipo de empresa</p>
           <p className="text-sm text-zinc-500">A lista de documentos exigidos será publicada em breve.</p>
@@ -308,7 +308,7 @@ const ChecklistContran = ({ companyId }) => {
   return (
     <div className="space-y-6" data-testid="checklist-contran">
       {/* Progresso geral */}
-      <Card className="bg-zinc-900/50 border-zinc-800">
+      <Card className="bg-card border-border">
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-2">
             <div>
@@ -339,7 +339,7 @@ const ChecklistContran = ({ companyId }) => {
                 data-testid={`checklist-pasta-${bloco.numero}`}
                 onClick={() => setBlocoAtivo(ativo ? null : bloco.numero)}
                 className={`text-left p-3.5 rounded-xl border transition-colors ${
-                  ativo ? 'bg-primary-500/10 border-primary-500/40' : 'bg-zinc-900/50 border-zinc-800 hover:border-zinc-700'
+                  ativo ? 'bg-primary-500/10 border-primary-500/40' : 'bg-card border-border hover:border-input'
                 }`}
               >
                 <Folder className={`h-5 w-5 mb-2 ${ativo ? 'text-primary-400' : 'text-zinc-500'}`} />
@@ -364,14 +364,14 @@ const ChecklistContran = ({ companyId }) => {
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Buscar por nome..."
               data-testid="checklist-busca"
-              className="pl-8 h-9 bg-zinc-900/50 border-zinc-800 text-white text-sm"
+              className="pl-8 h-9 bg-card border-border text-white text-sm"
             />
           </div>
           <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
-            <SelectTrigger className="h-9 w-44 bg-zinc-900/50 border-zinc-800 text-white text-sm" data-testid="checklist-filtro-tipo">
+            <SelectTrigger className="h-9 w-44 bg-card border-border text-white text-sm" data-testid="checklist-filtro-tipo">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+            <SelectContent className="bg-card border-border text-white">
               <SelectItem value="todos">Todos os tipos</SelectItem>
               {Object.entries(TIPO_LABELS).map(([v, l]) => (
                 <SelectItem key={v} value={v}>{l}</SelectItem>
@@ -384,7 +384,7 @@ const ChecklistContran = ({ companyId }) => {
             </Button>
           )}
         </div>
-        <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v)} className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-0.5 self-start">
+        <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v)} className="bg-card border border-border rounded-lg p-0.5 self-start">
           <ToggleGroupItem value="list" data-testid="checklist-view-list" className="h-8 px-2.5 data-[state=on]:bg-primary-500/15 data-[state=on]:text-primary-400">
             <List className="h-4 w-4" />
           </ToggleGroupItem>
@@ -395,15 +395,15 @@ const ChecklistContran = ({ companyId }) => {
       </div>
 
       {itensFiltrados.length === 0 ? (
-        <Card className="bg-zinc-900/50 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardContent className="p-10 text-center text-sm text-zinc-500">Nenhum item encontrado com esses filtros.</CardContent>
         </Card>
       ) : viewMode === 'list' ? (
         /* ── Visão em lista ── */
-        <Card className="bg-zinc-900/50 border-zinc-800 overflow-hidden">
+        <Card className="bg-card border-border overflow-hidden">
           <Table>
             <TableHeader>
-              <TableRow className="border-zinc-800 hover:bg-transparent">
+              <TableRow className="border-border hover:bg-transparent">
                 <TableHead className="text-zinc-500 text-xs uppercase font-mono">Nome</TableHead>
                 <TableHead className="text-zinc-500 text-xs uppercase font-mono">Tipo</TableHead>
                 <TableHead className="text-zinc-500 text-xs uppercase font-mono">Tamanho</TableHead>
@@ -419,7 +419,7 @@ const ChecklistContran = ({ companyId }) => {
                 const vencStatus = doc ? getVencimentoStatus(doc.vencimento) : null;
                 const Icone = doc ? IconeArquivo(doc.file_name) : FileIcon;
                 return (
-                  <TableRow key={item.item_id} data-testid={`checklist-item-${item.item_id}`} className="border-zinc-800/80 hover:bg-zinc-800/30">
+                  <TableRow key={item.item_id} data-testid={`checklist-item-${item.item_id}`} className="border-border hover:bg-zinc-800/30">
                     <TableCell className="max-w-[280px]">
                       <div className="flex items-start gap-2.5">
                         <Icone className="h-4 w-4 text-zinc-500 mt-0.5 shrink-0" />
@@ -429,7 +429,7 @@ const ChecklistContran = ({ companyId }) => {
                             editandoVencimento === doc.document_id ? (
                               <div className="flex items-center gap-1 mt-1">
                                 <Input type="date" value={vencimentoInput} onChange={(e) => setVencimentoInput(e.target.value)}
-                                  className="bg-zinc-950 border-zinc-800 text-white h-6 text-xs w-32" autoFocus />
+                                  className="bg-background border-border text-white h-6 text-xs w-32" autoFocus />
                                 <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-emerald-400" onClick={() => salvarVencimento(doc.document_id)}><Check className="h-3 w-3" /></Button>
                                 <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-zinc-500" onClick={() => setEditandoVencimento(null)}><XIcon className="h-3 w-3" /></Button>
                               </div>
@@ -440,7 +440,7 @@ const ChecklistContran = ({ companyId }) => {
                                   <>
                                     <span>Vence {new Date(doc.vencimento).toLocaleDateString('pt-BR')}</span>
                                     {vencStatus && <Badge className={`${vencStatus.className} text-[9px] px-1 py-0`}>{vencStatus.label}</Badge>}
-                                    {doc.vencimento_fonte === 'ocr' && <Sparkles className="h-2.5 w-2.5 text-blue-400" title="Sugerido por OCR" />}
+                                    {doc.vencimento_fonte === 'ocr' && <Sparkles className="h-2.5 w-2.5 text-sky-400" title="Sugerido por OCR" />}
                                   </>
                                 ) : <span className="italic">definir vencimento</span>}
                                 <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-60" />
@@ -453,7 +453,7 @@ const ChecklistContran = ({ companyId }) => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className="bg-zinc-800 text-zinc-400 border-zinc-700 text-[10px] font-mono">{TIPO_LABELS[item.tipo]}</Badge>
+                      <Badge className="bg-zinc-800 text-zinc-400 border-input text-[10px] font-mono">{TIPO_LABELS[item.tipo]}</Badge>
                     </TableCell>
                     <TableCell className="text-xs text-zinc-400 font-mono">{doc ? formatFileSize(doc.file_size) : '—'}</TableCell>
                     <TableCell className="text-xs text-zinc-400">{doc ? new Date(doc.created_at).toLocaleDateString('pt-BR') : '—'}</TableCell>
@@ -478,8 +478,8 @@ const ChecklistContran = ({ companyId }) => {
             const Icone = doc ? IconeArquivo(doc.file_name) : FileIcon;
             const preview = doc && previews[doc.document_id];
             return (
-              <Card key={item.item_id} data-testid={`checklist-card-${item.item_id}`} className="bg-zinc-900/50 border-zinc-800 overflow-hidden group">
-                <div className="h-28 bg-zinc-950 flex items-center justify-center relative border-b border-zinc-800">
+              <Card key={item.item_id} data-testid={`checklist-card-${item.item_id}`} className="bg-card border-border overflow-hidden group">
+                <div className="h-28 bg-background flex items-center justify-center relative border-b border-border">
                   {preview?.ext === 'pdf' ? (
                     <iframe src={preview.url} title={item.nome} className="w-full h-full pointer-events-none" />
                   ) : preview ? (
@@ -491,12 +491,12 @@ const ChecklistContran = ({ companyId }) => {
                     <div className="absolute top-1.5 right-1.5">
                       <button
                         onClick={() => setMenuAberto(menuAberto === doc.document_id ? null : doc.document_id)}
-                        className="h-6 w-6 rounded-md bg-zinc-950/80 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-6 w-6 rounded-md bg-background/80 border border-border flex items-center justify-center text-zinc-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <MoreVertical className="h-3.5 w-3.5" />
                       </button>
                       {menuAberto === doc.document_id && (
-                        <div className="absolute right-0 mt-1 w-36 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl z-10 py-1">
+                        <div className="absolute right-0 mt-1 w-36 bg-card border border-input rounded-lg shadow-xl z-10 py-1">
                           <Button variant="ghost" size="sm" onClick={() => { handleDownload(doc.document_id, doc.file_name); setMenuAberto(null); }}
                             className="w-full justify-start gap-2 h-auto px-3 py-1.5 text-xs font-normal"><Download className="h-3.5 w-3.5" /> Baixar</Button>
                           <Button variant="ghost" size="sm" onClick={() => { abrirEdicaoVencimento(doc); setMenuAberto(null); }}
@@ -511,7 +511,7 @@ const ChecklistContran = ({ companyId }) => {
                 <CardContent className="p-3">
                   <p className="text-xs font-medium text-zinc-200 line-clamp-2 mb-1.5 min-h-[2rem]">{item.nome}</p>
                   <div className="flex items-center justify-between mb-2">
-                    <Badge className="bg-zinc-800 text-zinc-400 border-zinc-700 text-[9px] font-mono">{TIPO_LABELS[item.tipo]}</Badge>
+                    <Badge className="bg-zinc-800 text-zinc-400 border-input text-[9px] font-mono">{TIPO_LABELS[item.tipo]}</Badge>
                     <Badge className={`${cfg.className} font-mono uppercase text-[9px] px-1.5 py-0`}><cfg.icon className="h-2.5 w-2.5 mr-0.5" />{cfg.label}</Badge>
                   </div>
                   {doc && <p className="text-[10px] text-zinc-600 font-mono mb-2">{formatFileSize(doc.file_size)} · {new Date(doc.created_at).toLocaleDateString('pt-BR')}</p>}
@@ -519,7 +519,7 @@ const ChecklistContran = ({ companyId }) => {
                   {editandoVencimento === doc?.document_id && (
                     <div className="flex items-center gap-1 mt-2">
                       <Input type="date" value={vencimentoInput} onChange={(e) => setVencimentoInput(e.target.value)}
-                        className="bg-zinc-950 border-zinc-800 text-white h-7 text-xs" autoFocus />
+                        className="bg-background border-border text-white h-7 text-xs" autoFocus />
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-400" onClick={() => salvarVencimento(doc.document_id)}><Check className="h-3.5 w-3.5" /></Button>
                     </div>
                   )}
@@ -531,7 +531,7 @@ const ChecklistContran = ({ companyId }) => {
       )}
 
       <Dialog open={!!itemUpload} onOpenChange={(open) => !open && setItemUpload(null)}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+        <DialogContent className="bg-card border-border text-white">
           <DialogHeader>
             <DialogTitle className="font-heading text-xl">Enviar documento</DialogTitle>
           </DialogHeader>
@@ -543,7 +543,7 @@ const ChecklistContran = ({ companyId }) => {
                 type="file"
                 data-testid="checklist-file-input"
                 onChange={(e) => setArquivo(e.target.files?.[0] || null)}
-                className="bg-zinc-950 border-zinc-800 text-white"
+                className="bg-background border-border text-white"
                 required
               />
               <Button

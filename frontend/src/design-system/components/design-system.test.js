@@ -25,8 +25,8 @@ describe('SIGCR Design System V2 foundation', () => {
   });
 
   test('StatusBadge uses semantic tone and neutral fallback', () => {
-    expect(renderToStaticMarkup(<StatusBadge tone="approved">Aprovado</StatusBadge>)).toContain('bg-emerald-500/10');
-    expect(renderToStaticMarkup(<StatusBadge tone="unknown">Outro</StatusBadge>)).toContain('bg-zinc-800');
+    expect(renderToStaticMarkup(<StatusBadge tone="approved">Aprovado</StatusBadge>)).toContain('bg-emerald-50');
+    expect(renderToStaticMarkup(<StatusBadge tone="unknown">Outro</StatusBadge>)).toContain('bg-slate-50');
   });
 
   test('TableToolbar keeps search, filters and actions in predictable regions', () => {

@@ -19,8 +19,8 @@ const API = `${process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br'}/
 
 const PERFIS = {
   sigcr_admin:       { label: 'Admin SIGCR',    color: 'bg-primary-500/20 text-primary-400 border-primary-500/30',   icon: Shield },
-  detran_admin:      { label: 'Admin DETRAN',   color: 'bg-blue-500/20 text-blue-400 border-blue-500/30',         icon: Landmark },
-  detran:            { label: 'Operador DETRAN', color: 'bg-blue-500/10 text-blue-300 border-blue-500/20',         icon: Landmark },
+  detran_admin:      { label: 'Admin DETRAN',   color: 'bg-sky-500/20 text-sky-400 border-sky-500/30',         icon: Landmark },
+  detran:            { label: 'Operador DETRAN', color: 'bg-sky-500/10 text-sky-300 border-sky-500/20',         icon: Landmark },
   registradora:      { label: 'Registradora',   color: 'bg-zinc-500/20 text-zinc-300 border-zinc-500/30',         icon: Building2 },
   financeira:        { label: 'Financeira',     color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: CreditCard },
 };
@@ -186,7 +186,7 @@ export default function GestaoUsuarios() {
         </div>
 
         <Tabs defaultValue="usuarios" className="w-full">
-          <TabsList className="bg-zinc-900 border border-zinc-800">
+          <TabsList className="bg-card border border-border">
             <TabsTrigger value="usuarios" className="data-[state=active]:bg-primary-500/20 data-[state=active]:text-primary-400">
               <UserCog className="h-4 w-4 mr-2" /> Usuários
             </TabsTrigger>
@@ -203,7 +203,7 @@ export default function GestaoUsuarios() {
           <TabsContent value="usuarios" className="space-y-6 mt-4">
         <div className="flex items-center justify-end gap-2">
           <Button variant="outline" size="sm" onClick={fetchUsuarios}
-            className="border-zinc-700 text-zinc-400 hover:text-white">
+            className="border-input text-zinc-400 hover:text-white">
             <RefreshCw className="h-4 w-4 mr-2" /> Atualizar
           </Button>
           <Button onClick={() => setShowForm(!showForm)}
@@ -213,14 +213,14 @@ export default function GestaoUsuarios() {
         </div>
 
         {/* Hierarquia visual */}
-        <Card className="bg-zinc-900/50 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardContent className="p-4">
             <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider mb-3">Hierarquia de Acesso (LGPD — Princípio do Mínimo Privilégio)</p>
             <div className="flex items-center gap-2 flex-wrap text-xs">
               {[
                 { label: 'Admin SIGCR', color: 'text-primary-400', desc: 'Todas as camadas' },
                 { label: '', color: 'text-zinc-600', desc: '' },
-                { label: 'DETRAN', color: 'text-blue-400', desc: 'Registradoras sob sua jurisdio' },
+                { label: 'DETRAN', color: 'text-sky-400', desc: 'Registradoras sob sua jurisdio' },
                 { label: '', color: 'text-zinc-600', desc: '' },
                 { label: 'Registradora', color: 'text-zinc-300', desc: 'Financeiras que usam seus servios' },
                 { label: '', color: 'text-zinc-600', desc: '' },
@@ -236,7 +236,7 @@ export default function GestaoUsuarios() {
 
         {/* Formulrio de criao */}
         {showForm && (
-          <Card className="border-primary-500/30 bg-zinc-900/70">
+          <Card className="border-primary-500/30 bg-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold text-white flex items-center gap-2">
                 <Plus className="h-4 w-4 text-primary-400" /> Novo Usuário
@@ -256,7 +256,7 @@ export default function GestaoUsuarios() {
                         className={`p-3 rounded-lg border text-left transition-all ${
                           isSelected
                             ? `border-${r.color}-500/50 bg-${r.color}-500/10`
-                            : 'border-zinc-700 bg-zinc-900 hover:border-zinc-600'
+                            : 'border-input bg-card hover:border-zinc-600'
                         }`}>
                         <div className="flex items-center gap-2 mb-1">
                           <Icon className={`h-4 w-4 ${isSelected ? `text-${r.color}-400` : 'text-zinc-500'}`} />
@@ -284,7 +284,7 @@ export default function GestaoUsuarios() {
                       value={form[f.key]}
                       onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
                       placeholder={f.placeholder}
-                      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-primary-500/60"
+                      className="w-full px-3 py-2 bg-zinc-800 border border-input rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-primary-500/60"
                     />
                   </div>
                 ))}
@@ -298,7 +298,7 @@ export default function GestaoUsuarios() {
                       value={form.password}
                       onChange={e => setForm(p => ({ ...p, password: e.target.value }))}
                       placeholder="Mnimo 8 caracteres"
-                      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-primary-500/60 pr-10"
+                      className="w-full px-3 py-2 bg-zinc-800 border border-input rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-primary-500/60 pr-10"
                     />
                     <Button type="button" variant="ghost" size="icon" onClick={() => setShowSenha(!showSenha)}
                       className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 text-zinc-500 hover:text-zinc-300">
@@ -312,7 +312,7 @@ export default function GestaoUsuarios() {
                   <div>
                     <label className="text-xs text-zinc-400 font-mono mb-1 block">UF do DETRAN *</label>
                     <select value={form.uf} onChange={e => setForm(p => ({ ...p, uf: e.target.value }))}
-                      className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white focus:outline-none focus:border-primary-500/60">
+                      className="w-full px-3 py-2 bg-zinc-800 border border-input rounded-lg text-sm text-white focus:outline-none focus:border-primary-500/60">
                       <option value="">Selecione o estado</option>
                       {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
                     </select>
@@ -325,7 +325,7 @@ export default function GestaoUsuarios() {
                   {saving ? <><RefreshCw className="h-4 w-4 mr-2 animate-spin" />Criando...</> : <><Check className="h-4 w-4 mr-2" />Criar Usuário</>}
                 </Button>
                 <Button variant="outline" onClick={() => { setShowForm(false); setForm(EMPTY_FORM); }}
-                  className="border-zinc-700 text-zinc-400">
+                  className="border-input text-zinc-400">
                   <X className="h-4 w-4 mr-2" /> Cancelar
                 </Button>
               </div>
@@ -338,7 +338,7 @@ export default function GestaoUsuarios() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
           <input value={busca} onChange={e => setBusca(e.target.value)}
             placeholder="Buscar por username ou e-mail..."
-            className="w-full pl-10 pr-4 py-2.5 bg-zinc-900 border border-zinc-800 rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-primary-500/40" />
+            className="w-full pl-10 pr-4 py-2.5 bg-card border border-border rounded-lg text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-primary-500/40" />
         </div>
 
         {/* Lista de usuários */}
@@ -347,7 +347,7 @@ export default function GestaoUsuarios() {
             <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : usuariosFiltrados.length === 0 ? (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <UserCog className="h-12 w-12 text-zinc-700 mx-auto mb-3" />
               <p className="text-zinc-400">Nenhum usuário encontrado</p>
@@ -361,7 +361,7 @@ export default function GestaoUsuarios() {
               const PerfilIcon = perfilCfg.icon;
               const isConfirmDelete = deletando === u.id;
               return (
-                <Card key={u.id} className="border-zinc-800 bg-zinc-900/50 hover:border-zinc-700 transition-colors">
+                <Card key={u.id} className="border-border bg-card hover:border-input transition-colors">
                   <CardContent className="p-4 flex items-center gap-4">
                     <div className="w-9 h-9 rounded-full bg-primary-500/20 border border-primary-500/20 flex items-center justify-center text-primary-400 font-bold text-sm shrink-0">
                       {u.firstName?.[0] || u.username?.[0]?.toUpperCase() || '?'}
@@ -379,7 +379,7 @@ export default function GestaoUsuarios() {
                         <PerfilIcon className="h-3 w-3" />
                         {perfilCfg.label}
                       </Badge>
-                      {u.uf && <Badge className="bg-zinc-800 text-zinc-400 border-zinc-700 text-xs font-mono">{u.uf}</Badge>}
+                      {u.uf && <Badge className="bg-zinc-800 text-zinc-400 border-input text-xs font-mono">{u.uf}</Badge>}
                       {isConfirmDelete ? (
                         <div className="flex gap-1">
                           <Button size="sm" variant="destructive" onClick={() => handleDeletar(u.id, u.username)}>
@@ -409,7 +409,7 @@ export default function GestaoUsuarios() {
           <TabsContent value="pendentes" className="space-y-6 mt-4">
             <div className="flex items-center justify-end">
               <Button variant="outline" size="sm" onClick={fetchCadastrosPendentes}
-                className="border-zinc-700 text-zinc-400 hover:text-white">
+                className="border-input text-zinc-400 hover:text-white">
                 <RefreshCw className="h-4 w-4 mr-2" /> Atualizar
               </Button>
             </div>
@@ -419,7 +419,7 @@ export default function GestaoUsuarios() {
                 <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
               </div>
             ) : cadastrosPendentes.length === 0 ? (
-              <Card className="bg-zinc-900/50 border-zinc-800">
+              <Card className="bg-card border-border">
                 <CardContent className="p-12 text-center">
                   <ClipboardList className="h-12 w-12 text-zinc-700 mx-auto mb-3" />
                   <p className="text-zinc-400">Nenhum cadastro pendente</p>
@@ -427,11 +427,11 @@ export default function GestaoUsuarios() {
                 </CardContent>
               </Card>
             ) : (
-              <Card className="bg-zinc-900/50 border-zinc-800">
+              <Card className="bg-card border-border">
                 <CardContent className="p-0">
                   <Table>
                     <TableHeader>
-                      <TableRow className="border-zinc-800 hover:bg-transparent">
+                      <TableRow className="border-border hover:bg-transparent">
                         <TableHead className="text-zinc-400">Empresa</TableHead>
                         <TableHead className="text-zinc-400">CNPJ</TableHead>
                         <TableHead className="text-zinc-400">Tipo</TableHead>
@@ -442,7 +442,7 @@ export default function GestaoUsuarios() {
                     </TableHeader>
                     <TableBody>
                       {cadastrosPendentes.map(c => (
-                        <TableRow key={c.company_id} className="border-zinc-800">
+                        <TableRow key={c.company_id} className="border-border">
                           <TableCell className="text-white">
                             <div className="font-semibold">{c.nome_fantasia}</div>
                             <div className="text-xs text-zinc-500">{c.name}</div>
@@ -454,7 +454,7 @@ export default function GestaoUsuarios() {
                           </TableCell>
                           <TableCell className="text-zinc-400 font-mono text-sm">{c.cnpj}</TableCell>
                           <TableCell>
-                            <Badge className="bg-zinc-800 text-zinc-300 border-zinc-700 text-xs">
+                            <Badge className="bg-zinc-800 text-zinc-300 border-input text-xs">
                               {c.tipo_empresa_label || c.tipo_empresa}
                             </Badge>
                           </TableCell>
@@ -493,7 +493,7 @@ export default function GestaoUsuarios() {
         {rejeicaoAlvo && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/70" onClick={() => setRejeicaoAlvo(null)} />
-            <Card className="relative z-10 w-full max-w-md border-zinc-700 bg-zinc-900">
+            <Card className="relative z-10 w-full max-w-md border-input bg-card">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold text-white flex items-center gap-2">
                   <ThumbsDown className="h-4 w-4 text-red-400" /> Rejeitar cadastro
@@ -507,7 +507,7 @@ export default function GestaoUsuarios() {
                     value={motivoRejeicao}
                     onChange={e => setMotivoRejeicao(e.target.value)}
                     placeholder="Ex: documento ilegível, CNPJ divergente do contrato social..."
-                    className="bg-zinc-800 border-zinc-700 text-white placeholder-zinc-600 text-sm min-h-[90px]"
+                    className="bg-zinc-800 border-input text-white placeholder-zinc-600 text-sm min-h-[90px]"
                   />
                   <p className="text-[11px] text-zinc-600 mt-1">O responsável poderá corrigir os dados e reenviar o cadastro.</p>
                 </div>

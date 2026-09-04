@@ -21,22 +21,22 @@ const STATUS_EMPRESA_CFG = {
   pending: { label: 'Pendente', icon: Clock, className: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
   pendente_aprovacao: { label: 'Pendente', icon: Clock, className: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
   approved: { label: 'Aprovada', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
-  aprovado_acesso_limitado: { label: 'Acesso Limitado', icon: CheckCircle, className: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  aprovado_acesso_limitado: { label: 'Acesso Limitado', icon: CheckCircle, className: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
   ativo_contrato_assinado: { label: 'Contrato Ativo', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
   rejected: { label: 'Rejeitada', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
   rejeitado: { label: 'Rejeitada', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
 };
 
 const STATUS_SUBMISSAO_CFG = {
-  rascunho: { label: 'Rascunho', className: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
+  rascunho: { label: 'Rascunho', className: 'bg-zinc-800 text-zinc-400 border-input' },
   submetido: { label: 'Submetido', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
   em_diligencia: { label: 'Em Diligência', icon: FileText, className: 'bg-primary-500/10 text-primary-400 border-primary-500/20' },
   homologado: { label: 'Homologado', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
 };
 
 const STATUS_ITEM_CFG = {
-  pendente: { label: 'Pendente', icon: Clock, className: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
+  pendente: { label: 'Pendente', icon: Clock, className: 'bg-zinc-800 text-zinc-400 border-input' },
   enviado: { label: 'Enviado', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   conforme: { label: 'Conforme', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
   inconforme: { label: 'Inconforme', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
@@ -128,10 +128,10 @@ const Registradoras = () => {
           </div>
           {ehAdmin && (
             <Select value={estadoSigla} onValueChange={setEstadoSigla}>
-              <SelectTrigger className="w-48 bg-zinc-900 border-zinc-700 text-white">
+              <SelectTrigger className="w-48 bg-card border-input text-white">
                 <SelectValue placeholder="Selecione a UF" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
+              <SelectContent className="bg-card border-input text-white">
                 {ufs.map((e) => (
                   <SelectItem key={e.sigla} value={e.sigla}>{e.sigla} — {e.nome}</SelectItem>
                 ))}
@@ -164,11 +164,11 @@ const Registradoras = () => {
             <span>Carregando...</span>
           </div>
         ) : !estadoSigla ? (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-12 text-center text-zinc-400">Selecione uma UF para ver as registradoras.</CardContent>
           </Card>
         ) : registradorasFiltradas.length === 0 ? (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <Building2 className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
               <p className="text-zinc-400">
@@ -183,7 +183,7 @@ const Registradoras = () => {
             {registradorasFiltradas.map((r) => {
               const expandida = !!expandidas[r.company_id];
               return (
-                <Card key={r.company_id} className="bg-zinc-900/50 border-zinc-800" data-testid={`registradora-card-${r.company_id}`}>
+                <Card key={r.company_id} className="bg-card border-border" data-testid={`registradora-card-${r.company_id}`}>
                   <CardContent className="p-5">
                     <button
                       onClick={() => toggleExpandida(r.company_id)}
@@ -213,7 +213,7 @@ const Registradoras = () => {
                     </button>
 
                     {expandida && (
-                      <div className="mt-4 pt-4 border-t border-zinc-800 space-y-4">
+                      <div className="mt-4 pt-4 border-t border-border space-y-4">
                         <div className="grid md:grid-cols-2 gap-4 text-sm">
                           <div>
                             <p className="text-zinc-500 mb-1">Email Comercial:</p>
@@ -237,7 +237,7 @@ const Registradoras = () => {
                             <p className="text-xs text-zinc-500 mb-2">DETRANs de Atuação:</p>
                             <div className="flex flex-wrap gap-2">
                               {r.detrans_atuacao.map((uf) => (
-                                <Badge key={uf} className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-xs">DETRAN-{uf}</Badge>
+                                <Badge key={uf} className="bg-sky-500/10 text-sky-500 border-sky-500/20 text-xs">DETRAN-{uf}</Badge>
                               ))}
                             </div>
                           </div>
@@ -252,7 +252,7 @@ const Registradoras = () => {
                           ) : (
                             <div className="space-y-3">
                               {r.submissoes.map((s) => (
-                                <div key={s.submissao_id} className="bg-zinc-950/50 border border-zinc-800 rounded-lg p-3">
+                                <div key={s.submissao_id} className="bg-background/50 border border-border rounded-lg p-3">
                                   <div className="flex items-center justify-between gap-3 flex-wrap mb-2">
                                     <p className="text-sm text-zinc-200">
                                       {s.portaria_numero ? `${s.portaria_numero} — ` : ''}{s.portaria_titulo || s.portaria_id}

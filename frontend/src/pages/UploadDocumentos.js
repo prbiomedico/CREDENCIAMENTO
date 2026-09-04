@@ -43,32 +43,32 @@ export default function UploadDocumentos() {
   const total = Object.keys(arquivos).length;
 
   return (
-    <div style={{ minHeight:"100vh", background:"#080B10", fontFamily:"system-ui,sans-serif", color:"#E8EAF0", padding:"32px" }}>
+    <div style={{ minHeight:"100vh", background:"hsl(var(--background))", fontFamily:"system-ui,sans-serif", color:"hsl(var(--foreground))", padding:"32px" }}>
       {/* Header */}
       <div style={{ marginBottom:"28px" }}>
-        <a href="/dashboard" style={{ display:"inline-flex", alignItems:"center", gap:"6px", color:"#6B7280", textDecoration:"none", fontSize:"13px", marginBottom:"16px" }}> Voltar</a>
+        <a href="/dashboard" style={{ display:"inline-flex", alignItems:"center", gap:"6px", color:"hsl(var(--muted-foreground))", textDecoration:"none", fontSize:"13px", marginBottom:"16px" }}> Voltar</a>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:"12px" }}>
           <div>
             <h1 style={{ fontSize:"24px", fontWeight:800, color:"#fff", margin:"0 0 6px" }}> Documentos HD Registros</h1>
-            <p style={{ fontSize:"13px", color:"#6B7280", margin:0 }}>Upload seguro para credenciamento DETRAN  Dados protegidos por LGPD</p>
+            <p style={{ fontSize:"13px", color:"hsl(var(--muted-foreground))", margin:0 }}>Upload seguro para credenciamento DETRAN  Dados protegidos por LGPD</p>
           </div>
           <div style={{ display:"flex", gap:"10px" }}>
             <div style={{ background:obrigPendentes===0?"rgba(0,230,118,0.1)":"rgba(255,193,7,0.1)", border:`1px solid ${obrigPendentes===0?"rgba(0,230,118,0.3)":"rgba(255,193,7,0.3)"}`, borderRadius:"10px", padding:"10px 16px", textAlign:"center" }}>
-              <div style={{ fontSize:"20px", fontWeight:800, color:obrigPendentes===0?"#00e676":"#ffc107" }}>{total}/{CATEGORIAS.length}</div>
-              <div style={{ fontSize:"10px", color:"#6B7280", textTransform:"uppercase" }}>Enviados</div>
+              <div style={{ fontSize:"20px", fontWeight:800, color:obrigPendentes===0?"hsl(var(--sigcr-success))":"hsl(var(--sigcr-warning))" }}>{total}/{CATEGORIAS.length}</div>
+              <div style={{ fontSize:"10px", color:"hsl(var(--muted-foreground))", textTransform:"uppercase" }}>Enviados</div>
             </div>
           </div>
         </div>
         {/* Barra de progresso */}
         <div style={{ marginTop:"16px", height:"4px", background:"rgba(255,255,255,0.06)", borderRadius:"4px", overflow:"hidden" }}>
-          <div style={{ height:"100%", width:`${(total/CATEGORIAS.length)*100}%`, background:"linear-gradient(90deg,#ffc107,#00e676)", borderRadius:"4px", transition:"width 0.5s" }}/>
+          <div style={{ height:"100%", width:`${(total/CATEGORIAS.length)*100}%`, background:"linear-gradient(90deg,hsl(var(--sigcr-warning)),hsl(var(--sigcr-success)))", borderRadius:"4px", transition:"width 0.5s" }}/>
         </div>
       </div>
 
       {/* Aviso LGPD */}
       <div style={{ display:"flex", gap:"10px", alignItems:"flex-start", background:"rgba(59,130,246,0.06)", border:"1px solid rgba(59,130,246,0.2)", borderRadius:"12px", padding:"14px 16px", marginBottom:"24px" }}>
-        <Shield size={16} color="#60a5fa" style={{ flexShrink:0, marginTop:"1px" }}/>
-        <div style={{ fontSize:"12px", color:"#93c5fd", lineHeight:1.6 }}>
+        <Shield size={16} color="hsl(var(--sigcr-accent))" style={{ flexShrink:0, marginTop:"1px" }}/>
+        <div style={{ fontSize:"12px", color:"hsl(var(--sigcr-accent))", lineHeight:1.6 }}>
           <strong>Proteo LGPD:</strong> Todos os documentos so armazenados com criptografia AES-256 e acessados apenas por agentes autorizados. O envio implica consentimento para uso exclusivo no processo de credenciamento DETRAN.
         </div>
       </div>
@@ -89,27 +89,27 @@ export default function UploadDocumentos() {
             >
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"12px" }}>
                 <div>
-                  <div style={{ fontWeight:700, fontSize:"14px", color:"#E8EAF0" }}>{cat.label}</div>
-                  {cat.obrig && <span style={{ fontSize:"10px", color:"#ffc107", background:"rgba(255,193,7,0.1)", padding:"2px 6px", borderRadius:"4px" }}>Obrigatrio</span>}
+                  <div style={{ fontWeight:700, fontSize:"14px", color:"hsl(var(--foreground))" }}>{cat.label}</div>
+                  {cat.obrig && <span style={{ fontSize:"10px", color:"hsl(var(--sigcr-warning))", background:"rgba(255,193,7,0.1)", padding:"2px 6px", borderRadius:"4px" }}>Obrigatrio</span>}
                 </div>
-                {arq && <button onClick={e => { e.stopPropagation(); setArquivos(p => { const n={...p}; delete n[cat.id]; return n; }); }} style={{ background:"none", border:"none", color:"#6B7280", cursor:"pointer", padding:"2px" }}><X size={14}/></button>}
+                {arq && <button onClick={e => { e.stopPropagation(); setArquivos(p => { const n={...p}; delete n[cat.id]; return n; }); }} style={{ background:"none", border:"none", color:"hsl(var(--muted-foreground))", cursor:"pointer", padding:"2px" }}><X size={14}/></button>}
               </div>
               {isUploading ? (
                 <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-                  <div style={{ width:"20px", height:"20px", border:"2px solid rgba(33,150,243,0.2)", borderTopColor:"#2196f3", borderRadius:"50%", animation:"spin 0.8s linear infinite", flexShrink:0 }}/>
-                  <span style={{ fontSize:"12px", color:"#9CA3AF" }}>Enviando...</span>
+                  <div style={{ width:"20px", height:"20px", border:"2px solid rgba(33,150,243,0.2)", borderTopColor:"hsl(var(--sigcr-accent))", borderRadius:"50%", animation:"spin 0.8s linear infinite", flexShrink:0 }}/>
+                  <span style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))" }}>Enviando...</span>
                   <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
                 </div>
               ) : arq ? (
                 <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-                  <CheckCircle size={18} color="#00e676"/>
+                  <CheckCircle size={18} color="hsl(var(--sigcr-success))"/>
                   <div>
-                    <div style={{ fontSize:"12px", color:"#00e676", fontWeight:600 }}>{arq.nome}</div>
-                    <div style={{ fontSize:"10px", color:"#6B7280" }}>{(arq.tamanho/1024).toFixed(0)} KB  Enviado</div>
+                    <div style={{ fontSize:"12px", color:"hsl(var(--sigcr-success))", fontWeight:600 }}>{arq.nome}</div>
+                    <div style={{ fontSize:"10px", color:"hsl(var(--muted-foreground))" }}>{(arq.tamanho/1024).toFixed(0)} KB  Enviado</div>
                   </div>
                 </div>
               ) : (
-                <div style={{ display:"flex", alignItems:"center", gap:"10px", color:"#6B7280" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:"10px", color:"hsl(var(--muted-foreground))" }}>
                   <Upload size={16}/>
                   <span style={{ fontSize:"12px" }}>Clique ou arraste o arquivo aqui</span>
                 </div>
@@ -125,7 +125,7 @@ export default function UploadDocumentos() {
       {/* Boto enviar */}
       {total > 0 && (
         <div style={{ position:"sticky", bottom:"24px", display:"flex", justifyContent:"center", marginTop:"28px" }}>
-          <button disabled={obrigPendentes>0} style={{ padding:"14px 40px", borderRadius:"12px", border:"none", cursor:obrigPendentes===0?"pointer":"not-allowed", background:obrigPendentes===0?"linear-gradient(135deg,#2196f3,#1e88e5)":"rgba(255,255,255,0.06)", color:obrigPendentes===0?"#fff":"#4B5563", fontSize:"15px", fontWeight:800, boxShadow:obrigPendentes===0?"0 4px 20px rgba(33,150,243,0.3)":"none" }}>
+          <button disabled={obrigPendentes>0} style={{ padding:"14px 40px", borderRadius:"12px", border:"none", cursor:obrigPendentes===0?"pointer":"not-allowed", background:obrigPendentes===0?"linear-gradient(135deg,hsl(var(--sigcr-accent)),hsl(var(--sigcr-accent)))":"rgba(255,255,255,0.06)", color:obrigPendentes===0?"#fff":"hsl(var(--muted-foreground))", fontSize:"15px", fontWeight:800, boxShadow:obrigPendentes===0?"0 4px 20px rgba(33,150,243,0.3)":"none" }}>
             {obrigPendentes===0 ? " Submeter documentos ao DETRAN" : `Faltam ${obrigPendentes} documento(s) obrigatrio(s)`}
           </button>
         </div>

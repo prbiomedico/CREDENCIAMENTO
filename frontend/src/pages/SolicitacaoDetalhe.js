@@ -16,8 +16,8 @@ import {
 const API = process.env.REACT_APP_API_URL || 'https://api.sigcr.com.br';
 
 const STATUS_DOC = {
-  pendente:    { label: 'Faltando Preencher', color: 'bg-zinc-800 text-zinc-400 border-zinc-700',     icon: Clock,       dot: 'bg-zinc-500' },
-  em_analise:  { label: 'Em Anlise',         color: 'bg-blue-900/40 text-blue-400 border-blue-700',  icon: RefreshCw,   dot: 'bg-blue-400 animate-pulse' },
+  pendente:    { label: 'Faltando Preencher', color: 'bg-zinc-800 text-zinc-400 border-input',     icon: Clock,       dot: 'bg-zinc-500' },
+  em_analise:  { label: 'Em Anlise',         color: 'bg-sky-900/40 text-sky-400 border-sky-700',  icon: RefreshCw,   dot: 'bg-sky-400 animate-pulse' },
   aprovado:    { label: 'Aprovado',            color: 'bg-emerald-900/40 text-emerald-400 border-emerald-700', icon: CheckCircle, dot: 'bg-emerald-400' },
   reprovado:   { label: 'Reprovado',           color: 'bg-red-900/40 text-red-400 border-red-700',    icon: XCircle,     dot: 'bg-red-400' },
 };
@@ -167,7 +167,7 @@ export default function SolicitacaoDetalhe() {
         </div>
 
         {/* Barra de progresso */}
-        <Card className="bg-zinc-900/50 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm text-zinc-400 font-medium">Progresso da Documentao</span>
@@ -179,14 +179,14 @@ export default function SolicitacaoDetalhe() {
                 style={{
                   width: `${progresso}%`,
                   background: progresso === 100
-                    ? 'linear-gradient(90deg, #00c853, #00e676)'
-                    : 'linear-gradient(90deg, #ffc107, #ffca28)'
+                    ? 'linear-gradient(90deg, hsl(var(--sigcr-success)), hsl(var(--sigcr-success)))'
+                    : 'linear-gradient(90deg, hsl(var(--sigcr-warning)), hsl(var(--sigcr-warning)))'
                 }}
               />
             </div>
             <div className="flex gap-4 mt-3 text-xs text-zinc-500">
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400 inline-block"/>Aprovado</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse inline-block"/>Em anlise</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse inline-block"/>Em anlise</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block"/>Reprovado</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-zinc-500 inline-block"/>Pendente</span>
             </div>
@@ -212,10 +212,10 @@ export default function SolicitacaoDetalhe() {
             return (
               <Card key={docNome}
                 className={`border transition-all duration-200 ${
-                  status === 'aprovado' ? 'border-emerald-800/50 bg-zinc-900/30' :
-                  status === 'reprovado' ? 'border-red-800/50 bg-zinc-900/30' :
-                  status === 'em_analise' ? 'border-blue-800/50 bg-zinc-900/30' :
-                  'border-zinc-800 bg-zinc-900/50'
+                  status === 'aprovado' ? 'border-emerald-800/50 bg-muted/40' :
+                  status === 'reprovado' ? 'border-red-800/50 bg-muted/40' :
+                  status === 'em_analise' ? 'border-sky-800/50 bg-muted/40' :
+                  'border-border bg-card'
                 }`}>
 
                 {/* Item header clicvel */}
@@ -240,18 +240,18 @@ export default function SolicitacaoDetalhe() {
 
                 {/* Painel expandido */}
                 {isOpen && (
-                  <div className="px-4 pb-4 space-y-3 border-t border-zinc-800 pt-3">
+                  <div className="px-4 pb-4 space-y-3 border-t border-border pt-3">
 
                     {/* Arquivo atual */}
                     {docData?.file_name && (
-                      <div className="flex items-center gap-2 p-3 bg-zinc-800/50 rounded-lg border border-zinc-700">
+                      <div className="flex items-center gap-2 p-3 bg-zinc-800/50 rounded-lg border border-input">
                         <FileText className="h-4 w-4 text-zinc-400 shrink-0" />
                         <span className="text-sm text-zinc-300 flex-1 truncate">{docData.file_name}</span>
                         <span className="text-xs text-zinc-500 font-mono">
                           {docData.file_size ? `${(docData.file_size / 1024).toFixed(1)} KB` : ''}
                         </span>
                         <Button variant="ghost" size="sm"
-                          className="text-blue-400 hover:text-blue-300 h-7 px-2"
+                          className="text-sky-400 hover:text-sky-300 h-7 px-2"
                           onClick={() => window.open(`${API}/solicitacoes/${id}/documentos/${encodeURIComponent(docNome)}/download`, '_blank')}>
                           <Eye className="h-3.5 w-3.5 mr-1" /> Visualizar
                         </Button>
@@ -316,7 +316,7 @@ export default function SolicitacaoDetalhe() {
                               placeholder="Informe o motivo da reprovao para a empresa..."
                               value={motivoReprova[docNome] || ''}
                               onChange={e => setMotivoReprova(p => ({ ...p, [docNome]: e.target.value }))}
-                              className="w-full p-3 bg-zinc-800 border border-zinc-700 rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-red-600 resize-none"
+                              className="w-full p-3 bg-zinc-800 border border-input rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-red-600 resize-none"
                               rows={3}
                             />
                             <Button
@@ -332,7 +332,7 @@ export default function SolicitacaoDetalhe() {
 
                     {/* Status info */}
                     {status === 'em_analise' && !isAnalista && (
-                      <div className="flex items-center gap-2 text-sm text-blue-400">
+                      <div className="flex items-center gap-2 text-sm text-sky-400">
                         <Bell className="h-4 w-4" />
                         <span>Documento em reviso pelo analista. Voc ser notificado ao concluir.</span>
                       </div>

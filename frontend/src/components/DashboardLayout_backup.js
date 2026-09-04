@@ -24,16 +24,16 @@ const DashboardLayout = ({ children }) => {
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex">
+    <div className="min-h-screen bg-background text-white flex">
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-black/40 backdrop-blur-xl border-r border-zinc-800 transform transition-transform lg:translate-x-0 ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-64 bg-black/40 backdrop-blur-xl border-r border-border transform transition-transform lg:translate-x-0 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="h-full flex flex-col">
           {/* Logo */}
-          <div className="p-6 border-b border-zinc-800">
+          <div className="p-6 border-b border-border">
             <Link to="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
               <Shield className="h-7 w-7 text-primary-500" />
               <span className="text-xl font-heading font-bold tracking-tight">SIGCR</span>
@@ -64,7 +64,7 @@ const DashboardLayout = ({ children }) => {
           </nav>
 
           {/* User Profile */}
-          <div className="p-4 border-t border-zinc-800">
+          <div className="p-4 border-t border-border">
             <div className="flex items-center gap-3 mb-3">
               <Avatar>
                 <AvatarImage src={user?.picture} alt={user?.name} />
@@ -81,7 +81,7 @@ const DashboardLayout = ({ children }) => {
               data-testid="logout-btn"
               onClick={handleLogout}
               variant="outline"
-              className="w-full bg-zinc-800 hover:bg-zinc-700 border-zinc-700 text-white"
+              className="w-full bg-zinc-800 hover:bg-zinc-700 border-input text-white"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Sair
@@ -93,7 +93,7 @@ const DashboardLayout = ({ children }) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile Header */}
-        <header className="lg:hidden sticky top-0 z-40 bg-black/40 backdrop-blur-xl border-b border-zinc-800 px-4 py-3">
+        <header className="lg:hidden sticky top-0 z-40 bg-black/40 backdrop-blur-xl border-b border-border px-4 py-3">
           <div className="flex items-center justify-between">
             <Button
               data-testid="mobile-menu-btn"

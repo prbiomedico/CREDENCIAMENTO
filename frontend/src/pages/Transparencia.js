@@ -30,8 +30,8 @@ export default function Transparencia() {
   }, [uf]);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
-      <nav className="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-xl border-b border-zinc-800">
+    <div className="min-h-screen bg-background text-white">
+      <nav className="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-xl border-b border-border">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
             <Shield className="h-7 w-7 text-primary-500" />
@@ -52,7 +52,7 @@ export default function Transparencia() {
         <div className="mb-8 max-w-xs">
           <label className="text-xs text-zinc-400 font-mono uppercase tracking-wider mb-2 block">Selecione o estado</label>
           <Select value={uf || ''} onValueChange={(v) => navigate(`/transparencia/${v}`)}>
-            <SelectTrigger className="bg-zinc-900 border-zinc-800 text-white">
+            <SelectTrigger className="bg-card border-border text-white">
               <SelectValue placeholder="Escolha uma UF" />
             </SelectTrigger>
             <SelectContent>
@@ -62,7 +62,7 @@ export default function Transparencia() {
         </div>
 
         {!uf && (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <FileText className="h-12 w-12 text-zinc-700 mx-auto mb-3" />
               <p className="text-zinc-400">Selecione um estado acima para ver os editais vigentes</p>
@@ -88,7 +88,7 @@ export default function Transparencia() {
               {dados.uf_nome} ({dados.uf})
             </h2>
             {dados.editais.length === 0 ? (
-              <Card className="bg-zinc-900/50 border-zinc-800">
+              <Card className="bg-card border-border">
                 <CardContent className="p-12 text-center">
                   <FileText className="h-12 w-12 text-zinc-700 mx-auto mb-3" />
                   <p className="text-zinc-400">Nenhum edital vigente neste estado no momento</p>
@@ -97,7 +97,7 @@ export default function Transparencia() {
             ) : (
               <div className="space-y-4">
                 {dados.editais.map(e => (
-                  <Card key={e.edital_id} className="bg-zinc-900/50 border-zinc-800">
+                  <Card key={e.edital_id} className="bg-card border-border">
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
                         <div>
@@ -119,13 +119,13 @@ export default function Transparencia() {
                           <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider mb-2">Documentos exigidos</p>
                           <div className="flex flex-wrap gap-1.5">
                             {e.documentos_obrigatorios.map((d, i) => (
-                              <Badge key={i} className="bg-zinc-800 text-zinc-300 border-zinc-700 text-xs">{d}</Badge>
+                              <Badge key={i} className="bg-zinc-800 text-zinc-300 border-input text-xs">{d}</Badge>
                             ))}
                           </div>
                         </div>
                       )}
 
-                      <div className="flex flex-wrap gap-2 pt-2 border-t border-zinc-800">
+                      <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
                         {e.termo_adesao_download_url && (
                           <a href={`${BACKEND_URL}${e.termo_adesao_download_url}`} target="_blank" rel="noreferrer">
                             <Button size="sm" variant="outline">

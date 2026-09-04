@@ -18,7 +18,7 @@ export default function PagamentoAguardando() {
   const fmt = s => `${String(Math.floor(s/60)).padStart(2,"0")}:${String(s%60).padStart(2,"0")}`;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#080B10", fontFamily: "system-ui,sans-serif", color: "#E8EAF0", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
+    <div style={{ minHeight: "100vh", background: "hsl(var(--background))", fontFamily: "system-ui,sans-serif", color: "hsl(var(--foreground))", display: "flex", alignItems: "center", justifyContent: "center", padding: "24px" }}>
       {/* Barra de navegao  Home */}
       <div style={{ position:"fixed", top:0, left:0, right:0, height:"48px", background:"rgba(8,11,16,0.95)", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", alignItems:"center", padding:"0 20px", gap:"16px", zIndex:100, backdropFilter:"blur(10px)" }}>
         <a href="/dashboard" style={{ display:"flex", alignItems:"center", gap:"8px", textDecoration:"none", color:"rgba(255,255,255,0.7)", fontSize:"13px", fontWeight:600 }}>
@@ -38,28 +38,28 @@ export default function PagamentoAguardando() {
               <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "rgba(33,150,243,0.1)", animation: "ping 1.5s cubic-bezier(0,0,0.2,1) infinite" }} />
               <div style={{ position: "absolute", inset: "12px", borderRadius: "50%", background: "rgba(33,150,243,0.15)", animation: "ping 1.5s cubic-bezier(0,0,0.2,1) infinite 0.3s" }} />
               <div style={{ position: "absolute", inset: "24px", borderRadius: "50%", background: "rgba(33,150,243,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Clock size={32} color="#2196f3" />
+                <Clock size={32} color="hsl(var(--sigcr-accent))" />
               </div>
             </div>
 
             <h2 style={{ fontSize: "24px", fontWeight: 800, color: "#fff", marginBottom: "10px" }}>Aguardando pagamento</h2>
-            <p style={{ fontSize: "14px", color: "#6B7280", marginBottom: "28px", lineHeight: 1.6 }}>
+            <p style={{ fontSize: "14px", color: "hsl(var(--muted-foreground))", marginBottom: "28px", lineHeight: 1.6 }}>
               Verificando automaticamente o pagamento via Pix.<br />
               Isso pode levar alguns segundos.
             </p>
 
             {/* Timer */}
             <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: "14px", padding: "20px", marginBottom: "20px" }}>
-              <div style={{ fontSize: "38px", fontWeight: 900, color: "#2196f3", fontVariantNumeric: "tabular-nums" }}>{fmt(segundos)}</div>
-              <div style={{ fontSize: "12px", color: "#4B5563", marginTop: "4px" }}>aguardando confirmao</div>
+              <div style={{ fontSize: "38px", fontWeight: 900, color: "hsl(var(--sigcr-accent))", fontVariantNumeric: "tabular-nums" }}>{fmt(segundos)}</div>
+              <div style={{ fontSize: "12px", color: "hsl(var(--muted-foreground))", marginTop: "4px" }}>aguardando confirmao</div>
             </div>
 
             {/* Barra de progresso pulsante */}
             <div style={{ height: "3px", background: "rgba(255,255,255,0.06)", borderRadius: "3px", marginBottom: "24px", overflow: "hidden" }}>
-              <div style={{ height: "100%", background: "linear-gradient(90deg,#2196f3,#64b5f6)", borderRadius: "3px", animation: "progress 2s ease-in-out infinite" }} />
+              <div style={{ height: "100%", background: "linear-gradient(90deg,hsl(var(--sigcr-accent)),hsl(var(--sigcr-accent)))", borderRadius: "3px", animation: "progress 2s ease-in-out infinite" }} />
             </div>
 
-            <button onClick={() => setStatus("aguardando")} style={{ display: "flex", alignItems: "center", gap: "8px", margin: "0 auto", background: "none", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "#9CA3AF", padding: "10px 20px", cursor: "pointer", fontSize: "13px" }}>
+            <button onClick={() => setStatus("aguardando")} style={{ display: "flex", alignItems: "center", gap: "8px", margin: "0 auto", background: "none", border: "1.5px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "hsl(var(--muted-foreground))", padding: "10px 20px", cursor: "pointer", fontSize: "13px" }}>
               <RefreshCw size={14} /> Verificar manualmente
             </button>
           </>
@@ -67,10 +67,10 @@ export default function PagamentoAguardando() {
           <>
             {/* Confirmado */}
             <div style={{ width: "100px", height: "100px", borderRadius: "50%", background: "rgba(34,197,94,0.1)", border: "2px solid rgba(34,197,94,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 28px", animation: "scaleIn 0.5s ease" }}>
-              <CheckCircle size={48} color="#22c55e" />
+              <CheckCircle size={48} color="hsl(var(--sigcr-success))" />
             </div>
             <h2 style={{ fontSize: "26px", fontWeight: 800, color: "#fff", marginBottom: "10px" }}>Pagamento confirmado!</h2>
-            <p style={{ fontSize: "14px", color: "#6B7280", marginBottom: "28px" }}>
+            <p style={{ fontSize: "14px", color: "hsl(var(--muted-foreground))", marginBottom: "28px" }}>
               Sua assinatura est ativa. Bem-vindo ao sigcr SIGCR Pro!
             </p>
             <div style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "14px", padding: "20px", marginBottom: "24px", textAlign: "left" }}>
@@ -81,12 +81,12 @@ export default function PagamentoAguardando() {
                 ["Status", " Ativo"],
               ].map(([k, v]) => (
                 <div key={k} style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-                  <span style={{ fontSize: "13px", color: "#6B7280" }}>{k}</span>
-                  <span style={{ fontSize: "13px", fontWeight: 700, color: k === "Status" ? "#22c55e" : "#fff" }}>{v}</span>
+                  <span style={{ fontSize: "13px", color: "hsl(var(--muted-foreground))" }}>{k}</span>
+                  <span style={{ fontSize: "13px", fontWeight: 700, color: k === "Status" ? "hsl(var(--sigcr-success))" : "#fff" }}>{v}</span>
                 </div>
               ))}
             </div>
-            <button onClick={() => navigate("/dashboard")} style={{ width: "100%", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,#2196f3,#1e88e5)", color: "#fff", fontSize: "15px", fontWeight: 800, boxShadow: "0 4px 20px rgba(33,150,243,0.3)" }}>
+            <button onClick={() => navigate("/dashboard")} style={{ width: "100%", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,hsl(var(--sigcr-accent)),hsl(var(--sigcr-accent)))", color: "#fff", fontSize: "15px", fontWeight: 800, boxShadow: "0 4px 20px rgba(33,150,243,0.3)" }}>
               Acessar o painel 
             </button>
           </>

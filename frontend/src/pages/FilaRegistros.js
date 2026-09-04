@@ -136,7 +136,7 @@ const FilaRegistros = () => {
             <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : solicitacoes.length === 0 ? (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <FileText className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
               <p className="text-zinc-400">Nenhuma solicitação recebida ainda</p>
@@ -149,12 +149,12 @@ const FilaRegistros = () => {
               const Icon = cfg.icon;
               const pendenteOuProcessando = sol.status === 'pendente' || sol.status === 'em_processamento';
               return (
-                <Card key={sol.solicitacao_registro_id} className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-colors">
+                <Card key={sol.solicitacao_registro_id} className="bg-card border-border hover:border-input transition-colors">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2 flex-wrap">
-                          <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-mono text-xs">{sol.veiculo_placa}</Badge>
+                          <Badge className="bg-sky-500/10 text-sky-400 border-sky-500/20 font-mono text-xs">{sol.veiculo_placa}</Badge>
                           <Badge className={`${cfg.bg} ${cfg.text} text-xs font-mono`}>
                             <Icon className="h-3 w-3 mr-1" />{cfg.label}
                           </Badge>
@@ -193,14 +193,14 @@ const FilaRegistros = () => {
 
         {/* Dialog: Concluir */}
         <Dialog open={!!concluirAlvo} onOpenChange={(open) => { if (!open) setConcluirAlvo(null); }}>
-          <DialogContent className="bg-zinc-900 border-zinc-700 text-white">
+          <DialogContent className="bg-card border-input text-white">
             <DialogHeader>
               <DialogTitle>Concluir Registro de Contrato</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleConcluir} className="space-y-4">
               <div>
                 <Label className="text-zinc-300">Número de registro no DETRAN</Label>
-                <Input value={numeroRegistro} onChange={(e) => setNumeroRegistro(e.target.value)} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                <Input value={numeroRegistro} onChange={(e) => setNumeroRegistro(e.target.value)} className="bg-zinc-800 border-input text-white mt-1" required />
               </div>
               <div>
                 <Label className="text-zinc-300">Comprovante do DETRAN (PDF)</Label>
@@ -208,7 +208,7 @@ const FilaRegistros = () => {
                   type="file"
                   accept="application/pdf"
                   onChange={(e) => setComprovantePdf(e.target.files?.[0] || null)}
-                  className="bg-zinc-800 border-zinc-700 text-white mt-1"
+                  className="bg-zinc-800 border-input text-white mt-1"
                   required
                 />
               </div>
@@ -221,14 +221,14 @@ const FilaRegistros = () => {
 
         {/* Dialog: Rejeitar */}
         <Dialog open={!!rejeitarAlvo} onOpenChange={(open) => { if (!open) { setRejeitarAlvo(null); setMotivoRejeicao(''); } }}>
-          <DialogContent className="bg-zinc-900 border-zinc-700 text-white">
+          <DialogContent className="bg-card border-input text-white">
             <DialogHeader>
               <DialogTitle>Rejeitar Solicitação de Registro</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleRejeitar} className="space-y-4">
               <div>
                 <Label className="text-zinc-300">Motivo (opcional)</Label>
-                <Textarea value={motivoRejeicao} onChange={(e) => setMotivoRejeicao(e.target.value)} className="bg-zinc-800 border-zinc-700 text-white mt-1" placeholder="Explique por que a solicitação está sendo rejeitada" />
+                <Textarea value={motivoRejeicao} onChange={(e) => setMotivoRejeicao(e.target.value)} className="bg-zinc-800 border-input text-white mt-1" placeholder="Explique por que a solicitação está sendo rejeitada" />
               </div>
               <Button type="submit" variant="destructive" disabled={processando} className="w-full">
                 {processando ? 'Rejeitando...' : 'Confirmar Rejeição'}

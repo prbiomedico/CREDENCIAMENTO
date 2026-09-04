@@ -7,11 +7,11 @@ const Login = () => {
   const { login } = useAuth();
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute inset-0 grid-pattern opacity-30"></div>
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] hero-glow rounded-full blur-3xl"></div>
       <div className="relative z-10 w-full max-w-md">
-        <div className="bg-zinc-900/50 backdrop-blur-xl border border-zinc-800 rounded-2xl p-8 shadow-2xl">
+        <div className="bg-card backdrop-blur-xl border border-border rounded-2xl p-8 shadow-2xl">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-primary-500/10 mb-4 glow-orange">
               <Shield className="h-8 w-8 text-primary-500" />

@@ -83,7 +83,7 @@ const Documentos = () => {
             </CardContent>
           </Card>
         ) : companies.length === 0 ? (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <FileText className="h-16 w-16 text-zinc-700 mx-auto mb-4" />
               <p className="text-zinc-400 mb-4">
@@ -97,17 +97,17 @@ const Documentos = () => {
         ) : (
           <>
             {/* Company Selection */}
-            <Card className="bg-zinc-900/50 border-zinc-800 mb-8">
+            <Card className="bg-card border-border mb-8">
               <CardContent className="p-6">
                 <Label className="text-zinc-300 mb-2 block">Selecionar Empresa</Label>
                 <Select value={selectedCompany} onValueChange={setSelectedCompany}>
                   <SelectTrigger
                     data-testid="company-select"
-                    className="bg-zinc-950 border-zinc-800 text-white"
+                    className="bg-background border-border text-white"
                   >
                     <SelectValue placeholder="Selecione a empresa" />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                  <SelectContent className="bg-card border-border text-white">
                     {companies.map((company) => (
                       <SelectItem key={company.company_id} value={company.company_id}>
                         {company.name} ({company.cnpj})

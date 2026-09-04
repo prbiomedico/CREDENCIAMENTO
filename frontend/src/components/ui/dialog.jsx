@@ -19,7 +19,7 @@ const DialogOverlay = React.forwardRef(({ className, ...props }, ref) => (
       // Redesign bento/glow (item 31): overlay com blur em vez de preto
       // chapado — o conteúdo por trás fica visível, desfocado, mais próximo
       // do padrão "glassmorphism" usado no resto do redesign.
-      "fixed inset-0 z-50 bg-black/70 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-50 bg-slate-950/45 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props} />
@@ -35,7 +35,7 @@ const DialogContent = React.forwardRef(({ className, overlayClassName, children,
         // Redesign bento/glow (item 31): borda mais visível + glow sutil na
         // cor da marca em vez de `border` genérico — o modal se destaca do
         // overlay desfocado, coerente com a linguagem de elevação dos cards.
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-background p-6 shadow-[0_0_40px_-12px_hsl(var(--primary)/0.25)] duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
+        "fixed left-[50%] top-[50%] z-50 grid w-[calc(100%-2rem)] max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border border-border bg-card p-6 text-card-foreground shadow-xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg",
         className
       )}
       {...props}>

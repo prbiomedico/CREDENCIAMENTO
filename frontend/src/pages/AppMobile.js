@@ -9,19 +9,19 @@ export default function AppMobile() {
   ];
 
   return (
-    <div style={{ minHeight:"100vh", background:"#080B10", fontFamily:"system-ui,sans-serif", color:"#E8EAF0", padding:"40px 32px" }}>
+    <div style={{ minHeight:"100vh", background:"hsl(var(--background))", fontFamily:"system-ui,sans-serif", color:"hsl(var(--foreground))", padding:"40px 32px" }}>
       {/* Header */}
       <div style={{ marginBottom:"40px" }}>
-        <a href="/dashboard" style={{ display:"inline-flex", alignItems:"center", gap:"6px", color:"#6B7280", textDecoration:"none", fontSize:"13px", marginBottom:"24px" }}>
+        <a href="/dashboard" style={{ display:"inline-flex", alignItems:"center", gap:"6px", color:"hsl(var(--muted-foreground))", textDecoration:"none", fontSize:"13px", marginBottom:"24px" }}>
            Voltar ao painel
         </a>
         <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
-          <div style={{ width:"60px", height:"60px", background:"linear-gradient(135deg,#2196f3,#1e88e5)", borderRadius:"16px", display:"flex", alignItems:"center", justifyContent:"center" }}>
+          <div style={{ width:"60px", height:"60px", background:"linear-gradient(135deg,hsl(var(--sigcr-accent)),hsl(var(--sigcr-accent)))", borderRadius:"16px", display:"flex", alignItems:"center", justifyContent:"center" }}>
             <Smartphone size={30} color="#fff"/>
           </div>
           <div>
             <h1 style={{ fontSize:"28px", fontWeight:800, color:"#fff", margin:0 }}>sigcr SIGCR Mobile</h1>
-            <p style={{ fontSize:"14px", color:"#6B7280", margin:"4px 0 0" }}>Gerencie credenciamentos de qualquer lugar</p>
+            <p style={{ fontSize:"14px", color:"hsl(var(--muted-foreground))", margin:"4px 0 0" }}>Gerencie credenciamentos de qualquer lugar</p>
           </div>
         </div>
       </div>
@@ -37,15 +37,15 @@ export default function AppMobile() {
               <div style={{ flex:"1 1 180px", display:"flex", alignItems:"center", gap:"12px", background:"rgba(255,255,255,0.04)", border:"1.5px solid rgba(255,255,255,0.1)", borderRadius:"12px", padding:"14px 18px", cursor:"pointer", opacity:0.7 }}>
                 <Apple size={28} color="#fff"/>
                 <div>
-                  <div style={{ fontSize:"10px", color:"#9CA3AF" }}>Em breve na</div>
+                  <div style={{ fontSize:"10px", color:"hsl(var(--muted-foreground))" }}>Em breve na</div>
                   <div style={{ fontWeight:700, color:"#fff", fontSize:"15px" }}>App Store</div>
                 </div>
               </div>
               {/* Play Store */}
               <div style={{ flex:"1 1 180px", display:"flex", alignItems:"center", gap:"12px", background:"rgba(255,255,255,0.04)", border:"1.5px solid rgba(255,255,255,0.1)", borderRadius:"12px", padding:"14px 18px", cursor:"pointer", opacity:0.7 }}>
-                <Download size={28} color="#22c55e"/>
+                <Download size={28} color="hsl(var(--sigcr-success))"/>
                 <div>
-                  <div style={{ fontSize:"10px", color:"#9CA3AF" }}>Em breve no</div>
+                  <div style={{ fontSize:"10px", color:"hsl(var(--muted-foreground))" }}>Em breve no</div>
                   <div style={{ fontWeight:700, color:"#fff", fontSize:"15px" }}>Google Play</div>
                 </div>
               </div>
@@ -54,18 +54,18 @@ export default function AppMobile() {
             <div style={{ background:"rgba(33,150,243,0.08)", border:"1px solid rgba(33,150,243,0.25)", borderRadius:"10px", padding:"12px 16px", display:"flex", gap:"10px", alignItems:"flex-start" }}>
               <span style={{ fontSize:"16px" }}></span>
               <div>
-                <div style={{ fontWeight:700, fontSize:"13px", color:"#2196f3", marginBottom:"4px" }}>Programa de Beta Testers</div>
-                <div style={{ fontSize:"12px", color:"#9CA3AF" }}>Cadastre seu e-mail para ser um dos primeiros a testar o aplicativo sigcr SIGCR Mobile.</div>
+                <div style={{ fontWeight:700, fontSize:"13px", color:"hsl(var(--sigcr-accent))", marginBottom:"4px" }}>Programa de Beta Testers</div>
+                <div style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))" }}>Cadastre seu e-mail para ser um dos primeiros a testar o aplicativo sigcr SIGCR Mobile.</div>
               </div>
             </div>
             {/* Form email */}
             <div style={{ display:"flex", gap:"8px", marginTop:"14px" }}>
-              <input placeholder="E-mail corporativo" style={{ flex:1, background:"rgba(255,255,255,0.04)", border:"1.5px solid rgba(255,255,255,0.1)", borderRadius:"8px", color:"#E8EAF0", padding:"10px 14px", fontSize:"13px", outline:"none" }} />
-              <button style={{ background:"linear-gradient(135deg,#2196f3,#1e88e5)", border:"none", borderRadius:"8px", color:"#fff", padding:"10px 18px", fontSize:"13px", fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
+              <input placeholder="E-mail corporativo" style={{ flex:1, background:"rgba(255,255,255,0.04)", border:"1.5px solid rgba(255,255,255,0.1)", borderRadius:"8px", color:"hsl(var(--foreground))", padding:"10px 14px", fontSize:"13px", outline:"none" }} />
+              <button style={{ background:"linear-gradient(135deg,hsl(var(--sigcr-accent)),hsl(var(--sigcr-accent)))", border:"none", borderRadius:"8px", color:"#fff", padding:"10px 18px", fontSize:"13px", fontWeight:700, cursor:"pointer", whiteSpace:"nowrap" }}>
                 Quero testar
               </button>
             </div>
-            <p style={{ fontSize:"11px", color:"#4B5563", marginTop:"8px" }}>
+            <p style={{ fontSize:"11px", color:"hsl(var(--muted-foreground))", marginTop:"8px" }}>
                Seus dados so protegidos conforme a LGPD. No compartilhamos com terceiros.
             </p>
           </div>
@@ -74,12 +74,12 @@ export default function AppMobile() {
           <div style={{ display:"flex", flexDirection:"column", gap:"12px" }}>
             {features.map((f, i) => (
               <div key={i} style={{ display:"flex", gap:"14px", alignItems:"flex-start", background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:"12px", padding:"16px" }}>
-                <div style={{ width:"38px", height:"38px", background:"rgba(33,150,243,0.1)", borderRadius:"10px", display:"flex", alignItems:"center", justifyContent:"center", color:"#2196f3", flexShrink:0 }}>
+                <div style={{ width:"38px", height:"38px", background:"rgba(33,150,243,0.1)", borderRadius:"10px", display:"flex", alignItems:"center", justifyContent:"center", color:"hsl(var(--sigcr-accent))", flexShrink:0 }}>
                   {f.icon}
                 </div>
                 <div>
-                  <div style={{ fontWeight:700, fontSize:"14px", color:"#E8EAF0", marginBottom:"4px" }}>{f.titulo}</div>
-                  <div style={{ fontSize:"12px", color:"#6B7280" }}>{f.desc}</div>
+                  <div style={{ fontWeight:700, fontSize:"14px", color:"hsl(var(--foreground))", marginBottom:"4px" }}>{f.titulo}</div>
+                  <div style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))" }}>{f.desc}</div>
                 </div>
               </div>
             ))}
@@ -94,23 +94,23 @@ export default function AppMobile() {
             {/* Contedo mock */}
             <div style={{ width:"160px", padding:"0 8px" }}>
               <div style={{ background:"rgba(33,150,243,0.15)", border:"1px solid rgba(33,150,243,0.3)", borderRadius:"10px", padding:"12px", marginBottom:"8px", textAlign:"center" }}>
-                <div style={{ fontSize:"10px", color:"#2196f3", fontWeight:700 }}> DETRAN-CE</div>
-                <div style={{ fontSize:"9px", color:"#9CA3AF", marginTop:"3px" }}>POC convocada!</div>
+                <div style={{ fontSize:"10px", color:"hsl(var(--sigcr-accent))", fontWeight:700 }}> DETRAN-CE</div>
+                <div style={{ fontSize:"9px", color:"hsl(var(--muted-foreground))", marginTop:"3px" }}>POC convocada!</div>
               </div>
               <div style={{ background:"rgba(34,197,94,0.08)", border:"1px solid rgba(34,197,94,0.2)", borderRadius:"10px", padding:"10px", marginBottom:"6px" }}>
-                <div style={{ fontSize:"9px", color:"#22c55e", fontWeight:700 }}> DETRAN-RS OK</div>
+                <div style={{ fontSize:"9px", color:"hsl(var(--sigcr-success))", fontWeight:700 }}> DETRAN-RS OK</div>
               </div>
               <div style={{ background:"rgba(255,255,255,0.04)", borderRadius:"8px", padding:"8px", display:"flex", justifyContent:"space-between" }}>
-                <span style={{ fontSize:"9px", color:"#6B7280" }}>Contratos</span>
-                <span style={{ fontSize:"9px", color:"#2196f3", fontWeight:700 }}>2.847</span>
+                <span style={{ fontSize:"9px", color:"hsl(var(--muted-foreground))" }}>Contratos</span>
+                <span style={{ fontSize:"9px", color:"hsl(var(--sigcr-accent))", fontWeight:700 }}>2.847</span>
               </div>
             </div>
-            <div style={{ fontSize:"10px", color:"#4B5563" }}>sigcr SIGCR</div>
+            <div style={{ fontSize:"10px", color:"hsl(var(--muted-foreground))" }}>sigcr SIGCR</div>
           </div>
           <div style={{ display:"flex", gap:"4px" }}>
-            {[1,2,3,4,5].map(s => <Star key={s} size={14} color="#2196f3" fill="#2196f3"/>)}
+            {[1,2,3,4,5].map(s => <Star key={s} size={14} color="hsl(var(--sigcr-accent))" fill="hsl(var(--sigcr-accent))"/>)}
           </div>
-          <div style={{ fontSize:"12px", color:"#6B7280", textAlign:"center" }}>Preview do app mobile</div>
+          <div style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))", textAlign:"center" }}>Preview do app mobile</div>
         </div>
       </div>
     </div>

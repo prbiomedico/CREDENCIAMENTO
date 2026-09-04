@@ -16,14 +16,14 @@ import { cn } from "@/lib/utils"
 // padrão nas 3 variantes coloridas: default/destructive/outline); o glow
 // colorido de hover já existente continua sendo o destaque visual forte.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 ease-out active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 disabled:active:scale-100 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default:
-          "bg-gradient-to-br from-primary to-primary-600 text-primary-foreground shadow-sm shadow-black/5 hover:shadow-[0_0_24px_-4px_hsl(var(--primary)/0.6)] hover:brightness-110",
+          "bg-primary text-primary-foreground hover:bg-primary/90",
         destructive:
-          "bg-destructive text-destructive-foreground shadow-sm shadow-black/5 hover:shadow-[0_0_20px_-4px_hsl(var(--destructive)/0.55)] hover:brightness-110",
+          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
         // Padrão único de "Fase 3" (SIGCR-Design-System, item de unificação
         // de clicáveis): antes desta variante, cada tela reescrevia sua
         // própria versão de "ação destrutiva secundária" à mão — pelo menos
@@ -36,11 +36,11 @@ const buttonVariants = cva(
         "destructive-ghost":
           "text-destructive hover:text-destructive hover:bg-destructive/10",
         outline:
-          "border border-input shadow-sm shadow-black/5 hover:border-primary/40 hover:bg-accent hover:text-accent-foreground",
+          "border border-input bg-card text-foreground hover:bg-muted",
         secondary:
-          "bg-gradient-to-br from-secondary to-secondary-600 text-secondary-foreground shadow-sm hover:shadow-[0_0_20px_-4px_hsl(var(--secondary)/0.55)] hover:brightness-110",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline active:scale-100",
+          "bg-secondary text-secondary-foreground hover:bg-secondary/75",
+        ghost: "text-muted-foreground hover:bg-muted hover:text-foreground",
+        link: "text-accent underline-offset-4 hover:underline",
         // Pill de navegação (tabs/menubar) — mesmo raio (`rounded-md`, herdado
         // da base) e mesma família tipográfica dos botões, só muda a forma.
         // `data-[state=active]` é o atributo que o Radix Tabs já expõe no
@@ -49,7 +49,7 @@ const buttonVariants = cva(
         // ativa), então app-menu-bar.js aplica a mesma cor via className
         // condicional em vez de depender do atributo — ver comentário lá.
         tab:
-          "text-muted-foreground shadow-none hover:text-foreground hover:bg-accent/60 data-[state=active]:bg-primary-500/15 data-[state=active]:text-primary-400 data-[state=active]:shadow-sm",
+          "text-muted-foreground shadow-none hover:text-foreground hover:bg-muted data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-none",
       },
       size: {
         default: "h-9 px-4 py-2",
@@ -75,10 +75,7 @@ const buttonVariants = cva(
 // marca (ex: "Excluir" vermelho, "Concluir"/baixar comprovante verde) — eles
 // saíam sempre azuis em produção. Quando o caller passa seu próprio `bg-`,
 // removemos o gradiente da variante pra a cor customizada valer de verdade.
-const GRADIENT_BG = {
-  default: "bg-gradient-to-br from-primary to-primary-600",
-  secondary: "bg-gradient-to-br from-secondary to-secondary-600",
-};
+const GRADIENT_BG = {};
 
 const Button = React.forwardRef(({ className, variant, size, asChild = false, ...props }, ref) => {
   const Comp = asChild ? Slot : "button"

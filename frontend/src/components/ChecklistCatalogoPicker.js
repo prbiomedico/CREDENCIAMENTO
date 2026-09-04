@@ -36,7 +36,7 @@ export const BLOCOS_POR_PERFIL = {
 // conhecidas). Categoria nova cai no fallback dentro do render — nome vem
 // do próprio catálogo de tipos, sem cor/fonte fixas.
 const PERFIL_SECAO = {
-  registradora: { label: 'Registradora', fonte: 'Resolução CONTRAN 807', badge: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  registradora: { label: 'Registradora', fonte: 'Resolução CONTRAN 807', badge: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
   financeira: { label: 'Financeira', fonte: 'Edital DETRAN-DF nº 003/2022', badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
 };
 
@@ -155,7 +155,7 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
                           {itensDoBloco.map((item) => (
                             <label
                               key={item.item_id}
-                              className="flex items-start gap-3 bg-zinc-900/50 border border-zinc-800 rounded-lg px-3 py-2 cursor-pointer hover:border-zinc-700"
+                              className="flex items-start gap-3 bg-card border border-border rounded-lg px-3 py-2 cursor-pointer hover:border-input"
                             >
                               <input
                                 type="checkbox"
@@ -182,27 +182,27 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
 
       <div className="mt-4">
         {novoItemAberto ? (
-          <div className="bg-zinc-900/50 border border-zinc-800 rounded-lg p-3 space-y-2">
+          <div className="bg-card border border-border rounded-lg p-3 space-y-2">
             <Input
               value={novoItemNome}
               onChange={(e) => setNovoItemNome(e.target.value)}
               placeholder="Nome do item novo"
-              className="bg-zinc-950 border-zinc-800 text-white"
+              className="bg-background border-border text-white"
             />
             <div className="grid grid-cols-2 gap-2">
               <Select value={novoItemPerfil} onValueChange={trocarNovoItemPerfil}>
-                <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white">
+                <SelectTrigger className="bg-background border-border text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                <SelectContent className="bg-card border-border text-white">
                   {tipos.map((t) => <SelectItem key={t.tipo_id} value={t.tipo_id}>{t.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={String(novoItemBloco)} onValueChange={(v) => setNovoItemBloco(Number(v))}>
-                <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white">
+                <SelectTrigger className="bg-background border-border text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                <SelectContent className="bg-card border-border text-white">
                   {Object.entries(blocosDoPerfil(novoItemPerfil)).map(([num, nome]) => (
                     <SelectItem key={num} value={num}>{nome}</SelectItem>
                   ))}
@@ -213,7 +213,7 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
               value={novoItemDescricao}
               onChange={(e) => setNovoItemDescricao(e.target.value)}
               placeholder="Descrição (opcional)"
-              className="bg-zinc-950 border-zinc-800 text-white"
+              className="bg-background border-border text-white"
             />
             <div className="flex gap-2">
               <Button type="button" onClick={criarItemCatalogo} disabled={criando} className="bg-zinc-700 hover:bg-zinc-600 text-white gap-1">
@@ -230,7 +230,7 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
             </div>
           </div>
         ) : (
-          <Button type="button" variant="outline" onClick={() => setNovoItemAberto(true)} className="border-zinc-700 border-dashed text-zinc-400 hover:bg-zinc-800 gap-1 w-full">
+          <Button type="button" variant="outline" onClick={() => setNovoItemAberto(true)} className="border-input border-dashed text-zinc-400 hover:bg-zinc-800 gap-1 w-full">
             <Plus className="h-4 w-4" />
             Criar item novo no catálogo
           </Button>

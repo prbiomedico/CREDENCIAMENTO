@@ -193,7 +193,7 @@ const EmpresaRegistradora = () => {
                 Nova Empresa
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="bg-card border-border text-white max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="font-heading text-2xl">Cadastrar Empresa Registradora</DialogTitle>
               </DialogHeader>
@@ -206,7 +206,7 @@ const EmpresaRegistradora = () => {
                       data-testid="company-name-input"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                      className="bg-background border-border focus:border-primary-500 text-white mt-2"
                       required
                     />
                   </div>
@@ -217,7 +217,7 @@ const EmpresaRegistradora = () => {
                       data-testid="company-fantasia-input"
                       value={formData.nome_fantasia}
                       onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })}
-                      className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                      className="bg-background border-border focus:border-primary-500 text-white mt-2"
                       required
                     />
                   </div>
@@ -232,7 +232,7 @@ const EmpresaRegistradora = () => {
                       value={formData.cnpj}
                       onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
                       placeholder="00.000.000/0000-00"
-                      className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                      className="bg-background border-border focus:border-primary-500 text-white mt-2"
                       required
                     />
                   </div>
@@ -244,7 +244,7 @@ const EmpresaRegistradora = () => {
                       data-testid="company-email-input"
                       value={formData.email_comercial}
                       onChange={(e) => setFormData({ ...formData, email_comercial: e.target.value })}
-                      className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                      className="bg-background border-border focus:border-primary-500 text-white mt-2"
                       required
                     />
                   </div>
@@ -258,7 +258,7 @@ const EmpresaRegistradora = () => {
                     value={formData.gestor_contrato}
                     onChange={(e) => setFormData({ ...formData, gestor_contrato: e.target.value })}
                     placeholder="Nome completo do gestor"
-                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
                     required
                   />
                 </div>
@@ -271,7 +271,7 @@ const EmpresaRegistradora = () => {
                       value={formData.endereco}
                       onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
                       placeholder="Endereço"
-                      className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                      className="bg-background border-border focus:border-primary-500 text-white mt-2"
                     />
                   </div>
                   <div>
@@ -281,21 +281,21 @@ const EmpresaRegistradora = () => {
                       value={formData.whatsapp}
                       onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                       placeholder="(99) 99999-9999"
-                      className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                      className="bg-background border-border focus:border-primary-500 text-white mt-2"
                     />
                   </div>
                 </div>
 
                 <div>
                   <Label className="text-zinc-300 mb-3 block">DETRANs de Atuação</Label>
-                  <div className="grid grid-cols-5 gap-3 max-h-48 overflow-y-auto p-4 bg-zinc-950 border border-zinc-800 rounded-md">
+                  <div className="grid grid-cols-5 gap-3 max-h-48 overflow-y-auto p-4 bg-background border border-border rounded-md">
                     {detransOptions.map((detran) => (
                       <div key={detran} className="flex items-center space-x-2">
                         <Checkbox
                           id={`detran-${detran}`}
                           checked={formData.detrans_atuacao.includes(detran)}
                           onCheckedChange={() => handleDetranToggle(detran)}
-                          className="border-zinc-700 data-[state=checked]:bg-primary-500 data-[state=checked]:border-primary-500"
+                          className="border-input data-[state=checked]:bg-primary-500 data-[state=checked]:border-primary-500"
                         />
                         <label
                           htmlFor={`detran-${detran}`}
@@ -325,7 +325,7 @@ const EmpresaRegistradora = () => {
 
         {/* Edit Company Modal */}
         <Dialog open={showEditModal} onOpenChange={(open) => { setShowEditModal(open); if (!open) setEditingCompany(null); }}>
-          <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="bg-card border-border text-white max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-heading text-2xl">Editar Empresa</DialogTitle>
             </DialogHeader>
@@ -338,7 +338,7 @@ const EmpresaRegistradora = () => {
                     data-testid="edit-company-name-input"
                     value={editFormData.name}
                     onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
                     required
                   />
                 </div>
@@ -349,7 +349,7 @@ const EmpresaRegistradora = () => {
                     data-testid="edit-company-fantasia-input"
                     value={editFormData.nome_fantasia}
                     onChange={(e) => setEditFormData({ ...editFormData, nome_fantasia: e.target.value })}
-                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
                     required
                   />
                 </div>
@@ -364,7 +364,7 @@ const EmpresaRegistradora = () => {
                     value={editFormData.cnpj}
                     onChange={(e) => setEditFormData({ ...editFormData, cnpj: e.target.value })}
                     placeholder="00.000.000/0000-00"
-                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
                     required
                   />
                 </div>
@@ -376,7 +376,7 @@ const EmpresaRegistradora = () => {
                     data-testid="edit-company-email-input"
                     value={editFormData.email_comercial}
                     onChange={(e) => setEditFormData({ ...editFormData, email_comercial: e.target.value })}
-                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
                     required
                   />
                 </div>
@@ -390,7 +390,7 @@ const EmpresaRegistradora = () => {
                   value={editFormData.gestor_contrato}
                   onChange={(e) => setEditFormData({ ...editFormData, gestor_contrato: e.target.value })}
                   placeholder="Nome completo do gestor"
-                  className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                  className="bg-background border-border focus:border-primary-500 text-white mt-2"
                   required
                 />
               </div>
@@ -403,7 +403,7 @@ const EmpresaRegistradora = () => {
                     value={editFormData.endereco}
                     onChange={(e) => setEditFormData({ ...editFormData, endereco: e.target.value })}
                     placeholder="Endereço"
-                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
                   />
                 </div>
                 <div>
@@ -413,21 +413,21 @@ const EmpresaRegistradora = () => {
                     value={editFormData.whatsapp}
                     onChange={(e) => setEditFormData({ ...editFormData, whatsapp: e.target.value })}
                     placeholder="(99) 99999-9999"
-                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
                   />
                 </div>
               </div>
 
               <div>
                 <Label className="text-zinc-300 mb-3 block">DETRANs de Atuação</Label>
-                <div className="grid grid-cols-5 gap-3 max-h-48 overflow-y-auto p-4 bg-zinc-950 border border-zinc-800 rounded-md">
+                <div className="grid grid-cols-5 gap-3 max-h-48 overflow-y-auto p-4 bg-background border border-border rounded-md">
                   {detransOptions.map((detran) => (
                     <div key={detran} className="flex items-center space-x-2">
                       <Checkbox
                         id={`edit-detran-${detran}`}
                         checked={editFormData.detrans_atuacao.includes(detran)}
                         onCheckedChange={() => handleEditDetranToggle(detran)}
-                        className="border-zinc-700 data-[state=checked]:bg-primary-500 data-[state=checked]:border-primary-500"
+                        className="border-input data-[state=checked]:bg-primary-500 data-[state=checked]:border-primary-500"
                       />
                       <label
                         htmlFor={`edit-detran-${detran}`}
@@ -472,7 +472,7 @@ const EmpresaRegistradora = () => {
             </CardContent>
           </Card>
         ) : companies.length === 0 ? (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <Building2 className="h-16 w-16 text-zinc-700 mx-auto mb-4" />
               <p className="text-zinc-400 mb-4">Nenhuma empresa cadastrada</p>
@@ -492,7 +492,7 @@ const EmpresaRegistradora = () => {
               <Card
                 key={company.company_id}
                 data-testid={`company-card-${company.company_id}`}
-                className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors"
+                className="bg-card border-border hover:border-primary-500/30 transition-colors"
               >
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -522,7 +522,7 @@ const EmpresaRegistradora = () => {
                       <p className="text-xs text-zinc-500 mb-2">DETRANs de Atuação:</p>
                       <div className="flex flex-wrap gap-2">
                         {company.detrans_atuacao.map((detran) => (
-                          <Badge key={detran} className="bg-blue-500/10 text-blue-500 border-blue-500/20 text-xs">
+                          <Badge key={detran} className="bg-sky-500/10 text-sky-500 border-sky-500/20 text-xs">
                             DETRAN-{detran}
                           </Badge>
                         ))}

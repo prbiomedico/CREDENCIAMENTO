@@ -78,8 +78,8 @@ const CadastroPublico = () => {
 
   if (concluido) {
     return (
-      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center p-6">
-        <Card className="bg-zinc-900/50 border-zinc-800 max-w-md w-full">
+      <div className="min-h-screen bg-background text-white flex items-center justify-center p-6">
+        <Card className="bg-card border-border max-w-md w-full">
           <CardContent className="p-10 text-center">
             <CheckCircle2 className="h-14 w-14 text-emerald-400 mx-auto mb-4" />
             <h1 className="text-xl font-bold text-white mb-2">Cadastro enviado</h1>
@@ -96,7 +96,7 @@ const CadastroPublico = () => {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white py-10 px-4">
+    <div className="min-h-screen bg-background text-white py-10 px-4">
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center gap-3 mb-8">
           <div className="w-10 h-10 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center justify-center">
@@ -108,7 +108,7 @@ const CadastroPublico = () => {
           </div>
         </div>
 
-        <Card className="bg-zinc-900/50 border-zinc-800">
+        <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Building2 className="h-5 w-5 text-primary-400" />
@@ -120,10 +120,10 @@ const CadastroPublico = () => {
               <div>
                 <Label className="text-zinc-300">Tipo de Empresa</Label>
                 <Select value={formData.tipo_empresa} onValueChange={(value) => setFormData({ ...formData, tipo_empresa: value, registradora_id: '' })}>
-                  <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                  <SelectTrigger className="bg-zinc-800 border-input text-white mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
+                  <SelectContent className="bg-card border-input text-white">
                     <SelectItem value="registradora">Registradora</SelectItem>
                     <SelectItem value="financeira">Financeira</SelectItem>
                   </SelectContent>
@@ -134,10 +134,10 @@ const CadastroPublico = () => {
                 <div>
                   <Label className="text-zinc-300">Registradora Vinculada</Label>
                   <Select value={formData.registradora_id} onValueChange={(value) => setFormData({ ...formData, registradora_id: value })}>
-                    <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                    <SelectTrigger className="bg-zinc-800 border-input text-white mt-1">
                       <SelectValue placeholder="Selecione a registradora..." />
                     </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
+                    <SelectContent className="bg-card border-input text-white">
                       {registradoras.length === 0 ? (
                         <div className="px-3 py-2 text-xs text-zinc-500">Nenhuma registradora disponível</div>
                       ) : (
@@ -153,38 +153,38 @@ const CadastroPublico = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-zinc-300">Razão Social</Label>
-                  <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                  <Input value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                 </div>
                 <div>
                   <Label className="text-zinc-300">Nome Fantasia</Label>
-                  <Input value={formData.nome_fantasia} onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                  <Input value={formData.nome_fantasia} onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-zinc-300">CNPJ</Label>
-                  <Input value={formData.cnpj} onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                  <Input value={formData.cnpj} onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                 </div>
                 <div>
                   <Label className="text-zinc-300">WhatsApp</Label>
-                  <Input value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} placeholder="(00) 00000-0000" className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                  <Input value={formData.whatsapp} onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })} placeholder="(00) 00000-0000" className="bg-zinc-800 border-input text-white mt-1" required />
                 </div>
               </div>
 
               <div>
                 <Label className="text-zinc-300">Endereço</Label>
-                <Input value={formData.endereco} onChange={(e) => setFormData({ ...formData, endereco: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                <Input value={formData.endereco} onChange={(e) => setFormData({ ...formData, endereco: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
               </div>
 
               <div>
                 <Label className="text-zinc-300">Nome do Gestor de Contrato</Label>
-                <Input value={formData.gestor_contrato} onChange={(e) => setFormData({ ...formData, gestor_contrato: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                <Input value={formData.gestor_contrato} onChange={(e) => setFormData({ ...formData, gestor_contrato: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
               </div>
 
               <div>
                 <Label className="text-zinc-300 mb-2 block">DETRANs de Atuação</Label>
-                <div className="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto p-3 bg-zinc-800 border border-zinc-700 rounded-md">
+                <div className="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto p-3 bg-zinc-800 border border-input rounded-md">
                   {UFS.map((uf) => (
                     <label key={uf} className="flex items-center gap-1.5 text-xs text-zinc-300 cursor-pointer">
                       <input type="checkbox" checked={formData.detrans_atuacao.includes(uf)} onChange={() => toggleDetran(uf)} className="rounded border-zinc-600" />
@@ -194,20 +194,20 @@ const CadastroPublico = () => {
                 </div>
               </div>
 
-              <div className="border-t border-zinc-800 pt-4">
+              <div className="border-t border-border pt-4">
                 <Label className="text-zinc-300">E-mail de Acesso</Label>
-                <Input type="email" value={formData.email_comercial} onChange={(e) => setFormData({ ...formData, email_comercial: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                <Input type="email" value={formData.email_comercial} onChange={(e) => setFormData({ ...formData, email_comercial: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                 <p className="text-xs text-zinc-500 mt-1">Esse e-mail também será usado pra você entrar no sistema.</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-zinc-300">Senha</Label>
-                  <Input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required minLength={8} />
+                  <Input type="password" value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required minLength={8} />
                 </div>
                 <div>
                   <Label className="text-zinc-300">Confirmar Senha</Label>
-                  <Input type="password" value={confirmSenha} onChange={(e) => setConfirmSenha(e.target.value)} className="bg-zinc-800 border-zinc-700 text-white mt-1" required minLength={8} />
+                  <Input type="password" value={confirmSenha} onChange={(e) => setConfirmSenha(e.target.value)} className="bg-zinc-800 border-input text-white mt-1" required minLength={8} />
                 </div>
               </div>
 

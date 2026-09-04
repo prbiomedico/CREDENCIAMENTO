@@ -49,9 +49,9 @@ const Landing = () => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div className="min-h-screen bg-background text-white">
       {/* Navbar */}
-      <nav className="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-xl border-b border-zinc-800">
+      <nav className="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-xl border-b border-border">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Shield className="h-8 w-8 text-primary-500" />
@@ -122,7 +122,7 @@ const Landing = () => {
                   onClick={() => document.getElementById('features').scrollIntoView({ behavior: 'smooth' })}
                   size="lg"
                   variant="outline"
-                  className="bg-zinc-800 hover:bg-zinc-700 text-white border-zinc-700 h-12 px-8"
+                  className="bg-zinc-800 hover:bg-zinc-700 text-white border-input h-12 px-8"
                 >
                   Saiba Mais
                 </Button>
@@ -166,7 +166,7 @@ const Landing = () => {
 
       {/* CTA Section */}
       <section className="py-24 px-6">
-        <div className="max-w-4xl mx-auto text-center bg-zinc-900 border border-zinc-800 rounded-2xl p-12 relative overflow-hidden">
+        <div className="max-w-4xl mx-auto text-center bg-card border border-border rounded-2xl p-12 relative overflow-hidden">
           <div className="absolute inset-0 hero-glow opacity-50"></div>
           <div className="relative z-10">
             <h2 className="text-4xl md:text-5xl font-heading font-bold tracking-tight mb-6">
@@ -188,7 +188,7 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-zinc-800 py-8 px-6">
+      <footer className="border-t border-border py-8 px-6">
         <div className="max-w-7xl mx-auto text-center text-zinc-500 text-sm">
           <p>© 2026 SIGCR - Sistema Integrado de Gestão de Credenciamento de Registradoras</p>
         </div>

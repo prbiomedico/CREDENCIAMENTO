@@ -31,26 +31,26 @@ export default function MapaNacionalPage() {
 
   return (
     <DashboardLayout>
-    <div style={{ padding:"24px 32px", height:"100%", background:"#0A0D12", fontFamily:"system-ui, sans-serif", color:"#E8EAF0" }}>
+    <div style={{ padding:"24px 32px", height:"100%", background:"hsl(var(--background))", fontFamily:"system-ui, sans-serif", color:"hsl(var(--foreground))" }}>
       {/* Header */}
       <div style={{ marginBottom:"24px" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
           <div>
-            <h1 style={{ fontSize:"24px", fontWeight:800, color:"#F1F3F8", margin:0, marginBottom:"6px" }}>
+            <h1 style={{ fontSize:"24px", fontWeight:800, color:"hsl(var(--muted))", margin:0, marginBottom:"6px" }}>
                Mapa Nacional
             </h1>
-            <p style={{ fontSize:"13px", color:"#6B7280", margin:0 }}>
+            <p style={{ fontSize:"13px", color:"hsl(var(--muted-foreground))", margin:0 }}>
               Cobertura SIGCR  Registradoras credenciadas por DETRAN
             </p>
           </div>
           <div style={{ display:"flex", gap:"12px" }}>
             <div style={{ background:"rgba(0,230,118,0.1)", border:"1px solid rgba(0,230,118,0.3)", borderRadius:"8px", padding:"8px 14px", textAlign:"center" }}>
-              <div style={{ fontSize:"20px", fontWeight:800, color:"#00e676" }}>{totalCredenciadas}</div>
-              <div style={{ fontSize:"10px", color:"#6B7280", textTransform:"uppercase", letterSpacing:"0.08em" }}>Credenciados</div>
+              <div style={{ fontSize:"20px", fontWeight:800, color:"hsl(var(--sigcr-success))" }}>{totalCredenciadas}</div>
+              <div style={{ fontSize:"10px", color:"hsl(var(--muted-foreground))", textTransform:"uppercase", letterSpacing:"0.08em" }}>Credenciados</div>
             </div>
             <div style={{ background:"rgba(255,193,7,0.1)", border:"1px solid rgba(255,193,7,0.3)", borderRadius:"8px", padding:"8px 14px", textAlign:"center" }}>
-              <div style={{ fontSize:"20px", fontWeight:800, color:"#ffc107" }}>{totalEmAndamento}</div>
-              <div style={{ fontSize:"10px", color:"#6B7280", textTransform:"uppercase", letterSpacing:"0.08em" }}>Em andamento</div>
+              <div style={{ fontSize:"20px", fontWeight:800, color:"hsl(var(--sigcr-warning))" }}>{totalEmAndamento}</div>
+              <div style={{ fontSize:"10px", color:"hsl(var(--muted-foreground))", textTransform:"uppercase", letterSpacing:"0.08em" }}>Em andamento</div>
             </div>
           </div>
         </div>
@@ -68,41 +68,41 @@ export default function MapaNacionalPage() {
           {/* Info selecionado */}
           {selected ? (
             <div style={{ background:"rgba(33,150,243,0.08)", border:"1.5px solid rgba(33,150,243,0.3)", borderRadius:"14px", padding:"20px" }}>
-              <div style={{ fontWeight:800, fontSize:"16px", color:"#F1F3F8", marginBottom:"4px" }}>DETRAN-{selected.sigla}</div>
-              <div style={{ fontSize:"12px", color:"#6B7280", marginBottom:"16px" }}>Estado: {selected.nome}</div>
+              <div style={{ fontWeight:800, fontSize:"16px", color:"hsl(var(--muted))", marginBottom:"4px" }}>DETRAN-{selected.sigla}</div>
+              <div style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))", marginBottom:"16px" }}>Estado: {selected.nome}</div>
               <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"10px" }}>
-                <span style={{ fontSize:"12px", color:"#9CA3AF" }}>Registradoras credenciadas</span>
-                <span style={{ fontSize:"14px", fontWeight:700, color:selected.cfg?.hex || "#00e676" }}>{selected.aprovadas}</span>
+                <span style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))" }}>Registradoras credenciadas</span>
+                <span style={{ fontSize:"14px", fontWeight:700, color:selected.cfg?.hex || "hsl(var(--sigcr-success))" }}>{selected.aprovadas}</span>
               </div>
               <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"10px" }}>
-                <span style={{ fontSize:"12px", color:"#9CA3AF" }}>Editais ativos</span>
-                <span style={{ fontSize:"14px", fontWeight:700, color:"#F1F3F8" }}>{selected.editais_ativos}</span>
+                <span style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))" }}>Editais ativos</span>
+                <span style={{ fontSize:"14px", fontWeight:700, color:"hsl(var(--muted))" }}>{selected.editais_ativos}</span>
               </div>
               <div style={{ display:"flex", justifyContent:"space-between" }}>
-                <span style={{ fontSize:"12px", color:"#9CA3AF" }}>Status</span>
-                <span style={{ fontSize:"11px", fontWeight:700, padding:"2px 8px", borderRadius:"20px", background:`${selected.cfg?.hex || "#6b7280"}26`, color:selected.cfg?.hex || "#6b7280", textTransform:"uppercase" }}>
+                <span style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))" }}>Status</span>
+                <span style={{ fontSize:"11px", fontWeight:700, padding:"2px 8px", borderRadius:"20px", background:`${selected.cfg?.hex || "hsl(var(--muted-foreground))"}26`, color:selected.cfg?.hex || "hsl(var(--muted-foreground))", textTransform:"uppercase" }}>
                   {STATUS_LABELS[selected.status_mapa] || selected.status_mapa}
                 </span>
               </div>
             </div>
           ) : (
-            <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:"14px", padding:"20px", textAlign:"center", color:"#6B7280", fontSize:"13px" }}>
+            <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:"14px", padding:"20px", textAlign:"center", color:"hsl(var(--muted-foreground))", fontSize:"13px" }}>
               Clique em um marcador<br/>para ver detalhes
             </div>
           )}
 
           {/* Legenda */}
           <div style={{ background:"rgba(255,255,255,0.02)", border:"1px solid rgba(255,255,255,0.06)", borderRadius:"14px", padding:"16px" }}>
-            <div style={{ fontSize:"11px", fontWeight:700, color:"#6B7280", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:"12px" }}>Legenda</div>
+            <div style={{ fontSize:"11px", fontWeight:700, color:"hsl(var(--muted-foreground))", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:"12px" }}>Legenda</div>
             {[
-              { color:"#00e676", label:"Credenciada" },
-              { color:"#3b82f6", label:"Edital aberto" },
-              { color:"#ffc107", label:"Em processo" },
-              { color:"#6b7280", label:"Sem atividade" },
+              { color:"hsl(var(--sigcr-success))", label:"Credenciada" },
+              { color:"hsl(var(--sigcr-accent))", label:"Edital aberto" },
+              { color:"hsl(var(--sigcr-warning))", label:"Em processo" },
+              { color:"hsl(var(--muted-foreground))", label:"Sem atividade" },
             ].map((l,i) => (
               <div key={i} style={{ display:"flex", alignItems:"center", gap:"8px", marginBottom:"8px" }}>
                 <div style={{ width:"10px", height:"10px", borderRadius:"50%", background:l.color, boxShadow:`0 0 8px ${l.color}` }} />
-                <span style={{ fontSize:"12px", color:"#9CA3AF" }}>{l.label}</span>
+                <span style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))" }}>{l.label}</span>
               </div>
             ))}
           </div>

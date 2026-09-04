@@ -19,15 +19,15 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.
 const API = `${BACKEND_URL}/api`;
 
 const STATUS_SUBMISSAO_CFG = {
-  rascunho: { label: 'Rascunho', className: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
+  rascunho: { label: 'Rascunho', className: 'bg-zinc-800 text-zinc-400 border-input' },
   submetido: { label: 'Submetido', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
   em_diligencia: { label: 'Em Diligência', icon: AlertTriangle, className: 'bg-primary-500/10 text-primary-400 border-primary-500/20' },
   homologado: { label: 'Homologado', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
 };
 
 const STATUS_ITEM_CFG = {
-  pendente: { label: 'Pendente', icon: Clock, className: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
+  pendente: { label: 'Pendente', icon: Clock, className: 'bg-zinc-800 text-zinc-400 border-input' },
   enviado: { label: 'Enviado', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   conforme: { label: 'Conforme', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
   inconforme: { label: 'Inconforme', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
@@ -245,13 +245,13 @@ const MinhasSubmissoes = () => {
             <span>Carregando...</span>
           </div>
         ) : !company ? (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-12 text-center text-zinc-400">
               Nenhuma empresa cadastrada — cadastre sua empresa primeiro.
             </CardContent>
           </Card>
         ) : portarias.length === 0 ? (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <ListChecks className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
               <p className="text-zinc-400">Nenhuma portaria com checklist publicado pra sua UF de atuação ainda.</p>
@@ -272,7 +272,7 @@ const MinhasSubmissoes = () => {
                 return (
                   <Card
                     key={`${portaria.portaria_id}__${cat}`}
-                    className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors cursor-pointer"
+                    className="bg-card border-border hover:border-primary-500/30 transition-colors cursor-pointer"
                     onClick={() => { setPortariaAtiva(portaria.portaria_id); setCategoriaAtiva(cat); }}
                   >
                     <CardContent className="p-5 flex items-center justify-between gap-4">
@@ -289,7 +289,7 @@ const MinhasSubmissoes = () => {
                             {cfg.icon && <cfg.icon className="h-3 w-3 mr-1" />}{cfg.label}
                           </Badge>
                         ) : (
-                          <Badge className="bg-zinc-800 text-zinc-500 border-zinc-700 text-[10px]">Não iniciado</Badge>
+                          <Badge className="bg-zinc-800 text-zinc-500 border-input text-[10px]">Não iniciado</Badge>
                         )}
                         <ChevronRight className="h-4 w-4 text-zinc-600" />
                       </div>
@@ -313,7 +313,7 @@ const MinhasSubmissoes = () => {
             </div>
 
             {!submissaoSelecionada ? (
-              <Card className="bg-zinc-900/50 border-zinc-800">
+              <Card className="bg-card border-border">
                 <CardContent className="p-8 text-center">
                   <p className="text-zinc-400 mb-4">Você ainda não iniciou o envio pra esta portaria.</p>
                   <Button
@@ -327,7 +327,7 @@ const MinhasSubmissoes = () => {
               </Card>
             ) : (
               <>
-                <Card className="bg-zinc-900/50 border-zinc-800">
+                <Card className="bg-card border-border">
                   <CardContent className="p-4 flex items-center justify-between">
                     <div>
                       <p className="text-xs text-zinc-500 uppercase font-mono">Status do processo</p>
@@ -361,7 +361,7 @@ const MinhasSubmissoes = () => {
                     const podeEnviar = item.status === 'pendente' ||
                       (item.status === 'inconforme' && submissaoSelecionada.status === 'em_diligencia');
                     return (
-                      <Card key={item.item_id} className="bg-zinc-900/50 border-zinc-800">
+                      <Card key={item.item_id} className="bg-card border-border">
                         <CardContent className="p-4">
                           <div className="flex items-center justify-between gap-4">
                             <div className="min-w-0">
@@ -397,7 +397,7 @@ const MinhasSubmissoes = () => {
       </div>
 
       <Dialog open={!!itemUpload} onOpenChange={(open) => !open && setItemUpload(null)}>
-        <DialogContent className="bg-zinc-900 border-zinc-700 text-white">
+        <DialogContent className="bg-card border-input text-white">
           <DialogHeader>
             <DialogTitle>Enviar documento</DialogTitle>
           </DialogHeader>
@@ -408,23 +408,23 @@ const MinhasSubmissoes = () => {
                 <div>
                   <Label className="text-zinc-300">Número do documento</Label>
                   <Input value={numeroDocumento} onChange={(e) => setNumeroDocumento(e.target.value)}
-                    className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    className="bg-zinc-800 border-input text-white mt-1" required />
                 </div>
                 <div>
                   <Label className="text-zinc-300">Data de emissão</Label>
                   <Input type="date" value={dataEmissao} onChange={(e) => setDataEmissao(e.target.value)}
-                    className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    className="bg-zinc-800 border-input text-white mt-1" required />
                 </div>
               </div>
               <div>
                 <Label className="text-zinc-300">Data de validade (opcional)</Label>
                 <Input type="date" value={dataValidade} onChange={(e) => setDataValidade(e.target.value)}
-                  className="bg-zinc-800 border-zinc-700 text-white mt-1" />
+                  className="bg-zinc-800 border-input text-white mt-1" />
               </div>
               <div>
                 <Label className="text-zinc-300">Arquivo</Label>
                 <Input type="file" onChange={(e) => setArquivo(e.target.files?.[0] || null)}
-                  className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                  className="bg-zinc-800 border-input text-white mt-1" required />
               </div>
               <Button type="submit" disabled={enviando} className="w-full bg-primary-500 hover:bg-primary-600 text-white">
                 {enviando ? 'Enviando...' : 'Enviar Documento'}

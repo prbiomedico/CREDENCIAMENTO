@@ -46,14 +46,14 @@ const DashboardFinanceira = () => {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : (
           <>
-            <Card className="bg-zinc-900/50 border-zinc-800 mb-8">
+            <Card className="bg-card border-border mb-8">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-heading flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-orange-500" />
+                  <Shield className="h-4 w-4 text-primary-500" />
                   Status do Credenciamento
                 </CardTitle>
               </CardHeader>
@@ -64,8 +64,8 @@ const DashboardFinanceira = () => {
                       <p className="text-2xl font-bold font-mono text-emerald-400">{resumo.aprovados}</p>
                       <p className="text-xs text-zinc-500 mt-1">Aprovados</p>
                     </div>
-                    <div className="p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 text-center">
-                      <p className="text-2xl font-bold font-mono text-blue-400">{resumo.enviados}</p>
+                    <div className="p-4 rounded-xl bg-sky-500/10 border border-sky-500/20 text-center">
+                      <p className="text-2xl font-bold font-mono text-sky-400">{resumo.enviados}</p>
                       <p className="text-xs text-zinc-500 mt-1">Enviados</p>
                     </div>
                     <div className="p-4 rounded-xl bg-zinc-500/10 border border-zinc-500/20 text-center">
@@ -85,13 +85,13 @@ const DashboardFinanceira = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-zinc-900/50 border-zinc-800">
+            <Card className="bg-card border-border">
               <CardContent className="p-6 flex items-center justify-between">
                 <div>
                   <p className="font-semibold text-white mb-1">Documentos</p>
                   <p className="text-sm text-zinc-500">Envie e acompanhe os documentos exigidos pra credenciamento.</p>
                 </div>
-                <Button onClick={() => navigate('/documentos')} className="bg-orange-500 hover:bg-orange-600 text-white gap-2 shrink-0">
+                <Button onClick={() => navigate('/documentos')} className="bg-primary-500 hover:bg-primary-600 text-white gap-2 shrink-0">
                   Ir para Documentos <ArrowRight className="h-4 w-4" />
                 </Button>
               </CardContent>
@@ -226,7 +226,7 @@ const Dashboard = () => {
                   key={label}
                   interactive={!!to}
                   onClick={to ? () => navigate(to) : undefined}
-                  className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-colors"
+                  className="bg-card border-border hover:border-input transition-colors"
                 >
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between mb-3">
@@ -241,7 +241,7 @@ const Dashboard = () => {
               ))}
 
               {/* Semáforo de Compliance */}
-              <BentoCard size="2x1" interactive={false} className="bg-zinc-900/50 border-zinc-800">
+              <BentoCard size="2x1" interactive={false} className="bg-card border-border">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-heading flex items-center gap-2">
                     <Shield className="h-4 w-4 text-primary-500" />
@@ -267,7 +267,7 @@ const Dashboard = () => {
 
               {/* Documentos vencendo (30 dias) + vencidos */}
               {(vencimentoResumo.vencendo.length > 0 || vencimentoResumo.vencidos.length > 0) && (
-                <BentoCard size="2x1" interactive={false} className="bg-zinc-900/50 border-zinc-800">
+                <BentoCard size="2x1" interactive={false} className="bg-card border-border">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base font-heading flex items-center gap-2">
                       <CalendarClock className="h-4 w-4 text-amber-400" />
@@ -319,7 +319,7 @@ const Dashboard = () => {
             </BentoGrid>
 
             {/* Info do perfil */}
-            <Card className="bg-zinc-900/50 border-zinc-800">
+            <Card className="bg-card border-border">
               <CardContent className="p-5">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-primary-500/20 flex items-center justify-center text-lg font-bold text-primary-400">

@@ -60,13 +60,9 @@ module.exports = {
           800: '#ff8f00', 900: '#ff6f00', 950: '#e65100',
         },
         zinc: {
-          // 50-100: cinza claro (Berry grey scale) · 200-300: texto título/
-          // primário · 400-500: texto secundário/cinza médio · 600: cinza
-          // escuro Berry · 700-800: níveis de superfície · 900: background
-          // · 950: paper (canvas mais escuro)
-          50: '#f8fafc', 100: '#eef2f6', 200: '#d7dcec', 300: '#bdc8f0',
-          400: '#9aa4b2', 500: '#8492c4', 600: '#4b5565', 700: '#29314f',
-          800: '#212946', 900: '#1a223f', 950: '#111936',
+          50: '#fafafa', 100: '#f4f4f5', 200: '#e4e4e7', 300: '#d4d4d8',
+          400: '#a1a1aa', 500: '#71717a', 600: '#52525b', 700: '#3f3f46',
+          800: '#27272a', 900: '#18181b', 950: '#09090b',
         },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -74,12 +70,9 @@ module.exports = {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         primary: {
-          // Escala 50-950 idêntica ao antigo "orange" — bg-primary-500 ==
-          // bg-orange-500 de antes, byte a byte. DEFAULT/foreground
-          // continuam nas variáveis HSL (já batem com o 500 desta escala).
-          50: '#e3f2fd', 100: '#bbdefb', 200: '#90caf9', 300: '#64b5f6',
-          400: '#42a5f5', 500: '#2196f3', 600: '#1e88e5', 700: '#1976d2',
-          800: '#1565c0', 900: '#0d47a1', 950: '#082a5e',
+          50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1',
+          400: '#94a3b8', 500: '#475569', 600: '#334155', 700: '#273449',
+          800: '#1f2937', 900: '#172033', 950: '#0f172a',
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
         },

@@ -29,10 +29,10 @@ const PortariaPublica = () => {
   }, [token]);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
-      <nav className="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-xl border-b border-zinc-800">
+    <div className="min-h-screen bg-background text-white">
+      <nav className="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-xl border-b border-border">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-          <Shield className="h-7 w-7 text-orange-500" />
+          <Shield className="h-7 w-7 text-sky-500" />
           <span className="text-xl font-bold tracking-tight">SIGCR</span>
         </div>
       </nav>
@@ -40,10 +40,10 @@ const PortariaPublica = () => {
       <div className="max-w-3xl mx-auto px-6 pt-28 pb-16">
         {loading ? (
           <div className="flex items-center justify-center py-24">
-            <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : erro || !portaria ? (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="flex flex-col items-center justify-center py-16 text-center">
               <FileText className="h-12 w-12 text-zinc-700 mb-4" />
               <p className="text-zinc-400 font-medium">Este link não é válido ou o evento não está mais disponível.</p>
@@ -54,10 +54,10 @@ const PortariaPublica = () => {
             <div>
               <div className="flex gap-2 mb-3">
                 {portaria.estado_sigla && (
-                  <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-mono text-xs">DETRAN-{portaria.estado_sigla}</Badge>
+                  <Badge className="bg-sky-500/10 text-sky-400 border-sky-500/20 font-mono text-xs">DETRAN-{portaria.estado_sigla}</Badge>
                 )}
                 {portaria.tipo && (
-                  <Badge className="bg-orange-500/10 text-orange-400 border-orange-500/20 font-mono text-xs">{portaria.tipo}</Badge>
+                  <Badge className="bg-sky-500/10 text-sky-400 border-sky-500/20 font-mono text-xs">{portaria.tipo}</Badge>
                 )}
               </div>
               <h1 className="text-2xl font-bold mb-2">{portaria.title}</h1>
@@ -71,7 +71,7 @@ const PortariaPublica = () => {
             </div>
 
             {Array.isArray(portaria.checklist_itens) && portaria.checklist_itens.length > 0 && (
-              <Card className="bg-zinc-900/50 border-zinc-800">
+              <Card className="bg-card border-border">
                 <CardContent className="p-5">
                   <div className="flex items-center gap-2 mb-3 text-sm font-mono uppercase text-zinc-500">
                     <ListChecks className="h-4 w-4" />
@@ -89,11 +89,11 @@ const PortariaPublica = () => {
             )}
 
             {(portaria.data_abertura || portaria.data_encerramento) && (
-              <Card className="bg-zinc-900/50 border-zinc-800">
+              <Card className="bg-card border-border">
                 <CardContent className="p-5">
                   <p className="text-sm font-mono uppercase text-zinc-500 mb-2">Prazo</p>
                   <div className="flex items-center gap-2 text-sm text-zinc-300">
-                    <Calendar className="h-4 w-4 text-orange-500 shrink-0" />
+                    <Calendar className="h-4 w-4 text-sky-500 shrink-0" />
                     <span>
                       {portaria.data_abertura ? new Date(portaria.data_abertura).toLocaleDateString('pt-BR') : '—'}
                       {' até '}
@@ -104,11 +104,11 @@ const PortariaPublica = () => {
               </Card>
             )}
 
-            <Card className="bg-orange-500/5 border-orange-500/20">
+            <Card className="bg-sky-500/5 border-sky-500/20">
               <CardContent className="p-5 space-y-3">
                 <p className="text-sm text-zinc-300">Pra participar, sua empresa precisa estar cadastrada no SIGCR.</p>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Button onClick={() => navigate('/credenciamento-portaria')} className="bg-orange-500 hover:bg-orange-600 text-white gap-2 flex-1">
+                  <Button onClick={() => navigate('/credenciamento-portaria')} className="bg-primary hover:bg-primary/90 text-white gap-2 flex-1">
                     Já tenho cadastro — enviar documentação <ArrowRight className="h-4 w-4" />
                   </Button>
                   <Button onClick={() => navigate('/cadastro')} variant="outline" className="gap-2 flex-1">

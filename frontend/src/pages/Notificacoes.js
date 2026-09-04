@@ -102,7 +102,7 @@ const Notificacoes = () => {
             <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : notifs.length === 0 ? (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <Bell className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
               <p className="text-zinc-400">Nenhuma notificação ainda</p>
@@ -115,7 +115,7 @@ const Notificacoes = () => {
               const Icon = cfg.icon;
               return (
                 <div key={notif.notificacao_id} onClick={() => abrirNotificacao(notif)}
-                  className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer ${notif.lida ? 'bg-zinc-900/30 border-zinc-800/50 opacity-60' : 'bg-zinc-900/70 border-zinc-700 hover:border-zinc-600'}`}>
+                  className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer ${notif.lida ? 'bg-muted/40 border-border opacity-60' : 'bg-card border-input hover:border-zinc-600'}`}>
                   <div className={`w-9 h-9 rounded-lg bg-${cfg.color}-500/10 border border-${cfg.color}-500/20 flex items-center justify-center shrink-0`}>
                     <Icon className={`h-4 w-4 text-${cfg.color}-400`} />
                   </div>

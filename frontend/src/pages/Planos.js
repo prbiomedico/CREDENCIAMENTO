@@ -11,7 +11,7 @@ const PLANOS = [
     periodo: "ms",
     descricao: "Ideal para iniciar o credenciamento",
     destaque: false,
-    cor: "#6B7280",
+    cor: "hsl(var(--muted-foreground))",
     icone: <Zap size={22} />,
     recursos: [
       "1 DETRAN credenciado",
@@ -28,7 +28,7 @@ const PLANOS = [
     periodo: "ms",
     descricao: "Para registradoras em expanso",
     destaque: true,
-    cor: "#2196f3",
+    cor: "hsl(var(--sigcr-accent))",
     icone: <Star size={22} />,
     recursos: [
       "At 5 DETRANs",
@@ -46,7 +46,7 @@ const PLANOS = [
     periodo: "ms",
     descricao: "Operao nacional completa",
     destaque: false,
-    cor: "#8B5CF6",
+    cor: "hsl(var(--foreground))",
     icone: <Shield size={22} />,
     recursos: [
       "DETRANs ilimitados",
@@ -67,7 +67,7 @@ export default function Planos() {
   const desconto = periodo === "anual" ? 0.85 : 1;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#080B10", fontFamily: "system-ui, sans-serif", color: "#E8EAF0", padding: "40px 24px" }}>
+    <div style={{ minHeight: "100vh", background: "hsl(var(--background))", fontFamily: "system-ui, sans-serif", color: "hsl(var(--foreground))", padding: "40px 24px" }}>
       {/* Barra de navegao  Home */}
       <div style={{ position:"fixed", top:0, left:0, right:0, height:"48px", background:"rgba(8,11,16,0.95)", borderBottom:"1px solid rgba(255,255,255,0.06)", display:"flex", alignItems:"center", padding:"0 20px", gap:"16px", zIndex:100, backdropFilter:"blur(10px)" }}>
         <a href="/dashboard" style={{ display:"flex", alignItems:"center", gap:"8px", textDecoration:"none", color:"rgba(255,255,255,0.7)", fontSize:"13px", fontWeight:600 }}>
@@ -81,14 +81,14 @@ export default function Planos() {
       {/* Header */}
       <div style={{ textAlign: "center", maxWidth: "680px", margin: "0 auto 48px" }}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(33,150,243,0.1)", border: "1px solid rgba(33,150,243,0.3)", borderRadius: "20px", padding: "6px 16px", marginBottom: "20px" }}>
-          <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#2196f3", animation: "pulse 2s infinite" }} />
-          <span style={{ fontSize: "12px", fontWeight: 700, color: "#2196f3", textTransform: "uppercase", letterSpacing: "0.1em" }}>Escolha seu plano</span>
+          <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "hsl(var(--sigcr-accent))", animation: "pulse 2s infinite" }} />
+          <span style={{ fontSize: "12px", fontWeight: 700, color: "hsl(var(--sigcr-accent))", textTransform: "uppercase", letterSpacing: "0.1em" }}>Escolha seu plano</span>
         </div>
         <h1 style={{ fontSize: "38px", fontWeight: 800, color: "#fff", margin: "0 0 12px", lineHeight: 1.15 }}>
           Comece a credenciar<br />
-          <span style={{ color: "#2196f3" }}>em minutos</span>
+          <span style={{ color: "hsl(var(--sigcr-accent))" }}>em minutos</span>
         </h1>
-        <p style={{ fontSize: "15px", color: "#6B7280", margin: "0 0 28px" }}>
+        <p style={{ fontSize: "15px", color: "hsl(var(--muted-foreground))", margin: "0 0 28px" }}>
           Pague com Pix ou Boleto. Sem carto de crdito obrigatrio.
         </p>
         {/* Toggle mensal/anual */}
@@ -96,8 +96,8 @@ export default function Planos() {
           {["mensal", "anual"].map(p => (
             <button key={p} onClick={() => setPeriodo(p)}
               style={{ padding: "8px 22px", borderRadius: "7px", border: "none", cursor: "pointer", fontSize: "13px", fontWeight: 600, transition: "all 0.2s",
-                background: periodo === p ? "#2196f3" : "transparent",
-                color: periodo === p ? "#fff" : "#6B7280",
+                background: periodo === p ? "hsl(var(--sigcr-accent))" : "transparent",
+                color: periodo === p ? "#fff" : "hsl(var(--muted-foreground))",
               }}>
               {p === "mensal" ? "Mensal" : "Anual 15%"}
             </button>
@@ -117,7 +117,7 @@ export default function Planos() {
             boxShadow: plano.destaque ? "0 0 40px rgba(33,150,243,0.12)" : "none",
           }}>
             {plano.destaque && (
-              <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,#2196f3,#1e88e5)", color: "#fff", fontSize: "11px", fontWeight: 800, padding: "4px 16px", borderRadius: "20px", letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+              <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,hsl(var(--sigcr-accent)),hsl(var(--sigcr-accent)))", color: "#fff", fontSize: "11px", fontWeight: 800, padding: "4px 16px", borderRadius: "20px", letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
                  Mais popular
               </div>
             )}
@@ -129,21 +129,21 @@ export default function Planos() {
               </div>
               <div>
                 <div style={{ fontWeight: 800, fontSize: "16px", color: "#fff" }}>{plano.nome}</div>
-                <div style={{ fontSize: "12px", color: "#6B7280" }}>{plano.descricao}</div>
+                <div style={{ fontSize: "12px", color: "hsl(var(--muted-foreground))" }}>{plano.descricao}</div>
               </div>
             </div>
 
             {/* Preo */}
             <div style={{ marginBottom: "24px" }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
-                <span style={{ fontSize: "13px", color: "#6B7280" }}>R$</span>
-                <span style={{ fontSize: "40px", fontWeight: 900, color: plano.destaque ? "#2196f3" : "#fff", lineHeight: 1 }}>
+                <span style={{ fontSize: "13px", color: "hsl(var(--muted-foreground))" }}>R$</span>
+                <span style={{ fontSize: "40px", fontWeight: 900, color: plano.destaque ? "hsl(var(--sigcr-accent))" : "#fff", lineHeight: 1 }}>
                   {Math.round(plano.preco * desconto).toLocaleString("pt-BR")}
                 </span>
-                <span style={{ fontSize: "13px", color: "#6B7280" }}>/{plano.periodo}</span>
+                <span style={{ fontSize: "13px", color: "hsl(var(--muted-foreground))" }}>/{plano.periodo}</span>
               </div>
               {periodo === "anual" && (
-                <div style={{ fontSize: "12px", color: "#22c55e", marginTop: "4px" }}>
+                <div style={{ fontSize: "12px", color: "hsl(var(--sigcr-success))", marginTop: "4px" }}>
                   Economize R$ {Math.round(plano.preco * 0.15 * 12).toLocaleString("pt-BR")}/ano
                 </div>
               )}
@@ -156,7 +156,7 @@ export default function Planos() {
                   <div style={{ width: "18px", height: "18px", borderRadius: "50%", background: `${plano.cor}20`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                     <Check size={11} color={plano.cor} strokeWidth={3} />
                   </div>
-                  <span style={{ fontSize: "13px", color: "#9CA3AF" }}>{r}</span>
+                  <span style={{ fontSize: "13px", color: "hsl(var(--muted-foreground))" }}>{r}</span>
                 </div>
               ))}
             </div>
@@ -167,7 +167,7 @@ export default function Planos() {
               style={{
                 width: "100%", padding: "13px",
                 borderRadius: "11px", border: "none", cursor: "pointer",
-                background: plano.destaque ? "linear-gradient(135deg,#2196f3,#1e88e5)" : "rgba(255,255,255,0.06)",
+                background: plano.destaque ? "linear-gradient(135deg,hsl(var(--sigcr-accent)),hsl(var(--sigcr-accent)))" : "rgba(255,255,255,0.06)",
                 color: "#fff", fontSize: "14px", fontWeight: 700,
                 transition: "all 0.2s",
                 boxShadow: plano.destaque ? "0 4px 20px rgba(33,150,243,0.3)" : "none",
@@ -179,7 +179,7 @@ export default function Planos() {
       </div>
 
       {/* Rodap */}
-      <div style={{ textAlign: "center", marginTop: "40px", fontSize: "13px", color: "#4B5563" }}>
+      <div style={{ textAlign: "center", marginTop: "40px", fontSize: "13px", color: "hsl(var(--muted-foreground))" }}>
          Pagamento seguro via Pagar.me  Pix liberado em instantes  Cancele quando quiser
       </div>
 

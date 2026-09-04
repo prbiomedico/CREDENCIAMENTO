@@ -5,19 +5,27 @@
  * deliberadamente isolados: nenhuma tela produtiva os consome nesta missão.
  */
 export const statusToneClasses = Object.freeze({
-  success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
-  warning: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
-  error: 'border-red-500/30 bg-red-500/10 text-red-300',
-  info: 'border-primary-500/30 bg-primary-500/10 text-primary-300',
-  pending: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
-  neutral: 'border-zinc-600 bg-zinc-800 text-zinc-300',
-  revoked: 'border-red-500/30 bg-red-500/10 text-red-300',
-  approved: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
-  analysis: 'border-primary-500/30 bg-primary-500/10 text-primary-300',
-  diligence: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
+  success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+  warning: 'border-amber-200 bg-amber-50 text-amber-900',
+  error: 'border-red-200 bg-red-50 text-red-800',
+  info: 'border-sky-200 bg-sky-50 text-sky-800',
+  pending: 'border-amber-200 bg-amber-50 text-amber-900',
+  neutral: 'border-slate-200 bg-slate-50 text-slate-700',
+  revoked: 'border-red-200 bg-red-50 text-red-800',
+  approved: 'border-emerald-200 bg-emerald-50 text-emerald-800',
+  analysis: 'border-sky-200 bg-sky-50 text-sky-800',
+  diligence: 'border-amber-200 bg-amber-50 text-amber-900',
 });
 export const layoutTokens = Object.freeze({
   pageMaxWidth: 'max-w-screen-2xl',
   pagePadding: 'px-4 py-6 sm:px-6 lg:px-8',
-  sectionGap: 'space-y-6',
+  sectionGap: 'space-y-5',
+});
+
+export const semanticTokens = Object.freeze({
+  canvas: 'bg-background text-foreground',
+  surface: 'border border-border bg-card text-card-foreground',
+  surfaceMuted: 'border border-border bg-muted/45',
+  primaryAction: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  contextualAccent: 'text-accent',
 });

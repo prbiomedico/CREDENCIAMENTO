@@ -24,9 +24,9 @@ const PERFIS = {
   },
   detran: {
     label: 'DETRAN',
-    color: 'text-blue-400',
-    dot: 'bg-blue-400',
-    badge: 'bg-blue-500/10 border-blue-500/30 text-blue-400',
+    color: 'text-sky-300',
+    dot: 'bg-sky-400',
+    badge: 'bg-sky-400/10 border-sky-400/25 text-sky-200',
     icon: Landmark,
   },
   financeira: {
@@ -55,13 +55,13 @@ const NavItemLink = ({ item, location, onNavigate }) => {
     <Link
       to={item.path}
       onClick={onNavigate}
-      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium transition-all duration-150 relative group ${
+      className={`flex items-center gap-3 px-3 py-2 rounded-md font-medium transition-colors duration-150 relative group ${
         isActive
-          ? 'bg-primary-500/15 text-primary-400 border border-primary-500/25 shadow-[0_0_16px_-6px_hsl(var(--primary)/0.5)]'
-          : 'text-zinc-400 hover:bg-zinc-800/70 hover:text-white'
+          ? 'bg-white/10 text-white border border-white/10'
+          : 'text-slate-400 border border-transparent hover:bg-white/5 hover:text-white'
       }`}
     >
-      {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary-500 rounded-r-full" />}
+      {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-sky-400 rounded-r-full" />}
       <item.icon className="h-4 w-4 shrink-0" />
       <span className="text-sm">{item.label}</span>
       {item.badge > 0 && (
@@ -174,14 +174,14 @@ const DashboardLayout = ({ children }) => {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-4 border-b border-zinc-800/50 glow-brand">
+      <div className="p-4 border-b border-white/10">
         <Link to="/dashboard" className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center justify-center">
-            <Shield className="h-5 w-5 text-primary-500" />
+          <div className="w-9 h-9 bg-white/5 border border-white/10 rounded-md flex items-center justify-center">
+            <Shield className="h-5 w-5 text-sky-400" />
           </div>
           <div>
             <span className="text-base font-heading font-bold block leading-none">sigcr</span>
-            <span className="text-xs text-primary-500 font-mono font-bold">SIGCR</span>
+            <span className="text-xs text-slate-400 font-mono font-semibold">SIGCR</span>
           </div>
         </Link>
       </div>
@@ -190,7 +190,7 @@ const DashboardLayout = ({ children }) => {
       <div className="px-3 pt-3 pb-2" ref={seletorRef}>
         <button
           onMouseDown={(e) => { e.stopPropagation(); }} onClick={() => perfisPermitidos.length > 1 && setSeletorOpen(o => !o)}
-          className={`w-full flex items-center gap-2 px-3 py-2 rounded-full border text-xs font-mono font-semibold uppercase tracking-wider transition-all ${cfg.badge} ${perfisPermitidos.length > 1 ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+          className={`w-full flex items-center gap-2 px-3 py-2 rounded-md border text-xs font-mono font-semibold uppercase tracking-wide transition-colors ${cfg.badge} ${perfisPermitidos.length > 1 ? 'cursor-pointer hover:bg-white/10' : 'cursor-default'}`}
         >
           <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot} animate-pulse`} />
           <PerfilIcon className="h-3.5 w-3.5 shrink-0" />
@@ -202,7 +202,7 @@ const DashboardLayout = ({ children }) => {
 
         {/* Dropdown de troca de perfil */}
         {seletorOpen && perfisPermitidos.length > 1 && (
-          <div className="mt-1 bg-zinc-900 rounded-lg overflow-hidden z-50 elevate-3">
+          <div className="mt-1 bg-slate-900 rounded-md overflow-hidden z-50 elevate-3">
             <p className="text-[10px] text-zinc-500 font-mono uppercase px-3 pt-2 pb-1">Trocar visão</p>
             {perfisPermitidos.map(p => {
               const pc = PERFIS[p];
@@ -234,7 +234,7 @@ const DashboardLayout = ({ children }) => {
                 value={viewingAs?.tipo === 'detran' ? viewingAs.id : ''}
                 onChange={handleSimularDetran}
                 data-testid="view-as-detran-select"
-                className="w-full text-[11px] font-mono bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-zinc-300"
+                className="w-full text-[11px] font-mono bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-slate-200"
               >
                 <option value="">Visão irrestrita (sem simulação)</option>
                 {UFS.map(uf => <option key={uf} value={uf}>Simular DETRAN {uf}</option>)}
@@ -244,7 +244,7 @@ const DashboardLayout = ({ children }) => {
                 value={viewingAs?.tipo === 'empresa' ? viewingAs.id : ''}
                 onChange={handleSimularEmpresa}
                 data-testid="view-as-empresa-select"
-                className="w-full text-[11px] font-mono bg-zinc-900 border border-zinc-700 rounded px-2 py-1.5 text-zinc-300"
+                className="w-full text-[11px] font-mono bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-slate-200"
               >
                 <option value="">Visão irrestrita (sem simulação)</option>
                 {empresasSimulacao.map(c => (
@@ -269,7 +269,7 @@ const DashboardLayout = ({ children }) => {
 
         {/* Seções agrupadas (ex: "DETRANs e Registradoras") */}
         {navSecoes.map((secao) => (
-          <div key={secao.label} className="pt-2 mt-2 border-t border-zinc-800">
+          <div key={secao.label} className="pt-2 mt-2 border-t border-white/10">
             <p className="text-[10px] text-zinc-600 font-mono uppercase px-3 pb-1">{secao.label}</p>
             {secao.items.map((item) => (
               <NavItemLink key={item.path} item={item} location={location} onNavigate={() => setSidebarOpen(false)} />
@@ -279,7 +279,7 @@ const DashboardLayout = ({ children }) => {
 
         {/* Separador admin */}
         {navAdminExtra.length > 0 && (
-          <div className="pt-2 mt-2 border-t border-zinc-800">
+          <div className="pt-2 mt-2 border-t border-white/10">
             <p className="text-[10px] text-zinc-600 font-mono uppercase px-3 pb-1">Administração</p>
             {navAdminExtra.map((item) => (
               <NavItemLink key={item.path} item={item} location={location} onNavigate={() => setSidebarOpen(false)} />
@@ -289,8 +289,8 @@ const DashboardLayout = ({ children }) => {
       </nav>
 
       {/* User footer */}
-      <div className="p-4 border-t border-zinc-800/80">
-        <div className="flex items-center gap-3 mb-3 p-2 rounded-lg bg-zinc-900/50">
+      <div className="p-4 border-t border-white/10">
+        <div className="flex items-center gap-3 mb-3 p-2 rounded-md bg-white/5">
           <Avatar className="h-8 w-8">
             <AvatarImage src={user?.picture} alt={user?.name} />
             <AvatarFallback className="bg-primary-500/20 text-primary-400 text-xs font-bold">
@@ -317,10 +317,10 @@ const DashboardLayout = ({ children }) => {
   );
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       <div className="flex-1 flex min-h-0">
       {/* Sidebar desktop */}
-      <aside className="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-black/60 backdrop-blur-xl border-r border-zinc-800 transform transition-transform duration-300 lg:translate-x-0 lg:flex flex-col hidden elevate-2">
+      <aside className="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[hsl(var(--sigcr-sidebar))] text-white border-r border-[hsl(var(--sigcr-sidebar-border))] transform transition-transform duration-200 lg:translate-x-0 lg:flex flex-col hidden">
         <SidebarContent />
       </aside>
 
@@ -330,13 +330,13 @@ const DashboardLayout = ({ children }) => {
           <div className="absolute inset-0 bg-black/60" />
         </div>
       )}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-black/90 backdrop-blur-xl border-r border-zinc-800 transform transition-transform duration-300 lg:hidden flex flex-col elevate-2 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-[hsl(var(--sigcr-sidebar))] text-white border-r border-[hsl(var(--sigcr-sidebar-border))] transform transition-transform duration-200 lg:hidden flex flex-col ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <SidebarContent />
       </aside>
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="lg:hidden sticky top-0 z-40 bg-black/60 backdrop-blur-xl border-b border-zinc-800 px-4 py-3 glow-brand">
+        <header className="lg:hidden sticky top-0 z-40 bg-card border-b border-border px-4 py-3">
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

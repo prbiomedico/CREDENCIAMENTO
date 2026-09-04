@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 const STATUS_CONFIG = {
   rascunho: { label: 'Rascunho', bg: 'bg-zinc-800', text: 'text-zinc-400', icon: FileText },
-  submetida: { label: 'Submetida', bg: 'bg-blue-500/10', text: 'text-blue-400', icon: Send },
+  submetida: { label: 'Submetida', bg: 'bg-sky-500/10', text: 'text-sky-400', icon: Send },
   em_analise: { label: 'Em Análise', bg: 'bg-primary-500/10', text: 'text-primary-400', icon: Clock },
   aprovada: { label: 'Aprovada', bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: CheckCircle },
   rejeitada: { label: 'Rejeitada', bg: 'bg-red-500/10', text: 'text-red-400', icon: XCircle },
@@ -61,7 +61,7 @@ const Solicitacoes = () => {
             <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : solicitacoes.length === 0 ? (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <ChevronRight className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
               <p className="text-zinc-400 mb-2">Nenhuma solicitação ainda</p>
@@ -74,12 +74,12 @@ const Solicitacoes = () => {
               const cfg = STATUS_CONFIG[sol.status] || STATUS_CONFIG.rascunho;
               const Icon = cfg.icon;
               return (
-                <Card key={sol.solicitacao_id} className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-colors">
+                <Card key={sol.solicitacao_id} className="bg-card border-border hover:border-input transition-colors">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-mono text-xs">DETRAN-{sol.uf}</Badge>
+                          <Badge className="bg-sky-500/10 text-sky-400 border-sky-500/20 font-mono text-xs">DETRAN-{sol.uf}</Badge>
                           <Badge className={`${cfg.bg} ${cfg.text} text-xs font-mono`}>
                             <Icon className="h-3 w-3 mr-1" />{cfg.label}
                           </Badge>
@@ -100,7 +100,7 @@ const Solicitacoes = () => {
                       )}
                     </div>
                     {sol.observacoes_detran && (
-                      <div className="mt-3 p-3 bg-zinc-800/50 rounded-lg border border-zinc-700/50">
+                      <div className="mt-3 p-3 bg-zinc-800/50 rounded-lg border border-input/50">
                         <p className="text-xs text-zinc-400"><span className="text-primary-400 font-mono">DETRAN:</span> {sol.observacoes_detran}</p>
                       </div>
                     )}

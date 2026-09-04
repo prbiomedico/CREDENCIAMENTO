@@ -26,10 +26,10 @@ const TEMPLATES_DISPONIVEIS = ['credenciamento'];
 
 const ICONS = { credenciamento: Shield, licitacao: Shield, dispensa: Zap, chamamento: Users };
 const CORES = {
-  credenciamento: { ativo: 'bg-primary-500/20 border-primary-500/50', inativo: 'bg-zinc-900/50 border-zinc-800', badge: 'bg-primary-500/10 text-primary-400' },
-  licitacao: { ativo: 'bg-blue-500/20 border-blue-500/50', inativo: 'bg-zinc-900/50 border-zinc-800', badge: 'bg-blue-500/10 text-blue-400' },
-  dispensa: { ativo: 'bg-emerald-500/20 border-emerald-500/50', inativo: 'bg-zinc-900/50 border-zinc-800', badge: 'bg-emerald-500/10 text-emerald-400' },
-  chamamento: { ativo: 'bg-secondary-500/20 border-secondary-500/50', inativo: 'bg-zinc-900/50 border-zinc-800', badge: 'bg-secondary-500/10 text-secondary-400' },
+  credenciamento: { ativo: 'bg-primary-500/20 border-primary-500/50', inativo: 'bg-card border-border', badge: 'bg-primary-500/10 text-primary-400' },
+  licitacao: { ativo: 'bg-sky-500/20 border-sky-500/50', inativo: 'bg-card border-border', badge: 'bg-sky-500/10 text-sky-400' },
+  dispensa: { ativo: 'bg-emerald-500/20 border-emerald-500/50', inativo: 'bg-card border-border', badge: 'bg-emerald-500/10 text-emerald-400' },
+  chamamento: { ativo: 'bg-secondary-500/20 border-secondary-500/50', inativo: 'bg-card border-border', badge: 'bg-secondary-500/10 text-secondary-400' },
 };
 
 const formInicial = () => ({
@@ -200,7 +200,7 @@ const CriarEvento = () => {
                   className={`relative p-6 rounded-2xl border-2 text-left transition-all ${disponivel ? 'hover:scale-[1.02]' : 'opacity-50 cursor-default'} ${c.inativo}`}
                 >
                   {!disponivel && (
-                    <Badge className="absolute top-4 right-4 bg-zinc-800 text-zinc-400 border-zinc-700 text-[10px] gap-1">
+                    <Badge className="absolute top-4 right-4 bg-zinc-800 text-zinc-400 border-input text-[10px] gap-1">
                       <Lock className="h-2.5 w-2.5" /> Em breve
                     </Badge>
                   )}
@@ -217,20 +217,20 @@ const CriarEvento = () => {
         {step === 1 && tmpl && (
           <div className="space-y-5">
             <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-mono ${cor?.badge}`}>{Icon && <Icon className="h-4 w-4" />}{tmpl.nome}</div>
-            <div><Label className="text-zinc-300 text-sm mb-1.5 block">Título *</Label><Input value={form.titulo} onChange={e => setForm(f => ({...f, titulo: e.target.value}))} className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white" placeholder="Ex: Credenciamento de Registradoras DF 2026" /></div>
-            <div><Label className="text-zinc-300 text-sm mb-1.5 block">Descrição</Label><Textarea value={form.descricao} onChange={e => setForm(f => ({...f, descricao: e.target.value}))} className="bg-zinc-950 border-zinc-800 text-white min-h-[80px]" /></div>
+            <div><Label className="text-zinc-300 text-sm mb-1.5 block">Título *</Label><Input value={form.titulo} onChange={e => setForm(f => ({...f, titulo: e.target.value}))} className="bg-background border-border focus:border-primary-500 text-white" placeholder="Ex: Credenciamento de Registradoras DF 2026" /></div>
+            <div><Label className="text-zinc-300 text-sm mb-1.5 block">Descrição</Label><Textarea value={form.descricao} onChange={e => setForm(f => ({...f, descricao: e.target.value}))} className="bg-background border-border text-white min-h-[80px]" /></div>
             <div className="grid grid-cols-2 gap-4">
               <div><Label className="text-zinc-300 text-sm mb-1.5 block">UF *</Label>
                 <Select value={form.uf} onValueChange={v => setForm(f => ({...f, uf: v, orgao: `DETRAN-${v}`}))}>
-                  <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-zinc-800 text-white">{UFS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="bg-background border-border text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent className="bg-card border-border text-white">{UFS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><Label className="text-zinc-300 text-sm mb-1.5 block">Órgão</Label><Input value={form.orgao} onChange={e => setForm(f => ({...f, orgao: e.target.value}))} className="bg-zinc-950 border-zinc-800 text-white" /></div>
+              <div><Label className="text-zinc-300 text-sm mb-1.5 block">Órgão</Label><Input value={form.orgao} onChange={e => setForm(f => ({...f, orgao: e.target.value}))} className="bg-background border-border text-white" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div><Label className="text-zinc-300 text-sm mb-1.5 block">Abertura</Label><Input type="datetime-local" value={form.data_abertura} onChange={e => setForm(f => ({...f, data_abertura: e.target.value}))} className="bg-zinc-950 border-zinc-800 text-white" /></div>
-              <div><Label className="text-zinc-300 text-sm mb-1.5 block">Encerramento</Label><Input type="datetime-local" value={form.data_encerramento} onChange={e => setForm(f => ({...f, data_encerramento: e.target.value}))} className="bg-zinc-950 border-zinc-800 text-white" /></div>
+              <div><Label className="text-zinc-300 text-sm mb-1.5 block">Abertura</Label><Input type="datetime-local" value={form.data_abertura} onChange={e => setForm(f => ({...f, data_abertura: e.target.value}))} className="bg-background border-border text-white" /></div>
+              <div><Label className="text-zinc-300 text-sm mb-1.5 block">Encerramento</Label><Input type="datetime-local" value={form.data_encerramento} onChange={e => setForm(f => ({...f, data_encerramento: e.target.value}))} className="bg-background border-border text-white" /></div>
             </div>
             <div className="flex gap-3"><Button variant="outline" onClick={() => setStep(0)}>Voltar</Button><Button onClick={() => setStep(2)} disabled={!form.titulo || !form.uf} className="bg-primary-500 hover:bg-primary-600 text-white">Próximo <ChevronRight className="h-4 w-4 ml-1" /></Button></div>
           </div>
@@ -240,17 +240,17 @@ const CriarEvento = () => {
           <div className="space-y-5">
             <p className="text-zinc-400 text-sm">Selecione os itens do catálogo de checklist exigidos para este evento — os mesmos usados pela conferência do DETRAN e pelas submissões das empresas.</p>
             <ChecklistCatalogoPicker selecionados={selecionadosCatalogo} onToggle={toggleChecklistItem} />
-            <div className="bg-zinc-900/30 rounded-lg p-3 border border-zinc-800"><p className="text-xs text-zinc-500 mb-2">{form.checklist_itens.length} selecionado(s)</p><div className="flex flex-wrap gap-1">{form.checklist_itens.map(d => <span key={d.catalogo_item_id || d.nome} className="text-[10px] bg-primary-500/10 text-primary-300 px-2 py-0.5 rounded-full font-mono">{d.nome}</span>)}</div></div>
+            <div className="bg-muted/40 rounded-lg p-3 border border-border"><p className="text-xs text-zinc-500 mb-2">{form.checklist_itens.length} selecionado(s)</p><div className="flex flex-wrap gap-1">{form.checklist_itens.map(d => <span key={d.catalogo_item_id || d.nome} className="text-[10px] bg-primary-500/10 text-primary-300 px-2 py-0.5 rounded-full font-mono">{d.nome}</span>)}</div></div>
             <div className="flex gap-3"><Button variant="outline" onClick={() => setStep(1)}>Voltar</Button><Button onClick={() => setStep(3)} className="bg-primary-500 hover:bg-primary-600 text-white">Revisar <ChevronRight className="h-4 w-4 ml-1" /></Button></div>
           </div>
         )}
 
         {step === 3 && (
           <div className="space-y-5">
-            <Card className="bg-zinc-900/50 border-zinc-800">
+            <Card className="bg-card border-border">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-3">{Icon && <Icon className="h-5 w-5 text-primary-400" />}<CardTitle className="text-lg font-heading">{form.titulo}</CardTitle></div>
-                <div className="flex gap-2 mt-2"><Badge className={`${cor?.badge} text-xs font-mono`}>{tmpl?.nome}</Badge><Badge className="bg-blue-500/10 text-blue-400 text-xs font-mono">DETRAN-{form.uf}</Badge></div>
+                <div className="flex gap-2 mt-2"><Badge className={`${cor?.badge} text-xs font-mono`}>{tmpl?.nome}</Badge><Badge className="bg-sky-500/10 text-sky-400 text-xs font-mono">DETRAN-{form.uf}</Badge></div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-zinc-400">{form.descricao}</p>
@@ -262,7 +262,7 @@ const CriarEvento = () => {
                     type="file"
                     accept="application/pdf"
                     onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-                    className="bg-zinc-950 border-zinc-800 text-white"
+                    className="bg-background border-border text-white"
                   />
                   {pdfFile && (
                     <p className="text-xs text-zinc-400 mt-1.5 flex items-center gap-1.5"><Paperclip className="h-3 w-3" /> {pdfFile.name}</p>
@@ -284,10 +284,10 @@ const CriarEvento = () => {
             <div className="w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 flex items-center justify-center mx-auto"><Check className="h-10 w-10 text-emerald-400" /></div>
             <div><h2 className="text-2xl font-heading font-bold mb-2">{eventoSalvo.status === 'publicado' ? 'Evento Publicado!' : 'Rascunho Salvo!'}</h2><p className="text-zinc-400">{eventoSalvo.titulo}</p></div>
             {eventoSalvo.status === 'publicado' && (
-              <Card className="bg-zinc-900/50 border-zinc-800 text-left">
+              <Card className="bg-card border-border text-left">
                 <CardContent className="p-5">
                   <p className="text-xs text-zinc-500 mb-2 font-mono uppercase">Link para Divulgação no DOU</p>
-                  <div className="flex items-center gap-2 p-3 bg-zinc-950 rounded-lg border border-zinc-800">
+                  <div className="flex items-center gap-2 p-3 bg-background rounded-lg border border-border">
                     <Globe className="h-4 w-4 text-primary-500 shrink-0" />
                     <span className="text-sm text-zinc-300 flex-1 truncate font-mono">{eventoSalvo.link_publico}</span>
                     <button onClick={copiarLink} className={`p-1.5 rounded-lg transition-all ${copiado ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-800 text-zinc-400 hover:text-white'}`}>{copiado ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}</button>

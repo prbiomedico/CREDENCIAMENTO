@@ -24,7 +24,7 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+        <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center space-y-4 max-w-md px-6">
             <AlertTriangle className="h-10 w-10 text-primary-500 mx-auto" />
             <p className="text-zinc-200 text-sm font-medium">Ocorreu um erro ao carregar esta tela.</p>

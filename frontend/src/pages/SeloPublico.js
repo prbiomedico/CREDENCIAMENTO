@@ -24,7 +24,7 @@ export default function SeloPublico() {
 
   if (erro) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div data-testid="selo-erro" className="text-center text-zinc-400">
           <ShieldAlert className="h-10 w-10 text-red-400 mx-auto mb-3" />
           {erro}
@@ -35,7 +35,7 @@ export default function SeloPublico() {
 
   if (!selo) {
     return (
-      <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="h-8 w-8 text-primary-500 animate-spin" />
       </div>
     );
@@ -45,11 +45,11 @@ export default function SeloPublico() {
   const SemIcon = sem.Icon;
 
   return (
-    <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute inset-0 grid-pattern opacity-30"></div>
       <div className="relative z-10 w-full max-w-md">
-        <div data-testid="selo-card" className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-8 shadow-2xl text-center">
-          <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 border ${selo.credenciada ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-zinc-800 border-zinc-700'}`}>
+        <div data-testid="selo-card" className="bg-card backdrop-blur-xl border border-border rounded-2xl p-8 shadow-2xl text-center">
+          <div className={`inline-flex items-center justify-center w-20 h-20 rounded-full mb-4 border ${selo.credenciada ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-zinc-800 border-input'}`}>
             {selo.credenciada
               ? <ShieldCheck className="h-10 w-10 text-emerald-400" />
               : <Shield className="h-10 w-10 text-zinc-400" />}

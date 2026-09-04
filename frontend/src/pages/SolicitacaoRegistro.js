@@ -146,7 +146,7 @@ const SolicitacaoRegistro = () => {
                 Nova Solicitação
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-zinc-900 border-zinc-700 text-white max-h-[90vh] overflow-y-auto max-w-2xl">
+            <DialogContent className="bg-card border-input text-white max-h-[90vh] overflow-y-auto max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Nova Solicitação de Registro de Contrato</DialogTitle>
               </DialogHeader>
@@ -155,10 +155,10 @@ const SolicitacaoRegistro = () => {
                   <div>
                     <Label className="text-zinc-300">Empresa solicitante</Label>
                     <Select value={selectedCompany} onValueChange={setSelectedCompany}>
-                      <SelectTrigger className="bg-zinc-800 border-zinc-700 text-white mt-1">
+                      <SelectTrigger className="bg-zinc-800 border-input text-white mt-1">
                         <SelectValue placeholder="Selecione a empresa" />
                       </SelectTrigger>
-                      <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                      <SelectContent className="bg-card border-border text-white">
                         {companies.map((c) => (
                           <SelectItem key={c.company_id} value={c.company_id}>
                             {c.nome_fantasia || c.name}
@@ -173,21 +173,21 @@ const SolicitacaoRegistro = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-zinc-300">Nome</Label>
-                    <Input value={formData.credor_nome} onChange={(e) => setFormData({ ...formData, credor_nome: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input value={formData.credor_nome} onChange={(e) => setFormData({ ...formData, credor_nome: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                   <div>
                     <Label className="text-zinc-300">CPF/CNPJ</Label>
-                    <Input value={formData.credor_documento} onChange={(e) => setFormData({ ...formData, credor_documento: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input value={formData.credor_documento} onChange={(e) => setFormData({ ...formData, credor_documento: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-zinc-300">Endereço</Label>
-                    <Input value={formData.credor_endereco} onChange={(e) => setFormData({ ...formData, credor_endereco: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input value={formData.credor_endereco} onChange={(e) => setFormData({ ...formData, credor_endereco: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                   <div>
                     <Label className="text-zinc-300">Telefone</Label>
-                    <Input value={formData.credor_telefone} onChange={(e) => setFormData({ ...formData, credor_telefone: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input value={formData.credor_telefone} onChange={(e) => setFormData({ ...formData, credor_telefone: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                 </div>
 
@@ -195,21 +195,21 @@ const SolicitacaoRegistro = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-zinc-300">Nome</Label>
-                    <Input value={formData.devedor_nome} onChange={(e) => setFormData({ ...formData, devedor_nome: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input value={formData.devedor_nome} onChange={(e) => setFormData({ ...formData, devedor_nome: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                   <div>
                     <Label className="text-zinc-300">CPF/CNPJ</Label>
-                    <Input value={formData.devedor_documento} onChange={(e) => setFormData({ ...formData, devedor_documento: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input value={formData.devedor_documento} onChange={(e) => setFormData({ ...formData, devedor_documento: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-zinc-300">Endereço</Label>
-                    <Input value={formData.devedor_endereco} onChange={(e) => setFormData({ ...formData, devedor_endereco: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input value={formData.devedor_endereco} onChange={(e) => setFormData({ ...formData, devedor_endereco: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                   <div>
                     <Label className="text-zinc-300">Telefone</Label>
-                    <Input value={formData.devedor_telefone} onChange={(e) => setFormData({ ...formData, devedor_telefone: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input value={formData.devedor_telefone} onChange={(e) => setFormData({ ...formData, devedor_telefone: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                 </div>
 
@@ -217,21 +217,21 @@ const SolicitacaoRegistro = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-zinc-300">Valor total (ou estimativa)</Label>
-                    <Input type="number" step="0.01" min="0" value={formData.valor_total_divida} onChange={(e) => setFormData({ ...formData, valor_total_divida: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input type="number" step="0.01" min="0" value={formData.valor_total_divida} onChange={(e) => setFormData({ ...formData, valor_total_divida: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                   <div>
                     <Label className="text-zinc-300">Taxa de juros</Label>
-                    <Input value={formData.taxa_juros} onChange={(e) => setFormData({ ...formData, taxa_juros: e.target.value })} placeholder="Ex: 1,99% a.m." className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input value={formData.taxa_juros} onChange={(e) => setFormData({ ...formData, taxa_juros: e.target.value })} placeholder="Ex: 1,99% a.m." className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-zinc-300">Local de pagamento</Label>
-                    <Input value={formData.local_pagamento} onChange={(e) => setFormData({ ...formData, local_pagamento: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input value={formData.local_pagamento} onChange={(e) => setFormData({ ...formData, local_pagamento: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                   <div>
                     <Label className="text-zinc-300">Data de pagamento</Label>
-                    <Input type="date" value={formData.data_pagamento} onChange={(e) => setFormData({ ...formData, data_pagamento: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input type="date" value={formData.data_pagamento} onChange={(e) => setFormData({ ...formData, data_pagamento: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                 </div>
 
@@ -239,31 +239,31 @@ const SolicitacaoRegistro = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-zinc-300">Placa</Label>
-                    <Input value={formData.veiculo_placa} onChange={(e) => setFormData({ ...formData, veiculo_placa: e.target.value.toUpperCase() })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input value={formData.veiculo_placa} onChange={(e) => setFormData({ ...formData, veiculo_placa: e.target.value.toUpperCase() })} className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                   <div>
                     <Label className="text-zinc-300">Chassi</Label>
-                    <Input value={formData.veiculo_chassi} onChange={(e) => setFormData({ ...formData, veiculo_chassi: e.target.value.toUpperCase() })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input value={formData.veiculo_chassi} onChange={(e) => setFormData({ ...formData, veiculo_chassi: e.target.value.toUpperCase() })} className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label className="text-zinc-300">Marca/Modelo</Label>
-                    <Input value={formData.veiculo_marca_modelo} onChange={(e) => setFormData({ ...formData, veiculo_marca_modelo: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input value={formData.veiculo_marca_modelo} onChange={(e) => setFormData({ ...formData, veiculo_marca_modelo: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                   <div>
                     <Label className="text-zinc-300">Ano</Label>
-                    <Input value={formData.veiculo_ano} onChange={(e) => setFormData({ ...formData, veiculo_ano: e.target.value })} className="bg-zinc-800 border-zinc-700 text-white mt-1" required />
+                    <Input value={formData.veiculo_ano} onChange={(e) => setFormData({ ...formData, veiculo_ano: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
                   </div>
                 </div>
 
-                <div className="border-t border-zinc-800 pt-4">
+                <div className="border-t border-border pt-4">
                   <Label className="text-zinc-300 mb-2 block">Contrato assinado (PDF)</Label>
                   <Input
                     type="file"
                     accept="application/pdf"
                     onChange={(e) => setContratoPdf(e.target.files?.[0] || null)}
-                    className="bg-zinc-800 border-zinc-700 text-white"
+                    className="bg-zinc-800 border-input text-white"
                     required
                   />
                 </div>
@@ -281,7 +281,7 @@ const SolicitacaoRegistro = () => {
             <div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : companies.length === 0 ? (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <FileText className="h-16 w-16 text-zinc-700 mx-auto mb-4" />
               <p className="text-zinc-400 mb-4">Nenhuma empresa financeira cadastrada</p>
@@ -289,7 +289,7 @@ const SolicitacaoRegistro = () => {
             </CardContent>
           </Card>
         ) : solicitacoes.length === 0 ? (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <FileText className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
               <p className="text-zinc-400">Nenhuma solicitação ainda</p>
@@ -303,12 +303,12 @@ const SolicitacaoRegistro = () => {
               const Icon = cfg.icon;
               const ultimaRejeicao = sol.historico_rejeicoes?.[sol.historico_rejeicoes.length - 1];
               return (
-                <Card key={sol.solicitacao_registro_id} className="bg-zinc-900/50 border-zinc-800 hover:border-zinc-700 transition-colors">
+                <Card key={sol.solicitacao_registro_id} className="bg-card border-border hover:border-input transition-colors">
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2 flex-wrap">
-                          <Badge className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-mono text-xs">{sol.veiculo_placa}</Badge>
+                          <Badge className="bg-sky-500/10 text-sky-400 border-sky-500/20 font-mono text-xs">{sol.veiculo_placa}</Badge>
                           <Badge className={`${cfg.bg} ${cfg.text} text-xs font-mono`}>
                             <Icon className="h-3 w-3 mr-1" />{cfg.label}
                           </Badge>

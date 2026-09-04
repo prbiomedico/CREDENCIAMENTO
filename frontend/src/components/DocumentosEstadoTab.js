@@ -246,14 +246,14 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
   };
 
   const categoriaBadge = (categoria) => (
-    <Badge className="bg-zinc-800 text-zinc-300 border-zinc-700 font-mono text-xs px-2 py-0.5">
+    <Badge className="bg-zinc-800 text-zinc-300 border-input font-mono text-xs px-2 py-0.5">
       {CATEGORIAS[categoria]?.label || categoria}
     </Badge>
   );
 
   if (acessoNegado) {
     return (
-      <Card className="bg-zinc-900/50 border-zinc-800">
+      <Card className="bg-card border-border">
         <CardContent className="p-12 text-center">
           <Ban className="h-16 w-16 text-zinc-700 mx-auto mb-4" />
           <p className="text-zinc-400">Seu perfil não tem acesso ao dossiê de credenciamento.</p>
@@ -280,7 +280,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                 Enviar Documento
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-zinc-900 border-zinc-800 text-white max-h-[90vh] overflow-y-auto">
+            <DialogContent className="bg-card border-border text-white max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="font-heading text-2xl">Enviar Documento</DialogTitle>
               </DialogHeader>
@@ -297,10 +297,10 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                       atividade_raci_numero: '',
                     }))}
                   >
-                    <SelectTrigger data-testid="categoria-select" className="bg-zinc-950 border-zinc-800 text-white mt-2">
+                    <SelectTrigger data-testid="categoria-select" className="bg-background border-border text-white mt-2">
                       <SelectValue placeholder="Selecione a categoria" />
                     </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                    <SelectContent className="bg-card border-border text-white">
                       {categoriasVisiveis.map((c) => (
                         <SelectItem key={c} value={c}>{CATEGORIAS[c].label}</SelectItem>
                       ))}
@@ -311,7 +311,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                 {estadoFixo ? (
                   <div>
                     <Label className="text-zinc-300">UF</Label>
-                    <div className="mt-2 px-3 py-2 rounded-md bg-zinc-950 border border-zinc-800 text-zinc-300 text-sm">
+                    <div className="mt-2 px-3 py-2 rounded-md bg-background border border-border text-zinc-300 text-sm">
                       {estadoFixo} (travado nesta página de estado)
                     </div>
                   </div>
@@ -325,7 +325,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                       placeholder="Ex: SP"
                       maxLength={2}
                       disabled={isDetranAdmin && !isAdmin}
-                      className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2 disabled:opacity-70"
+                      className="bg-background border-border focus:border-primary-500 text-white mt-2 disabled:opacity-70"
                       required
                     />
                   </div>
@@ -338,10 +338,10 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                       value={form.atividade_raci_numero}
                       onValueChange={(value) => setForm((prev) => ({ ...prev, atividade_raci_numero: value }))}
                     >
-                      <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white mt-2">
+                      <SelectTrigger className="bg-background border-border text-white mt-2">
                         <SelectValue placeholder="Selecione a atividade" />
                       </SelectTrigger>
-                      <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+                      <SelectContent className="bg-card border-border text-white">
                         {atividadesRaci.map((a) => (
                           <SelectItem key={a.numero} value={String(a.numero)}>
                             {a.numero}. {a.nome}
@@ -360,7 +360,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                     value={form.tipo}
                     onChange={(e) => setForm((prev) => ({ ...prev, tipo: e.target.value }))}
                     placeholder="Ex: Contrato Social"
-                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
                     required
                   />
                   <datalist id="tipos-sugeridos-list">
@@ -377,7 +377,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                     value={form.nome}
                     onChange={(e) => setForm((prev) => ({ ...prev, nome: e.target.value }))}
                     placeholder="Ex: Contrato Social - 2ª Alteração"
-                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
                     required
                   />
                 </div>
@@ -388,7 +388,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                     id="notes"
                     value={form.notes}
                     onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
-                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
                   />
                 </div>
 
@@ -398,7 +398,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                     id="file"
                     type="file"
                     onChange={(e) => setForm((prev) => ({ ...prev, file: e.target.files?.[0] || null }))}
-                    className="bg-zinc-950 border-zinc-800 focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
                     required
                   />
                   <p className="text-xs text-zinc-500 mt-1">Máx. 20MB. Tipos aceitos variam por categoria.</p>
@@ -418,7 +418,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
       </div>
 
       {/* Filtros */}
-      <Card className="bg-zinc-900/50 border-zinc-800 mb-8">
+      <Card className="bg-card border-border mb-8">
         <CardContent className="p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
             <Label className="text-zinc-300 mb-2 block">Categoria</Label>
@@ -426,10 +426,10 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
               value={filtros.categoria || 'todas'}
               onValueChange={(value) => setFiltros((prev) => ({ ...prev, categoria: value === 'todas' ? '' : value }))}
             >
-              <SelectTrigger className="bg-zinc-950 border-zinc-800 text-white">
+              <SelectTrigger className="bg-background border-border text-white">
                 <SelectValue placeholder="Todas" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-800 text-white">
+              <SelectContent className="bg-card border-border text-white">
                 <SelectItem value="todas">Todas</SelectItem>
                 {categoriasVisiveis.map((c) => (
                   <SelectItem key={c} value={c}>{CATEGORIAS[c].label}</SelectItem>
@@ -444,7 +444,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
               value={filtros.tipo}
               onChange={(e) => setFiltros((prev) => ({ ...prev, tipo: e.target.value }))}
               placeholder="Buscar por tipo..."
-              className="bg-zinc-950 border-zinc-800 text-white"
+              className="bg-background border-border text-white"
             />
           </div>
 
@@ -456,7 +456,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                 onChange={(e) => setFiltros((prev) => ({ ...prev, estado_sigla: e.target.value.toUpperCase().slice(0, 2) }))}
                 placeholder="Ex: SP"
                 maxLength={2}
-                className="bg-zinc-950 border-zinc-800 text-white"
+                className="bg-background border-border text-white"
               />
             </div>
           )}
@@ -474,7 +474,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
       </Card>
 
       {/* Tabela */}
-      <Card className="bg-zinc-900/50 border-zinc-800">
+      <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="font-heading">Documentos</CardTitle>
         </CardHeader>
@@ -493,7 +493,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow className="border-zinc-800 hover:bg-zinc-900/50">
+                  <TableRow className="border-border hover:bg-card">
                     <TableHead className="text-zinc-400">Categoria</TableHead>
                     <TableHead className="text-zinc-400">Tipo</TableHead>
                     <TableHead className="text-zinc-400">Nome</TableHead>
@@ -507,7 +507,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                 </TableHeader>
                 <TableBody>
                   {documentos.map((doc) => (
-                    <TableRow key={doc.documento_id} className={`border-zinc-800 hover:bg-zinc-900/50 ${doc.deleted_at ? 'opacity-50' : ''}`}>
+                    <TableRow key={doc.documento_id} className={`border-border hover:bg-card ${doc.deleted_at ? 'opacity-50' : ''}`}>
                       <TableCell>{categoriaBadge(doc.categoria)}</TableCell>
                       <TableCell className="text-zinc-300">{doc.tipo}</TableCell>
                       <TableCell className="text-white font-medium">
@@ -526,7 +526,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                                 {getVencimentoStatus(doc.vencimento).label}
                               </Badge>
                             )}
-                            {doc.vencimento_fonte === 'ocr' && <Sparkles className="h-3 w-3 text-blue-400" title="Sugerido por OCR" />}
+                            {doc.vencimento_fonte === 'ocr' && <Sparkles className="h-3 w-3 text-sky-400" title="Sugerido por OCR" />}
                           </div>
                         ) : (
                           <span className="text-zinc-600 italic">—</span>
@@ -566,13 +566,13 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
 
       {/* Dialog: histórico de versões */}
       <Dialog open={versoesDialog.open} onOpenChange={(open) => setVersoesDialog((prev) => ({ ...prev, open }))}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+        <DialogContent className="bg-card border-border text-white">
           <DialogHeader>
             <DialogTitle className="font-heading text-xl">Histórico de Versões</DialogTitle>
           </DialogHeader>
           <div className="space-y-2 mt-2">
             {versoesDialog.itens.map((v) => (
-              <div key={v.documento_id} className={`flex items-center justify-between p-3 rounded-lg border ${v.documento_id === versoesDialog.documento_id ? 'border-primary-500/40 bg-primary-500/5' : 'border-zinc-800'}`}>
+              <div key={v.documento_id} className={`flex items-center justify-between p-3 rounded-lg border ${v.documento_id === versoesDialog.documento_id ? 'border-primary-500/40 bg-primary-500/5' : 'border-border'}`}>
                 <div>
                   <p className="text-sm font-medium">v{v.versao} — {v.nome}</p>
                   <p className="text-xs text-zinc-500">{new Date(v.created_at).toLocaleString('pt-BR')} · {v.uploaded_by_nome}</p>
@@ -588,7 +588,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
 
       {/* Dialog: edição */}
       <Dialog open={editDialog.open} onOpenChange={(open) => setEditDialog((prev) => ({ ...prev, open }))}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 text-white">
+        <DialogContent className="bg-card border-border text-white">
           <DialogHeader>
             <DialogTitle className="font-heading text-xl">Editar Documento</DialogTitle>
           </DialogHeader>
@@ -598,7 +598,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
               <Input
                 value={editDialog.nome}
                 onChange={(e) => setEditDialog((prev) => ({ ...prev, nome: e.target.value }))}
-                className="bg-zinc-950 border-zinc-800 text-white mt-2"
+                className="bg-background border-border text-white mt-2"
                 required
               />
             </div>
@@ -607,7 +607,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
               <Input
                 value={editDialog.tipo}
                 onChange={(e) => setEditDialog((prev) => ({ ...prev, tipo: e.target.value }))}
-                className="bg-zinc-950 border-zinc-800 text-white mt-2"
+                className="bg-background border-border text-white mt-2"
                 required
               />
             </div>
@@ -616,21 +616,21 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
               <Textarea
                 value={editDialog.notes}
                 onChange={(e) => setEditDialog((prev) => ({ ...prev, notes: e.target.value }))}
-                className="bg-zinc-950 border-zinc-800 text-white mt-2"
+                className="bg-background border-border text-white mt-2"
               />
             </div>
             <div>
               <Label className="text-zinc-300 flex items-center gap-1.5">
                 Vencimento
                 {editDialog.doc?.vencimento_fonte === 'ocr' && (
-                  <span className="text-xs text-blue-400 flex items-center gap-1"><Sparkles className="h-3 w-3" /> sugerido por OCR</span>
+                  <span className="text-xs text-sky-400 flex items-center gap-1"><Sparkles className="h-3 w-3" /> sugerido por OCR</span>
                 )}
               </Label>
               <Input
                 type="date"
                 value={editDialog.vencimento}
                 onChange={(e) => setEditDialog((prev) => ({ ...prev, vencimento: e.target.value }))}
-                className="bg-zinc-950 border-zinc-800 text-white mt-2"
+                className="bg-background border-border text-white mt-2"
               />
             </div>
             <Button type="submit" className="w-full bg-primary-500 hover:bg-primary-600 text-white button-shadow">

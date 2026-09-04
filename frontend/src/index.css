@@ -17,31 +17,37 @@ code {
 
 @layer base {
     :root {
-        /* Identidade visual "Berry" (referência MUI, MIT) — variante escura.
-           Paper mais escuro que Background é intencional (assim o Berry
-           original é definido); Levels 1/2 (#212946/#29314f) alimentam
-           border/input/muted como superfícies elevadas. */
-        --background: 227 42% 18%;         /* #1a223f */
-        --foreground: 226 36% 88%;         /* texto título #d7dcec */
-        --card: 227 52% 14%;               /* paper #111936 */
-        --card-foreground: 226 36% 88%;
-        --popover: 227 52% 14%;
-        --popover-foreground: 226 36% 88%;
-        --primary: 207 90% 54%;            /* azul Berry main #2196f3 */
-        --primary-foreground: 227 52% 14%;
-        --secondary: 256 100% 65%;         /* roxo Berry main #7c4dff */
-        --secondary-foreground: 227 52% 14%;
-        --muted: 227 36% 20%;              /* level1 #212946 */
-        --muted-foreground: 227 35% 64%;   /* texto secundário #8492c4 */
-        --accent: 207 90% 54%;
-        --accent-foreground: 227 52% 14%;
-        --destructive: 4 90% 58%;          /* erro Berry #f44336 */
+        /* V2 Neutral Enterprise: canvas claro, superfícies brancas e CTA
+           grafite. O azul fica reservado ao accent contextual/foco. */
+        --background: 210 20% 98%;
+        --foreground: 220 24% 14%;
+        --card: 0 0% 100%;
+        --card-foreground: 220 24% 14%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 220 24% 14%;
+        --primary: 220 22% 18%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 215 16% 94%;
+        --secondary-foreground: 220 22% 18%;
+        --muted: 215 18% 95%;
+        --muted-foreground: 215 12% 43%;
+        --accent: 211 86% 45%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 72% 46%;
         --destructive-foreground: 0 0% 98%;
-        --border: 227 32% 24%;             /* level2 #29314f */
-        --input: 227 32% 24%;              /* level2 #29314f */
-        --ring: 207 90% 54%;
-        --radius: 0.8rem;                  /* raio padrão (botões, inputs, popovers) */
-        --card-radius: 1rem;               /* raio de cards — levemente maior que o padrão */
+        --border: 214 18% 87%;
+        --input: 214 18% 82%;
+        --ring: 211 86% 45%;
+        --radius: 0.5rem;
+        --card-radius: 0.5rem;
+
+        --sigcr-sidebar: 222 25% 13%;
+        --sigcr-sidebar-raised: 220 22% 17%;
+        --sigcr-sidebar-border: 218 15% 25%;
+        --sigcr-accent: 211 86% 45%;
+        --sigcr-success: 151 55% 34%;
+        --sigcr-warning: 38 92% 38%;
+        --sigcr-danger: 0 72% 46%;
     }
 }
 
@@ -51,6 +57,7 @@ code {
     }
     body {
         @apply bg-background text-foreground;
+        font-size: 14px;
     }
 }
 
@@ -63,23 +70,24 @@ code {
        de um glow de hover em elemento pontual. Radial dupla (primary +
        secondary) pra ecoar o gradiente da Landing sem competir com o
        conteúdo por cima. */
-    .glow-brand {
-        background-image:
-            radial-gradient(circle at 20% 15%, hsl(var(--primary) / 0.14), transparent 55%),
-            radial-gradient(circle at 85% 80%, hsl(var(--secondary) / 0.10), transparent 55%);
-    }
+    .glow-brand { background-image: none; }
 
     /* Escala de elevação por sombra+borda — 3 níveis de hierarquia visual,
        mesmo pedido do Passo 2. Nível 1 = superfície normal (cards padrão já
        cobertos pelo próprio ui/card.jsx); 2 = painel persistente elevado
        (sidebar); 3 = flutuante por cima de tudo (dropdown/popover). */
-    .elevate-2 {
-        box-shadow: 0 10px 30px -8px rgb(0 0 0 / 0.5);
-    }
+    .elevate-2 { box-shadow: none; }
     .elevate-3 {
-        border: 1px solid hsl(var(--primary) / 0.2);
-        box-shadow: 0 16px 40px -10px rgb(0 0 0 / 0.65), 0 0 0 1px hsl(var(--primary) / 0.05);
+        border: 1px solid hsl(var(--border));
+        box-shadow: 0 14px 34px -18px rgb(15 23 42 / 0.35);
     }
+
+    .sigcr-panel { @apply rounded-lg border border-border bg-card; }
+    .sigcr-table-wrap { @apply overflow-x-auto rounded-lg border border-border bg-card; }
+    .sigcr-table-wrap table { @apply w-full text-sm; }
+    .sigcr-table-wrap thead { @apply bg-muted/70 text-muted-foreground; }
+    .sigcr-table-wrap tbody tr { @apply border-t border-border hover:bg-muted/45; }
+    .sigcr-dense-row { min-height: 44px; }
 }
 
 @layer base {

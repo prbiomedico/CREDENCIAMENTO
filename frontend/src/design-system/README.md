@@ -1,6 +1,21 @@
 # SIGCR Design System V2 — auditoria e especificação
 
-Estado: fundação isolada, ainda não adotada por telas produtivas.
+Estado: V2 adotada globalmente em 2026-09-04. AppShell, primitives e tokens são
+a fonte visual; telas legadas permanecem funcionais por meio dos aliases
+semânticos e da camada de compatibilidade, para migração estrutural gradual.
+
+## Implementação V2 Neutral Enterprise
+
+- Canvas claro e superfícies brancas/cinza-claro; sidebar grafite.
+- CTA principal grafite; azul somente em foco, link, informação e seleção contextual.
+- Button, Card e Dialog sem gradiente/glow decorativo.
+- Classes `blue-*` removidas do código produtivo; cores inline das páginas públicas
+  convertidas para custom properties semânticas.
+- PageContainer, PageHeader, TableToolbar, StatusBadge e EmptyState seguem como
+  composições oficiais; DataTableSurface, DescriptionList, FormSection e AsyncState
+  completam as famílias de tabela, detalhe, formulário e estado.
+- Contratos de rota, API, permissão e contexto não pertencem ao design system e não
+  devem ser alterados durante migrações visuais.
 
 ## Inventário de telas produtivas
 

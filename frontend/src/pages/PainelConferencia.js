@@ -19,15 +19,15 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.
 const API = `${BACKEND_URL}/api`;
 
 const STATUS_SUBMISSAO_CFG = {
-  rascunho: { label: 'Rascunho', className: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
+  rascunho: { label: 'Rascunho', className: 'bg-zinc-800 text-zinc-400 border-input' },
   submetido: { label: 'Submetido', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
+  em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
   em_diligencia: { label: 'Em Diligência', icon: AlertTriangle, className: 'bg-primary-500/10 text-primary-400 border-primary-500/20' },
   homologado: { label: 'Homologado', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
 };
 
 const STATUS_ITEM_CFG = {
-  pendente: { label: 'Pendente', icon: Clock, className: 'bg-zinc-800 text-zinc-400 border-zinc-700' },
+  pendente: { label: 'Pendente', icon: Clock, className: 'bg-zinc-800 text-zinc-400 border-input' },
   enviado: { label: 'Enviado', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   conforme: { label: 'Conforme', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
   inconforme: { label: 'Inconforme', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
@@ -218,10 +218,10 @@ const PainelConferencia = () => {
           </div>
           {ehAdmin && (
             <Select value={estadoSigla} onValueChange={(v) => { setEstadoSigla(v); setSubmissaoAtivaId(null); }}>
-              <SelectTrigger className="w-48 bg-zinc-900 border-zinc-700 text-white">
+              <SelectTrigger className="w-48 bg-card border-input text-white">
                 <SelectValue placeholder="Selecione a UF" />
               </SelectTrigger>
-              <SelectContent className="bg-zinc-900 border-zinc-700 text-white">
+              <SelectContent className="bg-card border-input text-white">
                 {ufs.map((e) => (
                   <SelectItem key={e.sigla} value={e.sigla}>{e.sigla} — {e.nome}</SelectItem>
                 ))}
@@ -236,11 +236,11 @@ const PainelConferencia = () => {
             <span>Carregando...</span>
           </div>
         ) : !estadoSigla ? (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-12 text-center text-zinc-400">Selecione uma UF para ver as submissões.</CardContent>
           </Card>
         ) : submissoes.length === 0 ? (
-          <Card className="bg-zinc-900/50 border-zinc-800">
+          <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <ListChecks className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
               <p className="text-zinc-400">Nenhuma submissão de credenciamento para {estadoSigla} ainda.</p>
@@ -253,7 +253,7 @@ const PainelConferencia = () => {
               return (
                 <Card
                   key={sub.submissao_id}
-                  className="bg-zinc-900/50 border-zinc-800 hover:border-primary-500/30 transition-colors cursor-pointer"
+                  className="bg-card border-border hover:border-primary-500/30 transition-colors cursor-pointer"
                   onClick={() => setSubmissaoAtivaId(sub.submissao_id)}
                 >
                   <CardContent className="p-5 flex items-center justify-between gap-4">
@@ -262,7 +262,7 @@ const PainelConferencia = () => {
                       <p className="text-xs text-zinc-500 mt-1 truncate">{tituloPortaria(sub.portaria_id)}</p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <Badge className="bg-zinc-800 text-zinc-400 border-zinc-700 text-[10px] font-mono uppercase">
+                      <Badge className="bg-zinc-800 text-zinc-400 border-input text-[10px] font-mono uppercase">
                         {nomeCategoria(sub.perfil_empresa)}
                       </Badge>
                       <Badge className={`${cfg.className} font-mono uppercase text-[10px] px-2 py-0.5`}>
@@ -312,7 +312,7 @@ const PainelConferencia = () => {
                 const cfg = STATUS_ITEM_CFG[item.status];
                 const podeAnalisar = podeConferir && item.status === 'enviado';
                 return (
-                  <Card key={item.item_id} className="bg-zinc-900/50 border-zinc-800">
+                  <Card key={item.item_id} className="bg-card border-border">
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-center justify-between gap-4">
                         <div className="min-w-0">
@@ -353,7 +353,7 @@ const PainelConferencia = () => {
                             placeholder="Justificativa da diligência (obrigatória)"
                             value={justificativas[item.item_id] || ''}
                             onChange={(e) => setJustificativas((p) => ({ ...p, [item.item_id]: e.target.value }))}
-                            className="bg-zinc-800 border-zinc-700 text-white text-sm min-h-[70px]"
+                            className="bg-zinc-800 border-input text-white text-sm min-h-[70px]"
                           />
                           <Button size="sm" variant="destructive" onClick={() => analisarItem(item.item_id, 'inconforme')} disabled={analisando === item.item_id}>
                             Confirmar Inconformidade
