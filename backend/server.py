@@ -4915,6 +4915,9 @@ async def get_mapa_nacional(scope: EffectiveScope = Depends(get_effective_scope)
             **company_query, "estado_sigla": uf, "deleted_at": None,
             "status": {"$in": ["submetido", "em_analise", "em_diligencia"]},
         })
+        em_processo += await db.credenciamentos.count_documents({
+            **company_query, "estado_sigla": uf, "status": "pendente", "deleted_at": None,
+        })
         em_processo += await db.solicitacoes.count_documents({
             **company_query, "uf": uf, "deleted_at": None,
             "status": {"$in": ["submetida", "em_analise"]},

@@ -34,6 +34,7 @@ def test_acervo_e_mapa_por_visao(monkeypatch):
                 {'company_id':'c1','estado_sigla':'SP','status':'ativo'},
                 {'company_id':'c2','estado_sigla':'RN','status':'ativo'},
                 {'company_id':'c1','estado_sigla':'CE','status':'sem_efeito'},
+                {'company_id':'c1','estado_sigla':'MA','status':'pendente'},
                 {'company_id':'c1','estado_sigla':'BA','status':'ativo','deleted_at':'2026-01-01'},
             ])
             await db.submissoes.insert_one({'company_id':'c1','estado_sigla':'AP','status':'em_diligencia'})
@@ -51,6 +52,7 @@ def test_acervo_e_mapa_por_visao(monkeypatch):
                 assert mapa['RN']['aprovadas'] == 0
                 assert mapa['CE']['aprovadas'] == mapa['BA']['aprovadas'] == 0
                 assert mapa['AP']['status_mapa'] == 'em_processo'
+                assert mapa['MA']['status_mapa'] == 'em_processo'
                 active_scope = server.EffectiveScope(current_user=admin, effective_user_id='master', effective_perfil='sigcr_admin')
                 mapa = {x['sigla']:x for x in (await http.get('/api/mapa-nacional')).json()}
                 assert mapa['RN']['aprovadas'] == 1
