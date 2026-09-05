@@ -17,7 +17,7 @@ const FEATURES = [
   {
     icon: Search,
     title: 'Busca de Portarias',
-    description: 'Encontre portarias nos Diários Oficiais com análise inteligente por IA',
+    description: 'Consulte portarias e documentos reunidos para apoiar seu credenciamento',
     size: '2x1',
   },
   {

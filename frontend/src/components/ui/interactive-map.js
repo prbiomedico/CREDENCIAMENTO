@@ -42,7 +42,7 @@ const STATUS_MAPA_CFG = {
   // (green->sucesso, orange->aviso aqui — não primária — pra não colidir com
   // o azul de "edital_aberto", que fica como estava). "gold" é o nome mais
   // próximo de âmbar disponível no pacote de ícones leaflet-color-markers.
-  credenciada:   { color:"green",  hex:"#00e676", label:"Credenciada" },
+  credenciada:   { color:"green",  hex:"#00e676", label:"Credenciamento ativo cadastrado" },
   edital_aberto: { color:"blue",   hex:"#3b82f6", label:"Edital aberto" },
   em_processo:   { color:"gold",   hex:"#ffc107", label:"Em processo" },
   sem_edital:    { color:"grey",   hex:"#6b7280", label:"Sem atividade" },
@@ -70,7 +70,7 @@ export function MapaNacional({ data = [], onDetranClick, height = "100%" }) {
               <Popup>
                 <div style={{ fontFamily:"system-ui",minWidth:"150px" }}>
                   <strong style={{ color:"#1e40af",fontSize:"14px" }}>DETRAN-{d.sigla}</strong><br/>
-                  <span style={{ fontSize:"12px",color:"#555" }}>{d.aprovadas} registradora(s) credenciada(s)</span>
+                  <span style={{ fontSize:"12px",color:"#555" }}>{d.aprovadas} credenciamento(s) ativo(s) cadastrado(s)</span>
                   <div style={{ marginTop:"6px",padding:"3px 8px",background:"#f3f4f6",borderRadius:"4px",fontSize:"11px",color:d.cfg.hex,border:`1px solid ${d.cfg.hex}` }}>{d.cfg.label}</div>
                 </div>
               </Popup>

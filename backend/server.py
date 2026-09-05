@@ -2399,8 +2399,9 @@ async def analyze_portaria(analyze_data: AnalyzeRequest, current_user: User = De
 
 
 @api_router.get("/portarias/search")
-async def search_portarias(q: str, current_user: User = Depends(get_current_user)):
-    """Search portarias by keyword"""
+async def search_portarias(q: str, scope: EffectiveScope = Depends(get_effective_scope)):
+    """Busca com a mesma visibilidade da listagem, incluindo Trocar Visão."""
+    current_user = scope.as_user()
     query = {
         "$or": [
             {"title": {"$regex": q, "$options": "i"}},
@@ -2412,6 +2413,7 @@ async def search_portarias(q: str, current_user: User = Depends(get_current_user
     if current_user.perfil not in ("sigcr_admin", "detran", "detran_admin"):
         # Mesma regra de GET /portarias: rascunho do wizard não aparece pra
         # fora do DETRAN/admin, nem por busca.
+        query["link_pdf"] = {"$nin": [None, ""]}
         query["$and"] = [{"$or": [{"criado_via": {"$ne": "wizard"}}, {"publicado_at": {"$ne": None}}]}]
     portarias = await db.portarias.find(query, {"_id": 0}).to_list(100)
     return portarias
@@ -2539,15 +2541,7 @@ async def download_portaria_pdf(portaria_id: str, scope: EffectiveScope = Depend
     GET /portarias/{id} aqui. EffectiveScope (em vez de current_user direto)
     também pra ficar consistente com a simulação "ver como" adicionada nesta
     mesma leva de fixes."""
-    current_user = scope.as_user()
-    portaria = await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
-    if not portaria:
-        raise HTTPException(status_code=404, detail="Portaria não encontrada")
-    if portaria.get("estado_sigla"):
-        empresa = await _empresa_do_usuario(current_user)
-        empresa_atua = bool(empresa) and portaria["estado_sigla"] in (empresa.get("detrans_atuacao") or [])
-        if not _perfil_pode_ver_estado(current_user, portaria["estado_sigla"]) and not empresa_atua:
-            raise HTTPException(status_code=403, detail="Perfil sem acesso a esta portaria")
+    portaria = await get_portaria(portaria_id, scope)
     if not portaria.get("link_pdf") or not Path(portaria["link_pdf"]).exists():
         raise HTTPException(status_code=404, detail="Nenhum PDF anexado a esta portaria")
     await registrar_auditoria(scope.current_user, "download_portaria_pdf", "portaria", portaria_id, {
@@ -4882,7 +4876,8 @@ async def criar_notificacao(user_id: str, tipo: str, titulo: str, mensagem: str,
 # ============ MAPA NACIONAL ============
 
 @api_router.get("/mapa-nacional")
-async def get_mapa_nacional(current_user: User = Depends(get_current_user)):
+async def get_mapa_nacional(scope: EffectiveScope = Depends(get_effective_scope)):
+    current_user = scope.as_user()
     ufs = [
         "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA",
         "MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN",
@@ -4897,11 +4892,33 @@ async def get_mapa_nacional(current_user: User = Depends(get_current_user)):
         "RO":"Rondônia","RR":"Roraima","SC":"Santa Catarina","SP":"São Paulo",
         "SE":"Sergipe","TO":"Tocantins"
     }
+    # Todas as contagens de empresa respeitam a visão efetiva; não misturar
+    # credenciamentos de outras empresas com o acompanhamento da empresa atual.
+    company_filter = {"deleted_at": None}
+    is_company = current_user.perfil in ("registradora", "financeira")
+    if is_company:
+        company_filter["user_id"] = current_user.user_id
+        if scope.effective_company_id:
+            company_filter["company_id"] = scope.effective_company_id
+    companies = await db.companies.find(company_filter, {"company_id": 1}).to_list(10000)
+    company_ids = [c["company_id"] for c in companies]
     resultado = []
     for uf in ufs:
-        editais_ativos = await db.editais.count_documents({"uf": uf, "status": "aberto"})
-        aprovadas = await db.solicitacoes.count_documents({"uf": uf, "status": "aprovada"})
-        em_processo = await db.solicitacoes.count_documents({"uf": uf, "status": {"$in": ["submetida","em_analise"]}})
+        if current_user.perfil in ("detran", "detran_admin") and uf != current_user.detran_uf:
+            continue
+        editais_ativos = await db.editais.count_documents({"uf": uf, "status": "aberto", "deleted_at": None})
+        company_query = {"company_id": {"$in": company_ids}}
+        aprovadas = await db.credenciamentos.count_documents({
+            **company_query, "estado_sigla": uf, "status": "ativo", "deleted_at": None,
+        })
+        em_processo = await db.submissoes.count_documents({
+            **company_query, "estado_sigla": uf, "deleted_at": None,
+            "status": {"$in": ["submetido", "em_analise", "em_diligencia"]},
+        })
+        em_processo += await db.solicitacoes.count_documents({
+            **company_query, "uf": uf, "deleted_at": None,
+            "status": {"$in": ["submetida", "em_analise"]},
+        })
         if aprovadas > 0:
             status_mapa = "credenciada"
         elif editais_ativos > 0:
@@ -4916,6 +4933,7 @@ async def get_mapa_nacional(current_user: User = Depends(get_current_user)):
             "status_mapa": status_mapa,
             "editais_ativos": editais_ativos,
             "aprovadas": aprovadas,
+            "em_processo": em_processo,
         })
     return resultado
 

@@ -8,7 +8,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.
 const API = `${BACKEND_URL}/api`;
 
 const STATUS_LABELS = {
-  credenciada: "Credenciada",
+  credenciada: "Credenciamento ativo cadastrado",
   edital_aberto: "Edital aberto",
   em_processo: "Em processo",
   sem_edital: "Sem atividade",
@@ -36,11 +36,11 @@ export default function MapaNacionalPage() {
       <div style={{ marginBottom:"24px" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start" }}>
           <div>
-            <h1 style={{ fontSize:"24px", fontWeight:800, color:"hsl(var(--muted))", margin:0, marginBottom:"6px" }}>
+            <h1 style={{ fontSize:"24px", fontWeight:800, color:"hsl(var(--foreground))", margin:0, marginBottom:"6px" }}>
                Mapa Nacional
             </h1>
             <p style={{ fontSize:"13px", color:"hsl(var(--muted-foreground))", margin:0 }}>
-              Cobertura SIGCR  Registradoras credenciadas por DETRAN
+              Credenciamentos registrados no SIGCR por estado
             </p>
           </div>
           <div style={{ display:"flex", gap:"12px" }}>
@@ -68,15 +68,15 @@ export default function MapaNacionalPage() {
           {/* Info selecionado */}
           {selected ? (
             <div style={{ background:"rgba(33,150,243,0.08)", border:"1.5px solid rgba(33,150,243,0.3)", borderRadius:"14px", padding:"20px" }}>
-              <div style={{ fontWeight:800, fontSize:"16px", color:"hsl(var(--muted))", marginBottom:"4px" }}>DETRAN-{selected.sigla}</div>
+              <div style={{ fontWeight:800, fontSize:"16px", color:"hsl(var(--foreground))", marginBottom:"4px" }}>DETRAN-{selected.sigla}</div>
               <div style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))", marginBottom:"16px" }}>Estado: {selected.nome}</div>
               <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"10px" }}>
-                <span style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))" }}>Registradoras credenciadas</span>
+                <span style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))" }}>Credenciamentos ativos cadastrados</span>
                 <span style={{ fontSize:"14px", fontWeight:700, color:selected.cfg?.hex || "hsl(var(--sigcr-success))" }}>{selected.aprovadas}</span>
               </div>
               <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"10px" }}>
                 <span style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))" }}>Editais ativos</span>
-                <span style={{ fontSize:"14px", fontWeight:700, color:"hsl(var(--muted))" }}>{selected.editais_ativos}</span>
+                <span style={{ fontSize:"14px", fontWeight:700, color:"hsl(var(--foreground))" }}>{selected.editais_ativos}</span>
               </div>
               <div style={{ display:"flex", justifyContent:"space-between" }}>
                 <span style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))" }}>Status</span>

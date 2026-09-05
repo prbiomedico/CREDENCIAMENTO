@@ -396,6 +396,12 @@ const AreaTransparencia = () => {
         <span className="mt-0.5 block">{nomeUf((portaria.estado_sigla || portaria.detran || '').toUpperCase())}</span>
       </div>
       <div className="space-y-1.5">
+              {podeGerenciar && !portaria.link_pdf && (
+                <StatusBadge tone="neutral">PDF pendente · oculto para empresas</StatusBadge>
+              )}
+              {podeGerenciar && !(portaria.checklist_itens || []).length && (
+                <StatusBadge tone="neutral">Checklist não cadastrado</StatusBadge>
+              )}
               {portaria.criado_via === 'wizard' && (
           <StatusBadge tone={portaria.publicado_at ? 'approved' : 'neutral'}>
                   {portaria.publicado_at ? 'Publicado' : 'Rascunho'}
@@ -726,6 +732,16 @@ const AreaTransparencia = () => {
               )}
             />
 
+            {podeGerenciar && !loadingPortarias && (
+              <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground" role="status">
+                <strong className="text-foreground">Preparação do acervo: </strong>
+                {portarias.filter((p) => !p.link_pdf).length} sem PDF ·{' '}
+                {portarias.filter((p) => !(p.checklist_itens || []).length).length} sem checklist ·{' '}
+                {portarias.filter((p) => p.link_pdf && (p.criado_via !== 'wizard' || p.publicado_at)).length} disponíveis para empresas.
+                <p className="mt-1">Portarias sem PDF ficam ocultas para empresas. A classificação de vigência deve ser conferida na fonte oficial.</p>
+              </div>
+            )}
+
             {statusFiltro && (
               <div className="flex items-center gap-2 text-sm bg-primary-500/10 border border-primary-500/20 rounded-lg px-4 py-2 w-fit">
                 <span className="text-primary-300">
@@ -932,7 +948,7 @@ const AreaTransparencia = () => {
               <EmptyState
                 icon={Folder}
                 title="Nenhum edital encontrado"
-                description={podeGerenciar ? 'Cadastre o primeiro processo de credenciamento.' : 'Aguarde a publicação de editais pelos DETRANs.'}
+                description={podeGerenciar ? 'Cadastre o primeiro processo de credenciamento.' : 'Nenhum edital disponibilizado no acervo.'}
                 action={podeGerenciar ? <Button onClick={abrirNovoEdital} className="bg-primary-600 text-white hover:bg-primary-700"><Plus className="h-4 w-4" /> Cadastrar edital</Button> : undefined}
               />
             ) : (
