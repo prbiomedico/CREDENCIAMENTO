@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 // pra não misturar os dois fluxos.
 const ROTA_POR_TIPO = {
   novo_edital: (dados) => dados?.portaria_id ? `/portarias?portaria_id=${dados.portaria_id}` : null,
+  portaria_atualizada: (dados) => dados?.portaria_id ? `/portarias?portaria_id=${dados.portaria_id}` : null,
   submissao_recebida: (dados) => dados?.submissao_id ? `/detran/conferencia?submissao_id=${dados.submissao_id}` : null,
   checklist_inconforme: (dados) => dados?.submissao_id ? `/credenciamento-portaria?submissao_id=${dados.submissao_id}` : null,
   submissao_homologada: (dados) => dados?.submissao_id ? `/credenciamento-portaria?submissao_id=${dados.submissao_id}` : null,
@@ -30,6 +31,7 @@ const TIPO_CONFIG = {
   status_atualizado: { icon: TrendingUp, color: 'primary', label: 'Status Atualizado' },
   documento_validado: { icon: FileText, color: 'emerald', label: 'Documento' },
   portaria_publicada: { icon: CheckCircle, color: 'emerald', label: 'Portaria' },
+  portaria_atualizada: { icon: FileText, color: 'primary', label: 'Portaria Atualizada' },
   nova_solicitacao: { icon: TrendingUp, color: 'blue', label: 'Nova Solicitação' },
   solicitacao_registro_nova: { icon: FileText, color: 'blue', label: 'Registro de Contrato' },
   solicitacao_registro_concluida: { icon: CheckCircle, color: 'emerald', label: 'Registro Concluído' },

@@ -2136,6 +2136,30 @@ async def _empresa_do_usuario(user: User) -> Optional[dict]:
     return await db.companies.find_one({"user_id": user.user_id, "deleted_at": None}, {"_id": 0})
 
 
+async def _notificar_registradoras_portaria_atualizada(portaria: dict) -> int:
+    """Notifica registradoras vinculadas ou, na ausência delas, atuantes na UF."""
+    referenciadas = list(dict.fromkeys(portaria.get("empresas_referenciadas") or []))
+    filtro = {"tipo_empresa": "registradora", "deleted_at": None}
+    if referenciadas:
+        filtro["company_id"] = {"$in": referenciadas}
+    elif portaria.get("estado_sigla"):
+        filtro["detrans_atuacao"] = portaria["estado_sigla"]
+    else:
+        return 0
+
+    empresas = await db.companies.find(filtro, {"_id": 0, "user_id": 1}).to_list(1000)
+    usuarios = {empresa.get("user_id") for empresa in empresas if empresa.get("user_id")}
+    for user_id in usuarios:
+        await criar_notificacao(
+            user_id,
+            "portaria_atualizada",
+            f"Portaria atualizada — DETRAN-{portaria.get('estado_sigla') or ''}",
+            f"A Portaria {portaria.get('title') or portaria.get('numero') or ''} recebeu uma atualização.",
+            {"portaria_id": portaria["portaria_id"], "estado_sigla": portaria.get("estado_sigla")},
+        )
+    return len(usuarios)
+
+
 def _categorias_da_empresa(empresa: dict) -> set:
     """Fatia 2 (modelo Credencia-CE): todas as categorias de credenciamento
     que uma empresa detém — categorias_credenciamento (novo, N:N) UNIÃO
@@ -2348,7 +2372,9 @@ async def anexar_pdf_portaria(
     await registrar_auditoria(current_user, "anexar_pdf_portaria", "portaria", portaria_id, {
         "estado_sigla": portaria.get("estado_sigla")
     })
-    return await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
+    atualizada = await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
+    await _notificar_registradoras_portaria_atualizada(atualizada)
+    return atualizada
 
 
 @api_router.get("/tipos-credenciamento", response_model=List[TipoCredenciamento])
@@ -2663,7 +2689,9 @@ async def atualizar_portaria(portaria_id: str, updates: PortariaUpdate, current_
         "estado_sigla": portaria.get("estado_sigla"), "antes": antes,
         "depois": {k: v for k, v in campos.items() if k != "updated_at"}
     })
-    return await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
+    atualizada = await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
+    await _notificar_registradoras_portaria_atualizada(atualizada)
+    return atualizada
 
 
 @api_router.patch("/portarias/{portaria_id}/publicar", response_model=Portaria)

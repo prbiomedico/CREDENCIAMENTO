@@ -208,3 +208,21 @@ def test_status_livre_nao_pode_corromper_vocabulario_de_empresa(monkeypatch):
         run(server.update_company_status("company_1", "qualquer_coisa", user("admin", "sigcr_admin")))
     assert exc.value.status_code == 400
     companies.update_one.assert_not_awaited()
+
+
+def test_atualizacao_notifica_registradoras_da_uf_sem_duplicar(monkeypatch):
+    class Cursor:
+        async def to_list(self, limit):
+            return [{"user_id": "reg_1"}, {"user_id": "reg_1"}, {"user_id": "reg_2"}]
+
+    companies = SimpleNamespace(find=lambda query, projection: Cursor())
+    monkeypatch.setattr(server, "db", SimpleNamespace(companies=companies))
+    notificar = AsyncMock()
+    monkeypatch.setattr(server, "criar_notificacao", notificar)
+
+    total = run(server._notificar_registradoras_portaria_atualizada({
+        "portaria_id": "port_1", "title": "Portaria 1", "estado_sigla": "SP",
+    }))
+    assert total == 2
+    assert notificar.await_count == 2
+    assert {call.args[0] for call in notificar.await_args_list} == {"reg_1", "reg_2"}
