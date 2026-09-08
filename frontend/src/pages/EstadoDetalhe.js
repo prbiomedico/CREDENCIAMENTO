@@ -341,7 +341,7 @@ export default function EstadoDetalhe() {
         <Card className="bg-card border-border">
           <CardContent className="p-12 text-center">
             <Ban className="h-16 w-16 text-zinc-700 mx-auto mb-4" />
-            <p className="text-zinc-400">Seu perfil não tem acesso aos dados do estado {siglaUpper}.</p>
+            <p className="text-slate-600">Seu perfil não tem acesso aos dados do estado {siglaUpper}.</p>
           </CardContent>
         </Card>
       </DashboardLayout>
@@ -354,7 +354,7 @@ export default function EstadoDetalhe() {
         <Card className="bg-card border-border">
           <CardContent className="p-12 text-center">
             <Ban className="h-16 w-16 text-zinc-700 mx-auto mb-4" />
-            <p className="text-zinc-400">Seu perfil não tem acesso aos dados do estado {siglaUpper}.</p>
+            <p className="text-slate-600">Seu perfil não tem acesso aos dados do estado {siglaUpper}.</p>
           </CardContent>
         </Card>
       </DashboardLayout>
@@ -369,18 +369,18 @@ export default function EstadoDetalhe() {
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-foreground">
               Estado <span className="text-primary-400 font-mono">{siglaUpper}</span>
-              {estadoInfo?.estado_nome && <span className="text-zinc-400 font-normal"> — {estadoInfo.estado_nome}</span>}
+              {estadoInfo?.estado_nome && <span className="text-slate-600 font-normal"> — {estadoInfo.estado_nome}</span>}
             </h1>
-            <p className="text-zinc-400 text-sm mt-1">
+            <p className="text-slate-600 text-sm mt-1">
               {estadoInfo?.total_empresas ?? 0} empresa(s) credenciada(s) · {estadoInfo?.total_portarias_vigentes ?? 0} portaria(s) vigente(s)
             </p>
           </div>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
+          <div className="flex items-center justify-center py-16 text-slate-500 gap-3">
             <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
             <span>Carregando...</span>
           </div>
@@ -410,7 +410,7 @@ export default function EstadoDetalhe() {
                 <CardContent className="space-y-4">
                   {!estadoInfo?.configurado ? (
                     <div className="text-center py-6">
-                      <p className="text-zinc-400 mb-4">Este estado ainda não foi ativado para acompanhamento de credenciamento.</p>
+                      <p className="text-slate-600 mb-4">Este estado ainda não foi ativado para acompanhamento de credenciamento.</p>
                       <Button onClick={ativarEstado} disabled={salvandoEstado} className="bg-primary-500 hover:bg-primary-600 text-white gap-2">
                         <Plus className="h-4 w-4" />
                         {salvandoEstado ? 'Ativando...' : `Ativar ${siglaUpper} para acompanhamento`}
@@ -419,11 +419,11 @@ export default function EstadoDetalhe() {
                   ) : (
                     <>
                       <div>
-                        <Label className="text-zinc-300">Observações</Label>
+                        <Label className="text-slate-700">Observações</Label>
                         <Textarea
                           value={observacoes}
                           onChange={(e) => setObservacoes(e.target.value)}
-                          className="bg-background border-border text-white mt-2"
+                          className="bg-background border-border text-foreground mt-2"
                           disabled={!!estadoInfo?.estado?.deleted_at}
                         />
                       </div>
@@ -459,19 +459,19 @@ export default function EstadoDetalhe() {
                           Novo credenciamento
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="bg-card border-border text-white">
+                      <DialogContent className="bg-card border-border text-foreground">
                         <DialogHeader>
                           <DialogTitle>{editandoCredId ? 'Editar credenciamento' : 'Novo credenciamento'}</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={salvarCredenciamento} className="space-y-4 mt-2">
                           {!editandoCredId && (
                             <div>
-                              <Label className="text-zinc-300">Empresa</Label>
+                              <Label className="text-slate-700">Empresa</Label>
                               <Select value={credForm.company_id} onValueChange={(v) => setCredForm((p) => ({ ...p, company_id: v }))}>
-                                <SelectTrigger className="bg-background border-border text-white mt-2">
+                                <SelectTrigger className="bg-background border-border text-foreground mt-2">
                                   <SelectValue placeholder="Selecione a empresa" />
                                 </SelectTrigger>
-                                <SelectContent className="bg-card border-border text-white">
+                                <SelectContent className="bg-card border-border text-foreground">
                                   {companies.map((c) => (
                                     <SelectItem key={c.company_id} value={c.company_id}>{c.nome_fantasia || c.name}</SelectItem>
                                   ))}
@@ -480,22 +480,22 @@ export default function EstadoDetalhe() {
                             </div>
                           )}
                           <div>
-                            <Label className="text-zinc-300">Extrato do contrato</Label>
+                            <Label className="text-slate-700">Extrato do contrato</Label>
                             <Textarea
                               value={credForm.extrato_contrato}
                               onChange={(e) => setCredForm((p) => ({ ...p, extrato_contrato: e.target.value }))}
-                              className="bg-background border-border text-white mt-2"
+                              className="bg-background border-border text-foreground mt-2"
                               required
                             />
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <Label className="text-zinc-300">Status</Label>
+                              <Label className="text-slate-700">Status</Label>
                               <Select value={credForm.status} onValueChange={(v) => setCredForm((p) => ({ ...p, status: v }))}>
-                                <SelectTrigger className="bg-background border-border text-white mt-2">
+                                <SelectTrigger className="bg-background border-border text-foreground mt-2">
                                   <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-card border-border text-white">
+                                <SelectContent className="bg-card border-border text-foreground">
                                   <SelectItem value="ativo">Ativo</SelectItem>
                                   <SelectItem value="pendente">Pendente</SelectItem>
                                   <SelectItem value="sem_efeito">Sem efeito</SelectItem>
@@ -503,22 +503,22 @@ export default function EstadoDetalhe() {
                               </Select>
                             </div>
                             <div>
-                              <Label className="text-zinc-300">Validade</Label>
-                              <Input type="date" value={credForm.validade} onChange={(e) => setCredForm((p) => ({ ...p, validade: e.target.value }))} className="bg-background border-border text-white mt-2" />
+                              <Label className="text-slate-700">Validade</Label>
+                              <Input type="date" value={credForm.validade} onChange={(e) => setCredForm((p) => ({ ...p, validade: e.target.value }))} className="bg-background border-border text-foreground mt-2" />
                             </div>
                           </div>
                           <div className="grid grid-cols-3 gap-3">
                             <div>
-                              <Label className="text-zinc-300 text-xs">Valor total</Label>
-                              <Input type="number" step="0.01" value={credForm.valor_total_registro} onChange={(e) => setCredForm((p) => ({ ...p, valor_total_registro: e.target.value }))} className="bg-background border-border text-white mt-2" />
+                              <Label className="text-slate-700 text-xs">Valor total</Label>
+                              <Input type="number" step="0.01" value={credForm.valor_total_registro} onChange={(e) => setCredForm((p) => ({ ...p, valor_total_registro: e.target.value }))} className="bg-background border-border text-foreground mt-2" />
                             </div>
                             <div>
-                              <Label className="text-zinc-300 text-xs">Valor DETRAN</Label>
-                              <Input type="number" step="0.01" value={credForm.valor_detran} onChange={(e) => setCredForm((p) => ({ ...p, valor_detran: e.target.value }))} className="bg-background border-border text-white mt-2" />
+                              <Label className="text-slate-700 text-xs">Valor DETRAN</Label>
+                              <Input type="number" step="0.01" value={credForm.valor_detran} onChange={(e) => setCredForm((p) => ({ ...p, valor_detran: e.target.value }))} className="bg-background border-border text-foreground mt-2" />
                             </div>
                             <div>
-                              <Label className="text-zinc-300 text-xs">Valor registradora</Label>
-                              <Input type="number" step="0.01" value={credForm.valor_registradora} onChange={(e) => setCredForm((p) => ({ ...p, valor_registradora: e.target.value }))} className="bg-background border-border text-white mt-2" />
+                              <Label className="text-slate-700 text-xs">Valor registradora</Label>
+                              <Input type="number" step="0.01" value={credForm.valor_registradora} onChange={(e) => setCredForm((p) => ({ ...p, valor_registradora: e.target.value }))} className="bg-background border-border text-foreground mt-2" />
                             </div>
                           </div>
                           <Button type="submit" className="w-full bg-primary-500 hover:bg-primary-600 text-white">Salvar</Button>
@@ -529,15 +529,15 @@ export default function EstadoDetalhe() {
                 </CardHeader>
                 <CardContent>
                   {credenciamentos.length === 0 ? (
-                    <p className="text-zinc-500 text-sm py-4 text-center">Nenhum credenciamento cadastrado neste estado.</p>
+                    <p className="text-slate-500 text-sm py-4 text-center">Nenhum credenciamento cadastrado neste estado.</p>
                   ) : (
                     <Table>
                       <TableHeader>
                         <TableRow className="border-border">
-                          <TableHead className="text-zinc-400">Empresa</TableHead>
-                          <TableHead className="text-zinc-400">Status</TableHead>
-                          <TableHead className="text-zinc-400">Validade</TableHead>
-                          <TableHead className="text-zinc-400 text-right">Ações</TableHead>
+                          <TableHead className="text-slate-600">Empresa</TableHead>
+                          <TableHead className="text-slate-600">Status</TableHead>
+                          <TableHead className="text-slate-600">Validade</TableHead>
+                          <TableHead className="text-slate-600 text-right">Ações</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -545,12 +545,12 @@ export default function EstadoDetalhe() {
                           const company = companies.find((c) => c.company_id === cred.company_id);
                           return (
                             <TableRow key={cred.credenciamento_id} className={`border-border ${cred.deleted_at ? 'opacity-50' : ''}`}>
-                              <TableCell className="text-white">{company?.nome_fantasia || company?.name || cred.company_id}</TableCell>
+                              <TableCell className="text-foreground">{company?.nome_fantasia || company?.name || cred.company_id}</TableCell>
                               <TableCell>
-                                <Badge className="bg-zinc-800 text-zinc-300 border-input text-xs">{cred.status}</Badge>
+                                <Badge className="bg-muted text-slate-700 border-input text-xs">{cred.status}</Badge>
                                 {cred.deleted_at && <Badge className="ml-2 bg-red-500/10 text-red-400 border-red-500/20 text-xs">removido</Badge>}
                               </TableCell>
-                              <TableCell className="text-zinc-400 text-sm">{cred.validade ? new Date(cred.validade).toLocaleDateString('pt-BR') : '—'}</TableCell>
+                              <TableCell className="text-slate-600 text-sm">{cred.validade ? new Date(cred.validade).toLocaleDateString('pt-BR') : '—'}</TableCell>
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-1">
                                   <Button variant="ghost" size="icon" title="Editar" onClick={() => abrirEdicaoCredenciamento(cred)}>
@@ -586,37 +586,37 @@ export default function EstadoDetalhe() {
                           Nova portaria
                         </Button>
                       </DialogTrigger>
-                      <DialogContent className="bg-card border-border text-white max-h-[90vh] overflow-y-auto">
+                      <DialogContent className="bg-card border-border text-foreground max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                           <DialogTitle>Cadastrar portaria — {siglaUpper}</DialogTitle>
                         </DialogHeader>
                         <form onSubmit={salvarPortaria} className="space-y-4 mt-2">
                           <div>
-                            <Label className="text-zinc-300">Título</Label>
-                            <Input value={portariaForm.title} onChange={(e) => setPortariaForm((p) => ({ ...p, title: e.target.value }))} className="bg-background border-border text-white mt-2" required />
+                            <Label className="text-slate-700">Título</Label>
+                            <Input value={portariaForm.title} onChange={(e) => setPortariaForm((p) => ({ ...p, title: e.target.value }))} className="bg-background border-border text-foreground mt-2" required />
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <Label className="text-zinc-300">Número</Label>
-                              <Input value={portariaForm.numero} onChange={(e) => setPortariaForm((p) => ({ ...p, numero: e.target.value }))} className="bg-background border-border text-white mt-2" />
+                              <Label className="text-slate-700">Número</Label>
+                              <Input value={portariaForm.numero} onChange={(e) => setPortariaForm((p) => ({ ...p, numero: e.target.value }))} className="bg-background border-border text-foreground mt-2" />
                             </div>
                             <div>
-                              <Label className="text-zinc-300">Órgão emissor</Label>
-                              <Input value={portariaForm.orgao_emissor} onChange={(e) => setPortariaForm((p) => ({ ...p, orgao_emissor: e.target.value }))} className="bg-background border-border text-white mt-2" />
+                              <Label className="text-slate-700">Órgão emissor</Label>
+                              <Input value={portariaForm.orgao_emissor} onChange={(e) => setPortariaForm((p) => ({ ...p, orgao_emissor: e.target.value }))} className="bg-background border-border text-foreground mt-2" />
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <Label className="text-zinc-300">Fonte</Label>
-                              <Input value={portariaForm.source} onChange={(e) => setPortariaForm((p) => ({ ...p, source: e.target.value }))} className="bg-background border-border text-white mt-2" />
+                              <Label className="text-slate-700">Fonte</Label>
+                              <Input value={portariaForm.source} onChange={(e) => setPortariaForm((p) => ({ ...p, source: e.target.value }))} className="bg-background border-border text-foreground mt-2" />
                             </div>
                             <div>
-                              <Label className="text-zinc-300">Status</Label>
+                              <Label className="text-slate-700">Status</Label>
                               <Select value={portariaForm.status} onValueChange={(v) => setPortariaForm((p) => ({ ...p, status: v }))}>
-                                <SelectTrigger className="bg-background border-border text-white mt-2">
+                                <SelectTrigger className="bg-background border-border text-foreground mt-2">
                                   <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="bg-card border-border text-white">
+                                <SelectContent className="bg-card border-border text-foreground">
                                   <SelectItem value="vigente">Vigente</SelectItem>
                                   <SelectItem value="revogada">Revogada</SelectItem>
                                 </SelectContent>
@@ -625,16 +625,16 @@ export default function EstadoDetalhe() {
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <Label className="text-zinc-300">Data</Label>
-                              <Input type="date" value={portariaForm.date} onChange={(e) => setPortariaForm((p) => ({ ...p, date: e.target.value }))} className="bg-background border-border text-white mt-2" />
+                              <Label className="text-slate-700">Data</Label>
+                              <Input type="date" value={portariaForm.date} onChange={(e) => setPortariaForm((p) => ({ ...p, date: e.target.value }))} className="bg-background border-border text-foreground mt-2" />
                             </div>
                             <div>
-                              <Label className="text-zinc-300">Tipo</Label>
+                              <Label className="text-slate-700">Tipo</Label>
                               <Select value={portariaForm.tipo} onValueChange={(v) => setPortariaForm((p) => ({ ...p, tipo: v }))}>
-                                <SelectTrigger className="bg-background border-border text-white mt-2">
+                                <SelectTrigger className="bg-background border-border text-foreground mt-2">
                                   <SelectValue placeholder="Selecione..." />
                                 </SelectTrigger>
-                                <SelectContent className="bg-card border-border text-white">
+                                <SelectContent className="bg-card border-border text-foreground">
                                   {TIPOS_PORTARIA.map((t) => (
                                     <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                                   ))}
@@ -643,17 +643,17 @@ export default function EstadoDetalhe() {
                             </div>
                           </div>
                           <div>
-                            <Label className="text-zinc-300">Conteúdo</Label>
-                            <Textarea value={portariaForm.content} onChange={(e) => setPortariaForm((p) => ({ ...p, content: e.target.value }))} className="bg-background border-border text-white mt-2 min-h-[100px]" />
+                            <Label className="text-slate-700">Conteúdo</Label>
+                            <Textarea value={portariaForm.content} onChange={(e) => setPortariaForm((p) => ({ ...p, content: e.target.value }))} className="bg-background border-border text-foreground mt-2 min-h-[100px]" />
                           </div>
                           <div>
-                            <Label className="text-zinc-300">Empresa(s) credenciada(s) referenciada(s)</Label>
+                            <Label className="text-slate-700">Empresa(s) credenciada(s) referenciada(s)</Label>
                             <div className="mt-2 bg-background border border-border rounded-lg max-h-40 overflow-y-auto p-2 space-y-1">
                               {companies.length === 0 ? (
-                                <p className="text-xs text-zinc-500 px-1 py-1">Nenhuma empresa disponível</p>
+                                <p className="text-xs text-slate-500 px-1 py-1">Nenhuma empresa disponível</p>
                               ) : (
                                 companies.map((c) => (
-                                  <label key={c.company_id} className="flex items-center gap-2 px-1 py-1 text-sm text-zinc-300 hover:bg-zinc-800/50 rounded cursor-pointer">
+                                  <label key={c.company_id} className="flex items-center gap-2 px-1 py-1 text-sm text-slate-700 hover:bg-muted/50 rounded cursor-pointer">
                                     <input
                                       type="checkbox"
                                       checked={empresasSelecionadas.includes(c.company_id)}
@@ -667,16 +667,16 @@ export default function EstadoDetalhe() {
                             </div>
                           </div>
                           <div className="border-t border-border pt-4">
-                            <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer mb-3">
+                            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer mb-3">
                               <Checkbox checked={anexarArquivo} onCheckedChange={(c) => setAnexarArquivo(!!c)} />
                               Anexar PDF (upload real)
                             </label>
                             {anexarArquivo ? (
-                              <Input type="file" accept="application/pdf" onChange={(e) => setArquivoPdf(e.target.files?.[0] || null)} className="bg-background border-border text-white" />
+                              <Input type="file" accept="application/pdf" onChange={(e) => setArquivoPdf(e.target.files?.[0] || null)} className="bg-background border-border text-foreground" />
                             ) : (
                               <div>
-                                <Label className="text-zinc-300">Link do PDF (opcional)</Label>
-                                <Input value={portariaForm.link_pdf} onChange={(e) => setPortariaForm((p) => ({ ...p, link_pdf: e.target.value }))} placeholder="https://..." className="bg-background border-border text-white mt-2" />
+                                <Label className="text-slate-700">Link do PDF (opcional)</Label>
+                                <Input value={portariaForm.link_pdf} onChange={(e) => setPortariaForm((p) => ({ ...p, link_pdf: e.target.value }))} placeholder="https://..." className="bg-background border-border text-foreground mt-2" />
                               </div>
                             )}
                           </div>
@@ -690,13 +690,13 @@ export default function EstadoDetalhe() {
                 </CardHeader>
                 <CardContent>
                   {portarias.length === 0 ? (
-                    <p className="text-zinc-500 text-sm py-4 text-center">Nenhuma portaria cadastrada para {siglaUpper}.</p>
+                    <p className="text-slate-500 text-sm py-4 text-center">Nenhuma portaria cadastrada para {siglaUpper}.</p>
                   ) : (
                     <div className="space-y-2">
                       {portarias.map((portaria) => (
                         <div key={portaria.portaria_id} className={`flex items-center justify-between p-3 rounded-lg border border-border ${portaria.deleted_at ? 'opacity-50' : ''}`}>
                           <div>
-                            <p className="text-sm font-medium text-white">
+                            <p className="text-sm font-medium text-foreground">
                               {portaria.numero ? `${portaria.numero} — ` : ''}{portaria.title}
                             </p>
                             <div className="flex gap-2 mt-1 flex-wrap">
@@ -715,7 +715,7 @@ export default function EstadoDetalhe() {
                                   {portaria.empresas_referenciadas.length} empresa(s) referenciada(s)
                                 </Badge>
                               )}
-                              <span className="text-xs text-zinc-500">{new Date(portaria.date).toLocaleDateString('pt-BR')}</span>
+                              <span className="text-xs text-slate-500">{new Date(portaria.date).toLocaleDateString('pt-BR')}</span>
                             </div>
                           </div>
                           <div className="flex gap-1 shrink-0">

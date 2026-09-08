@@ -19,7 +19,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.
 const API = `${BACKEND_URL}/api`;
 
 const STATUS_SUBMISSAO_CFG = {
-  rascunho: { label: 'Rascunho', className: 'bg-zinc-800 text-zinc-400 border-input' },
+  rascunho: { label: 'Rascunho', className: 'bg-muted text-slate-600 border-input' },
   submetido: { label: 'Submetido', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
   em_diligencia: { label: 'Em Diligência', icon: AlertTriangle, className: 'bg-primary-500/10 text-primary-400 border-primary-500/20' },
@@ -27,7 +27,7 @@ const STATUS_SUBMISSAO_CFG = {
 };
 
 const STATUS_ITEM_CFG = {
-  pendente: { label: 'Pendente', icon: Clock, className: 'bg-zinc-800 text-zinc-400 border-input' },
+  pendente: { label: 'Pendente', icon: Clock, className: 'bg-muted text-slate-600 border-input' },
   enviado: { label: 'Enviado', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   conforme: { label: 'Conforme', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
   inconforme: { label: 'Inconforme', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
@@ -213,15 +213,15 @@ const PainelConferencia = () => {
       <div className="p-6 lg:p-8 space-y-8">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white">Painel de Conferência</h1>
-            <p className="text-zinc-400 text-sm mt-1">Análise das submissões de credenciamento por portaria</p>
+            <h1 className="text-2xl font-bold text-foreground">Painel de Conferência</h1>
+            <p className="text-slate-600 text-sm mt-1">Análise das submissões de credenciamento por portaria</p>
           </div>
           {ehAdmin && (
             <Select value={estadoSigla} onValueChange={(v) => { setEstadoSigla(v); setSubmissaoAtivaId(null); }}>
-              <SelectTrigger className="w-48 bg-card border-input text-white">
+              <SelectTrigger className="w-48 bg-card border-input text-foreground">
                 <SelectValue placeholder="Selecione a UF" />
               </SelectTrigger>
-              <SelectContent className="bg-card border-input text-white">
+              <SelectContent className="bg-card border-input text-foreground">
                 {ufs.map((e) => (
                   <SelectItem key={e.sigla} value={e.sigla}>{e.sigla} — {e.nome}</SelectItem>
                 ))}
@@ -231,19 +231,19 @@ const PainelConferencia = () => {
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
+          <div className="flex items-center justify-center py-16 text-slate-500 gap-3">
             <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
             <span>Carregando...</span>
           </div>
         ) : !estadoSigla ? (
           <Card className="bg-card border-border">
-            <CardContent className="p-12 text-center text-zinc-400">Selecione uma UF para ver as submissões.</CardContent>
+            <CardContent className="p-12 text-center text-slate-600">Selecione uma UF para ver as submissões.</CardContent>
           </Card>
         ) : submissoes.length === 0 ? (
           <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <ListChecks className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-400">Nenhuma submissão de credenciamento para {estadoSigla} ainda.</p>
+              <p className="text-slate-600">Nenhuma submissão de credenciamento para {estadoSigla} ainda.</p>
             </CardContent>
           </Card>
         ) : !submissaoAtiva ? (
@@ -258,17 +258,17 @@ const PainelConferencia = () => {
                 >
                   <CardContent className="p-5 flex items-center justify-between gap-4">
                     <div className="min-w-0">
-                      <p className="text-white font-semibold truncate">{nomeEmpresa(sub.company_id)}</p>
-                      <p className="text-xs text-zinc-500 mt-1 truncate">{tituloPortaria(sub.portaria_id)}</p>
+                      <p className="text-foreground font-semibold truncate">{nomeEmpresa(sub.company_id)}</p>
+                      <p className="text-xs text-slate-500 mt-1 truncate">{tituloPortaria(sub.portaria_id)}</p>
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
-                      <Badge className="bg-zinc-800 text-zinc-400 border-input text-[10px] font-mono uppercase">
+                      <Badge className="bg-muted text-slate-600 border-input text-[10px] font-mono uppercase">
                         {nomeCategoria(sub.perfil_empresa)}
                       </Badge>
                       <Badge className={`${cfg.className} font-mono uppercase text-[10px] px-2 py-0.5`}>
                         {cfg.icon && <cfg.icon className="h-3 w-3 mr-1" />}{cfg.label}
                       </Badge>
-                      <ChevronRight className="h-4 w-4 text-zinc-600" />
+                      <ChevronRight className="h-4 w-4 text-slate-400" />
                     </div>
                   </CardContent>
                 </Card>
@@ -277,14 +277,14 @@ const PainelConferencia = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            <Button variant="link" size="sm" onClick={() => setSubmissaoAtivaId(null)} className="h-auto p-0 text-zinc-400 hover:text-white">
+            <Button variant="link" size="sm" onClick={() => setSubmissaoAtivaId(null)} className="h-auto p-0 text-slate-600 hover:text-foreground">
               ← Voltar pra lista de submissões
             </Button>
 
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-lg font-semibold text-white">{nomeEmpresa(submissaoAtiva.company_id)}</h2>
-                <p className="text-xs text-zinc-500 mt-1">{tituloPortaria(submissaoAtiva.portaria_id)}</p>
+                <h2 className="text-lg font-semibold text-foreground">{nomeEmpresa(submissaoAtiva.company_id)}</h2>
+                <p className="text-xs text-slate-500 mt-1">{tituloPortaria(submissaoAtiva.portaria_id)}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <Badge className={`${STATUS_SUBMISSAO_CFG[submissaoAtiva.status].className} font-mono uppercase text-xs`}>
@@ -317,7 +317,7 @@ const PainelConferencia = () => {
                       <div className="flex items-center justify-between gap-4">
                         <div className="min-w-0">
                           <p className="text-sm text-zinc-200 font-medium">{item.nome}</p>
-                          {item.descricao && <p className="text-xs text-zinc-500 mt-0.5">{item.descricao}</p>}
+                          {item.descricao && <p className="text-xs text-slate-500 mt-0.5">{item.descricao}</p>}
                         </div>
                         <Badge className={`${cfg.className} font-mono uppercase text-[10px] px-2 py-0.5 shrink-0`}>
                           <cfg.icon className="h-3 w-3 mr-1" />{cfg.label}
@@ -353,7 +353,7 @@ const PainelConferencia = () => {
                             placeholder="Justificativa da diligência (obrigatória)"
                             value={justificativas[item.item_id] || ''}
                             onChange={(e) => setJustificativas((p) => ({ ...p, [item.item_id]: e.target.value }))}
-                            className="bg-zinc-800 border-input text-white text-sm min-h-[70px]"
+                            className="bg-muted border-input text-foreground text-sm min-h-[70px]"
                           />
                           <Button size="sm" variant="destructive" onClick={() => analisarItem(item.item_id, 'inconforme')} disabled={analisando === item.item_id}>
                             Confirmar Inconformidade

@@ -28,7 +28,7 @@ const STATUS_EMPRESA_CFG = {
 };
 
 const STATUS_SUBMISSAO_CFG = {
-  rascunho: { label: 'Rascunho', className: 'bg-zinc-800 text-zinc-400 border-input' },
+  rascunho: { label: 'Rascunho', className: 'bg-muted text-slate-600 border-input' },
   submetido: { label: 'Submetido', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
   em_diligencia: { label: 'Em Diligência', icon: FileText, className: 'bg-primary-500/10 text-primary-400 border-primary-500/20' },
@@ -36,7 +36,7 @@ const STATUS_SUBMISSAO_CFG = {
 };
 
 const STATUS_ITEM_CFG = {
-  pendente: { label: 'Pendente', icon: Clock, className: 'bg-zinc-800 text-zinc-400 border-input' },
+  pendente: { label: 'Pendente', icon: Clock, className: 'bg-muted text-slate-600 border-input' },
   enviado: { label: 'Enviado', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   conforme: { label: 'Conforme', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
   inconforme: { label: 'Inconforme', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
@@ -118,20 +118,20 @@ const Registradoras = () => {
       <div className="p-6 lg:p-8 space-y-8" data-testid="registradoras-page">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <Building2 className="h-6 w-6 text-primary-400" />
               Registradoras
             </h1>
-            <p className="text-zinc-400 text-sm mt-1">
+            <p className="text-slate-600 text-sm mt-1">
               Cadastro e status de credenciamento por portaria das registradoras que atuam nesta UF
             </p>
           </div>
           {ehAdmin && (
             <Select value={estadoSigla} onValueChange={setEstadoSigla}>
-              <SelectTrigger className="w-48 bg-card border-input text-white">
+              <SelectTrigger className="w-48 bg-card border-input text-foreground">
                 <SelectValue placeholder="Selecione a UF" />
               </SelectTrigger>
-              <SelectContent className="bg-card border-input text-white">
+              <SelectContent className="bg-card border-input text-foreground">
                 {ufs.map((e) => (
                   <SelectItem key={e.sigla} value={e.sigla}>{e.sigla} — {e.nome}</SelectItem>
                 ))}
@@ -159,19 +159,19 @@ const Registradoras = () => {
         )}
 
         {loading ? (
-          <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
+          <div className="flex items-center justify-center py-16 text-slate-500 gap-3">
             <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
             <span>Carregando...</span>
           </div>
         ) : !estadoSigla ? (
           <Card className="bg-card border-border">
-            <CardContent className="p-12 text-center text-zinc-400">Selecione uma UF para ver as registradoras.</CardContent>
+            <CardContent className="p-12 text-center text-slate-600">Selecione uma UF para ver as registradoras.</CardContent>
           </Card>
         ) : registradorasFiltradas.length === 0 ? (
           <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <Building2 className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-400">
+              <p className="text-slate-600">
                 {registradoras.length === 0
                   ? `Nenhuma registradora atuando em ${estadoSigla} ainda.`
                   : 'Nenhuma registradora corresponde a este filtro.'}
@@ -191,24 +191,24 @@ const Registradoras = () => {
                     >
                       <div className="min-w-0">
                         <div className="flex items-center gap-3 flex-wrap mb-1">
-                          <p className="text-white font-semibold">{r.name}</p>
+                          <p className="text-foreground font-semibold">{r.name}</p>
                           {badge(STATUS_EMPRESA_CFG, r.status)}
                         </div>
-                        <p className="text-sm text-zinc-400">{r.nome_fantasia}</p>
-                        <p className="text-xs font-mono text-zinc-500 mt-0.5">CNPJ: {r.cnpj}</p>
+                        <p className="text-sm text-slate-600">{r.nome_fantasia}</p>
+                        <p className="text-xs font-mono text-slate-500 mt-0.5">CNPJ: {r.cnpj}</p>
                         {(complianceFiltro || pendenciasFiltro) && r.compliance && (
                           <div className="mt-1.5">{badge(COMPLIANCE_CFG, r.compliance)}</div>
                         )}
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
-                        <div className="text-right text-xs text-zinc-500">
+                        <div className="text-right text-xs text-slate-500">
                           <p>{r.total_portarias_respondidas} portaria(s) respondida(s)</p>
                           <p>{r.total_homologadas} homologada(s)</p>
                           {(complianceFiltro || pendenciasFiltro) && (
                             <p>{r.docs_pendentes} doc(s) pendente(s)</p>
                           )}
                         </div>
-                        {expandida ? <ChevronDown className="h-4 w-4 text-zinc-500" /> : <ChevronRight className="h-4 w-4 text-zinc-500" />}
+                        {expandida ? <ChevronDown className="h-4 w-4 text-slate-500" /> : <ChevronRight className="h-4 w-4 text-slate-500" />}
                       </div>
                     </button>
 
@@ -216,25 +216,25 @@ const Registradoras = () => {
                       <div className="mt-4 pt-4 border-t border-border space-y-4">
                         <div className="grid md:grid-cols-2 gap-4 text-sm">
                           <div>
-                            <p className="text-zinc-500 mb-1">Email Comercial:</p>
-                            <p className="text-zinc-300">{r.email_comercial}</p>
+                            <p className="text-slate-500 mb-1">Email Comercial:</p>
+                            <p className="text-slate-700">{r.email_comercial}</p>
                           </div>
                           <div>
-                            <p className="text-zinc-500 mb-1">Gestor do Contrato:</p>
-                            <p className="text-zinc-300">{r.gestor_contrato}</p>
+                            <p className="text-slate-500 mb-1">Gestor do Contrato:</p>
+                            <p className="text-slate-700">{r.gestor_contrato}</p>
                           </div>
                           <div>
-                            <p className="text-zinc-500 mb-1">Endereço:</p>
-                            <p className="text-zinc-300">{r.endereco || '—'}</p>
+                            <p className="text-slate-500 mb-1">Endereço:</p>
+                            <p className="text-slate-700">{r.endereco || '—'}</p>
                           </div>
                           <div>
-                            <p className="text-zinc-500 mb-1">WhatsApp:</p>
-                            <p className="text-zinc-300">{r.whatsapp || '—'}</p>
+                            <p className="text-slate-500 mb-1">WhatsApp:</p>
+                            <p className="text-slate-700">{r.whatsapp || '—'}</p>
                           </div>
                         </div>
                         {r.detrans_atuacao?.length > 0 && (
                           <div>
-                            <p className="text-xs text-zinc-500 mb-2">DETRANs de Atuação:</p>
+                            <p className="text-xs text-slate-500 mb-2">DETRANs de Atuação:</p>
                             <div className="flex flex-wrap gap-2">
                               {r.detrans_atuacao.map((uf) => (
                                 <Badge key={uf} className="bg-sky-500/10 text-sky-500 border-sky-500/20 text-xs">DETRAN-{uf}</Badge>
@@ -244,11 +244,11 @@ const Registradoras = () => {
                         )}
 
                         <div>
-                          <p className="text-xs text-zinc-500 mb-2 flex items-center gap-1.5">
+                          <p className="text-xs text-slate-500 mb-2 flex items-center gap-1.5">
                             <ListChecks className="h-3.5 w-3.5" /> Credenciamento por Portaria
                           </p>
                           {r.submissoes.length === 0 ? (
-                            <p className="text-sm text-zinc-500">Nenhuma submissão ainda para portarias desta UF.</p>
+                            <p className="text-sm text-slate-500">Nenhuma submissão ainda para portarias desta UF.</p>
                           ) : (
                             <div className="space-y-3">
                               {r.submissoes.map((s) => (
@@ -259,7 +259,7 @@ const Registradoras = () => {
                                     </p>
                                     {badge(STATUS_SUBMISSAO_CFG, s.status)}
                                   </div>
-                                  <p className="text-xs text-zinc-500 mb-2">
+                                  <p className="text-xs text-slate-500 mb-2">
                                     {s.itens_conforme}/{s.total_itens} itens conformes
                                     {s.itens_inconforme > 0 && ` · ${s.itens_inconforme} inconforme(s)`}
                                     {s.itens_pendentes > 0 && ` · ${s.itens_pendentes} pendente(s)`}

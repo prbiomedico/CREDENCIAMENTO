@@ -174,14 +174,14 @@ const CriarEvento = () => {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-lg bg-primary-500/10 border border-primary-500/20 flex items-center justify-center"><Plus className="h-5 w-5 text-primary-500" /></div>
-            <div><h1 className="text-3xl font-heading font-bold">Criar Evento</h1><p className="text-zinc-500 text-sm">Configure um novo processo</p></div>
+            <div><h1 className="text-3xl font-heading font-bold">Criar Evento</h1><p className="text-slate-500 text-sm">Configure um novo processo</p></div>
           </div>
           {step < 4 && (
             <div className="flex items-center gap-2">
               {STEPS.map((s, i) => (
                 <React.Fragment key={i}>
-                  <div className={`px-3 py-1.5 rounded-full text-xs font-mono transition-all ${i === step ? 'bg-primary-500 text-white' : i < step ? 'bg-primary-500/20 text-primary-400' : 'bg-zinc-800 text-zinc-500'}`}>{i+1} <span className="hidden sm:inline">{s}</span></div>
-                  {i < STEPS.length-1 && <div className={`h-px flex-1 ${i < step ? 'bg-primary-500/40' : 'bg-zinc-800'}`} />}
+                  <div className={`px-3 py-1.5 rounded-full text-xs font-mono transition-all ${i === step ? 'bg-primary-500 text-white' : i < step ? 'bg-primary-500/20 text-primary-400' : 'bg-muted text-slate-500'}`}>{i+1} <span className="hidden sm:inline">{s}</span></div>
+                  {i < STEPS.length-1 && <div className={`h-px flex-1 ${i < step ? 'bg-primary-500/40' : 'bg-muted'}`} />}
                 </React.Fragment>
               ))}
             </div>
@@ -200,14 +200,14 @@ const CriarEvento = () => {
                   className={`relative p-6 rounded-2xl border-2 text-left transition-all ${disponivel ? 'hover:scale-[1.02]' : 'opacity-50 cursor-default'} ${c.inativo}`}
                 >
                   {!disponivel && (
-                    <Badge className="absolute top-4 right-4 bg-zinc-800 text-zinc-400 border-input text-[10px] gap-1">
+                    <Badge className="absolute top-4 right-4 bg-muted text-slate-600 border-input text-[10px] gap-1">
                       <Lock className="h-2.5 w-2.5" /> Em breve
                     </Badge>
                   )}
                   <div className={`w-12 h-12 rounded-xl ${c.badge} flex items-center justify-center mb-4`}><I className="h-6 w-6" /></div>
-                  <h3 className="text-lg font-semibold text-white mb-1">{t.nome}</h3>
-                  <p className="text-sm text-zinc-400 mb-4">{t.descricao}</p>
-                  <div className="flex flex-wrap gap-1">{t.documentos_padrao.slice(0,3).map(d => <span key={d} className="text-[10px] bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded font-mono">{d}</span>)}{t.documentos_padrao.length > 3 && <span className="text-[10px] text-zinc-600">+{t.documentos_padrao.length-3}</span>}</div>
+                  <h3 className="text-lg font-semibold text-foreground mb-1">{t.nome}</h3>
+                  <p className="text-sm text-slate-600 mb-4">{t.descricao}</p>
+                  <div className="flex flex-wrap gap-1">{t.documentos_padrao.slice(0,3).map(d => <span key={d} className="text-[10px] bg-muted text-slate-600 px-2 py-0.5 rounded font-mono">{d}</span>)}{t.documentos_padrao.length > 3 && <span className="text-[10px] text-slate-400">+{t.documentos_padrao.length-3}</span>}</div>
                 </button>
               );
             })}
@@ -217,20 +217,20 @@ const CriarEvento = () => {
         {step === 1 && tmpl && (
           <div className="space-y-5">
             <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-mono ${cor?.badge}`}>{Icon && <Icon className="h-4 w-4" />}{tmpl.nome}</div>
-            <div><Label className="text-zinc-300 text-sm mb-1.5 block">Título *</Label><Input value={form.titulo} onChange={e => setForm(f => ({...f, titulo: e.target.value}))} className="bg-background border-border focus:border-primary-500 text-white" placeholder="Ex: Credenciamento de Registradoras DF 2026" /></div>
-            <div><Label className="text-zinc-300 text-sm mb-1.5 block">Descrição</Label><Textarea value={form.descricao} onChange={e => setForm(f => ({...f, descricao: e.target.value}))} className="bg-background border-border text-white min-h-[80px]" /></div>
+            <div><Label className="text-slate-700 text-sm mb-1.5 block">Título *</Label><Input value={form.titulo} onChange={e => setForm(f => ({...f, titulo: e.target.value}))} className="bg-background border-border focus:border-primary-500 text-foreground" placeholder="Ex: Credenciamento de Registradoras DF 2026" /></div>
+            <div><Label className="text-slate-700 text-sm mb-1.5 block">Descrição</Label><Textarea value={form.descricao} onChange={e => setForm(f => ({...f, descricao: e.target.value}))} className="bg-background border-border text-foreground min-h-[80px]" /></div>
             <div className="grid grid-cols-2 gap-4">
-              <div><Label className="text-zinc-300 text-sm mb-1.5 block">UF *</Label>
+              <div><Label className="text-slate-700 text-sm mb-1.5 block">UF *</Label>
                 <Select value={form.uf} onValueChange={v => setForm(f => ({...f, uf: v, orgao: `DETRAN-${v}`}))}>
-                  <SelectTrigger className="bg-background border-border text-white"><SelectValue placeholder="Selecione" /></SelectTrigger>
-                  <SelectContent className="bg-card border-border text-white">{UFS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="bg-background border-border text-foreground"><SelectValue placeholder="Selecione" /></SelectTrigger>
+                  <SelectContent className="bg-card border-border text-foreground">{UFS.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
-              <div><Label className="text-zinc-300 text-sm mb-1.5 block">Órgão</Label><Input value={form.orgao} onChange={e => setForm(f => ({...f, orgao: e.target.value}))} className="bg-background border-border text-white" /></div>
+              <div><Label className="text-slate-700 text-sm mb-1.5 block">Órgão</Label><Input value={form.orgao} onChange={e => setForm(f => ({...f, orgao: e.target.value}))} className="bg-background border-border text-foreground" /></div>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div><Label className="text-zinc-300 text-sm mb-1.5 block">Abertura</Label><Input type="datetime-local" value={form.data_abertura} onChange={e => setForm(f => ({...f, data_abertura: e.target.value}))} className="bg-background border-border text-white" /></div>
-              <div><Label className="text-zinc-300 text-sm mb-1.5 block">Encerramento</Label><Input type="datetime-local" value={form.data_encerramento} onChange={e => setForm(f => ({...f, data_encerramento: e.target.value}))} className="bg-background border-border text-white" /></div>
+              <div><Label className="text-slate-700 text-sm mb-1.5 block">Abertura</Label><Input type="datetime-local" value={form.data_abertura} onChange={e => setForm(f => ({...f, data_abertura: e.target.value}))} className="bg-background border-border text-foreground" /></div>
+              <div><Label className="text-slate-700 text-sm mb-1.5 block">Encerramento</Label><Input type="datetime-local" value={form.data_encerramento} onChange={e => setForm(f => ({...f, data_encerramento: e.target.value}))} className="bg-background border-border text-foreground" /></div>
             </div>
             <div className="flex gap-3"><Button variant="outline" onClick={() => setStep(0)}>Voltar</Button><Button onClick={() => setStep(2)} disabled={!form.titulo || !form.uf} className="bg-primary-500 hover:bg-primary-600 text-white">Próximo <ChevronRight className="h-4 w-4 ml-1" /></Button></div>
           </div>
@@ -238,9 +238,9 @@ const CriarEvento = () => {
 
         {step === 2 && (
           <div className="space-y-5">
-            <p className="text-zinc-400 text-sm">Selecione os itens do catálogo de checklist exigidos para este evento — os mesmos usados pela conferência do DETRAN e pelas submissões das empresas.</p>
+            <p className="text-slate-600 text-sm">Selecione os itens do catálogo de checklist exigidos para este evento — os mesmos usados pela conferência do DETRAN e pelas submissões das empresas.</p>
             <ChecklistCatalogoPicker selecionados={selecionadosCatalogo} onToggle={toggleChecklistItem} />
-            <div className="bg-muted/40 rounded-lg p-3 border border-border"><p className="text-xs text-zinc-500 mb-2">{form.checklist_itens.length} selecionado(s)</p><div className="flex flex-wrap gap-1">{form.checklist_itens.map(d => <span key={d.catalogo_item_id || d.nome} className="text-[10px] bg-primary-500/10 text-primary-300 px-2 py-0.5 rounded-full font-mono">{d.nome}</span>)}</div></div>
+            <div className="bg-muted/40 rounded-lg p-3 border border-border"><p className="text-xs text-slate-500 mb-2">{form.checklist_itens.length} selecionado(s)</p><div className="flex flex-wrap gap-1">{form.checklist_itens.map(d => <span key={d.catalogo_item_id || d.nome} className="text-[10px] bg-primary-500/10 text-primary-300 px-2 py-0.5 rounded-full font-mono">{d.nome}</span>)}</div></div>
             <div className="flex gap-3"><Button variant="outline" onClick={() => setStep(1)}>Voltar</Button><Button onClick={() => setStep(3)} className="bg-primary-500 hover:bg-primary-600 text-white">Revisar <ChevronRight className="h-4 w-4 ml-1" /></Button></div>
           </div>
         )}
@@ -253,21 +253,21 @@ const CriarEvento = () => {
                 <div className="flex gap-2 mt-2"><Badge className={`${cor?.badge} text-xs font-mono`}>{tmpl?.nome}</Badge><Badge className="bg-sky-500/10 text-sky-400 text-xs font-mono">DETRAN-{form.uf}</Badge></div>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-zinc-400">{form.descricao}</p>
-                <div><p className="text-xs text-zinc-500 mb-2 font-mono uppercase">Checklist ({form.checklist_itens.length})</p><div className="flex flex-wrap gap-1">{form.checklist_itens.map(d => <span key={d.catalogo_item_id || d.nome} className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-mono">{d.nome}</span>)}</div></div>
-                <div><p className="text-xs text-zinc-500 mb-2 font-mono uppercase">Prazo</p><p className="text-sm text-zinc-300">{formatarData(form.data_abertura) || formatarData(form.data_encerramento) ? `${formatarData(form.data_abertura) || '—'} até ${formatarData(form.data_encerramento) || '—'}` : 'Não definido'}</p></div>
+                <p className="text-sm text-slate-600">{form.descricao}</p>
+                <div><p className="text-xs text-slate-500 mb-2 font-mono uppercase">Checklist ({form.checklist_itens.length})</p><div className="flex flex-wrap gap-1">{form.checklist_itens.map(d => <span key={d.catalogo_item_id || d.nome} className="text-[10px] bg-muted text-slate-700 px-2 py-0.5 rounded font-mono">{d.nome}</span>)}</div></div>
+                <div><p className="text-xs text-slate-500 mb-2 font-mono uppercase">Prazo</p><p className="text-sm text-slate-700">{formatarData(form.data_abertura) || formatarData(form.data_encerramento) ? `${formatarData(form.data_abertura) || '—'} até ${formatarData(form.data_encerramento) || '—'}` : 'Não definido'}</p></div>
                 <div>
-                  <p className="text-xs text-zinc-500 mb-2 font-mono uppercase">PDF da Portaria (opcional)</p>
+                  <p className="text-xs text-slate-500 mb-2 font-mono uppercase">PDF da Portaria (opcional)</p>
                   <Input
                     type="file"
                     accept="application/pdf"
                     onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
-                    className="bg-background border-border text-white"
+                    className="bg-background border-border text-foreground"
                   />
                   {pdfFile && (
-                    <p className="text-xs text-zinc-400 mt-1.5 flex items-center gap-1.5"><Paperclip className="h-3 w-3" /> {pdfFile.name}</p>
+                    <p className="text-xs text-slate-600 mt-1.5 flex items-center gap-1.5"><Paperclip className="h-3 w-3" /> {pdfFile.name}</p>
                   )}
-                  <p className="text-xs text-zinc-600 mt-1.5">Pode ser anexado depois em Transparência {'>'} Editar, se preferir.</p>
+                  <p className="text-xs text-slate-400 mt-1.5">Pode ser anexado depois em Transparência {'>'} Editar, se preferir.</p>
                 </div>
               </CardContent>
             </Card>
@@ -282,17 +282,17 @@ const CriarEvento = () => {
         {step === 4 && eventoSalvo && (
           <div className="text-center space-y-6">
             <div className="w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 flex items-center justify-center mx-auto"><Check className="h-10 w-10 text-emerald-400" /></div>
-            <div><h2 className="text-2xl font-heading font-bold mb-2">{eventoSalvo.status === 'publicado' ? 'Evento Publicado!' : 'Rascunho Salvo!'}</h2><p className="text-zinc-400">{eventoSalvo.titulo}</p></div>
+            <div><h2 className="text-2xl font-heading font-bold mb-2">{eventoSalvo.status === 'publicado' ? 'Evento Publicado!' : 'Rascunho Salvo!'}</h2><p className="text-slate-600">{eventoSalvo.titulo}</p></div>
             {eventoSalvo.status === 'publicado' && (
               <Card className="bg-card border-border text-left">
                 <CardContent className="p-5">
-                  <p className="text-xs text-zinc-500 mb-2 font-mono uppercase">Link para Divulgação no DOU</p>
+                  <p className="text-xs text-slate-500 mb-2 font-mono uppercase">Link para Divulgação no DOU</p>
                   <div className="flex items-center gap-2 p-3 bg-background rounded-lg border border-border">
                     <Globe className="h-4 w-4 text-primary-500 shrink-0" />
-                    <span className="text-sm text-zinc-300 flex-1 truncate font-mono">{eventoSalvo.link_publico}</span>
-                    <button onClick={copiarLink} className={`p-1.5 rounded-lg transition-all ${copiado ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-800 text-zinc-400 hover:text-white'}`}>{copiado ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}</button>
+                    <span className="text-sm text-slate-700 flex-1 truncate font-mono">{eventoSalvo.link_publico}</span>
+                    <button onClick={copiarLink} className={`p-1.5 rounded-lg transition-all ${copiado ? 'bg-emerald-500/20 text-emerald-400' : 'bg-muted text-slate-600 hover:text-foreground'}`}>{copiado ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}</button>
                   </div>
-                  <p className="text-xs text-zinc-600 mt-2">Compartilhe este link no Diário Oficial para que as empresas se inscrevam</p>
+                  <p className="text-xs text-slate-400 mt-2">Compartilhe este link no Diário Oficial para que as empresas se inscrevam</p>
                 </CardContent>
               </Card>
             )}

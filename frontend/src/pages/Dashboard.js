@@ -41,7 +41,7 @@ const DashboardFinanceira = () => {
           <h1 className="text-3xl font-heading font-bold tracking-tight">
             Olá, {user?.name?.split(' ')[0]} 👋
           </h1>
-          <p className="text-zinc-500 text-sm mt-1">Bem-vindo ao SIGCR — {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <p className="text-slate-500 text-sm mt-1">Bem-vindo ao SIGCR — {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
         </div>
 
         {loading ? (
@@ -62,23 +62,23 @@ const DashboardFinanceira = () => {
                   <div className="grid grid-cols-4 gap-4">
                     <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
                       <p className="text-2xl font-bold font-mono text-emerald-400">{resumo.aprovados}</p>
-                      <p className="text-xs text-zinc-500 mt-1">Aprovados</p>
+                      <p className="text-xs text-slate-500 mt-1">Aprovados</p>
                     </div>
                     <div className="p-4 rounded-xl bg-sky-500/10 border border-sky-500/20 text-center">
                       <p className="text-2xl font-bold font-mono text-sky-400">{resumo.enviados}</p>
-                      <p className="text-xs text-zinc-500 mt-1">Enviados</p>
+                      <p className="text-xs text-slate-500 mt-1">Enviados</p>
                     </div>
                     <div className="p-4 rounded-xl bg-zinc-500/10 border border-zinc-500/20 text-center">
-                      <p className="text-2xl font-bold font-mono text-zinc-400">{resumo.pendentes}</p>
-                      <p className="text-xs text-zinc-500 mt-1">Pendentes</p>
+                      <p className="text-2xl font-bold font-mono text-slate-600">{resumo.pendentes}</p>
+                      <p className="text-xs text-slate-500 mt-1">Pendentes</p>
                     </div>
                     <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
                       <p className="text-2xl font-bold font-mono text-red-400">{resumo.rejeitados}</p>
-                      <p className="text-xs text-zinc-500 mt-1">Rejeitados</p>
+                      <p className="text-xs text-slate-500 mt-1">Rejeitados</p>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-zinc-400 text-sm py-4">
+                  <p className="text-slate-600 text-sm py-4">
                     A lista de documentos exigidos pra credenciamento de Financeira ainda não foi publicada. Assim que estiver disponível, ela aparece aqui e na tela de Documentos.
                   </p>
                 )}
@@ -88,8 +88,8 @@ const DashboardFinanceira = () => {
             <Card className="bg-card border-border">
               <CardContent className="p-6 flex items-center justify-between">
                 <div>
-                  <p className="font-semibold text-white mb-1">Documentos</p>
-                  <p className="text-sm text-zinc-500">Envie e acompanhe os documentos exigidos pra credenciamento.</p>
+                  <p className="font-semibold text-foreground mb-1">Documentos</p>
+                  <p className="text-sm text-slate-500">Envie e acompanhe os documentos exigidos pra credenciamento.</p>
                 </div>
                 <Button onClick={() => navigate('/documentos')} className="bg-primary-500 hover:bg-primary-600 text-white gap-2 shrink-0">
                   Ir para Documentos <ArrowRight className="h-4 w-4" />
@@ -203,7 +203,7 @@ const Dashboard = () => {
           <h1 className="text-3xl font-heading font-bold tracking-tight">
             Olá, {user?.name?.split(' ')[0]} 👋
           </h1>
-          <p className="text-zinc-500 text-sm mt-1">Bem-vindo ao SIGCR — {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <p className="text-slate-500 text-sm mt-1">Bem-vindo ao SIGCR — {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
           <div className="mt-4">
             <AppMenuBar />
           </div>
@@ -230,7 +230,7 @@ const Dashboard = () => {
                 >
                   <CardContent className="p-5">
                     <div className="flex items-center justify-between mb-3">
-                      <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider">{label}</p>
+                      <p className="text-xs text-slate-500 font-mono uppercase tracking-wider">{label}</p>
                       <div className={`w-8 h-8 rounded-lg bg-${color}-500/10 flex items-center justify-center`}>
                         <Icon className={`h-4 w-4 text-${color}-400`} />
                       </div>
@@ -258,7 +258,7 @@ const Dashboard = () => {
                       >
                         <Icon className={`h-6 w-6 text-${color}-400 mx-auto mb-2`} />
                         <p className={`text-2xl font-bold font-mono text-${color}-400`}>{value}</p>
-                        <p className="text-xs text-zinc-500 mt-1">{label}</p>
+                        <p className="text-xs text-slate-500 mt-1">{label}</p>
                       </div>
                     ))}
                   </div>
@@ -278,21 +278,21 @@ const Dashboard = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
                         <p className="text-2xl font-bold font-mono text-amber-400">{vencimentoResumo.vencendo.length}</p>
-                        <p className="text-xs text-zinc-500 mt-1">Vencendo em até 30 dias</p>
+                        <p className="text-xs text-slate-500 mt-1">Vencendo em até 30 dias</p>
                       </div>
                       <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
                         <p className="text-2xl font-bold font-mono text-red-400">{vencimentoResumo.vencidos.length}</p>
-                        <p className="text-xs text-zinc-500 mt-1">Já vencidos</p>
+                        <p className="text-xs text-slate-500 mt-1">Já vencidos</p>
                       </div>
                     </div>
 
                     {vencimentoResumo.vencidos.length > 0 && (
                       <div>
-                        <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider mb-2">Vencidos</p>
+                        <p className="text-xs text-slate-500 font-mono uppercase tracking-wider mb-2">Vencidos</p>
                         <div className="space-y-1.5">
                           {vencimentoResumo.vencidos.map((item) => (
                             <div key={`${item.origem}-${item.id}`} className="flex items-center justify-between text-sm p-2 rounded-lg bg-red-500/5 border border-red-500/10">
-                              <span className="text-zinc-300">{item.nome}</span>
+                              <span className="text-slate-700">{item.nome}</span>
                               <span className="text-red-400 font-mono text-xs">{new Date(item.vencimento).toLocaleDateString('pt-BR')}</span>
                             </div>
                           ))}
@@ -302,11 +302,11 @@ const Dashboard = () => {
 
                     {vencimentoResumo.vencendo.length > 0 && (
                       <div>
-                        <p className="text-xs text-zinc-500 font-mono uppercase tracking-wider mb-2">Vencendo em breve</p>
+                        <p className="text-xs text-slate-500 font-mono uppercase tracking-wider mb-2">Vencendo em breve</p>
                         <div className="space-y-1.5">
                           {vencimentoResumo.vencendo.map((item) => (
                             <div key={`${item.origem}-${item.id}`} className="flex items-center justify-between text-sm p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
-                              <span className="text-zinc-300">{item.nome}</span>
+                              <span className="text-slate-700">{item.nome}</span>
                               <span className="text-amber-400 font-mono text-xs">{new Date(item.vencimento).toLocaleDateString('pt-BR')}</span>
                             </div>
                           ))}
@@ -326,8 +326,8 @@ const Dashboard = () => {
                     {user?.name?.[0]?.toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-semibold text-white">{user?.name}</p>
-                    <p className="text-sm text-zinc-500">{user?.email}</p>
+                    <p className="font-semibold text-foreground">{user?.name}</p>
+                    <p className="text-sm text-slate-500">{user?.email}</p>
                     <p className="text-xs font-mono text-primary-400 mt-0.5 uppercase">{user?.perfil}</p>
                   </div>
                 </div>

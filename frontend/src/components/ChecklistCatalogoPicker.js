@@ -123,7 +123,7 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
   };
 
   if (carregando) {
-    return <p className="text-xs text-zinc-500">Carregando catálogo...</p>;
+    return <p className="text-xs text-slate-500">Carregando catálogo...</p>;
   }
 
   return (
@@ -131,7 +131,7 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
       <div className="space-y-6">
         {tipos.map((tipo) => {
           const secao = PERFIL_SECAO[tipo.tipo_id] || {
-            label: tipo.nome, fonte: tipo.descricao || null, badge: 'bg-zinc-700/50 text-zinc-300 border-zinc-600',
+            label: tipo.nome, fonte: tipo.descricao || null, badge: 'bg-zinc-700/50 text-slate-700 border-zinc-600',
           };
           const itensDoPerfil = catalogo.filter((it) => it.perfil_alvo === tipo.tipo_id);
           const blocosNomes = blocosDoPerfil(tipo.tipo_id);
@@ -139,10 +139,10 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
             <div key={tipo.tipo_id}>
               <div className="flex items-center gap-2 mb-2">
                 <Badge className={`${secao.badge} text-xs shrink-0`}>{secao.label}</Badge>
-                {secao.fonte && <p className="text-[11px] text-zinc-500">{secao.fonte}</p>}
+                {secao.fonte && <p className="text-[11px] text-slate-500">{secao.fonte}</p>}
               </div>
               {itensDoPerfil.length === 0 ? (
-                <p className="text-xs text-zinc-500 mb-2">Nenhum item cadastrado pra esta categoria ainda.</p>
+                <p className="text-xs text-slate-500 mb-2">Nenhum item cadastrado pra esta categoria ainda.</p>
               ) : (
                 <div className="space-y-4">
                   {Object.entries(blocosNomes).map(([blocoNum, blocoNome]) => {
@@ -150,7 +150,7 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
                     if (itensDoBloco.length === 0) return null;
                     return (
                       <div key={blocoNum}>
-                        <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-1.5">{blocoNome}</p>
+                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-1.5">{blocoNome}</p>
                         <div className="space-y-1.5">
                           {itensDoBloco.map((item) => (
                             <label
@@ -165,7 +165,7 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
                               />
                               <div className="flex-1 min-w-0">
                                 <p className="text-sm text-zinc-200">{item.nome}</p>
-                                {item.descricao && <p className="text-xs text-zinc-500 mt-0.5">{item.descricao}</p>}
+                                {item.descricao && <p className="text-xs text-slate-500 mt-0.5">{item.descricao}</p>}
                               </div>
                             </label>
                           ))}
@@ -187,22 +187,22 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
               value={novoItemNome}
               onChange={(e) => setNovoItemNome(e.target.value)}
               placeholder="Nome do item novo"
-              className="bg-background border-border text-white"
+              className="bg-background border-border text-foreground"
             />
             <div className="grid grid-cols-2 gap-2">
               <Select value={novoItemPerfil} onValueChange={trocarNovoItemPerfil}>
-                <SelectTrigger className="bg-background border-border text-white">
+                <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border text-white">
+                <SelectContent className="bg-card border-border text-foreground">
                   {tipos.map((t) => <SelectItem key={t.tipo_id} value={t.tipo_id}>{t.nome}</SelectItem>)}
                 </SelectContent>
               </Select>
               <Select value={String(novoItemBloco)} onValueChange={(v) => setNovoItemBloco(Number(v))}>
-                <SelectTrigger className="bg-background border-border text-white">
+                <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent className="bg-card border-border text-white">
+                <SelectContent className="bg-card border-border text-foreground">
                   {Object.entries(blocosDoPerfil(novoItemPerfil)).map(([num, nome]) => (
                     <SelectItem key={num} value={num}>{nome}</SelectItem>
                   ))}
@@ -213,10 +213,10 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
               value={novoItemDescricao}
               onChange={(e) => setNovoItemDescricao(e.target.value)}
               placeholder="Descrição (opcional)"
-              className="bg-background border-border text-white"
+              className="bg-background border-border text-foreground"
             />
             <div className="flex gap-2">
-              <Button type="button" onClick={criarItemCatalogo} disabled={criando} className="bg-zinc-700 hover:bg-zinc-600 text-white gap-1">
+              <Button type="button" onClick={criarItemCatalogo} disabled={criando} className="bg-zinc-700 hover:bg-zinc-600 text-foreground gap-1">
                 <Plus className="h-4 w-4" />
                 {criando ? 'Salvando...' : 'Salvar no catálogo'}
               </Button>
@@ -230,7 +230,7 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
             </div>
           </div>
         ) : (
-          <Button type="button" variant="outline" onClick={() => setNovoItemAberto(true)} className="border-input border-dashed text-zinc-400 hover:bg-zinc-800 gap-1 w-full">
+          <Button type="button" variant="outline" onClick={() => setNovoItemAberto(true)} className="border-input border-dashed text-slate-600 hover:bg-muted gap-1 w-full">
             <Plus className="h-4 w-4" />
             Criar item novo no catálogo
           </Button>

@@ -130,11 +130,11 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
           <Globe className="h-5 w-5 text-primary-400" />
         </div>
         <div>
-          <h2 className="text-lg font-bold text-white flex items-center gap-2">
+          <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
             Querido Diário
             <Badge className="bg-green-500/10 text-green-400 border-green-500/20 text-xs font-normal">API Pública</Badge>
           </h2>
-          <p className="text-sm text-zinc-400">Busca em Diários Oficiais brasileiros — Open Knowledge Brasil</p>
+          <p className="text-sm text-slate-600">Busca em Diários Oficiais brasileiros — Open Knowledge Brasil</p>
         </div>
       </div>
 
@@ -147,27 +147,27 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
 
             {/* Seletor de Estado (travado quando estadoFixo é passado) */}
             <div className="sm:w-56">
-              <Label className="text-zinc-400 text-xs mb-1.5 block">Estado</Label>
+              <Label className="text-slate-600 text-xs mb-1.5 block">Estado</Label>
               {estadoFixo ? (
-                <div className="w-full flex items-center gap-2 px-3 py-2 bg-zinc-800/50 border border-input rounded-md text-sm">
+                <div className="w-full flex items-center gap-2 px-3 py-2 bg-muted/50 border border-input rounded-md text-sm">
                   <span className="text-primary-400 font-mono font-bold text-xs">{qdEstado.sigla}</span>
-                  <span className="text-zinc-300">{qdEstado.nome}</span>
+                  <span className="text-slate-700">{qdEstado.nome}</span>
                 </div>
               ) : (
                 <div className="relative">
                   <button
                     type="button"
                     onClick={() => setQdEstadoDropdown(!qdEstadoDropdown)}
-                    className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-zinc-800 border border-input rounded-md text-white text-sm hover:border-zinc-600 transition-colors"
+                    className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-muted border border-input rounded-md text-foreground text-sm hover:border-zinc-600 transition-colors"
                   >
                     <span className="flex items-center gap-2">
                       <span className="text-primary-400 font-mono font-bold text-xs">{qdEstado.sigla}</span>
-                      <span className="text-zinc-300">{qdEstado.nome}</span>
+                      <span className="text-slate-700">{qdEstado.nome}</span>
                     </span>
-                    <ChevronDown className="h-4 w-4 text-zinc-500 shrink-0" />
+                    <ChevronDown className="h-4 w-4 text-slate-500 shrink-0" />
                   </button>
                   {qdEstadoDropdown && (
-                    <div className="absolute z-50 top-full mt-1 w-full bg-zinc-800 border border-input rounded-md shadow-xl max-h-60 overflow-y-auto">
+                    <div className="absolute z-50 top-full mt-1 w-full bg-muted border border-input rounded-md shadow-xl max-h-60 overflow-y-auto">
                       {ESTADOS_IBGE.map((estado) => (
                         <button
                           key={estado.sigla}
@@ -176,7 +176,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
                           className={`w-full flex items-center gap-2 px-3 py-2 text-sm text-left hover:bg-zinc-700 transition-colors ${qdEstado.sigla === estado.sigla ? 'bg-zinc-700' : ''}`}
                         >
                           <span className="text-primary-400 font-mono font-bold text-xs w-6">{estado.sigla}</span>
-                          <span className="text-zinc-300">{estado.nome}</span>
+                          <span className="text-slate-700">{estado.nome}</span>
                         </button>
                       ))}
                     </div>
@@ -187,16 +187,16 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
 
             {/* Campo de busca */}
             <div className="flex-1">
-              <Label className="text-zinc-400 text-xs mb-1.5 block">Palavra-chave</Label>
+              <Label className="text-slate-600 text-xs mb-1.5 block">Palavra-chave</Label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-500" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
                   <Input
                     value={qdQuery}
                     onChange={(e) => setQdQuery(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && buscarQueridoDiario()}
                     placeholder="Ex: portaria credenciamento registradora"
-                    className="pl-9 bg-zinc-800 border-input text-white"
+                    className="pl-9 bg-muted border-input text-foreground"
                   />
                 </div>
                 <Button
@@ -218,7 +218,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
             <Button
               variant="ghost" size="sm"
               onClick={() => setQdFiltrosAbertos(!qdFiltrosAbertos)}
-              className="h-auto p-0 gap-1.5 text-zinc-500 hover:text-zinc-300 hover:bg-transparent"
+              className="h-auto p-0 gap-1.5 text-slate-500 hover:text-slate-700 hover:bg-transparent"
             >
               <Filter className="h-3.5 w-3.5" />
               Filtros avançados
@@ -228,21 +228,21 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
             {qdFiltrosAbertos && (
               <div className="mt-3 flex flex-col sm:flex-row gap-3">
                 <div className="flex-1">
-                  <Label className="text-zinc-400 text-xs mb-1.5 block">Publicado desde</Label>
+                  <Label className="text-slate-600 text-xs mb-1.5 block">Publicado desde</Label>
                   <Input
                     type="date"
                     value={qdDataInicio}
                     onChange={(e) => setQdDataInicio(e.target.value)}
-                    className="bg-zinc-800 border-input text-white text-sm"
+                    className="bg-muted border-input text-foreground text-sm"
                   />
                 </div>
                 <div className="flex-1">
-                  <Label className="text-zinc-400 text-xs mb-1.5 block">Publicado até</Label>
+                  <Label className="text-slate-600 text-xs mb-1.5 block">Publicado até</Label>
                   <Input
                     type="date"
                     value={qdDataFim}
                     onChange={(e) => setQdDataFim(e.target.value)}
-                    className="bg-zinc-800 border-input text-white text-sm"
+                    className="bg-muted border-input text-foreground text-sm"
                   />
                 </div>
                 {(qdDataInicio || qdDataFim) && (
@@ -250,7 +250,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
                     <Button
                       variant="ghost"
                       onClick={limparFiltrosQD}
-                      className="text-zinc-500 hover:text-zinc-300 gap-1 text-xs"
+                      className="text-slate-500 hover:text-slate-700 gap-1 text-xs"
                     >
                       <X className="h-3.5 w-3.5" />
                       Limpar
@@ -264,13 +264,13 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
           {/* Sugestões de termos */}
           {!qdResults && !qdLoading && (
             <div className="flex flex-wrap gap-2 pt-1">
-              <span className="text-xs text-zinc-600 self-center">Sugestões:</span>
+              <span className="text-xs text-slate-400 self-center">Sugestões:</span>
               {TERMOS_SUGERIDOS.map((termo) => (
                 <button
                   key={termo}
                   type="button"
                   onClick={() => { setQdQuery(termo); }}
-                  className="text-xs px-2.5 py-1 rounded-full bg-zinc-800 border border-input text-zinc-400 hover:border-primary-500/40 hover:text-primary-400 transition-colors"
+                  className="text-xs px-2.5 py-1 rounded-full bg-muted border border-input text-slate-600 hover:border-primary-500/40 hover:text-primary-400 transition-colors"
                 >
                   {termo}
                 </button>
@@ -292,15 +292,15 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
       {qdResults && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <p className="text-sm text-zinc-400">
+            <p className="text-sm text-slate-600">
               <span className="text-primary-400 font-semibold">{qdResults.total || 0}</span> resultado(s) em{' '}
-              <span className="text-zinc-300 font-medium">{qdEstado.nome}</span>{' '}
-              para <span className="text-zinc-300">"{qdQuery}"</span>
+              <span className="text-slate-700 font-medium">{qdEstado.nome}</span>{' '}
+              para <span className="text-slate-700">"{qdQuery}"</span>
             </p>
             <Button
               variant="link" size="sm"
               onClick={() => setQdResults(null)}
-              className="h-auto p-0 gap-1 text-zinc-600 hover:text-zinc-400"
+              className="h-auto p-0 gap-1 text-slate-400 hover:text-slate-600"
             >
               <X className="h-3 w-3" /> Limpar
             </Button>
@@ -310,8 +310,8 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
             <Card className="bg-card border-border">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                 <BookOpen className="h-10 w-10 text-zinc-700 mb-3" />
-                <p className="text-zinc-400 font-medium mb-1">Nenhum resultado encontrado</p>
-                <p className="text-zinc-600 text-sm">
+                <p className="text-slate-600 font-medium mb-1">Nenhum resultado encontrado</p>
+                <p className="text-slate-400 text-sm">
                   O Querido Diário pode não cobrir esse estado/município.<br />
                   Tente termos diferentes ou outro estado.
                 </p>
@@ -333,7 +333,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
                         {new Date(item.date).toLocaleDateString('pt-BR')}
                       </Badge>
                       {item.edition && (
-                        <Badge className="bg-zinc-700/50 text-zinc-300 border-zinc-600 font-mono text-xs">
+                        <Badge className="bg-zinc-700/50 text-slate-700 border-zinc-600 font-mono text-xs">
                           Edição {item.edition}
                         </Badge>
                       )}
@@ -344,7 +344,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
                     {Array.isArray(item.excerpts) && item.excerpts.map((exc, i) => (
                       <p
                         key={i}
-                        className="text-sm text-zinc-300 leading-relaxed"
+                        className="text-sm text-slate-700 leading-relaxed"
                         dangerouslySetInnerHTML={{
                           __html: exc.replace(
                             /<em>/g,

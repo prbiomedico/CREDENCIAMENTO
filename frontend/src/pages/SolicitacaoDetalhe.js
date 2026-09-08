@@ -16,7 +16,7 @@ import {
 const API = process.env.REACT_APP_API_URL || 'https://api.sigcr.com.br';
 
 const STATUS_DOC = {
-  pendente:    { label: 'Faltando Preencher', color: 'bg-zinc-800 text-zinc-400 border-input',     icon: Clock,       dot: 'bg-zinc-500' },
+  pendente:    { label: 'Faltando Preencher', color: 'bg-muted text-slate-600 border-input',     icon: Clock,       dot: 'bg-zinc-500' },
   em_analise:  { label: 'Em Anlise',         color: 'bg-sky-900/40 text-sky-400 border-sky-700',  icon: RefreshCw,   dot: 'bg-sky-400 animate-pulse' },
   aprovado:    { label: 'Aprovado',            color: 'bg-emerald-900/40 text-emerald-400 border-emerald-700', icon: CheckCircle, dot: 'bg-emerald-400' },
   reprovado:   { label: 'Reprovado',           color: 'bg-red-900/40 text-red-400 border-red-700',    icon: XCircle,     dot: 'bg-red-400' },
@@ -141,7 +141,7 @@ export default function SolicitacaoDetalhe() {
 
   if (!solicitacao) return (
     <DashboardLayout>
-      <div className="p-8 text-zinc-400">Solicitao no encontrada.</div>
+      <div className="p-8 text-slate-600">Solicitao no encontrada.</div>
     </DashboardLayout>
   );
 
@@ -154,12 +154,12 @@ export default function SolicitacaoDetalhe() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-2">
           <Button variant="ghost" size="icon" onClick={() => navigate('/solicitacoes')}
-            className="text-zinc-400 hover:text-white">
+            className="text-slate-600 hover:text-foreground">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-white">{solicitacao.titulo || 'Solicitao de Credenciamento'}</h1>
-            <p className="text-zinc-500 text-sm">DETRAN-{solicitacao.uf}  Solicitao #{id?.slice(0,8)}</p>
+            <h1 className="text-2xl font-bold text-foreground">{solicitacao.titulo || 'Solicitao de Credenciamento'}</h1>
+            <p className="text-slate-500 text-sm">DETRAN-{solicitacao.uf}  Solicitao #{id?.slice(0,8)}</p>
           </div>
           <Badge className="bg-primary-500/20 text-primary-400 border-primary-500/30 font-mono text-xs">
             {solicitacao.status?.toUpperCase() || 'EM ANLISE'}
@@ -170,10 +170,10 @@ export default function SolicitacaoDetalhe() {
         <Card className="bg-card border-border">
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-sm text-zinc-400 font-medium">Progresso da Documentao</span>
+              <span className="text-sm text-slate-600 font-medium">Progresso da Documentao</span>
               <span className="text-sm font-mono text-primary-400">{aprovados}/{totalDocs} aprovados</span>
             </div>
-            <div className="w-full bg-zinc-800 rounded-full h-2.5">
+            <div className="w-full bg-muted rounded-full h-2.5">
               <div
                 className="h-2.5 rounded-full transition-all duration-700"
                 style={{
@@ -184,7 +184,7 @@ export default function SolicitacaoDetalhe() {
                 }}
               />
             </div>
-            <div className="flex gap-4 mt-3 text-xs text-zinc-500">
+            <div className="flex gap-4 mt-3 text-xs text-slate-500">
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400 inline-block"/>Aprovado</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse inline-block"/>Em anlise</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block"/>Reprovado</span>
@@ -195,7 +195,7 @@ export default function SolicitacaoDetalhe() {
 
         {/* Checklist de documentos */}
         <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-zinc-400 uppercase tracking-widest px-1 mb-3">
+          <h2 className="text-sm font-semibold text-slate-600 uppercase tracking-widest px-1 mb-3">
             Documentao Necessria
           </h2>
 
@@ -223,7 +223,7 @@ export default function SolicitacaoDetalhe() {
                   onClick={() => toggleExpand(docNome)}
                   className="w-full text-left p-4 flex items-center gap-3">
                   <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
-                  <span className="flex-1 text-sm font-medium text-white uppercase tracking-wide">
+                  <span className="flex-1 text-sm font-medium text-foreground uppercase tracking-wide">
                     {docNome}
                   </span>
                   <div className="flex items-center gap-2 shrink-0">
@@ -234,7 +234,7 @@ export default function SolicitacaoDetalhe() {
                     <Badge className={`text-xs border ${responsabilidade.color} hidden sm:flex`}>
                       {responsabilidade.label}
                     </Badge>
-                    {isOpen ? <ChevronUp className="h-4 w-4 text-zinc-500" /> : <ChevronDown className="h-4 w-4 text-zinc-500" />}
+                    {isOpen ? <ChevronUp className="h-4 w-4 text-slate-500" /> : <ChevronDown className="h-4 w-4 text-slate-500" />}
                   </div>
                 </button>
 
@@ -244,10 +244,10 @@ export default function SolicitacaoDetalhe() {
 
                     {/* Arquivo atual */}
                     {docData?.file_name && (
-                      <div className="flex items-center gap-2 p-3 bg-zinc-800/50 rounded-lg border border-input">
-                        <FileText className="h-4 w-4 text-zinc-400 shrink-0" />
-                        <span className="text-sm text-zinc-300 flex-1 truncate">{docData.file_name}</span>
-                        <span className="text-xs text-zinc-500 font-mono">
+                      <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg border border-input">
+                        <FileText className="h-4 w-4 text-slate-600 shrink-0" />
+                        <span className="text-sm text-slate-700 flex-1 truncate">{docData.file_name}</span>
+                        <span className="text-xs text-slate-500 font-mono">
                           {docData.file_size ? `${(docData.file_size / 1024).toFixed(1)} KB` : ''}
                         </span>
                         <Button variant="ghost" size="sm"
@@ -291,7 +291,7 @@ export default function SolicitacaoDetalhe() {
                             </>
                           )}
                         </Button>
-                        <p className="text-xs text-zinc-500 mt-1">Formatos aceitos: PDF, DOC, DOCX, JPG, PNG</p>
+                        <p className="text-xs text-slate-500 mt-1">Formatos aceitos: PDF, DOC, DOCX, JPG, PNG</p>
                       </div>
                     )}
 
@@ -316,7 +316,7 @@ export default function SolicitacaoDetalhe() {
                               placeholder="Informe o motivo da reprovao para a empresa..."
                               value={motivoReprova[docNome] || ''}
                               onChange={e => setMotivoReprova(p => ({ ...p, [docNome]: e.target.value }))}
-                              className="w-full p-3 bg-zinc-800 border border-input rounded-lg text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-red-600 resize-none"
+                              className="w-full p-3 bg-muted border border-input rounded-lg text-sm text-foreground placeholder-zinc-500 focus:outline-none focus:border-red-600 resize-none"
                               rows={3}
                             />
                             <Button
@@ -356,7 +356,7 @@ export default function SolicitacaoDetalhe() {
             <CardContent className="p-5 flex items-center gap-4">
               <CheckCircle className="h-8 w-8 text-emerald-400 shrink-0" />
               <div>
-                <p className="text-white font-semibold">Toda a documentao foi aprovada!</p>
+                <p className="text-foreground font-semibold">Toda a documentao foi aprovada!</p>
                 <p className="text-emerald-400 text-sm">Aguarde a homologao final pelo DETRAN.</p>
               </div>
             </CardContent>

@@ -45,17 +45,17 @@ const Estados = () => {
     <DashboardLayout>
       <div className="p-6 lg:p-8 space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Landmark className="h-6 w-6 text-primary-400" />
             Estados
           </h1>
-          <p className="text-zinc-400 text-sm mt-1">
+          <p className="text-slate-600 text-sm mt-1">
             Acompanhamento de credenciamento, portarias e documentos por UF
           </p>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
+          <div className="flex items-center justify-center py-16 text-slate-500 gap-3">
             <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
             <span>Carregando estados...</span>
           </div>
@@ -71,20 +71,20 @@ const Estados = () => {
                   <div>
                     <div className="flex items-center gap-2 mb-1">
                       <span className="font-mono font-bold text-primary-400">{estado.sigla}</span>
-                      <span className="text-white font-medium">{estado.nome}</span>
+                      <span className="text-foreground font-medium">{estado.nome}</span>
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       <Badge className={estado.configurado
                         ? 'bg-green-500/10 text-green-400 border-green-500/20 text-xs'
-                        : 'bg-zinc-800 text-zinc-500 border-input text-xs'}>
+                        : 'bg-muted text-slate-500 border-input text-xs'}>
                         {estado.configurado ? 'Ativado' : 'Não ativado'}
                       </Badge>
-                      <span className="text-xs text-zinc-500 self-center">
+                      <span className="text-xs text-slate-500 self-center">
                         {estado.empresas_credenciadas_count} empresa(s) credenciada(s)
                       </span>
                     </div>
                   </div>
-                  <ChevronRight className="h-5 w-5 text-zinc-600 shrink-0" />
+                  <ChevronRight className="h-5 w-5 text-slate-400 shrink-0" />
                 </CardContent>
               </Card>
             ))}

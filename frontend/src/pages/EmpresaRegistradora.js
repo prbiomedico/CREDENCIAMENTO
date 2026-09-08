@@ -181,7 +181,7 @@ const EmpresaRegistradora = () => {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h1 className="text-4xl font-heading font-bold tracking-tight mb-2">Minha Empresa</h1>
-            <p className="text-zinc-400">Gerencie os dados da sua empresa registradora</p>
+            <p className="text-slate-600">Gerencie os dados da sua empresa registradora</p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
@@ -193,31 +193,31 @@ const EmpresaRegistradora = () => {
                 Nova Empresa
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-card border-border text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="bg-card border-border text-foreground max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="font-heading text-2xl">Cadastrar Empresa Registradora</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name" className="text-zinc-300">Razão Social</Label>
+                    <Label htmlFor="name" className="text-slate-700">Razão Social</Label>
                     <Input
                       id="name"
                       data-testid="company-name-input"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                      className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="nome_fantasia" className="text-zinc-300">Nome Fantasia</Label>
+                    <Label htmlFor="nome_fantasia" className="text-slate-700">Nome Fantasia</Label>
                     <Input
                       id="nome_fantasia"
                       data-testid="company-fantasia-input"
                       value={formData.nome_fantasia}
                       onChange={(e) => setFormData({ ...formData, nome_fantasia: e.target.value })}
-                      className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                      className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                       required
                     />
                   </div>
@@ -225,69 +225,69 @@ const EmpresaRegistradora = () => {
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="cnpj" className="text-zinc-300">CNPJ</Label>
+                    <Label htmlFor="cnpj" className="text-slate-700">CNPJ</Label>
                     <Input
                       id="cnpj"
                       data-testid="company-cnpj-input"
                       value={formData.cnpj}
                       onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })}
                       placeholder="00.000.000/0000-00"
-                      className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                      className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email_comercial" className="text-zinc-300">Email Comercial</Label>
+                    <Label htmlFor="email_comercial" className="text-slate-700">Email Comercial</Label>
                     <Input
                       id="email_comercial"
                       type="email"
                       data-testid="company-email-input"
                       value={formData.email_comercial}
                       onChange={(e) => setFormData({ ...formData, email_comercial: e.target.value })}
-                      className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                      className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                       required
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label htmlFor="gestor_contrato" className="text-zinc-300">Gestor do Contrato</Label>
+                  <Label htmlFor="gestor_contrato" className="text-slate-700">Gestor do Contrato</Label>
                   <Input
                     id="gestor_contrato"
                     data-testid="company-gestor-input"
                     value={formData.gestor_contrato}
                     onChange={(e) => setFormData({ ...formData, gestor_contrato: e.target.value })}
                     placeholder="Nome completo do gestor"
-                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                     required
                   />
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="endereco" className="text-zinc-300">Endereço</Label>
+                    <Label htmlFor="endereco" className="text-slate-700">Endereço</Label>
                     <Input
                       id="endereco"
                       value={formData.endereco}
                       onChange={(e) => setFormData({ ...formData, endereco: e.target.value })}
                       placeholder="Endereço"
-                      className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                      className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="whatsapp" className="text-zinc-300">WhatsApp</Label>
+                    <Label htmlFor="whatsapp" className="text-slate-700">WhatsApp</Label>
                     <Input
                       id="whatsapp"
                       value={formData.whatsapp}
                       onChange={(e) => setFormData({ ...formData, whatsapp: e.target.value })}
                       placeholder="(99) 99999-9999"
-                      className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                      className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <Label className="text-zinc-300 mb-3 block">DETRANs de Atuação</Label>
+                  <Label className="text-slate-700 mb-3 block">DETRANs de Atuação</Label>
                   <div className="grid grid-cols-5 gap-3 max-h-48 overflow-y-auto p-4 bg-background border border-border rounded-md">
                     {detransOptions.map((detran) => (
                       <div key={detran} className="flex items-center space-x-2">
@@ -299,14 +299,14 @@ const EmpresaRegistradora = () => {
                         />
                         <label
                           htmlFor={`detran-${detran}`}
-                          className="text-sm text-zinc-300 cursor-pointer"
+                          className="text-sm text-slate-700 cursor-pointer"
                         >
                           {detran}
                         </label>
                       </div>
                     ))}
                   </div>
-                  <p className="text-xs text-zinc-500 mt-2">
+                  <p className="text-xs text-slate-500 mt-2">
                     Selecionados: {formData.detrans_atuacao.length > 0 ? formData.detrans_atuacao.join(', ') : 'Nenhum'}
                   </p>
                 </div>
@@ -325,31 +325,31 @@ const EmpresaRegistradora = () => {
 
         {/* Edit Company Modal */}
         <Dialog open={showEditModal} onOpenChange={(open) => { setShowEditModal(open); if (!open) setEditingCompany(null); }}>
-          <DialogContent className="bg-card border-border text-white max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="bg-card border-border text-foreground max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-heading text-2xl">Editar Empresa</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleEditSubmit} className="space-y-4 mt-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="edit-name" className="text-zinc-300">Razão Social</Label>
+                  <Label htmlFor="edit-name" className="text-slate-700">Razão Social</Label>
                   <Input
                     id="edit-name"
                     data-testid="edit-company-name-input"
                     value={editFormData.name}
                     onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-nome_fantasia" className="text-zinc-300">Nome Fantasia</Label>
+                  <Label htmlFor="edit-nome_fantasia" className="text-slate-700">Nome Fantasia</Label>
                   <Input
                     id="edit-nome_fantasia"
                     data-testid="edit-company-fantasia-input"
                     value={editFormData.nome_fantasia}
                     onChange={(e) => setEditFormData({ ...editFormData, nome_fantasia: e.target.value })}
-                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                     required
                   />
                 </div>
@@ -357,69 +357,69 @@ const EmpresaRegistradora = () => {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="edit-cnpj" className="text-zinc-300">CNPJ</Label>
+                  <Label htmlFor="edit-cnpj" className="text-slate-700">CNPJ</Label>
                   <Input
                     id="edit-cnpj"
                     data-testid="edit-company-cnpj-input"
                     value={editFormData.cnpj}
                     onChange={(e) => setEditFormData({ ...editFormData, cnpj: e.target.value })}
                     placeholder="00.000.000/0000-00"
-                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                     required
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-email_comercial" className="text-zinc-300">Email Comercial</Label>
+                  <Label htmlFor="edit-email_comercial" className="text-slate-700">Email Comercial</Label>
                   <Input
                     id="edit-email_comercial"
                     type="email"
                     data-testid="edit-company-email-input"
                     value={editFormData.email_comercial}
                     onChange={(e) => setEditFormData({ ...editFormData, email_comercial: e.target.value })}
-                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="edit-gestor_contrato" className="text-zinc-300">Gestor do Contrato</Label>
+                <Label htmlFor="edit-gestor_contrato" className="text-slate-700">Gestor do Contrato</Label>
                 <Input
                   id="edit-gestor_contrato"
                   data-testid="edit-company-gestor-input"
                   value={editFormData.gestor_contrato}
                   onChange={(e) => setEditFormData({ ...editFormData, gestor_contrato: e.target.value })}
                   placeholder="Nome completo do gestor"
-                  className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                  className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                   required
                 />
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="edit-endereco" className="text-zinc-300">Endereço</Label>
+                  <Label htmlFor="edit-endereco" className="text-slate-700">Endereço</Label>
                   <Input
                     id="edit-endereco"
                     value={editFormData.endereco}
                     onChange={(e) => setEditFormData({ ...editFormData, endereco: e.target.value })}
                     placeholder="Endereço"
-                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="edit-whatsapp" className="text-zinc-300">WhatsApp</Label>
+                  <Label htmlFor="edit-whatsapp" className="text-slate-700">WhatsApp</Label>
                   <Input
                     id="edit-whatsapp"
                     value={editFormData.whatsapp}
                     onChange={(e) => setEditFormData({ ...editFormData, whatsapp: e.target.value })}
                     placeholder="(99) 99999-9999"
-                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                   />
                 </div>
               </div>
 
               <div>
-                <Label className="text-zinc-300 mb-3 block">DETRANs de Atuação</Label>
+                <Label className="text-slate-700 mb-3 block">DETRANs de Atuação</Label>
                 <div className="grid grid-cols-5 gap-3 max-h-48 overflow-y-auto p-4 bg-background border border-border rounded-md">
                   {detransOptions.map((detran) => (
                     <div key={detran} className="flex items-center space-x-2">
@@ -431,14 +431,14 @@ const EmpresaRegistradora = () => {
                       />
                       <label
                         htmlFor={`edit-detran-${detran}`}
-                        className="text-sm text-zinc-300 cursor-pointer"
+                        className="text-sm text-slate-700 cursor-pointer"
                       >
                         {detran}
                       </label>
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-zinc-500 mt-2">
+                <p className="text-xs text-slate-500 mt-2">
                   Selecionados: {editFormData.detrans_atuacao.length > 0 ? editFormData.detrans_atuacao.join(', ') : 'Nenhum'}
                 </p>
               </div>
@@ -458,14 +458,14 @@ const EmpresaRegistradora = () => {
         {loading ? (
           <div className="text-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-            <p className="text-zinc-400">Carregando empresas...</p>
+            <p className="text-slate-600">Carregando empresas...</p>
           </div>
         ) : sessaoExpirada ? (
           <Card className="bg-amber-950/20 border-amber-900/50">
             <CardContent className="p-12 text-center">
               <Building2 className="h-16 w-16 text-amber-700 mx-auto mb-4" />
               <p className="text-amber-400 mb-4">Sessão expirada</p>
-              <p className="text-sm text-zinc-500 mb-4">Não foi possível confirmar sua autenticação — isso não significa que você não tem empresas cadastradas.</p>
+              <p className="text-sm text-slate-500 mb-4">Não foi possível confirmar sua autenticação — isso não significa que você não tem empresas cadastradas.</p>
               <Button onClick={() => window.location.reload()} className="bg-primary-500 hover:bg-primary-600 text-white">
                 Recarregar página
               </Button>
@@ -475,7 +475,7 @@ const EmpresaRegistradora = () => {
           <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <Building2 className="h-16 w-16 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-400 mb-4">Nenhuma empresa cadastrada</p>
+              <p className="text-slate-600 mb-4">Nenhuma empresa cadastrada</p>
               <Button
                 data-testid="empty-state-add-btn"
                 onClick={() => setDialogOpen(true)}
@@ -501,25 +501,25 @@ const EmpresaRegistradora = () => {
                         <CardTitle className="text-xl font-semibold">{company.name}</CardTitle>
                         {getStatusBadge(company.status)}
                       </div>
-                      <p className="text-sm text-zinc-400 mb-1">Nome Fantasia: {company.nome_fantasia}</p>
-                      <p className="text-sm font-mono text-zinc-500">CNPJ: {company.cnpj}</p>
+                      <p className="text-sm text-slate-600 mb-1">Nome Fantasia: {company.nome_fantasia}</p>
+                      <p className="text-sm font-mono text-slate-500">CNPJ: {company.cnpj}</p>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <div className="grid md:grid-cols-2 gap-4 text-sm">
                     <div>
-                      <p className="text-zinc-500 mb-1">Email Comercial:</p>
-                      <p className="text-zinc-300">{company.email_comercial}</p>
+                      <p className="text-slate-500 mb-1">Email Comercial:</p>
+                      <p className="text-slate-700">{company.email_comercial}</p>
                     </div>
                     <div>
-                      <p className="text-zinc-500 mb-1">Gestor do Contrato:</p>
-                      <p className="text-zinc-300">{company.gestor_contrato}</p>
+                      <p className="text-slate-500 mb-1">Gestor do Contrato:</p>
+                      <p className="text-slate-700">{company.gestor_contrato}</p>
                     </div>
                   </div>
                   {company.detrans_atuacao && company.detrans_atuacao.length > 0 && (
                     <div className="mt-4">
-                      <p className="text-xs text-zinc-500 mb-2">DETRANs de Atuação:</p>
+                      <p className="text-xs text-slate-500 mb-2">DETRANs de Atuação:</p>
                       <div className="flex flex-wrap gap-2">
                         {company.detrans_atuacao.map((detran) => (
                           <Badge key={detran} className="bg-sky-500/10 text-sky-500 border-sky-500/20 text-xs">
@@ -529,7 +529,7 @@ const EmpresaRegistradora = () => {
                       </div>
                     </div>
                   )}
-                  <div className="text-xs text-zinc-600 mt-4">
+                  <div className="text-xs text-slate-400 mt-4">
                     Cadastrado em: {new Date(company.created_at).toLocaleDateString('pt-BR')}
                 </div>
                 <div className="flex gap-2 mt-3">

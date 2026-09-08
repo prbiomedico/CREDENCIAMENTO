@@ -16,7 +16,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.
 const API = `${BACKEND_URL}/api`;
 
 const STATUS_CONFIG = {
-  pendente: { label: 'Pendente', bg: 'bg-zinc-800', text: 'text-zinc-400', icon: Clock },
+  pendente: { label: 'Pendente', bg: 'bg-muted', text: 'text-slate-600', icon: Clock },
   em_processamento: { label: 'Em Processamento', bg: 'bg-primary-500/10', text: 'text-primary-400', icon: Loader2 },
   concluido: { label: 'Concluído', bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: CheckCircle },
   rejeitado: { label: 'Rejeitado', bg: 'bg-red-500/10', text: 'text-red-400', icon: XCircle },
@@ -127,7 +127,7 @@ const FilaRegistros = () => {
           </div>
           <div>
             <h1 className="text-3xl font-heading font-bold tracking-tight">Fila de Registro de Contrato</h1>
-            <p className="text-zinc-500 text-sm">Solicitações de registro recebidas das financeiras vinculadas</p>
+            <p className="text-slate-500 text-sm">Solicitações de registro recebidas das financeiras vinculadas</p>
           </div>
         </div>
 
@@ -139,7 +139,7 @@ const FilaRegistros = () => {
           <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <FileText className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-400">Nenhuma solicitação recebida ainda</p>
+              <p className="text-slate-600">Nenhuma solicitação recebida ainda</p>
             </CardContent>
           </Card>
         ) : (
@@ -159,14 +159,14 @@ const FilaRegistros = () => {
                             <Icon className="h-3 w-3 mr-1" />{cfg.label}
                           </Badge>
                         </div>
-                        <h3 className="text-lg font-semibold text-white mb-1">{sol.devedor_nome}</h3>
-                        <p className="text-sm text-zinc-400 mb-1">
+                        <h3 className="text-lg font-semibold text-foreground mb-1">{sol.devedor_nome}</h3>
+                        <p className="text-sm text-slate-600 mb-1">
                           {sol.veiculo_marca_modelo} {sol.veiculo_ano} · Chassi {sol.veiculo_chassi}
                         </p>
-                        <p className="text-sm text-zinc-400 mb-2">
+                        <p className="text-sm text-slate-600 mb-2">
                           Valor: R$ {Number(sol.valor_total_divida).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} · Juros: {sol.taxa_juros}
                         </p>
-                        <p className="text-xs text-zinc-600">Enviado em {new Date(sol.created_at).toLocaleDateString('pt-BR')}</p>
+                        <p className="text-xs text-slate-400">Enviado em {new Date(sol.created_at).toLocaleDateString('pt-BR')}</p>
                       </div>
                       <div className="flex flex-col gap-2 shrink-0 w-40">
                         <Button variant="outline" size="sm" className="gap-2" onClick={() => baixarContrato(sol.solicitacao_registro_id)}>
@@ -193,22 +193,22 @@ const FilaRegistros = () => {
 
         {/* Dialog: Concluir */}
         <Dialog open={!!concluirAlvo} onOpenChange={(open) => { if (!open) setConcluirAlvo(null); }}>
-          <DialogContent className="bg-card border-input text-white">
+          <DialogContent className="bg-card border-input text-foreground">
             <DialogHeader>
               <DialogTitle>Concluir Registro de Contrato</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleConcluir} className="space-y-4">
               <div>
-                <Label className="text-zinc-300">Número de registro no DETRAN</Label>
-                <Input value={numeroRegistro} onChange={(e) => setNumeroRegistro(e.target.value)} className="bg-zinc-800 border-input text-white mt-1" required />
+                <Label className="text-slate-700">Número de registro no DETRAN</Label>
+                <Input value={numeroRegistro} onChange={(e) => setNumeroRegistro(e.target.value)} className="bg-muted border-input text-foreground mt-1" required />
               </div>
               <div>
-                <Label className="text-zinc-300">Comprovante do DETRAN (PDF)</Label>
+                <Label className="text-slate-700">Comprovante do DETRAN (PDF)</Label>
                 <Input
                   type="file"
                   accept="application/pdf"
                   onChange={(e) => setComprovantePdf(e.target.files?.[0] || null)}
-                  className="bg-zinc-800 border-input text-white mt-1"
+                  className="bg-muted border-input text-foreground mt-1"
                   required
                 />
               </div>
@@ -221,14 +221,14 @@ const FilaRegistros = () => {
 
         {/* Dialog: Rejeitar */}
         <Dialog open={!!rejeitarAlvo} onOpenChange={(open) => { if (!open) { setRejeitarAlvo(null); setMotivoRejeicao(''); } }}>
-          <DialogContent className="bg-card border-input text-white">
+          <DialogContent className="bg-card border-input text-foreground">
             <DialogHeader>
               <DialogTitle>Rejeitar Solicitação de Registro</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleRejeitar} className="space-y-4">
               <div>
-                <Label className="text-zinc-300">Motivo (opcional)</Label>
-                <Textarea value={motivoRejeicao} onChange={(e) => setMotivoRejeicao(e.target.value)} className="bg-zinc-800 border-input text-white mt-1" placeholder="Explique por que a solicitação está sendo rejeitada" />
+                <Label className="text-slate-700">Motivo (opcional)</Label>
+                <Textarea value={motivoRejeicao} onChange={(e) => setMotivoRejeicao(e.target.value)} className="bg-muted border-input text-foreground mt-1" placeholder="Explique por que a solicitação está sendo rejeitada" />
               </div>
               <Button type="submit" variant="destructive" disabled={processando} className="w-full">
                 {processando ? 'Rejeitando...' : 'Confirmar Rejeição'}

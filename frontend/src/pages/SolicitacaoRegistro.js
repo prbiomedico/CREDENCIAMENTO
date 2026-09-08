@@ -16,7 +16,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.
 const API = `${BACKEND_URL}/api`;
 
 const STATUS_CONFIG = {
-  pendente: { label: 'Pendente', bg: 'bg-zinc-800', text: 'text-zinc-400', icon: Clock },
+  pendente: { label: 'Pendente', bg: 'bg-muted', text: 'text-slate-600', icon: Clock },
   em_processamento: { label: 'Em Processamento', bg: 'bg-primary-500/10', text: 'text-primary-400', icon: Loader2 },
   concluido: { label: 'Concluído', bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: CheckCircle },
   rejeitado: { label: 'Rejeitado', bg: 'bg-red-500/10', text: 'text-red-400', icon: XCircle },
@@ -135,7 +135,7 @@ const SolicitacaoRegistro = () => {
             </div>
             <div>
               <h1 className="text-3xl font-heading font-bold tracking-tight">Registro de Contrato</h1>
-              <p className="text-zinc-500 text-sm">Solicite o registro do contrato de financiamento junto à registradora</p>
+              <p className="text-slate-500 text-sm">Solicite o registro do contrato de financiamento junto à registradora</p>
             </div>
           </div>
 
@@ -146,19 +146,19 @@ const SolicitacaoRegistro = () => {
                 Nova Solicitação
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-card border-input text-white max-h-[90vh] overflow-y-auto max-w-2xl">
+            <DialogContent className="bg-card border-input text-foreground max-h-[90vh] overflow-y-auto max-w-2xl">
               <DialogHeader>
                 <DialogTitle>Nova Solicitação de Registro de Contrato</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
                 {companies.length > 1 && (
                   <div>
-                    <Label className="text-zinc-300">Empresa solicitante</Label>
+                    <Label className="text-slate-700">Empresa solicitante</Label>
                     <Select value={selectedCompany} onValueChange={setSelectedCompany}>
-                      <SelectTrigger className="bg-zinc-800 border-input text-white mt-1">
+                      <SelectTrigger className="bg-muted border-input text-foreground mt-1">
                         <SelectValue placeholder="Selecione a empresa" />
                       </SelectTrigger>
-                      <SelectContent className="bg-card border-border text-white">
+                      <SelectContent className="bg-card border-border text-foreground">
                         {companies.map((c) => (
                           <SelectItem key={c.company_id} value={c.company_id}>
                             {c.nome_fantasia || c.name}
@@ -169,101 +169,101 @@ const SolicitacaoRegistro = () => {
                   </div>
                 )}
 
-                <p className="text-xs text-zinc-500 font-mono uppercase pt-2">Credor (Art. 3º Res. CONTRAN 320/2009)</p>
+                <p className="text-xs text-slate-500 font-mono uppercase pt-2">Credor (Art. 3º Res. CONTRAN 320/2009)</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-zinc-300">Nome</Label>
-                    <Input value={formData.credor_nome} onChange={(e) => setFormData({ ...formData, credor_nome: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
+                    <Label className="text-slate-700">Nome</Label>
+                    <Input value={formData.credor_nome} onChange={(e) => setFormData({ ...formData, credor_nome: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
                   </div>
                   <div>
-                    <Label className="text-zinc-300">CPF/CNPJ</Label>
-                    <Input value={formData.credor_documento} onChange={(e) => setFormData({ ...formData, credor_documento: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
+                    <Label className="text-slate-700">CPF/CNPJ</Label>
+                    <Input value={formData.credor_documento} onChange={(e) => setFormData({ ...formData, credor_documento: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-zinc-300">Endereço</Label>
-                    <Input value={formData.credor_endereco} onChange={(e) => setFormData({ ...formData, credor_endereco: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
+                    <Label className="text-slate-700">Endereço</Label>
+                    <Input value={formData.credor_endereco} onChange={(e) => setFormData({ ...formData, credor_endereco: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
                   </div>
                   <div>
-                    <Label className="text-zinc-300">Telefone</Label>
-                    <Input value={formData.credor_telefone} onChange={(e) => setFormData({ ...formData, credor_telefone: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
-                  </div>
-                </div>
-
-                <p className="text-xs text-zinc-500 font-mono uppercase pt-2">Devedor</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-zinc-300">Nome</Label>
-                    <Input value={formData.devedor_nome} onChange={(e) => setFormData({ ...formData, devedor_nome: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
-                  </div>
-                  <div>
-                    <Label className="text-zinc-300">CPF/CNPJ</Label>
-                    <Input value={formData.devedor_documento} onChange={(e) => setFormData({ ...formData, devedor_documento: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="text-zinc-300">Endereço</Label>
-                    <Input value={formData.devedor_endereco} onChange={(e) => setFormData({ ...formData, devedor_endereco: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
-                  </div>
-                  <div>
-                    <Label className="text-zinc-300">Telefone</Label>
-                    <Input value={formData.devedor_telefone} onChange={(e) => setFormData({ ...formData, devedor_telefone: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
+                    <Label className="text-slate-700">Telefone</Label>
+                    <Input value={formData.credor_telefone} onChange={(e) => setFormData({ ...formData, credor_telefone: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
                   </div>
                 </div>
 
-                <p className="text-xs text-zinc-500 font-mono uppercase pt-2">Condições da dívida</p>
+                <p className="text-xs text-slate-500 font-mono uppercase pt-2">Devedor</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-zinc-300">Valor total (ou estimativa)</Label>
-                    <Input type="number" step="0.01" min="0" value={formData.valor_total_divida} onChange={(e) => setFormData({ ...formData, valor_total_divida: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
+                    <Label className="text-slate-700">Nome</Label>
+                    <Input value={formData.devedor_nome} onChange={(e) => setFormData({ ...formData, devedor_nome: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
                   </div>
                   <div>
-                    <Label className="text-zinc-300">Taxa de juros</Label>
-                    <Input value={formData.taxa_juros} onChange={(e) => setFormData({ ...formData, taxa_juros: e.target.value })} placeholder="Ex: 1,99% a.m." className="bg-zinc-800 border-input text-white mt-1" required />
+                    <Label className="text-slate-700">CPF/CNPJ</Label>
+                    <Input value={formData.devedor_documento} onChange={(e) => setFormData({ ...formData, devedor_documento: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-zinc-300">Local de pagamento</Label>
-                    <Input value={formData.local_pagamento} onChange={(e) => setFormData({ ...formData, local_pagamento: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
+                    <Label className="text-slate-700">Endereço</Label>
+                    <Input value={formData.devedor_endereco} onChange={(e) => setFormData({ ...formData, devedor_endereco: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
                   </div>
                   <div>
-                    <Label className="text-zinc-300">Data de pagamento</Label>
-                    <Input type="date" value={formData.data_pagamento} onChange={(e) => setFormData({ ...formData, data_pagamento: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
+                    <Label className="text-slate-700">Telefone</Label>
+                    <Input value={formData.devedor_telefone} onChange={(e) => setFormData({ ...formData, devedor_telefone: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
                   </div>
                 </div>
 
-                <p className="text-xs text-zinc-500 font-mono uppercase pt-2">Veículo</p>
+                <p className="text-xs text-slate-500 font-mono uppercase pt-2">Condições da dívida</p>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-zinc-300">Placa</Label>
-                    <Input value={formData.veiculo_placa} onChange={(e) => setFormData({ ...formData, veiculo_placa: e.target.value.toUpperCase() })} className="bg-zinc-800 border-input text-white mt-1" required />
+                    <Label className="text-slate-700">Valor total (ou estimativa)</Label>
+                    <Input type="number" step="0.01" min="0" value={formData.valor_total_divida} onChange={(e) => setFormData({ ...formData, valor_total_divida: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
                   </div>
                   <div>
-                    <Label className="text-zinc-300">Chassi</Label>
-                    <Input value={formData.veiculo_chassi} onChange={(e) => setFormData({ ...formData, veiculo_chassi: e.target.value.toUpperCase() })} className="bg-zinc-800 border-input text-white mt-1" required />
+                    <Label className="text-slate-700">Taxa de juros</Label>
+                    <Input value={formData.taxa_juros} onChange={(e) => setFormData({ ...formData, taxa_juros: e.target.value })} placeholder="Ex: 1,99% a.m." className="bg-muted border-input text-foreground mt-1" required />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <Label className="text-zinc-300">Marca/Modelo</Label>
-                    <Input value={formData.veiculo_marca_modelo} onChange={(e) => setFormData({ ...formData, veiculo_marca_modelo: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
+                    <Label className="text-slate-700">Local de pagamento</Label>
+                    <Input value={formData.local_pagamento} onChange={(e) => setFormData({ ...formData, local_pagamento: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
                   </div>
                   <div>
-                    <Label className="text-zinc-300">Ano</Label>
-                    <Input value={formData.veiculo_ano} onChange={(e) => setFormData({ ...formData, veiculo_ano: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
+                    <Label className="text-slate-700">Data de pagamento</Label>
+                    <Input type="date" value={formData.data_pagamento} onChange={(e) => setFormData({ ...formData, data_pagamento: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
+                  </div>
+                </div>
+
+                <p className="text-xs text-slate-500 font-mono uppercase pt-2">Veículo</p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-slate-700">Placa</Label>
+                    <Input value={formData.veiculo_placa} onChange={(e) => setFormData({ ...formData, veiculo_placa: e.target.value.toUpperCase() })} className="bg-muted border-input text-foreground mt-1" required />
+                  </div>
+                  <div>
+                    <Label className="text-slate-700">Chassi</Label>
+                    <Input value={formData.veiculo_chassi} onChange={(e) => setFormData({ ...formData, veiculo_chassi: e.target.value.toUpperCase() })} className="bg-muted border-input text-foreground mt-1" required />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-slate-700">Marca/Modelo</Label>
+                    <Input value={formData.veiculo_marca_modelo} onChange={(e) => setFormData({ ...formData, veiculo_marca_modelo: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
+                  </div>
+                  <div>
+                    <Label className="text-slate-700">Ano</Label>
+                    <Input value={formData.veiculo_ano} onChange={(e) => setFormData({ ...formData, veiculo_ano: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
                   </div>
                 </div>
 
                 <div className="border-t border-border pt-4">
-                  <Label className="text-zinc-300 mb-2 block">Contrato assinado (PDF)</Label>
+                  <Label className="text-slate-700 mb-2 block">Contrato assinado (PDF)</Label>
                   <Input
                     type="file"
                     accept="application/pdf"
                     onChange={(e) => setContratoPdf(e.target.files?.[0] || null)}
-                    className="bg-zinc-800 border-input text-white"
+                    className="bg-muted border-input text-foreground"
                     required
                   />
                 </div>
@@ -284,16 +284,16 @@ const SolicitacaoRegistro = () => {
           <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <FileText className="h-16 w-16 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-400 mb-4">Nenhuma empresa financeira cadastrada</p>
-              <p className="text-sm text-zinc-500">Cadastre uma empresa do tipo Financeira primeiro</p>
+              <p className="text-slate-600 mb-4">Nenhuma empresa financeira cadastrada</p>
+              <p className="text-sm text-slate-500">Cadastre uma empresa do tipo Financeira primeiro</p>
             </CardContent>
           </Card>
         ) : solicitacoes.length === 0 ? (
           <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <FileText className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-400">Nenhuma solicitação ainda</p>
-              <p className="text-sm text-zinc-600 mt-1">Envie uma nova solicitação de registro de contrato</p>
+              <p className="text-slate-600">Nenhuma solicitação ainda</p>
+              <p className="text-sm text-slate-400 mt-1">Envie uma nova solicitação de registro de contrato</p>
             </CardContent>
           </Card>
         ) : (
@@ -313,8 +313,8 @@ const SolicitacaoRegistro = () => {
                             <Icon className="h-3 w-3 mr-1" />{cfg.label}
                           </Badge>
                         </div>
-                        <h3 className="text-lg font-semibold text-white mb-1">{sol.devedor_nome}</h3>
-                        <p className="text-sm text-zinc-400 mb-2">
+                        <h3 className="text-lg font-semibold text-foreground mb-1">{sol.devedor_nome}</h3>
+                        <p className="text-sm text-slate-600 mb-2">
                           {sol.veiculo_marca_modelo} {sol.veiculo_ano} · Valor: R$ {Number(sol.valor_total_divida).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                         </p>
                         {sol.status === 'concluido' && (
@@ -323,7 +323,7 @@ const SolicitacaoRegistro = () => {
                         {sol.status === 'rejeitado' && ultimaRejeicao && (
                           <p className="text-xs text-red-400">Motivo: {ultimaRejeicao.motivo || 'Não informado'}</p>
                         )}
-                        <p className="text-xs text-zinc-600 mt-1">Enviado em {new Date(sol.created_at).toLocaleDateString('pt-BR')}</p>
+                        <p className="text-xs text-slate-400 mt-1">Enviado em {new Date(sol.created_at).toLocaleDateString('pt-BR')}</p>
                       </div>
                       <div className="flex flex-col gap-2 shrink-0">
                         <Button variant="outline" size="sm" className="gap-2" onClick={() => baixarArquivo(sol.solicitacao_registro_id, 'contrato')}>

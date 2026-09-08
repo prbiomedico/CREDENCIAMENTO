@@ -246,7 +246,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
   };
 
   const categoriaBadge = (categoria) => (
-    <Badge className="bg-zinc-800 text-zinc-300 border-input font-mono text-xs px-2 py-0.5">
+    <Badge className="bg-muted text-slate-700 border-input font-mono text-xs px-2 py-0.5">
       {CATEGORIAS[categoria]?.label || categoria}
     </Badge>
   );
@@ -256,7 +256,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
       <Card className="bg-card border-border">
         <CardContent className="p-12 text-center">
           <Ban className="h-16 w-16 text-zinc-700 mx-auto mb-4" />
-          <p className="text-zinc-400">Seu perfil não tem acesso ao dossiê de credenciamento.</p>
+          <p className="text-slate-600">Seu perfil não tem acesso ao dossiê de credenciamento.</p>
         </CardContent>
       </Card>
     );
@@ -269,7 +269,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
         {!compact && (
           <div>
             <h1 className="text-4xl font-heading font-bold tracking-tight mb-2">Dossiê de Credenciamento</h1>
-            <p className="text-zinc-400">Documentos GOV-CRD-001 vinculados ao credenciamento da HD Registros</p>
+            <p className="text-slate-600">Documentos GOV-CRD-001 vinculados ao credenciamento da HD Registros</p>
           </div>
         )}
         {podeEscrever && (
@@ -280,13 +280,13 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                 Enviar Documento
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-card border-border text-white max-h-[90vh] overflow-y-auto">
+            <DialogContent className="bg-card border-border text-foreground max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="font-heading text-2xl">Enviar Documento</DialogTitle>
               </DialogHeader>
               <form onSubmit={handleUpload} className="space-y-4 mt-4">
                 <div>
-                  <Label className="text-zinc-300">Categoria</Label>
+                  <Label className="text-slate-700">Categoria</Label>
                   <Select
                     value={form.categoria}
                     onValueChange={(value) => setForm((prev) => ({
@@ -297,10 +297,10 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                       atividade_raci_numero: '',
                     }))}
                   >
-                    <SelectTrigger data-testid="categoria-select" className="bg-background border-border text-white mt-2">
+                    <SelectTrigger data-testid="categoria-select" className="bg-background border-border text-foreground mt-2">
                       <SelectValue placeholder="Selecione a categoria" />
                     </SelectTrigger>
-                    <SelectContent className="bg-card border-border text-white">
+                    <SelectContent className="bg-card border-border text-foreground">
                       {categoriasVisiveis.map((c) => (
                         <SelectItem key={c} value={c}>{CATEGORIAS[c].label}</SelectItem>
                       ))}
@@ -310,14 +310,14 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
 
                 {estadoFixo ? (
                   <div>
-                    <Label className="text-zinc-300">UF</Label>
-                    <div className="mt-2 px-3 py-2 rounded-md bg-background border border-border text-zinc-300 text-sm">
+                    <Label className="text-slate-700">UF</Label>
+                    <div className="mt-2 px-3 py-2 rounded-md bg-background border border-border text-slate-700 text-sm">
                       {estadoFixo} (travado nesta página de estado)
                     </div>
                   </div>
                 ) : form.categoria === 'estado_detran' && (
                   <div>
-                    <Label htmlFor="estado_sigla" className="text-zinc-300">UF</Label>
+                    <Label htmlFor="estado_sigla" className="text-slate-700">UF</Label>
                     <Input
                       id="estado_sigla"
                       value={form.estado_sigla}
@@ -325,7 +325,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                       placeholder="Ex: SP"
                       maxLength={2}
                       disabled={isDetranAdmin && !isAdmin}
-                      className="bg-background border-border focus:border-primary-500 text-white mt-2 disabled:opacity-70"
+                      className="bg-background border-border focus:border-primary-500 text-foreground mt-2 disabled:opacity-70"
                       required
                     />
                   </div>
@@ -333,15 +333,15 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
 
                 {form.categoria === 'atividade_raci' && (
                   <div>
-                    <Label className="text-zinc-300">Atividade RACI</Label>
+                    <Label className="text-slate-700">Atividade RACI</Label>
                     <Select
                       value={form.atividade_raci_numero}
                       onValueChange={(value) => setForm((prev) => ({ ...prev, atividade_raci_numero: value }))}
                     >
-                      <SelectTrigger className="bg-background border-border text-white mt-2">
+                      <SelectTrigger className="bg-background border-border text-foreground mt-2">
                         <SelectValue placeholder="Selecione a atividade" />
                       </SelectTrigger>
-                      <SelectContent className="bg-card border-border text-white">
+                      <SelectContent className="bg-card border-border text-foreground">
                         {atividadesRaci.map((a) => (
                           <SelectItem key={a.numero} value={String(a.numero)}>
                             {a.numero}. {a.nome}
@@ -353,14 +353,14 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                 )}
 
                 <div>
-                  <Label htmlFor="tipo" className="text-zinc-300">Tipo</Label>
+                  <Label htmlFor="tipo" className="text-slate-700">Tipo</Label>
                   <Input
                     id="tipo"
                     list="tipos-sugeridos-list"
                     value={form.tipo}
                     onChange={(e) => setForm((prev) => ({ ...prev, tipo: e.target.value }))}
                     placeholder="Ex: Contrato Social"
-                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                     required
                   />
                   <datalist id="tipos-sugeridos-list">
@@ -371,37 +371,37 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                 </div>
 
                 <div>
-                  <Label htmlFor="nome" className="text-zinc-300">Nome do Documento</Label>
+                  <Label htmlFor="nome" className="text-slate-700">Nome do Documento</Label>
                   <Input
                     id="nome"
                     value={form.nome}
                     onChange={(e) => setForm((prev) => ({ ...prev, nome: e.target.value }))}
                     placeholder="Ex: Contrato Social - 2ª Alteração"
-                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                     required
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="notes" className="text-zinc-300">Observações (opcional)</Label>
+                  <Label htmlFor="notes" className="text-slate-700">Observações (opcional)</Label>
                   <Textarea
                     id="notes"
                     value={form.notes}
                     onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
-                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                   />
                 </div>
 
                 <div>
-                  <Label htmlFor="file" className="text-zinc-300">Arquivo</Label>
+                  <Label htmlFor="file" className="text-slate-700">Arquivo</Label>
                   <Input
                     id="file"
                     type="file"
                     onChange={(e) => setForm((prev) => ({ ...prev, file: e.target.files?.[0] || null }))}
-                    className="bg-background border-border focus:border-primary-500 text-white mt-2"
+                    className="bg-background border-border focus:border-primary-500 text-foreground mt-2"
                     required
                   />
-                  <p className="text-xs text-zinc-500 mt-1">Máx. 20MB. Tipos aceitos variam por categoria.</p>
+                  <p className="text-xs text-slate-500 mt-1">Máx. 20MB. Tipos aceitos variam por categoria.</p>
                 </div>
 
                 <Button
@@ -421,15 +421,15 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
       <Card className="bg-card border-border mb-8">
         <CardContent className="p-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <Label className="text-zinc-300 mb-2 block">Categoria</Label>
+            <Label className="text-slate-700 mb-2 block">Categoria</Label>
             <Select
               value={filtros.categoria || 'todas'}
               onValueChange={(value) => setFiltros((prev) => ({ ...prev, categoria: value === 'todas' ? '' : value }))}
             >
-              <SelectTrigger className="bg-background border-border text-white">
+              <SelectTrigger className="bg-background border-border text-foreground">
                 <SelectValue placeholder="Todas" />
               </SelectTrigger>
-              <SelectContent className="bg-card border-border text-white">
+              <SelectContent className="bg-card border-border text-foreground">
                 <SelectItem value="todas">Todas</SelectItem>
                 {categoriasVisiveis.map((c) => (
                   <SelectItem key={c} value={c}>{CATEGORIAS[c].label}</SelectItem>
@@ -439,30 +439,30 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
           </div>
 
           <div>
-            <Label className="text-zinc-300 mb-2 block">Tipo</Label>
+            <Label className="text-slate-700 mb-2 block">Tipo</Label>
             <Input
               value={filtros.tipo}
               onChange={(e) => setFiltros((prev) => ({ ...prev, tipo: e.target.value }))}
               placeholder="Buscar por tipo..."
-              className="bg-background border-border text-white"
+              className="bg-background border-border text-foreground"
             />
           </div>
 
           {!estadoFixo && isAdmin && (
             <div>
-              <Label className="text-zinc-300 mb-2 block">UF</Label>
+              <Label className="text-slate-700 mb-2 block">UF</Label>
               <Input
                 value={filtros.estado_sigla}
                 onChange={(e) => setFiltros((prev) => ({ ...prev, estado_sigla: e.target.value.toUpperCase().slice(0, 2) }))}
                 placeholder="Ex: SP"
                 maxLength={2}
-                className="bg-background border-border text-white"
+                className="bg-background border-border text-foreground"
               />
             </div>
           )}
 
           <div className="flex items-end">
-            <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
               <Checkbox
                 checked={filtros.incluir_removidos}
                 onCheckedChange={(checked) => setFiltros((prev) => ({ ...prev, incluir_removidos: !!checked }))}
@@ -482,45 +482,45 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-              <p className="text-zinc-400">Carregando documentos...</p>
+              <p className="text-slate-600">Carregando documentos...</p>
             </div>
           ) : documentos.length === 0 ? (
             <div className="text-center py-12">
               <FileText className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-400">Nenhum documento encontrado</p>
+              <p className="text-slate-600">Nenhum documento encontrado</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="border-border hover:bg-card">
-                    <TableHead className="text-zinc-400">Categoria</TableHead>
-                    <TableHead className="text-zinc-400">Tipo</TableHead>
-                    <TableHead className="text-zinc-400">Nome</TableHead>
-                    <TableHead className="text-zinc-400">UF/RACI</TableHead>
-                    <TableHead className="text-zinc-400">Vencimento</TableHead>
-                    <TableHead className="text-zinc-400">Versão</TableHead>
-                    <TableHead className="text-zinc-400">Tamanho</TableHead>
-                    <TableHead className="text-zinc-400">Enviado por</TableHead>
-                    <TableHead className="text-zinc-400 text-right">Ações</TableHead>
+                    <TableHead className="text-slate-600">Categoria</TableHead>
+                    <TableHead className="text-slate-600">Tipo</TableHead>
+                    <TableHead className="text-slate-600">Nome</TableHead>
+                    <TableHead className="text-slate-600">UF/RACI</TableHead>
+                    <TableHead className="text-slate-600">Vencimento</TableHead>
+                    <TableHead className="text-slate-600">Versão</TableHead>
+                    <TableHead className="text-slate-600">Tamanho</TableHead>
+                    <TableHead className="text-slate-600">Enviado por</TableHead>
+                    <TableHead className="text-slate-600 text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {documentos.map((doc) => (
                     <TableRow key={doc.documento_id} className={`border-border hover:bg-card ${doc.deleted_at ? 'opacity-50' : ''}`}>
                       <TableCell>{categoriaBadge(doc.categoria)}</TableCell>
-                      <TableCell className="text-zinc-300">{doc.tipo}</TableCell>
-                      <TableCell className="text-white font-medium">
+                      <TableCell className="text-slate-700">{doc.tipo}</TableCell>
+                      <TableCell className="text-foreground font-medium">
                         {doc.nome}
                         {doc.deleted_at && <Badge className="ml-2 bg-red-500/10 text-red-400 border-red-500/20 text-xs">removido</Badge>}
                       </TableCell>
-                      <TableCell className="text-zinc-400 text-sm">
+                      <TableCell className="text-slate-600 text-sm">
                         {doc.estado_sigla || (doc.atividade_raci_numero ? `RACI #${doc.atividade_raci_numero}` : '—')}
                       </TableCell>
                       <TableCell className="text-sm">
                         {doc.vencimento ? (
                           <div className="flex items-center gap-1.5">
-                            <span className="text-zinc-400">{new Date(doc.vencimento).toLocaleDateString('pt-BR')}</span>
+                            <span className="text-slate-600">{new Date(doc.vencimento).toLocaleDateString('pt-BR')}</span>
                             {getVencimentoStatus(doc.vencimento) && (
                               <Badge className={`${getVencimentoStatus(doc.vencimento).className} text-[10px] px-1.5 py-0`}>
                                 {getVencimentoStatus(doc.vencimento).label}
@@ -529,12 +529,12 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                             {doc.vencimento_fonte === 'ocr' && <Sparkles className="h-3 w-3 text-sky-400" title="Sugerido por OCR" />}
                           </div>
                         ) : (
-                          <span className="text-zinc-600 italic">—</span>
+                          <span className="text-slate-400 italic">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-zinc-400 text-sm">v{doc.versao}</TableCell>
-                      <TableCell className="text-zinc-400 text-sm">{formatFileSize(doc.file_size)}</TableCell>
-                      <TableCell className="text-zinc-400 text-sm">{doc.uploaded_by_nome}</TableCell>
+                      <TableCell className="text-slate-600 text-sm">v{doc.versao}</TableCell>
+                      <TableCell className="text-slate-600 text-sm">{formatFileSize(doc.file_size)}</TableCell>
+                      <TableCell className="text-slate-600 text-sm">{doc.uploaded_by_nome}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           <Button variant="ghost" size="icon" title="Baixar" onClick={() => handleDownload(doc.documento_id, doc.file_name)}>
@@ -566,7 +566,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
 
       {/* Dialog: histórico de versões */}
       <Dialog open={versoesDialog.open} onOpenChange={(open) => setVersoesDialog((prev) => ({ ...prev, open }))}>
-        <DialogContent className="bg-card border-border text-white">
+        <DialogContent className="bg-card border-border text-foreground">
           <DialogHeader>
             <DialogTitle className="font-heading text-xl">Histórico de Versões</DialogTitle>
           </DialogHeader>
@@ -575,7 +575,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
               <div key={v.documento_id} className={`flex items-center justify-between p-3 rounded-lg border ${v.documento_id === versoesDialog.documento_id ? 'border-primary-500/40 bg-primary-500/5' : 'border-border'}`}>
                 <div>
                   <p className="text-sm font-medium">v{v.versao} — {v.nome}</p>
-                  <p className="text-xs text-zinc-500">{new Date(v.created_at).toLocaleString('pt-BR')} · {v.uploaded_by_nome}</p>
+                  <p className="text-xs text-slate-500">{new Date(v.created_at).toLocaleString('pt-BR')} · {v.uploaded_by_nome}</p>
                 </div>
                 <Button variant="ghost" size="icon" title="Baixar" onClick={() => handleDownload(v.documento_id, v.file_name)}>
                   <Download className="h-4 w-4" />
@@ -588,39 +588,39 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
 
       {/* Dialog: edição */}
       <Dialog open={editDialog.open} onOpenChange={(open) => setEditDialog((prev) => ({ ...prev, open }))}>
-        <DialogContent className="bg-card border-border text-white">
+        <DialogContent className="bg-card border-border text-foreground">
           <DialogHeader>
             <DialogTitle className="font-heading text-xl">Editar Documento</DialogTitle>
           </DialogHeader>
           <form onSubmit={salvarEdicao} className="space-y-4 mt-2">
             <div>
-              <Label className="text-zinc-300">Nome</Label>
+              <Label className="text-slate-700">Nome</Label>
               <Input
                 value={editDialog.nome}
                 onChange={(e) => setEditDialog((prev) => ({ ...prev, nome: e.target.value }))}
-                className="bg-background border-border text-white mt-2"
+                className="bg-background border-border text-foreground mt-2"
                 required
               />
             </div>
             <div>
-              <Label className="text-zinc-300">Tipo</Label>
+              <Label className="text-slate-700">Tipo</Label>
               <Input
                 value={editDialog.tipo}
                 onChange={(e) => setEditDialog((prev) => ({ ...prev, tipo: e.target.value }))}
-                className="bg-background border-border text-white mt-2"
+                className="bg-background border-border text-foreground mt-2"
                 required
               />
             </div>
             <div>
-              <Label className="text-zinc-300">Observações</Label>
+              <Label className="text-slate-700">Observações</Label>
               <Textarea
                 value={editDialog.notes}
                 onChange={(e) => setEditDialog((prev) => ({ ...prev, notes: e.target.value }))}
-                className="bg-background border-border text-white mt-2"
+                className="bg-background border-border text-foreground mt-2"
               />
             </div>
             <div>
-              <Label className="text-zinc-300 flex items-center gap-1.5">
+              <Label className="text-slate-700 flex items-center gap-1.5">
                 Vencimento
                 {editDialog.doc?.vencimento_fonte === 'ocr' && (
                   <span className="text-xs text-sky-400 flex items-center gap-1"><Sparkles className="h-3 w-3" /> sugerido por OCR</span>
@@ -630,7 +630,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                 type="date"
                 value={editDialog.vencimento}
                 onChange={(e) => setEditDialog((prev) => ({ ...prev, vencimento: e.target.value }))}
-                className="bg-background border-border text-white mt-2"
+                className="bg-background border-border text-foreground mt-2"
               />
             </div>
             <Button type="submit" className="w-full bg-primary-500 hover:bg-primary-600 text-white button-shadow">

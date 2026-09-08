@@ -19,7 +19,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.
 const API = `${BACKEND_URL}/api`;
 
 const STATUS_SUBMISSAO_CFG = {
-  rascunho: { label: 'Rascunho', className: 'bg-zinc-800 text-zinc-400 border-input' },
+  rascunho: { label: 'Rascunho', className: 'bg-muted text-slate-600 border-input' },
   submetido: { label: 'Submetido', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
   em_diligencia: { label: 'Em Diligência', icon: AlertTriangle, className: 'bg-primary-500/10 text-primary-400 border-primary-500/20' },
@@ -27,7 +27,7 @@ const STATUS_SUBMISSAO_CFG = {
 };
 
 const STATUS_ITEM_CFG = {
-  pendente: { label: 'Pendente', icon: Clock, className: 'bg-zinc-800 text-zinc-400 border-input' },
+  pendente: { label: 'Pendente', icon: Clock, className: 'bg-muted text-slate-600 border-input' },
   enviado: { label: 'Enviado', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   conforme: { label: 'Conforme', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
   inconforme: { label: 'Inconforme', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
@@ -233,20 +233,20 @@ const MinhasSubmissoes = () => {
     <DashboardLayout>
       <div className="p-6 lg:p-8 space-y-8">
         <div>
-          <h1 className="text-2xl font-bold text-white">Credenciamento por Portaria</h1>
-          <p className="text-zinc-400 text-sm mt-1">
+          <h1 className="text-2xl font-bold text-foreground">Credenciamento por Portaria</h1>
+          <p className="text-slate-600 text-sm mt-1">
             Responda ao checklist de exigências publicado pelo DETRAN pra cada portaria da sua UF de atuação.
           </p>
         </div>
 
         {loading ? (
-          <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
+          <div className="flex items-center justify-center py-16 text-slate-500 gap-3">
             <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
             <span>Carregando...</span>
           </div>
         ) : !company ? (
           <Card className="bg-card border-border">
-            <CardContent className="p-12 text-center text-zinc-400">
+            <CardContent className="p-12 text-center text-slate-600">
               Nenhuma empresa cadastrada — cadastre sua empresa primeiro.
             </CardContent>
           </Card>
@@ -254,7 +254,7 @@ const MinhasSubmissoes = () => {
           <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <ListChecks className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-400">Nenhuma portaria com checklist publicado pra sua UF de atuação ainda.</p>
+              <p className="text-slate-600">Nenhuma portaria com checklist publicado pra sua UF de atuação ainda.</p>
             </CardContent>
           </Card>
         ) : !portariaAtiva ? (
@@ -277,10 +277,10 @@ const MinhasSubmissoes = () => {
                   >
                     <CardContent className="p-5 flex items-center justify-between gap-4">
                       <div>
-                        <p className="text-white font-semibold">{portaria.numero ? `${portaria.numero} — ` : ''}{portaria.title}</p>
-                        <p className="text-xs text-zinc-500 mt-1">
+                        <p className="text-foreground font-semibold">{portaria.numero ? `${portaria.numero} — ` : ''}{portaria.title}</p>
+                        <p className="text-xs text-slate-500 mt-1">
                           UF {portaria.estado_sigla} · {portaria.checklist_itens?.length || 0} item(ns) no checklist
-                          {cats.length > 1 && <> · categoria <span className="text-zinc-400">{tipoInfo?.nome || cat}</span></>}
+                          {cats.length > 1 && <> · categoria <span className="text-slate-600">{tipoInfo?.nome || cat}</span></>}
                         </p>
                       </div>
                       <div className="flex items-center gap-3 shrink-0">
@@ -289,9 +289,9 @@ const MinhasSubmissoes = () => {
                             {cfg.icon && <cfg.icon className="h-3 w-3 mr-1" />}{cfg.label}
                           </Badge>
                         ) : (
-                          <Badge className="bg-zinc-800 text-zinc-500 border-input text-[10px]">Não iniciado</Badge>
+                          <Badge className="bg-muted text-slate-500 border-input text-[10px]">Não iniciado</Badge>
                         )}
-                        <ChevronRight className="h-4 w-4 text-zinc-600" />
+                        <ChevronRight className="h-4 w-4 text-slate-400" />
                       </div>
                     </CardContent>
                   </Card>
@@ -301,21 +301,21 @@ const MinhasSubmissoes = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            <Button variant="link" size="sm" onClick={() => { setPortariaAtiva(null); setCategoriaAtiva(null); }} className="h-auto p-0 text-zinc-400 hover:text-white">
+            <Button variant="link" size="sm" onClick={() => { setPortariaAtiva(null); setCategoriaAtiva(null); }} className="h-auto p-0 text-slate-600 hover:text-foreground">
               ← Voltar pra lista de portarias
             </Button>
 
             <div>
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold text-foreground">
                 {portariaSelecionada?.numero ? `${portariaSelecionada.numero} — ` : ''}{portariaSelecionada?.title}
               </h2>
-              <p className="text-xs text-zinc-500 mt-1">UF {portariaSelecionada?.estado_sigla}</p>
+              <p className="text-xs text-slate-500 mt-1">UF {portariaSelecionada?.estado_sigla}</p>
             </div>
 
             {!submissaoSelecionada ? (
               <Card className="bg-card border-border">
                 <CardContent className="p-8 text-center">
-                  <p className="text-zinc-400 mb-4">Você ainda não iniciou o envio pra esta portaria.</p>
+                  <p className="text-slate-600 mb-4">Você ainda não iniciou o envio pra esta portaria.</p>
                   <Button
                     onClick={() => iniciarSubmissao(portariaSelecionada.portaria_id, categoriaAtiva)}
                     disabled={criandoSubmissao}
@@ -330,7 +330,7 @@ const MinhasSubmissoes = () => {
                 <Card className="bg-card border-border">
                   <CardContent className="p-4 flex items-center justify-between">
                     <div>
-                      <p className="text-xs text-zinc-500 uppercase font-mono">Status do processo</p>
+                      <p className="text-xs text-slate-500 uppercase font-mono">Status do processo</p>
                       <Badge className={`${STATUS_SUBMISSAO_CFG[submissaoSelecionada.status].className} mt-1 font-mono uppercase text-xs`}>
                         {STATUS_SUBMISSAO_CFG[submissaoSelecionada.status].label}
                       </Badge>
@@ -366,7 +366,7 @@ const MinhasSubmissoes = () => {
                           <div className="flex items-center justify-between gap-4">
                             <div className="min-w-0">
                               <p className="text-sm text-zinc-200 font-medium">{item.nome}</p>
-                              {item.descricao && <p className="text-xs text-zinc-500 mt-0.5">{item.descricao}</p>}
+                              {item.descricao && <p className="text-xs text-slate-500 mt-0.5">{item.descricao}</p>}
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <Badge className={`${cfg.className} font-mono uppercase text-[10px] px-2 py-0.5`}>
@@ -397,34 +397,34 @@ const MinhasSubmissoes = () => {
       </div>
 
       <Dialog open={!!itemUpload} onOpenChange={(open) => !open && setItemUpload(null)}>
-        <DialogContent className="bg-card border-input text-white">
+        <DialogContent className="bg-card border-input text-foreground">
           <DialogHeader>
             <DialogTitle>Enviar documento</DialogTitle>
           </DialogHeader>
           {itemUpload && (
             <form onSubmit={enviarItem} className="space-y-4 mt-2">
-              <p className="text-sm text-zinc-300">{itemUpload.nome}</p>
+              <p className="text-sm text-slate-700">{itemUpload.nome}</p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label className="text-zinc-300">Número do documento</Label>
+                  <Label className="text-slate-700">Número do documento</Label>
                   <Input value={numeroDocumento} onChange={(e) => setNumeroDocumento(e.target.value)}
-                    className="bg-zinc-800 border-input text-white mt-1" required />
+                    className="bg-muted border-input text-foreground mt-1" required />
                 </div>
                 <div>
-                  <Label className="text-zinc-300">Data de emissão</Label>
+                  <Label className="text-slate-700">Data de emissão</Label>
                   <Input type="date" value={dataEmissao} onChange={(e) => setDataEmissao(e.target.value)}
-                    className="bg-zinc-800 border-input text-white mt-1" required />
+                    className="bg-muted border-input text-foreground mt-1" required />
                 </div>
               </div>
               <div>
-                <Label className="text-zinc-300">Data de validade (opcional)</Label>
+                <Label className="text-slate-700">Data de validade (opcional)</Label>
                 <Input type="date" value={dataValidade} onChange={(e) => setDataValidade(e.target.value)}
-                  className="bg-zinc-800 border-input text-white mt-1" />
+                  className="bg-muted border-input text-foreground mt-1" />
               </div>
               <div>
-                <Label className="text-zinc-300">Arquivo</Label>
+                <Label className="text-slate-700">Arquivo</Label>
                 <Input type="file" onChange={(e) => setArquivo(e.target.files?.[0] || null)}
-                  className="bg-zinc-800 border-input text-white mt-1" required />
+                  className="bg-muted border-input text-foreground mt-1" required />
               </div>
               <Button type="submit" disabled={enviando} className="w-full bg-primary-500 hover:bg-primary-600 text-white">
                 {enviando ? 'Enviando...' : 'Enviar Documento'}

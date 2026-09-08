@@ -709,7 +709,7 @@ const AreaTransparencia = () => {
                         placeholder="Cole o texto da portaria aqui..."
                         value={analyzeText}
                         onChange={(e) => setAnalyzeText(e.target.value)}
-                        className="bg-zinc-800 border-input text-white min-h-[160px]"
+                        className="bg-muted border-input text-foreground min-h-[160px]"
                       />
                       <Button
                         onClick={handleAnalyze}
@@ -758,7 +758,7 @@ const AreaTransparencia = () => {
             )}
 
             {loadingPortarias ? (
-              <div className="flex items-center justify-center py-16 text-zinc-500 gap-3">
+              <div className="flex items-center justify-center py-16 text-slate-500 gap-3">
                 <Loader2 className="h-5 w-5 animate-spin text-primary-400" />
                 <span>Carregando portarias...</span>
               </div>
@@ -803,13 +803,13 @@ const AreaTransparencia = () => {
           {/* ── ABA: EDITAIS ── */}
           <TabsContent value="editais" className="mt-6">
             <div className="mb-6 flex items-center justify-between flex-wrap gap-4">
-              <p className="text-zinc-500 text-sm">Processos de credenciamento abertos pelos DETRANs</p>
+              <p className="text-slate-500 text-sm">Processos de credenciamento abertos pelos DETRANs</p>
               <div className="flex items-center gap-3">
                 <Select value={filtroUF} onValueChange={setFiltroUF}>
-                  <SelectTrigger className="bg-card border-border text-white w-36">
+                  <SelectTrigger className="bg-card border-border text-foreground w-36">
                     <SelectValue placeholder="Estado" />
                   </SelectTrigger>
-                  <SelectContent className="bg-card border-border text-white">
+                  <SelectContent className="bg-card border-border text-foreground">
                     <SelectItem value="todos">Todos</SelectItem>
                     {UFS.map(uf => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}
                   </SelectContent>
@@ -828,17 +828,17 @@ const AreaTransparencia = () => {
                       </DialogHeader>
                       <form onSubmit={handleSubmitEdital} className="space-y-4">
                         <div>
-                          <Label className="text-zinc-300">Título</Label>
-                          <Input value={formDataEdital.titulo} onChange={(e) => setFormDataEdital({ ...formDataEdital, titulo: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" required />
+                          <Label className="text-slate-700">Título</Label>
+                          <Input value={formDataEdital.titulo} onChange={(e) => setFormDataEdital({ ...formDataEdital, titulo: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
                         </div>
                         <div className="grid grid-cols-2 gap-3">
                           <div>
-                            <Label className="text-zinc-300">UF</Label>
+                            <Label className="text-slate-700">UF</Label>
                             <Select value={formDataEdital.uf} onValueChange={(value) => setFormDataEdital({ ...formDataEdital, uf: value })}>
-                              <SelectTrigger className="bg-zinc-800 border-input text-white mt-1">
+                              <SelectTrigger className="bg-muted border-input text-foreground mt-1">
                                 <SelectValue placeholder="Selecione..." />
                               </SelectTrigger>
-                              <SelectContent className="bg-card border-input text-white max-h-64">
+                              <SelectContent className="bg-card border-input text-foreground max-h-64">
                                 {UFS.map((uf) => (
                                   <SelectItem key={uf} value={uf}>{uf}</SelectItem>
                                 ))}
@@ -846,12 +846,12 @@ const AreaTransparencia = () => {
                             </Select>
                           </div>
                           <div>
-                            <Label className="text-zinc-300">Status</Label>
+                            <Label className="text-slate-700">Status</Label>
                             <Select value={formDataEdital.status} onValueChange={(value) => setFormDataEdital({ ...formDataEdital, status: value })}>
-                              <SelectTrigger className="bg-zinc-800 border-input text-white mt-1">
+                              <SelectTrigger className="bg-muted border-input text-foreground mt-1">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent className="bg-card border-input text-white">
+                              <SelectContent className="bg-card border-input text-foreground">
                                 <SelectItem value="aberto">Aberto</SelectItem>
                                 <SelectItem value="encerrado">Encerrado</SelectItem>
                               </SelectContent>
@@ -859,23 +859,23 @@ const AreaTransparencia = () => {
                           </div>
                         </div>
                         <div>
-                          <Label className="text-zinc-300">Data de Encerramento</Label>
-                          <Input type="date" value={formDataEdital.data_encerramento} onChange={(e) => setFormDataEdital({ ...formDataEdital, data_encerramento: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" />
+                          <Label className="text-slate-700">Data de Encerramento</Label>
+                          <Input type="date" value={formDataEdital.data_encerramento} onChange={(e) => setFormDataEdital({ ...formDataEdital, data_encerramento: e.target.value })} className="bg-muted border-input text-foreground mt-1" />
                         </div>
                         <div>
-                          <Label className="text-zinc-300">Descrição</Label>
-                          <Textarea value={formDataEdital.descricao} onChange={(e) => setFormDataEdital({ ...formDataEdital, descricao: e.target.value })} className="bg-zinc-800 border-input text-white mt-1 min-h-[100px]" />
+                          <Label className="text-slate-700">Descrição</Label>
+                          <Textarea value={formDataEdital.descricao} onChange={(e) => setFormDataEdital({ ...formDataEdital, descricao: e.target.value })} className="bg-muted border-input text-foreground mt-1 min-h-[100px]" />
                         </div>
 
                         <div>
-                          <Label className="text-zinc-300">Documentos Obrigatórios</Label>
+                          <Label className="text-slate-700">Documentos Obrigatórios</Label>
                           <div className="flex gap-2 mt-1">
                             <Input
                               value={novoDocumento}
                               onChange={(e) => setNovoDocumento(e.target.value)}
                               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); adicionarDocumento(); } }}
                               placeholder="Ex: Contrato Social"
-                              className="bg-zinc-800 border-input text-white"
+                              className="bg-muted border-input text-foreground"
                             />
                             <Button type="button" onClick={adicionarDocumento} variant="outline" className="shrink-0">
                               Adicionar
@@ -884,7 +884,7 @@ const AreaTransparencia = () => {
                           {formDataEdital.documentos_obrigatorios.length > 0 && (
                             <div className="flex flex-wrap gap-2 mt-2">
                               {formDataEdital.documentos_obrigatorios.map((doc, idx) => (
-                                <Badge key={idx} className="bg-zinc-800 text-zinc-300 border-input gap-1 pr-1">
+                                <Badge key={idx} className="bg-muted text-slate-700 border-input gap-1 pr-1">
                                   {doc}
                                   <button type="button" onClick={() => removerDocumento(idx)} className="ml-1 hover:text-red-400">
                                     <X className="h-3 w-3" />
@@ -896,19 +896,19 @@ const AreaTransparencia = () => {
                         </div>
 
                         <div className="border-t border-border pt-4">
-                          <Label className="text-zinc-300">Anexos (PDF)</Label>
+                          <Label className="text-slate-700">Anexos (PDF)</Label>
                           <div className="mt-1 flex items-center gap-2">
-                            <Input type="file" accept="application/pdf" onChange={handleAnexoUpload} disabled={enviandoAnexo} className="bg-zinc-800 border-input text-white" />
+                            <Input type="file" accept="application/pdf" onChange={handleAnexoUpload} disabled={enviandoAnexo} className="bg-muted border-input text-foreground" />
                             {enviandoAnexo && <Loader2 className="h-4 w-4 animate-spin text-primary-400 shrink-0" />}
                           </div>
                           {formDataEdital.anexos.length > 0 && (
                             <div className="space-y-1 mt-2">
                               {formDataEdital.anexos.map((a, idx) => (
-                                <div key={idx} className="flex items-center justify-between text-xs bg-zinc-800/50 border border-input rounded px-2 py-1.5">
-                                  <span className="flex items-center gap-1.5 text-zinc-300 truncate">
+                                <div key={idx} className="flex items-center justify-between text-xs bg-muted/50 border border-input rounded px-2 py-1.5">
+                                  <span className="flex items-center gap-1.5 text-slate-700 truncate">
                                     <Paperclip className="h-3 w-3 shrink-0" /> {a.nome}
                                   </span>
-                                  <button type="button" onClick={() => removerAnexo(idx)} className="text-zinc-500 hover:text-red-400 shrink-0">
+                                  <button type="button" onClick={() => removerAnexo(idx)} className="text-slate-500 hover:text-red-400 shrink-0">
                                     <Trash2 className="h-3.5 w-3.5" />
                                   </button>
                                 </div>
@@ -918,13 +918,13 @@ const AreaTransparencia = () => {
                         </div>
 
                         <div>
-                          <Label className="text-zinc-300">Termo de Adesão (PDF)</Label>
+                          <Label className="text-slate-700">Termo de Adesão (PDF)</Label>
                           <div className="mt-1 flex items-center gap-2">
-                            <Input type="file" accept="application/pdf" onChange={handleTermoUpload} disabled={enviandoTermo} className="bg-zinc-800 border-input text-white" />
+                            <Input type="file" accept="application/pdf" onChange={handleTermoUpload} disabled={enviandoTermo} className="bg-muted border-input text-foreground" />
                             {enviandoTermo && <Loader2 className="h-4 w-4 animate-spin text-primary-400 shrink-0" />}
                           </div>
                           {termoNome && (
-                            <p className="text-xs text-zinc-400 mt-1.5 flex items-center gap-1.5">
+                            <p className="text-xs text-slate-600 mt-1.5 flex items-center gap-1.5">
                               <Paperclip className="h-3 w-3" /> {termoNome}
                             </p>
                           )}
@@ -997,36 +997,36 @@ const AreaTransparencia = () => {
           </DialogHeader>
           <div className="space-y-4">
             <div>
-              <Label className="text-zinc-300">Título</Label>
-              <Input value={editDataPortaria.title} onChange={(e) => setEditDataPortaria({ ...editDataPortaria, title: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" />
+              <Label className="text-slate-700">Título</Label>
+              <Input value={editDataPortaria.title} onChange={(e) => setEditDataPortaria({ ...editDataPortaria, title: e.target.value })} className="bg-muted border-input text-foreground mt-1" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-zinc-300">Número da Portaria</Label>
-                <Input value={editDataPortaria.numero} onChange={(e) => setEditDataPortaria({ ...editDataPortaria, numero: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" />
+                <Label className="text-slate-700">Número da Portaria</Label>
+                <Input value={editDataPortaria.numero} onChange={(e) => setEditDataPortaria({ ...editDataPortaria, numero: e.target.value })} className="bg-muted border-input text-foreground mt-1" />
               </div>
               <div>
-                <Label className="text-zinc-300">Órgão Emissor</Label>
-                <Input value={editDataPortaria.orgao_emissor} onChange={(e) => setEditDataPortaria({ ...editDataPortaria, orgao_emissor: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" />
+                <Label className="text-slate-700">Órgão Emissor</Label>
+                <Input value={editDataPortaria.orgao_emissor} onChange={(e) => setEditDataPortaria({ ...editDataPortaria, orgao_emissor: e.target.value })} className="bg-muted border-input text-foreground mt-1" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-zinc-300">UF (estado)</Label>
+                <Label className="text-slate-700">UF (estado)</Label>
                 <Input
                   value={editDataPortaria.estado_sigla}
                   onChange={(e) => setEditDataPortaria({ ...editDataPortaria, estado_sigla: e.target.value.toUpperCase().slice(0, 2) })}
                   maxLength={2}
-                  className="bg-zinc-800 border-input text-white mt-1"
+                  className="bg-muted border-input text-foreground mt-1"
                 />
               </div>
               <div>
-                <Label className="text-zinc-300">Status</Label>
+                <Label className="text-slate-700">Status</Label>
                 <Select value={editDataPortaria.status} onValueChange={(value) => setEditDataPortaria({ ...editDataPortaria, status: value })}>
-                  <SelectTrigger className="bg-zinc-800 border-input text-white mt-1">
+                  <SelectTrigger className="bg-muted border-input text-foreground mt-1">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent className="bg-card border-input text-white">
+                  <SelectContent className="bg-card border-input text-foreground">
                     <SelectItem value="vigente">Vigente</SelectItem>
                     <SelectItem value="revogada">Revogada</SelectItem>
                   </SelectContent>
@@ -1035,16 +1035,16 @@ const AreaTransparencia = () => {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <Label className="text-zinc-300">Data</Label>
-                <Input type="date" value={editDataPortaria.date} onChange={(e) => setEditDataPortaria({ ...editDataPortaria, date: e.target.value })} className="bg-zinc-800 border-input text-white mt-1" />
+                <Label className="text-slate-700">Data</Label>
+                <Input type="date" value={editDataPortaria.date} onChange={(e) => setEditDataPortaria({ ...editDataPortaria, date: e.target.value })} className="bg-muted border-input text-foreground mt-1" />
               </div>
               <div>
-                <Label className="text-zinc-300">Tipo</Label>
+                <Label className="text-slate-700">Tipo</Label>
                 <Select value={editDataPortaria.tipo} onValueChange={(value) => setEditDataPortaria({ ...editDataPortaria, tipo: value })}>
-                  <SelectTrigger className="bg-zinc-800 border-input text-white mt-1">
+                  <SelectTrigger className="bg-muted border-input text-foreground mt-1">
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
-                  <SelectContent className="bg-card border-input text-white">
+                  <SelectContent className="bg-card border-input text-foreground">
                     {TIPOS_PORTARIA.map((t) => (
                       <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                     ))}
@@ -1053,21 +1053,21 @@ const AreaTransparencia = () => {
               </div>
             </div>
             <div>
-              <Label className="text-zinc-300">Resumo</Label>
-              <Textarea value={editDataPortaria.summary} onChange={(e) => setEditDataPortaria({ ...editDataPortaria, summary: e.target.value })} className="bg-zinc-800 border-input text-white mt-1 min-h-[80px]" />
+              <Label className="text-slate-700">Resumo</Label>
+              <Textarea value={editDataPortaria.summary} onChange={(e) => setEditDataPortaria({ ...editDataPortaria, summary: e.target.value })} className="bg-muted border-input text-foreground mt-1 min-h-[80px]" />
             </div>
             <div>
-              <Label className="text-zinc-300">Link do PDF</Label>
-              <Input value={editDataPortaria.link_pdf} onChange={(e) => setEditDataPortaria({ ...editDataPortaria, link_pdf: e.target.value })} placeholder="https://..." className="bg-zinc-800 border-input text-white mt-1" />
+              <Label className="text-slate-700">Link do PDF</Label>
+              <Input value={editDataPortaria.link_pdf} onChange={(e) => setEditDataPortaria({ ...editDataPortaria, link_pdf: e.target.value })} placeholder="https://..." className="bg-muted border-input text-foreground mt-1" />
               <div className="mt-2 flex items-center gap-2">
-                <span className="text-xs text-zinc-500 shrink-0">ou envie o arquivo:</span>
-                <Input type="file" accept="application/pdf" onChange={handleUploadPdfPortaria} disabled={enviandoPdfPortaria} className="bg-zinc-800 border-input text-white" />
+                <span className="text-xs text-slate-500 shrink-0">ou envie o arquivo:</span>
+                <Input type="file" accept="application/pdf" onChange={handleUploadPdfPortaria} disabled={enviandoPdfPortaria} className="bg-muted border-input text-foreground" />
                 {enviandoPdfPortaria && <Loader2 className="h-4 w-4 animate-spin text-primary-400 shrink-0" />}
               </div>
             </div>
 
             <div className="border-t border-border pt-4">
-              <Label className="text-zinc-300 mb-2 block">Checklist de exigências</Label>
+              <Label className="text-slate-700 mb-2 block">Checklist de exigências</Label>
               <ChecklistCatalogoPicker selecionados={editChecklistSelecionados} onToggle={toggleEditChecklistItem} />
             </div>
 
@@ -1084,14 +1084,14 @@ const AreaTransparencia = () => {
           <DialogHeader>
             <DialogTitle>Qual empresa está se candidatando?</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-zinc-400">
+          <p className="text-sm text-slate-600">
             Sua conta tem mais de uma empresa cadastrada. Selecione qual delas está se candidatando ao edital{editalParaCandidatar ? ` "${editalParaCandidatar.titulo}"` : ''}.
           </p>
           <Select value={empresaEscolhida} onValueChange={setEmpresaEscolhida}>
-            <SelectTrigger className="bg-zinc-800 border-input text-white">
+            <SelectTrigger className="bg-muted border-input text-foreground">
               <SelectValue placeholder="Selecione a empresa" />
             </SelectTrigger>
-            <SelectContent className="bg-card border-border text-white">
+            <SelectContent className="bg-card border-border text-foreground">
               {empresasParaEscolher.map((c) => (
                 <SelectItem key={c.company_id} value={c.company_id}>
                   {c.nome_fantasia || c.name || c.company_id}

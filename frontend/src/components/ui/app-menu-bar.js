@@ -67,14 +67,14 @@ const AppMenuBar = () => {
       'flex items-center gap-2 cursor-pointer',
       active
         ? 'bg-primary-500/15 text-primary-400 focus:bg-primary-500/15 focus:text-primary-400'
-        : 'focus:bg-zinc-800 focus:text-white'
+        : 'focus:bg-muted focus:text-foreground'
     );
 
   const subTriggerClass = (active) =>
     cn(
       active
         ? 'bg-primary-500/15 text-primary-400 focus:bg-primary-500/15 focus:text-primary-400 data-[state=open]:bg-primary-500/15 data-[state=open]:text-primary-400'
-        : 'focus:bg-zinc-800 focus:text-white data-[state=open]:bg-zinc-800 data-[state=open]:text-white'
+        : 'focus:bg-muted focus:text-foreground data-[state=open]:bg-muted data-[state=open]:text-foreground'
     );
 
   const temMais = navSecundarios.length > 0 || navSecoes.length > 0 || navAdminExtra.length > 0;

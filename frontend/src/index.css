@@ -88,6 +88,20 @@ code {
     .sigcr-table-wrap thead { @apply bg-muted/70 text-muted-foreground; }
     .sigcr-table-wrap tbody tr { @apply border-t border-border hover:bg-muted/45; }
     .sigcr-dense-row { min-height: 44px; }
+    .sigcr-app-main {
+        background-color: #f7f8fa;
+        color: hsl(var(--foreground));
+    }
+
+    .sigcr-app-main h1,
+    .sigcr-app-main h2,
+    .sigcr-app-main h3 {
+        letter-spacing: -0.015em;
+    }
+
+    .sigcr-app-main :where(input, textarea, select) {
+        color-scheme: light;
+    }
 }
 
 @layer base {

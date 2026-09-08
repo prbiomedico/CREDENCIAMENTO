@@ -87,7 +87,7 @@ const Notificacoes = () => {
             </div>
             <div>
               <h1 className="text-3xl font-heading font-bold tracking-tight">Notificações</h1>
-              <p className="text-zinc-500 text-sm">{naoLidas} não lidas</p>
+              <p className="text-slate-500 text-sm">{naoLidas} não lidas</p>
             </div>
           </div>
           {naoLidas > 0 && (
@@ -105,7 +105,7 @@ const Notificacoes = () => {
           <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <Bell className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-400">Nenhuma notificação ainda</p>
+              <p className="text-slate-600">Nenhuma notificação ainda</p>
             </CardContent>
           </Card>
         ) : (
@@ -121,11 +121,11 @@ const Notificacoes = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <p className={`text-sm font-semibold ${notif.lida ? 'text-zinc-400' : 'text-white'}`}>{notif.titulo}</p>
+                      <p className={`text-sm font-semibold ${notif.lida ? 'text-slate-600' : 'text-foreground'}`}>{notif.titulo}</p>
                       {!notif.lida && <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />}
                     </div>
-                    <p className="text-xs text-zinc-500">{notif.mensagem}</p>
-                    <p className="text-[10px] text-zinc-600 mt-1 font-mono">{new Date(notif.created_at).toLocaleString('pt-BR')}</p>
+                    <p className="text-xs text-slate-500">{notif.mensagem}</p>
+                    <p className="text-[10px] text-slate-400 mt-1 font-mono">{new Date(notif.created_at).toLocaleString('pt-BR')}</p>
                   </div>
                 </div>
               );

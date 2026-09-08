@@ -28,7 +28,7 @@ class ErrorBoundary extends React.Component {
           <div className="text-center space-y-4 max-w-md px-6">
             <AlertTriangle className="h-10 w-10 text-primary-500 mx-auto" />
             <p className="text-zinc-200 text-sm font-medium">Ocorreu um erro ao carregar esta tela.</p>
-            <p className="text-zinc-500 text-xs">Isso não afeta seus dados. Tente voltar ao dashboard.</p>
+            <p className="text-slate-500 text-xs">Isso não afeta seus dados. Tente voltar ao dashboard.</p>
             <Button onClick={this.handleReload}>
               Voltar ao Dashboard
             </Button>

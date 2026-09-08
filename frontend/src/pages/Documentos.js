@@ -64,7 +64,7 @@ const Documentos = () => {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-heading font-bold tracking-tight mb-2">Documentos</h1>
-          <p className="text-zinc-400">
+          <p className="text-slate-600">
             {user?.perfil === 'financeira'
               ? 'Checklist de documentos exigidos pra credenciamento'
               : 'Checklist de documentos exigidos pela Resolução CONTRAN 807'}
@@ -76,7 +76,7 @@ const Documentos = () => {
             <CardContent className="p-12 text-center">
               <FileText className="h-16 w-16 text-amber-700 mx-auto mb-4" />
               <p className="text-amber-400 mb-4">Sessão expirada</p>
-              <p className="text-sm text-zinc-500 mb-4">Não foi possível confirmar sua autenticação — isso não significa que você não tem empresas cadastradas.</p>
+              <p className="text-sm text-slate-500 mb-4">Não foi possível confirmar sua autenticação — isso não significa que você não tem empresas cadastradas.</p>
               <Button onClick={() => window.location.reload()} className="bg-primary-500 hover:bg-primary-600 text-white">
                 Recarregar página
               </Button>
@@ -86,12 +86,12 @@ const Documentos = () => {
           <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <FileText className="h-16 w-16 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-400 mb-4">
+              <p className="text-slate-600 mb-4">
                 {tipoEmpresaAtivo
                   ? `Nenhuma empresa do tipo ${TIPO_EMPRESA_LABEL[tipoEmpresaAtivo]} cadastrada ainda`
                   : 'Nenhuma empresa cadastrada'}
               </p>
-              <p className="text-sm text-zinc-500">Cadastre uma empresa primeiro para gerenciar documentos</p>
+              <p className="text-sm text-slate-500">Cadastre uma empresa primeiro para gerenciar documentos</p>
             </CardContent>
           </Card>
         ) : (
@@ -99,15 +99,15 @@ const Documentos = () => {
             {/* Company Selection */}
             <Card className="bg-card border-border mb-8">
               <CardContent className="p-6">
-                <Label className="text-zinc-300 mb-2 block">Selecionar Empresa</Label>
+                <Label className="text-slate-700 mb-2 block">Selecionar Empresa</Label>
                 <Select value={selectedCompany} onValueChange={setSelectedCompany}>
                   <SelectTrigger
                     data-testid="company-select"
-                    className="bg-background border-border text-white"
+                    className="bg-background border-border text-foreground"
                   >
                     <SelectValue placeholder="Selecione a empresa" />
                   </SelectTrigger>
-                  <SelectContent className="bg-card border-border text-white">
+                  <SelectContent className="bg-card border-border text-foreground">
                     {companies.map((company) => (
                       <SelectItem key={company.company_id} value={company.company_id}>
                         {company.name} ({company.cnpj})

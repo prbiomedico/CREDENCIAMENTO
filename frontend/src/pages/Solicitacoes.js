@@ -9,7 +9,7 @@ import { useApi } from '../hooks/useApi';
 import { toast } from 'sonner';
 
 const STATUS_CONFIG = {
-  rascunho: { label: 'Rascunho', bg: 'bg-zinc-800', text: 'text-zinc-400', icon: FileText },
+  rascunho: { label: 'Rascunho', bg: 'bg-muted', text: 'text-slate-600', icon: FileText },
   submetida: { label: 'Submetida', bg: 'bg-sky-500/10', text: 'text-sky-400', icon: Send },
   em_analise: { label: 'Em Análise', bg: 'bg-primary-500/10', text: 'text-primary-400', icon: Clock },
   aprovada: { label: 'Aprovada', bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: CheckCircle },
@@ -52,7 +52,7 @@ const Solicitacoes = () => {
           </div>
           <div>
             <h1 className="text-3xl font-heading font-bold tracking-tight">Minhas Solicitações</h1>
-            <p className="text-zinc-500 text-sm">Acompanhe o status de cada credenciamento</p>
+            <p className="text-slate-500 text-sm">Acompanhe o status de cada credenciamento</p>
           </div>
         </div>
 
@@ -64,8 +64,8 @@ const Solicitacoes = () => {
           <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <ChevronRight className="h-12 w-12 text-zinc-700 mx-auto mb-4" />
-              <p className="text-zinc-400 mb-2">Nenhuma solicitação ainda</p>
-              <p className="text-sm text-zinc-600">Candidate-se a um edital para iniciar</p>
+              <p className="text-slate-600 mb-2">Nenhuma solicitação ainda</p>
+              <p className="text-sm text-slate-400">Candidate-se a um edital para iniciar</p>
             </CardContent>
           </Card>
         ) : (
@@ -84,10 +84,10 @@ const Solicitacoes = () => {
                             <Icon className="h-3 w-3 mr-1" />{cfg.label}
                           </Badge>
                         </div>
-                        <p className="text-sm text-zinc-300 mb-1">Etapa: <span className="text-white font-medium">{sol.etapa_atual}</span></p>
-                        <p className="text-xs text-zinc-600 font-mono mb-3">{sol.solicitacao_id}</p>
+                        <p className="text-sm text-slate-700 mb-1">Etapa: <span className="text-foreground font-medium">{sol.etapa_atual}</span></p>
+                        <p className="text-xs text-slate-400 font-mono mb-3">{sol.solicitacao_id}</p>
                         <div className="flex items-center gap-3">
-                          <div className="flex-1 bg-zinc-800 rounded-full h-1.5">
+                          <div className="flex-1 bg-muted rounded-full h-1.5">
                             <div className="bg-primary-500 h-1.5 rounded-full" style={{ width: `${sol.progresso}%` }} />
                           </div>
                           <span className="text-xs font-mono text-primary-400">{sol.progresso}%</span>
@@ -100,8 +100,8 @@ const Solicitacoes = () => {
                       )}
                     </div>
                     {sol.observacoes_detran && (
-                      <div className="mt-3 p-3 bg-zinc-800/50 rounded-lg border border-input/50">
-                        <p className="text-xs text-zinc-400"><span className="text-primary-400 font-mono">DETRAN:</span> {sol.observacoes_detran}</p>
+                      <div className="mt-3 p-3 bg-muted/50 rounded-lg border border-input/50">
+                        <p className="text-xs text-slate-600"><span className="text-primary-400 font-mono">DETRAN:</span> {sol.observacoes_detran}</p>
                       </div>
                     )}
                   </CardContent>

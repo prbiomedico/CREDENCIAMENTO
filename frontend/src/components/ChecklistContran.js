@@ -20,7 +20,7 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.
 const API = `${BACKEND_URL}/api`;
 
 const STATUS_CFG = {
-  pendente: { label: 'Pendente', icon: Clock, className: 'bg-zinc-800 text-zinc-400 border-input' },
+  pendente: { label: 'Pendente', icon: Clock, className: 'bg-muted text-slate-600 border-input' },
   enviado: { label: 'Enviado', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   aprovado: { label: 'Aprovado', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
   rejeitado: { label: 'Rejeitado', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
@@ -255,7 +255,7 @@ const ChecklistContran = ({ companyId }) => {
     return (
       <div className="text-center py-12">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary-500 mx-auto mb-4" />
-        <p className="text-zinc-400">Carregando checklist...</p>
+        <p className="text-slate-600">Carregando checklist...</p>
       </div>
     );
   }
@@ -269,8 +269,8 @@ const ChecklistContran = ({ companyId }) => {
     return (
       <Card className="bg-card border-border">
         <CardContent className="p-12 text-center">
-          <p className="text-zinc-400 mb-2">Checklist ainda não definido para este tipo de empresa</p>
-          <p className="text-sm text-zinc-500">A lista de documentos exigidos será publicada em breve.</p>
+          <p className="text-slate-600 mb-2">Checklist ainda não definido para este tipo de empresa</p>
+          <p className="text-sm text-slate-500">A lista de documentos exigidos será publicada em breve.</p>
         </CardContent>
       </Card>
     );
@@ -312,8 +312,8 @@ const ChecklistContran = ({ companyId }) => {
         <CardContent className="p-6">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h3 className="font-heading font-semibold text-white">Progresso geral</h3>
-              <p className="text-xs text-zinc-500">
+              <h3 className="font-heading font-semibold text-foreground">Progresso geral</h3>
+              <p className="text-xs text-slate-500">
                 {resumo.aprovados} de {resumo.total} itens aprovados
                 {resumo.enviados > 0 && ` · ${resumo.enviados} aguardando aprovação`}
                 {resumo.rejeitados > 0 && ` · ${resumo.rejeitados} rejeitado(s)`}
@@ -327,7 +327,7 @@ const ChecklistContran = ({ companyId }) => {
 
       {/* Cards de pasta — um por bloco do checklist */}
       <div>
-        <p className="text-xs font-mono uppercase tracking-wider text-zinc-500 mb-3">Pastas</p>
+        <p className="text-xs font-mono uppercase tracking-wider text-slate-500 mb-3">Pastas</p>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {blocos.map((bloco) => {
             const enviados = bloco.itens.filter((i) => i.documento).length;
@@ -342,12 +342,12 @@ const ChecklistContran = ({ companyId }) => {
                   ativo ? 'bg-primary-500/10 border-primary-500/40' : 'bg-card border-border hover:border-input'
                 }`}
               >
-                <Folder className={`h-5 w-5 mb-2 ${ativo ? 'text-primary-400' : 'text-zinc-500'}`} />
+                <Folder className={`h-5 w-5 mb-2 ${ativo ? 'text-primary-400' : 'text-slate-500'}`} />
                 <p className={`text-xs font-semibold leading-snug mb-1 line-clamp-2 ${ativo ? 'text-primary-200' : 'text-zinc-200'}`}>
                   Bloco {bloco.numero} — {bloco.nome}
                 </p>
-                <p className="text-[11px] text-zinc-500">{enviados} de {bloco.itens.length} enviados</p>
-                <p className="text-[11px] text-zinc-600 font-mono">{formatFileSize(tamanhoTotal)}</p>
+                <p className="text-[11px] text-slate-500">{enviados} de {bloco.itens.length} enviados</p>
+                <p className="text-[11px] text-slate-400 font-mono">{formatFileSize(tamanhoTotal)}</p>
               </button>
             );
           })}
@@ -358,20 +358,20 @@ const ChecklistContran = ({ companyId }) => {
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <div className="flex flex-1 gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[180px] max-w-xs">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-zinc-500" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
             <Input
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Buscar por nome..."
               data-testid="checklist-busca"
-              className="pl-8 h-9 bg-card border-border text-white text-sm"
+              className="pl-8 h-9 bg-card border-border text-foreground text-sm"
             />
           </div>
           <Select value={tipoFiltro} onValueChange={setTipoFiltro}>
-            <SelectTrigger className="h-9 w-44 bg-card border-border text-white text-sm" data-testid="checklist-filtro-tipo">
+            <SelectTrigger className="h-9 w-44 bg-card border-border text-foreground text-sm" data-testid="checklist-filtro-tipo">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-card border-border text-white">
+            <SelectContent className="bg-card border-border text-foreground">
               <SelectItem value="todos">Todos os tipos</SelectItem>
               {Object.entries(TIPO_LABELS).map(([v, l]) => (
                 <SelectItem key={v} value={v}>{l}</SelectItem>
@@ -379,7 +379,7 @@ const ChecklistContran = ({ companyId }) => {
             </SelectContent>
           </Select>
           {blocoAtivo !== null && (
-            <Button variant="ghost" size="sm" onClick={() => setBlocoAtivo(null)} className="h-9 text-xs text-zinc-400 hover:text-white">
+            <Button variant="ghost" size="sm" onClick={() => setBlocoAtivo(null)} className="h-9 text-xs text-slate-600 hover:text-foreground">
               <XIcon className="h-3.5 w-3.5 mr-1" /> Limpar filtro de pasta
             </Button>
           )}
@@ -396,7 +396,7 @@ const ChecklistContran = ({ companyId }) => {
 
       {itensFiltrados.length === 0 ? (
         <Card className="bg-card border-border">
-          <CardContent className="p-10 text-center text-sm text-zinc-500">Nenhum item encontrado com esses filtros.</CardContent>
+          <CardContent className="p-10 text-center text-sm text-slate-500">Nenhum item encontrado com esses filtros.</CardContent>
         </Card>
       ) : viewMode === 'list' ? (
         /* ── Visão em lista ── */
@@ -404,12 +404,12 @@ const ChecklistContran = ({ companyId }) => {
           <Table>
             <TableHeader>
               <TableRow className="border-border hover:bg-transparent">
-                <TableHead className="text-zinc-500 text-xs uppercase font-mono">Nome</TableHead>
-                <TableHead className="text-zinc-500 text-xs uppercase font-mono">Tipo</TableHead>
-                <TableHead className="text-zinc-500 text-xs uppercase font-mono">Tamanho</TableHead>
-                <TableHead className="text-zinc-500 text-xs uppercase font-mono">Modificado</TableHead>
-                <TableHead className="text-zinc-500 text-xs uppercase font-mono">Status</TableHead>
-                <TableHead className="text-zinc-500 text-xs uppercase font-mono text-right">Ações</TableHead>
+                <TableHead className="text-slate-500 text-xs uppercase font-mono">Nome</TableHead>
+                <TableHead className="text-slate-500 text-xs uppercase font-mono">Tipo</TableHead>
+                <TableHead className="text-slate-500 text-xs uppercase font-mono">Tamanho</TableHead>
+                <TableHead className="text-slate-500 text-xs uppercase font-mono">Modificado</TableHead>
+                <TableHead className="text-slate-500 text-xs uppercase font-mono">Status</TableHead>
+                <TableHead className="text-slate-500 text-xs uppercase font-mono text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -419,23 +419,23 @@ const ChecklistContran = ({ companyId }) => {
                 const vencStatus = doc ? getVencimentoStatus(doc.vencimento) : null;
                 const Icone = doc ? IconeArquivo(doc.file_name) : FileIcon;
                 return (
-                  <TableRow key={item.item_id} data-testid={`checklist-item-${item.item_id}`} className="border-border hover:bg-zinc-800/30">
+                  <TableRow key={item.item_id} data-testid={`checklist-item-${item.item_id}`} className="border-border hover:bg-muted/30">
                     <TableCell className="max-w-[280px]">
                       <div className="flex items-start gap-2.5">
-                        <Icone className="h-4 w-4 text-zinc-500 mt-0.5 shrink-0" />
+                        <Icone className="h-4 w-4 text-slate-500 mt-0.5 shrink-0" />
                         <div className="min-w-0">
                           <p className="text-sm text-zinc-200 font-medium truncate">{item.nome}</p>
                           {doc ? (
                             editandoVencimento === doc.document_id ? (
                               <div className="flex items-center gap-1 mt-1">
                                 <Input type="date" value={vencimentoInput} onChange={(e) => setVencimentoInput(e.target.value)}
-                                  className="bg-background border-border text-white h-6 text-xs w-32" autoFocus />
+                                  className="bg-background border-border text-foreground h-6 text-xs w-32" autoFocus />
                                 <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-emerald-400" onClick={() => salvarVencimento(doc.document_id)}><Check className="h-3 w-3" /></Button>
-                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-zinc-500" onClick={() => setEditandoVencimento(null)}><XIcon className="h-3 w-3" /></Button>
+                                <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-slate-500" onClick={() => setEditandoVencimento(null)}><XIcon className="h-3 w-3" /></Button>
                               </div>
                             ) : (
                               <button onClick={() => abrirEdicaoVencimento(doc)} data-testid={`checklist-vencimento-${item.item_id}`}
-                                className="flex items-center gap-1.5 text-[11px] text-zinc-500 hover:text-white group mt-0.5">
+                                className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-foreground group mt-0.5">
                                 {doc.vencimento ? (
                                   <>
                                     <span>Vence {new Date(doc.vencimento).toLocaleDateString('pt-BR')}</span>
@@ -447,16 +447,16 @@ const ChecklistContran = ({ companyId }) => {
                               </button>
                             )
                           ) : item.descricao ? (
-                            <p className="text-[11px] text-zinc-600 truncate">{item.descricao}</p>
+                            <p className="text-[11px] text-slate-400 truncate">{item.descricao}</p>
                           ) : null}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className="bg-zinc-800 text-zinc-400 border-input text-[10px] font-mono">{TIPO_LABELS[item.tipo]}</Badge>
+                      <Badge className="bg-muted text-slate-600 border-input text-[10px] font-mono">{TIPO_LABELS[item.tipo]}</Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-zinc-400 font-mono">{doc ? formatFileSize(doc.file_size) : '—'}</TableCell>
-                    <TableCell className="text-xs text-zinc-400">{doc ? new Date(doc.created_at).toLocaleDateString('pt-BR') : '—'}</TableCell>
+                    <TableCell className="text-xs text-slate-600 font-mono">{doc ? formatFileSize(doc.file_size) : '—'}</TableCell>
+                    <TableCell className="text-xs text-slate-600">{doc ? new Date(doc.created_at).toLocaleDateString('pt-BR') : '—'}</TableCell>
                     <TableCell>
                       <Badge className={`${cfg.className} font-mono uppercase text-[10px] px-2 py-0.5`}>
                         <cfg.icon className="h-3 w-3 mr-1" />{cfg.label}
@@ -491,7 +491,7 @@ const ChecklistContran = ({ companyId }) => {
                     <div className="absolute top-1.5 right-1.5">
                       <button
                         onClick={() => setMenuAberto(menuAberto === doc.document_id ? null : doc.document_id)}
-                        className="h-6 w-6 rounded-md bg-background/80 border border-border flex items-center justify-center text-zinc-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                        className="h-6 w-6 rounded-md bg-background/80 border border-border flex items-center justify-center text-slate-600 hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <MoreVertical className="h-3.5 w-3.5" />
                       </button>
@@ -511,15 +511,15 @@ const ChecklistContran = ({ companyId }) => {
                 <CardContent className="p-3">
                   <p className="text-xs font-medium text-zinc-200 line-clamp-2 mb-1.5 min-h-[2rem]">{item.nome}</p>
                   <div className="flex items-center justify-between mb-2">
-                    <Badge className="bg-zinc-800 text-zinc-400 border-input text-[9px] font-mono">{TIPO_LABELS[item.tipo]}</Badge>
+                    <Badge className="bg-muted text-slate-600 border-input text-[9px] font-mono">{TIPO_LABELS[item.tipo]}</Badge>
                     <Badge className={`${cfg.className} font-mono uppercase text-[9px] px-1.5 py-0`}><cfg.icon className="h-2.5 w-2.5 mr-0.5" />{cfg.label}</Badge>
                   </div>
-                  {doc && <p className="text-[10px] text-zinc-600 font-mono mb-2">{formatFileSize(doc.file_size)} · {new Date(doc.created_at).toLocaleDateString('pt-BR')}</p>}
+                  {doc && <p className="text-[10px] text-slate-400 font-mono mb-2">{formatFileSize(doc.file_size)} · {new Date(doc.created_at).toLocaleDateString('pt-BR')}</p>}
                   {!doc && <AcoesDocumento item={item} />}
                   {editandoVencimento === doc?.document_id && (
                     <div className="flex items-center gap-1 mt-2">
                       <Input type="date" value={vencimentoInput} onChange={(e) => setVencimentoInput(e.target.value)}
-                        className="bg-background border-border text-white h-7 text-xs" autoFocus />
+                        className="bg-background border-border text-foreground h-7 text-xs" autoFocus />
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-400" onClick={() => salvarVencimento(doc.document_id)}><Check className="h-3.5 w-3.5" /></Button>
                     </div>
                   )}
@@ -531,19 +531,19 @@ const ChecklistContran = ({ companyId }) => {
       )}
 
       <Dialog open={!!itemUpload} onOpenChange={(open) => !open && setItemUpload(null)}>
-        <DialogContent className="bg-card border-border text-white">
+        <DialogContent className="bg-card border-border text-foreground">
           <DialogHeader>
             <DialogTitle className="font-heading text-xl">Enviar documento</DialogTitle>
           </DialogHeader>
           {itemUpload && (
             <form onSubmit={enviarDocumento} className="space-y-4 mt-2">
-              <p className="text-sm text-zinc-300">{itemUpload.nome}</p>
-              {itemUpload.descricao && <p className="text-xs text-zinc-500">{itemUpload.descricao}</p>}
+              <p className="text-sm text-slate-700">{itemUpload.nome}</p>
+              {itemUpload.descricao && <p className="text-xs text-slate-500">{itemUpload.descricao}</p>}
               <Input
                 type="file"
                 data-testid="checklist-file-input"
                 onChange={(e) => setArquivo(e.target.files?.[0] || null)}
-                className="bg-background border-border text-white"
+                className="bg-background border-border text-foreground"
                 required
               />
               <Button

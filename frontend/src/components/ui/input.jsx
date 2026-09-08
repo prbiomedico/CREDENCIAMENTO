@@ -9,7 +9,7 @@ const Input = React.forwardRef(({ className, type, ...props }, ref) => {
       className={cn(
         // Redesign bento/glow (item 31): foco ganha anel + borda na cor da
         // marca em vez do ring cinza genérico do shadcn padrão.
-        "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-all duration-200 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-primary/50 focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        "flex h-9 w-full rounded-md border border-input bg-white px-3 py-1 text-base text-foreground transition-colors duration-150 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-accent focus-visible:ring-2 focus-visible:ring-accent/15 disabled:cursor-not-allowed disabled:bg-muted disabled:opacity-60 md:text-sm",
         className
       )}
       ref={ref}

@@ -17,7 +17,7 @@ const Login = () => {
               <Shield className="h-8 w-8 text-primary-500" />
             </div>
             <h1 className="text-3xl font-heading font-bold tracking-tight mb-2">SIGCR</h1>
-            <p className="text-zinc-400">Sistema Integrado de Gestão de Credenciamento</p>
+            <p className="text-slate-600">Sistema Integrado de Gestão de Credenciamento</p>
           </div>
           <Button
             onClick={login}
@@ -25,7 +25,7 @@ const Login = () => {
           >
             Entrar
           </Button>
-          <p className="text-xs text-zinc-500 text-center mt-6">
+          <p className="text-xs text-slate-500 text-center mt-6">
             Ao continuar, você concorda com os termos de uso
           </p>
         </div>

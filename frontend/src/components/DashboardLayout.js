@@ -170,6 +170,8 @@ const DashboardLayout = ({ children }) => {
   // centralizada em navMenus.js pra ser reaproveitada pelo AppMenuBar do
   // Dashboard sem duplicar as regras de dedupe (ver comentário lá).
   const { navItems, navSecoes, navAdminExtra } = buildNavStructure(perfilAtivo, isAdmin);
+  const allNavItems = [...navItems, ...navSecoes.flatMap((section) => section.items), ...navAdminExtra];
+  const activeNavItem = allNavItems.find((item) => location.pathname === item.path);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -336,6 +338,19 @@ const DashboardLayout = ({ children }) => {
 
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
+        <header className="sticky top-0 z-30 hidden h-16 items-center justify-between border-b border-border bg-white/95 px-6 lg:flex">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">SIGCR · {cfg.label}</p>
+            <h1 className="mt-0.5 text-sm font-semibold text-foreground">{activeNavItem?.label || 'Visão operacional'}</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link to="/notificacoes" data-testid="desktop-notif-link" className="relative grid h-9 w-9 place-items-center rounded-md border border-border bg-white text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Notificações">
+              <Bell className="h-4 w-4" />
+              {notifCount > 0 && <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-slate-950 px-1 text-[9px] font-bold text-white">{notifCount > 9 ? '9+' : notifCount}</span>}
+            </Link>
+            <div className="ml-1 text-right"><p className="max-w-48 truncate text-xs font-semibold text-foreground">{user?.name}</p><p className="max-w-48 truncate text-[10px] text-muted-foreground">{user?.email}</p></div>
+          </div>
+        </header>
         <header className="lg:hidden sticky top-0 z-40 bg-card border-b border-border px-4 py-3">
           <div className="flex items-center justify-between">
             <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
@@ -351,7 +366,7 @@ const DashboardLayout = ({ children }) => {
             </Link>
           </div>
         </header>
-        <main className="flex-1 overflow-auto">{children}</main>
+        <main className="sigcr-app-main flex-1 overflow-auto">{children}</main>
       </div>
       </div>
     </div>
