@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -28,9 +28,7 @@ const Documentos = () => {
 
   const tipoEmpresaAtivo = TIPO_EMPRESA_LABEL[perfilAtivo] ? perfilAtivo : null;
 
-  useEffect(() => { if (!initialized || !user) return; fetchCompanies(); }, [initialized, user, perfilAtivo]);
-
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     try { await getToken(); } catch {}
     try {
       const response = await axios.get(`${API}/companies`, {
@@ -56,7 +54,9 @@ const Documentos = () => {
         toast.error('Erro ao carregar empresas');
       }
     }
-  };
+  }, [getToken, tipoEmpresaAtivo]);
+
+  useEffect(() => { if (!initialized || !user) return; fetchCompanies(); }, [fetchCompanies, initialized, user]);
 
   return (
     <DashboardLayout>

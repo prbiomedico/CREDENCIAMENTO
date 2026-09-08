@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -21,10 +21,10 @@ export const useApi = () => {
     return res.data;
   }, []);
 
-  return {
+  return useMemo(() => ({
     get: (path) => request('GET', path),
     post: (path, data) => request('POST', path, data),
     patch: (path, data) => request('PATCH', path, data),
     delete: (path) => request('DELETE', path),
-  };
+  }), [request]);
 };

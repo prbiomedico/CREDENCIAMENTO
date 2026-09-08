@@ -158,7 +158,7 @@ export default function Esteiras() {
       if (esteiras.length && !selectedId) setSelectedId(esteiras[0].esteira_id);
     } catch (e) { console.error(e); setErro("Erro ao carregar esteiras."); }
     finally { setLoading(false); }
-  }, [token]);
+  }, [selectedId, token]);
 
   useEffect(() => { carregar(); }, [carregar]);
 

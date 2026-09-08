@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { ChevronRight, CheckCircle, Clock, XCircle, FileText, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -22,18 +22,18 @@ const Solicitacoes = () => {
   const { user, initialized } = useAuth();
   const api = useApi();
 
-  useEffect(() => {
-    if (!initialized || !user) return;
-    fetchSolicitacoes();
-  }, [initialized, user]);
-
-  const fetchSolicitacoes = async () => {
+  const fetchSolicitacoes = useCallback(async () => {
     try {
       const data = await api.get('/solicitacoes');
       setSolicitacoes(Array.isArray(data) ? data : []);
     } catch { toast.error('Erro ao carregar solicitações'); }
     finally { setLoading(false); }
-  };
+  }, [api]);
+
+  useEffect(() => {
+    if (!initialized || !user) return;
+    fetchSolicitacoes();
+  }, [fetchSolicitacoes, initialized, user]);
 
   const handleSubmeter = async (solId) => {
     try {

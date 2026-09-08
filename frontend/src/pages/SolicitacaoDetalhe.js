@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
@@ -42,12 +42,7 @@ export default function SolicitacaoDetalhe() {
   const [motivoReprova, setMotivoReprova] = useState({});
   const [showMotivoInput, setShowMotivoInput] = useState({});
 
-  useEffect(() => {
-    if (!initialized || !user) return;
-    fetchSolicitacao();
-  }, [initialized, user, id]);
-
-  const fetchSolicitacao = async () => {
+  const fetchSolicitacao = useCallback(async () => {
     try {
       await getToken();
     } catch {}
@@ -63,7 +58,12 @@ export default function SolicitacaoDetalhe() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getToken, id, toast]);
+
+  useEffect(() => {
+    if (!initialized || !user) return;
+    fetchSolicitacao();
+  }, [fetchSolicitacao, initialized, user]);
 
   const toggleExpand = (docNome) =>
     setExpandido(p => ({ ...p, [docNome]: !p[docNome] }));

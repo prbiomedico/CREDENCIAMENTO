@@ -1,6 +1,6 @@
 import { MapaNacional } from '../components/ui/interactive-map';
 import AppMenuBar from '../components/ui/app-menu-bar';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import { Building2, CreditCard, FileText, Search, TrendingUp, Shield, CheckCircle, Clock, AlertCircle, CalendarClock, ArrowRight } from 'lucide-react';
@@ -112,13 +112,7 @@ const Dashboard = () => {
   const api = useApi();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (!initialized || !user || user.perfil === 'financeira') return;
-    fetchStats();
-    fetchVencimentoResumo();
-  }, [initialized, user]);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try {
       const data = await api.get('/stats');
       setStats(data);
@@ -134,9 +128,9 @@ const Dashboard = () => {
         compliance_vermelho: 0,
       });
     } finally { setLoading(false); }
-  };
+  }, [api]);
 
-  const fetchVencimentoResumo = async () => {
+  const fetchVencimentoResumo = useCallback(async () => {
     try {
       const data = await api.get('/documentos/vencimento-resumo');
       setVencimentoResumo({
@@ -146,7 +140,13 @@ const Dashboard = () => {
     } catch {
       setVencimentoResumo({ vencendo: [], vencidos: [] });
     }
-  };
+  }, [api]);
+
+  useEffect(() => {
+    if (!initialized || !user || user.perfil === 'financeira') return;
+    fetchStats();
+    fetchVencimentoResumo();
+  }, [fetchStats, fetchVencimentoResumo, initialized, user]);
 
   if (user?.perfil === 'financeira') return <DashboardFinanceira />;
 

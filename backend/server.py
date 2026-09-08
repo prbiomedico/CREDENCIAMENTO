@@ -17,6 +17,8 @@ import httpx
 import tempfile
 import shutil
 import aiofiles
+import asyncio
+import struct
 
 
 ROOT_DIR = Path(__file__).parent
@@ -132,6 +134,85 @@ UF_NOMES = {
 }
 
 MAX_PORTARIA_PDF_SIZE = 20 * 1024 * 1024  # 20MB
+MAX_LOGO_SIZE = 5 * 1024 * 1024
+
+
+def _assinatura_compativel(conteudo: bytes, content_type: str) -> bool:
+    assinaturas = {
+        "application/pdf": (b"%PDF-",),
+        "image/png": (b"\x89PNG\r\n\x1a\n",),
+        "image/jpeg": (b"\xff\xd8\xff",),
+        "image/jpg": (b"\xff\xd8\xff",),
+        "image/gif": (b"GIF87a", b"GIF89a"),
+        "application/msword": (b"\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1",),
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": (b"PK\x03\x04",),
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": (b"PK\x03\x04",),
+    }
+    if content_type == "image/webp":
+        return conteudo.startswith(b"RIFF") and conteudo[8:12] == b"WEBP"
+    return any(conteudo.startswith(prefixo) for prefixo in assinaturas.get(content_type, ()))
+
+
+async def _ler_upload_validado(
+    file: UploadFile,
+    *,
+    tipos_permitidos: set,
+    limite: int,
+    contexto: str,
+) -> bytes:
+    if file.content_type not in tipos_permitidos:
+        raise HTTPException(status_code=400, detail=f"Tipo de arquivo não permitido para {contexto}")
+    conteudo = await file.read()
+    if not conteudo:
+        raise HTTPException(status_code=400, detail="Arquivo vazio")
+    if len(conteudo) > limite:
+        limite_mb = limite // (1024 * 1024)
+        raise HTTPException(status_code=400, detail=f"Arquivo excede o limite de {limite_mb}MB")
+    if not _assinatura_compativel(conteudo, file.content_type):
+        raise HTTPException(status_code=400, detail="Conteúdo do arquivo incompatível com o tipo informado")
+    await _verificar_antivirus(conteudo)
+    return conteudo
+
+
+async def _verificar_antivirus(conteudo: bytes) -> None:
+    """Escaneia em clamd via INSTREAM quando CLAMAV_HOST estiver configurado.
+
+    CLAMAV_REQUIRED=true ativa fail-closed. Sem essa flag, uma indisponibilidade
+    do scanner é registrada mas não interrompe o serviço; uma detecção de
+    malware sempre bloqueia o upload.
+    """
+    host = os.environ.get("CLAMAV_HOST", "").strip()
+    if not host:
+        return
+    port = int(os.environ.get("CLAMAV_PORT", "3310"))
+    required = os.environ.get("CLAMAV_REQUIRED", "false").lower() == "true"
+    writer = None
+    try:
+        reader, writer = await asyncio.wait_for(asyncio.open_connection(host, port), timeout=5)
+        writer.write(b"zINSTREAM\0")
+        for inicio in range(0, len(conteudo), 64 * 1024):
+            bloco = conteudo[inicio:inicio + 64 * 1024]
+            writer.write(struct.pack("!I", len(bloco)) + bloco)
+        writer.write(struct.pack("!I", 0))
+        await writer.drain()
+        resposta = (await asyncio.wait_for(reader.read(4096), timeout=30)).decode("utf-8", "replace")
+        if "FOUND" in resposta:
+            raise HTTPException(status_code=400, detail="Arquivo bloqueado pela verificação de segurança")
+        if "OK" not in resposta:
+            raise RuntimeError(f"Resposta inesperada do antivírus: {resposta[:120]}")
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error("Falha na verificação antivírus: %s", exc)
+        if required:
+            raise HTTPException(status_code=503, detail="Verificação de segurança temporariamente indisponível")
+    finally:
+        if writer:
+            writer.close()
+            try:
+                await writer.wait_closed()
+            except Exception:
+                pass
 
 
 async def _ler_pdf_validado(file: UploadFile, *, contexto: str = "o arquivo") -> bytes:
@@ -140,16 +221,12 @@ async def _ler_pdf_validado(file: UploadFile, *, contexto: str = "o arquivo") ->
     Centralizar esta barreira evita que endpoints novos validem apenas o
     Content-Type, que é controlado pelo cliente e pode ser falsificado.
     """
-    if file.content_type != "application/pdf":
-        raise HTTPException(status_code=400, detail=f"Apenas arquivos PDF são aceitos para {contexto}")
-    conteudo = await file.read()
-    if not conteudo:
-        raise HTTPException(status_code=400, detail="Arquivo vazio")
-    if len(conteudo) > MAX_PORTARIA_PDF_SIZE:
-        raise HTTPException(status_code=400, detail="Arquivo excede o limite de 20MB")
-    if not conteudo.startswith(b"%PDF-"):
-        raise HTTPException(status_code=400, detail="Arquivo não é um PDF válido (assinatura inválida)")
-    return conteudo
+    return await _ler_upload_validado(
+        file,
+        tipos_permitidos={"application/pdf"},
+        limite=MAX_PORTARIA_PDF_SIZE,
+        contexto=contexto,
+    )
 
 
 # ============ Checklist CONTRAN 807 (Registradora) ============
@@ -1590,6 +1667,12 @@ async def update_company_status(company_id: str, status: str, current_user: User
     se auto-promovesse pra qualquer status (ex: ativo_contrato_assinado) sem
     passar pelo fluxo de aprovação. Não usado por nenhum ponto do frontend hoje —
     /admin/cadastros/{id}/aprovar e /rejeitar são o fluxo real de transição de status."""
+    status_validos = {
+        "pendente_aprovacao", "aprovado_acesso_limitado",
+        "ativo_contrato_assinado", "rejeitado",
+    }
+    if status not in status_validos:
+        raise HTTPException(status_code=400, detail="Status de empresa inválido")
     result = await db.companies.update_one(
         {"company_id": company_id},
         {"$set": {"status": status, "updated_at": datetime.now(timezone.utc).isoformat()}}
@@ -1608,15 +1691,20 @@ async def upload_company_logo(
     """Upload company logo (dono ou sigcr_admin em modo 'ver como')"""
     scope = await _autorizar_acesso_empresa(company_id, current_user, exigir_nao_deletada=False)
 
-    # Generate unique filename
-    file_extension = Path(file.filename).suffix if file.filename else ".png"
+    tipos_logo = {"image/png", "image/jpeg", "image/gif", "image/webp"}
+    content = await _ler_upload_validado(
+        file, tipos_permitidos=tipos_logo, limite=MAX_LOGO_SIZE, contexto="o logotipo"
+    )
+    extensao_por_mime = {
+        "image/png": ".png", "image/jpeg": ".jpg", "image/gif": ".gif", "image/webp": ".webp",
+    }
+    file_extension = extensao_por_mime[file.content_type]
     unique_filename = f"logo_{company_id}{file_extension}"
     file_path = UPLOAD_DIR / unique_filename
 
     # Save file
     try:
         async with aiofiles.open(file_path, 'wb') as f:
-            content = await file.read()
             await f.write(content)
     except Exception as e:
         logger.error(f"Error saving logo: {str(e)}")
@@ -1638,7 +1726,7 @@ async def upload_company_logo(
 async def get_company_logo(company_id: str):
     """Get company logo"""
     # Find logo file
-    for ext in ['.png', '.jpg', '.jpeg', '.gif']:
+    for ext in ['.png', '.jpg', '.jpeg', '.gif', '.webp']:
         file_path = UPLOAD_DIR / f"logo_{company_id}{ext}"
         if file_path.exists():
             return FileResponse(path=file_path, media_type=f"image/{ext[1:]}")
@@ -1811,15 +1899,21 @@ async def upload_document(
     if not checklist_item_id or checklist_item_id not in ids_validos:
         raise HTTPException(status_code=400, detail="checklist_item_id é obrigatório e precisa ser um item válido do checklist deste tipo de empresa")
 
-    # Generate unique filename
-    file_extension = Path(file.filename).suffix if file.filename else ""
+    tipos_documento = {"application/pdf", "image/jpeg", "image/png", "image/gif", "image/webp"}
+    content = await _ler_upload_validado(
+        file, tipos_permitidos=tipos_documento, limite=MAX_PORTARIA_PDF_SIZE, contexto="o documento"
+    )
+    extensao_por_mime = {
+        "application/pdf": ".pdf", "image/jpeg": ".jpg", "image/png": ".png",
+        "image/gif": ".gif", "image/webp": ".webp",
+    }
+    file_extension = extensao_por_mime[file.content_type]
     unique_filename = f"{uuid.uuid4().hex}{file_extension}"
     file_path = UPLOAD_DIR / unique_filename
 
     # Save file
     try:
         async with aiofiles.open(file_path, 'wb') as f:
-            content = await file.read()
             await f.write(content)
 
         file_size = len(content)
@@ -3284,12 +3378,19 @@ async def upload_item_submissao(
         except ValueError:
             raise HTTPException(status_code=400, detail="data_validade inválida (use ISO 8601, AAAA-MM-DD)")
 
-    file_extension = Path(file.filename).suffix if file.filename else ""
+    tipos_documento = {"application/pdf", "image/jpeg", "image/png", "image/gif", "image/webp"}
+    conteudo = await _ler_upload_validado(
+        file, tipos_permitidos=tipos_documento, limite=MAX_PORTARIA_PDF_SIZE, contexto="o documento"
+    )
+    extensao_por_mime = {
+        "application/pdf": ".pdf", "image/jpeg": ".jpg", "image/png": ".png",
+        "image/gif": ".gif", "image/webp": ".webp",
+    }
+    file_extension = extensao_por_mime[file.content_type]
     unique_filename = f"{uuid.uuid4().hex}{file_extension}"
     file_path = UPLOAD_DIR / unique_filename
     try:
         async with aiofiles.open(file_path, "wb") as f:
-            conteudo = await file.read()
             await f.write(conteudo)
     except Exception:
         logger.error("Error saving submissao file")
@@ -4998,6 +5099,21 @@ async def get_eventos(current_user: User = Depends(get_current_user)):
     return eventos
 
 
+def _autorizar_evento(evento: dict, current_user: User, *, escrita: bool = False) -> None:
+    """Aplica ownership/UF ao módulo legado sem alterar seu contrato HTTP."""
+    if current_user.perfil == "sigcr_admin":
+        return
+    if current_user.perfil in ("detran", "detran_admin"):
+        mesma_uf = bool(current_user.detran_uf) and evento.get("uf") == current_user.detran_uf
+        mesmo_autor = evento.get("criado_por") == current_user.user_id
+        if mesma_uf and mesmo_autor:
+            return
+        raise HTTPException(status_code=403, detail="Sem permissão para gerenciar este evento")
+    if not escrita and evento.get("status") == "publicado":
+        return
+    raise HTTPException(status_code=403, detail="Sem acesso a este evento")
+
+
 @api_router.get("/eventos/publico/{token}")
 async def get_evento_publico(token: str):
     evento = await db.eventos.find_one({"token_publico": token}, {"_id": 0})
@@ -5011,6 +5127,7 @@ async def get_evento(evento_id: str, current_user: User = Depends(get_current_us
     evento = await db.eventos.find_one({"evento_id": evento_id}, {"_id": 0})
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
+    _autorizar_evento(evento, current_user)
     return evento
 
 
@@ -5019,6 +5136,7 @@ async def publicar_evento(evento_id: str, current_user: User = Depends(require_p
     evento = await db.eventos.find_one({"evento_id": evento_id}, {"_id": 0})
     if not evento:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
+    _autorizar_evento(evento, current_user, escrita=True)
     await db.eventos.update_one(
         {"evento_id": evento_id},
         {"$set": {"status": "publicado", "publicado_at": datetime.now(timezone.utc).isoformat()}}
@@ -5039,14 +5157,30 @@ async def publicar_evento(evento_id: str, current_user: User = Depends(require_p
 
 @api_router.patch("/eventos/{evento_id}")
 async def atualizar_evento(evento_id: str, request: Request, current_user: User = Depends(require_perfil("detran", "detran_admin"))):
+    evento = await db.eventos.find_one({"evento_id": evento_id}, {"_id": 0})
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado")
+    _autorizar_evento(evento, current_user, escrita=True)
     body = await request.json()
-    await db.eventos.update_one({"evento_id": evento_id}, {"$set": body})
+    campos_permitidos = {
+        "titulo", "descricao", "data_abertura", "data_encerramento",
+        "documentos", "config", "status",
+    }
+    campos = {k: v for k, v in body.items() if k in campos_permitidos}
+    if not campos:
+        raise HTTPException(status_code=400, detail="Nenhum campo válido para atualizar")
+    campos["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.eventos.update_one({"evento_id": evento_id}, {"$set": campos})
     await registrar_auditoria(current_user, "atualizar_evento", "evento", evento_id)
     return {"message": "Evento atualizado"}
 
 
 @api_router.delete("/eventos/{evento_id}")
 async def deletar_evento(evento_id: str, current_user: User = Depends(require_perfil("detran", "detran_admin"))):
+    evento = await db.eventos.find_one({"evento_id": evento_id}, {"_id": 0})
+    if not evento:
+        raise HTTPException(status_code=404, detail="Evento não encontrado")
+    _autorizar_evento(evento, current_user, escrita=True)
     result = await db.eventos.delete_one({"evento_id": evento_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Evento não encontrado")
@@ -5442,11 +5576,9 @@ async def upload_documento(
     if file.content_type not in allowed:
         raise HTTPException(status_code=400, detail=f"Tipo de arquivo não permitido para esta categoria ({file.content_type})")
 
-    content = await file.read()
-    if not content:
-        raise HTTPException(status_code=400, detail="Arquivo vazio")
-    if len(content) > MAX_DOC_SIZE:
-        raise HTTPException(status_code=400, detail="Arquivo excede o limite de 20MB")
+    content = await _ler_upload_validado(
+        file, tipos_permitidos=allowed, limite=MAX_DOC_SIZE, contexto="esta categoria"
+    )
 
     versao = 1
     documento_anterior_id = None

@@ -147,6 +147,64 @@ def test_barreira_pdf_rejeita_content_type_ou_assinatura_falsos():
         run(server._ler_pdf_validado(upload_pdf(b"%PDF-1.7", "text/plain")))
     assert exc.value.status_code == 400
 
+
+def test_barreira_generica_valida_imagem_e_rejeita_extensao_disfarcada():
+    png = UploadFile(
+        BytesIO(b"\x89PNG\r\n\x1a\nconteudo"),
+        filename="logo.png",
+        headers=Headers({"content-type": "image/png"}),
+    )
+    assert run(server._ler_upload_validado(
+        png, tipos_permitidos={"image/png"}, limite=1024, contexto="o logotipo"
+    ))
+
+    falso = UploadFile(
+        BytesIO(b"<script>alert(1)</script>"),
+        filename="logo.png",
+        headers=Headers({"content-type": "image/png"}),
+    )
+    with pytest.raises(server.HTTPException) as exc:
+        run(server._ler_upload_validado(
+            falso, tipos_permitidos={"image/png"}, limite=1024, contexto="o logotipo"
+        ))
+    assert exc.value.status_code == 400
+
     with pytest.raises(server.HTTPException) as exc:
         run(server._ler_pdf_validado(upload_pdf(b"arquivo-executavel")))
     assert exc.value.status_code == 400
+
+
+def test_evento_privado_nao_vaza_para_empresa():
+    privado = {"evento_id": "ev1", "status": "rascunho", "uf": "SP", "criado_por": "detran_sp"}
+    with pytest.raises(server.HTTPException) as exc:
+        server._autorizar_evento(privado, user("empresa", "registradora"))
+    assert exc.value.status_code == 403
+
+    publicado = {**privado, "status": "publicado"}
+    server._autorizar_evento(publicado, user("empresa", "registradora"))
+
+
+def test_detran_nao_gerencia_evento_de_outro_autor_ou_uf():
+    detran_sp = user("detran_sp", "detran", "SP")
+    server._autorizar_evento(
+        {"status": "rascunho", "uf": "SP", "criado_por": "detran_sp"},
+        detran_sp,
+        escrita=True,
+    )
+
+    for evento in (
+        {"status": "rascunho", "uf": "RJ", "criado_por": "detran_sp"},
+        {"status": "rascunho", "uf": "SP", "criado_por": "outro_usuario"},
+    ):
+        with pytest.raises(server.HTTPException) as exc:
+            server._autorizar_evento(evento, detran_sp, escrita=True)
+        assert exc.value.status_code == 403
+
+
+def test_status_livre_nao_pode_corromper_vocabulario_de_empresa(monkeypatch):
+    companies = SimpleNamespace(update_one=AsyncMock())
+    monkeypatch.setattr(server, "db", SimpleNamespace(companies=companies))
+    with pytest.raises(server.HTTPException) as exc:
+        run(server.update_company_status("company_1", "qualquer_coisa", user("admin", "sigcr_admin")))
+    assert exc.value.status_code == 400
+    companies.update_one.assert_not_awaited()

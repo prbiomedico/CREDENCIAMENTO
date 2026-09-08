@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { FileText, Download, CheckCircle, Clock, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -35,9 +35,7 @@ const FilaRegistros = () => {
   const [rejeitarAlvo, setRejeitarAlvo] = useState(null);
   const [motivoRejeicao, setMotivoRejeicao] = useState('');
 
-  useEffect(() => { if (!initialized || !user) return; fetchSolicitacoes(); }, [initialized, user]);
-
-  const fetchSolicitacoes = async () => {
+  const fetchSolicitacoes = useCallback(async () => {
     try { await getToken(); } catch {}
     setLoading(true);
     try {
@@ -49,7 +47,9 @@ const FilaRegistros = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getToken]);
+
+  useEffect(() => { if (!initialized || !user) return; fetchSolicitacoes(); }, [fetchSolicitacoes, initialized, user]);
 
   const baixarContrato = async (solicitacaoId) => {
     try {

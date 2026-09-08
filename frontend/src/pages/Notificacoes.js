@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { Bell, CheckCheck, Folder, TrendingUp, FileText, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -46,16 +46,16 @@ const Notificacoes = () => {
   const { user, initialized, getToken } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => { if (!initialized || !user) return; fetchNotifs(); }, [initialized, user]);
-
-  const fetchNotifs = async () => {
+  const fetchNotifs = useCallback(async () => {
     try { await getToken(); } catch {}
     try {
       const res = await axios.get(`${API}/notificacoes`);
       setNotifs(Array.isArray(res.data) ? res.data : []);
     } catch { toast.error('Erro ao carregar notificações'); }
     finally { setLoading(false); }
-  };
+  }, [getToken]);
+
+  useEffect(() => { if (!initialized || !user) return; fetchNotifs(); }, [fetchNotifs, initialized, user]);
 
   const marcarLida = async (id) => {
     await axios.patch(`${API}/notificacoes/${id}/lida`);
