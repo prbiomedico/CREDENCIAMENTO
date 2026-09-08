@@ -134,6 +134,24 @@ UF_NOMES = {
 MAX_PORTARIA_PDF_SIZE = 20 * 1024 * 1024  # 20MB
 
 
+async def _ler_pdf_validado(file: UploadFile, *, contexto: str = "o arquivo") -> bytes:
+    """Valida o tipo declarado, tamanho e assinatura real de um PDF.
+
+    Centralizar esta barreira evita que endpoints novos validem apenas o
+    Content-Type, que é controlado pelo cliente e pode ser falsificado.
+    """
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail=f"Apenas arquivos PDF são aceitos para {contexto}")
+    conteudo = await file.read()
+    if not conteudo:
+        raise HTTPException(status_code=400, detail="Arquivo vazio")
+    if len(conteudo) > MAX_PORTARIA_PDF_SIZE:
+        raise HTTPException(status_code=400, detail="Arquivo excede o limite de 20MB")
+    if not conteudo.startswith(b"%PDF-"):
+        raise HTTPException(status_code=400, detail="Arquivo não é um PDF válido (assinatura inválida)")
+    return conteudo
+
+
 # ============ Checklist CONTRAN 807 (Registradora) ============
 # Catálogo fixo — os itens em si não mudam por empresa, só o status de envio
 # (derivado de db.documents via Document.checklist_item_id, não duplicado
@@ -388,17 +406,10 @@ class Company(BaseModel):
     # posterior — o campo em si aceita qualquer string pra não travar leitura
     # de dados migrados/legados que não passaram por essa validação.
     registradora_id: Optional[str] = None
-    # NOTA (Fase 0): default deliberadamente mantido em "pending" (vocabulário antigo) —
-    # POST /companies (rota existente, inalterada nesta fase) ainda cria empresas assim.
-    # A troca do default para o vocabulário novo (pendente_aprovacao/aprovado_acesso_limitado/
-    # ativo_contrato_assinado/rejeitado) e a atualização de quem lê esse default acontece na
-    # Fase 1, junto com a camada de autorização por status — trocar aqui sem isso quebraria
-    # silenciosamente as contagens de /stats pra empresas novas criadas entre as duas fases.
-    # 2026-08-12: achado durante o merge da fatia 2 que o lote pendente já tinha essa troca
-    # feita (pra "pendente_aprovacao"), mas não commitada — mantido "pending" aqui de propósito
-    # (é o que está rodando em produção agora) até essa mudança ser revisada e deployada
-    # separadamente; ver PENDING_ACTIONS.md item 19.
-    status: str = "pending"  # legado: pending/approved/rejected. Migrados: pendente_aprovacao/aprovado_acesso_limitado/ativo_contrato_assinado/rejeitado
+    # Vocabulário oficial. Leituras administrativas continuam aceitando
+    # temporariamente "pending" para que a migração dos registros legados possa
+    # acontecer sem janela de indisponibilidade.
+    status: str = "pendente_aprovacao"
     responsavel: Optional[Responsavel] = None
     contrato_social_path: Optional[str] = None
     aprovado_por: Optional[str] = None
@@ -2176,16 +2187,7 @@ async def upload_portaria(
             raise HTTPException(status_code=400, detail=f"checklist_itens inválido: {e}")
         await _validar_checklist_itens_portaria(checklist_lista)
 
-    if file.content_type != "application/pdf":
-        raise HTTPException(status_code=400, detail="Apenas arquivos PDF são aceitos para portarias")
-
-    conteudo = await file.read()
-    if not conteudo:
-        raise HTTPException(status_code=400, detail="Arquivo vazio")
-    if len(conteudo) > MAX_PORTARIA_PDF_SIZE:
-        raise HTTPException(status_code=400, detail="Arquivo excede o limite de 20MB")
-    if not conteudo.startswith(b"%PDF-"):
-        raise HTTPException(status_code=400, detail="Arquivo não é um PDF válido (assinatura inválida)")
+    conteudo = await _ler_pdf_validado(file, contexto="portarias")
 
     try:
         data_parsed = datetime.fromisoformat(date)
@@ -2239,16 +2241,7 @@ async def anexar_pdf_portaria(
     if portaria.get("estado_sigla"):
         await _checar_permissao_escrita_estado(current_user, portaria["estado_sigla"])
 
-    if file.content_type != "application/pdf":
-        raise HTTPException(status_code=400, detail="Apenas arquivos PDF são aceitos para portarias")
-
-    conteudo = await file.read()
-    if not conteudo:
-        raise HTTPException(status_code=400, detail="Arquivo vazio")
-    if len(conteudo) > MAX_PORTARIA_PDF_SIZE:
-        raise HTTPException(status_code=400, detail="Arquivo excede o limite de 20MB")
-    if not conteudo.startswith(b"%PDF-"):
-        raise HTTPException(status_code=400, detail="Arquivo não é um PDF válido (assinatura inválida)")
+    conteudo = await _ler_pdf_validado(file, contexto="portarias")
 
     portarias_dir = UPLOAD_DIR / "portarias"
     portarias_dir.mkdir(exist_ok=True)
@@ -3903,7 +3896,7 @@ class RejeitarCadastroPayload(BaseModel):
 async def listar_cadastros_pendentes(current_user: User = Depends(require_perfil("sigcr_admin"))):
     """Lista companies aguardando aprovação, com dados da empresa + responsável PF vinculado."""
     companies = await db.companies.find(
-        {"status": "pendente_aprovacao", "deleted_at": None}, {"_id": 0}
+        {"status": {"$in": ["pendente_aprovacao", "pending"]}, "deleted_at": None}, {"_id": 0}
     ).sort("created_at", 1).to_list(1000)
 
     user_ids = list({c["user_id"] for c in companies})
@@ -3937,7 +3930,7 @@ async def aprovar_cadastro(company_id: str, current_user: User = Depends(require
     company = await db.companies.find_one({"company_id": company_id, "deleted_at": None}, {"_id": 0})
     if not company:
         raise HTTPException(status_code=404, detail="Cadastro não encontrado")
-    if company.get("status") != "pendente_aprovacao":
+    if company.get("status") not in ("pendente_aprovacao", "pending"):
         raise HTTPException(status_code=409, detail="Cadastro não está pendente de aprovação")
 
     agora = datetime.now(timezone.utc).isoformat()
@@ -3971,7 +3964,7 @@ async def rejeitar_cadastro(
     company = await db.companies.find_one({"company_id": company_id, "deleted_at": None}, {"_id": 0})
     if not company:
         raise HTTPException(status_code=404, detail="Cadastro não encontrado")
-    if company.get("status") != "pendente_aprovacao":
+    if company.get("status") not in ("pendente_aprovacao", "pending"):
         raise HTTPException(status_code=409, detail="Cadastro não está pendente de aprovação")
 
     agora = datetime.now(timezone.utc).isoformat()
@@ -4234,6 +4227,7 @@ async def get_auditoria(
 ):
     """Retorna log de auditoria — sigcr_admin vê tudo; detran_admin vê só o próprio estado
     (via detalhes.estado_sigla); demais perfis veem só as próprias ações."""
+    limit = min(max(limit, 1), 500)
     query = _filtro_visibilidade_auditoria(current_user)
     if entidade:
         query["entidade"] = entidade
@@ -4284,11 +4278,15 @@ async def get_editais(current_user: User = Depends(get_current_user)):
 @api_router.post("/editais")
 async def create_edital(request: Request, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))):
     body = await request.json()
+    uf = (body.get("uf") or "").upper()
+    if uf not in UF_VALIDAS:
+        raise HTTPException(status_code=400, detail="UF inválida")
+    await _checar_permissao_escrita_estado(current_user, uf)
     edital = {
         "edital_id": f"edital_{uuid.uuid4().hex[:12]}",
         "titulo": body.get("titulo"),
         "descricao": body.get("descricao"),
-        "uf": body.get("uf"),
+        "uf": uf,
         "status": "aberto",
         "data_encerramento": body.get("data_encerramento"),
         "documentos_obrigatorios": body.get("documentos_obrigatorios", []),
@@ -4323,9 +4321,18 @@ async def atualizar_edital(edital_id: str, updates: EditalUpdate, current_user: 
     if not edital:
         raise HTTPException(status_code=404, detail="Edital não encontrado")
 
+    # Impede que um DETRAN altere edital de outra UF e também que mova um
+    # edital da própria UF para o escopo de outro estado.
+    await _checar_permissao_escrita_estado(current_user, edital.get("uf"))
+
     campos = {k: v for k, v in updates.model_dump().items() if v is not None}
     if not campos:
         return edital
+    if "uf" in campos:
+        campos["uf"] = campos["uf"].upper()
+        if campos["uf"] not in UF_VALIDAS:
+            raise HTTPException(status_code=400, detail="UF inválida")
+        await _checar_permissao_escrita_estado(current_user, campos["uf"])
     campos["updated_at"] = datetime.now(timezone.utc).isoformat()
 
     await db.editais.update_one({"edital_id": edital_id}, {"$set": campos})
@@ -4345,14 +4352,7 @@ async def upload_arquivo_edital(
     arquivo primeiro (recebe path+nome de volta) e só depois inclui essas
     referências no POST/PATCH /editais. Substitui o workaround manual de
     reaproveitar /portarias/upload só pra conseguir um path em UPLOAD_DIR."""
-    if file.content_type != "application/pdf":
-        raise HTTPException(status_code=400, detail="Apenas arquivos PDF são aceitos")
-
-    conteudo = await file.read()
-    if not conteudo:
-        raise HTTPException(status_code=400, detail="Arquivo vazio")
-    if len(conteudo) > MAX_PORTARIA_PDF_SIZE:
-        raise HTTPException(status_code=400, detail="Arquivo excede o limite de 20MB")
+    conteudo = await _ler_pdf_validado(file, contexto="editais")
 
     editais_dir = UPLOAD_DIR / "editais"
     editais_dir.mkdir(exist_ok=True)
@@ -4582,13 +4582,7 @@ def _solicitacao_registro_dir() -> Path:
 
 
 async def _salvar_pdf_solicitacao_registro(file: UploadFile, campo: str) -> str:
-    if file.content_type != "application/pdf":
-        raise HTTPException(status_code=400, detail=f"Apenas arquivos PDF são aceitos para {campo}")
-    conteudo = await file.read()
-    if not conteudo:
-        raise HTTPException(status_code=400, detail="Arquivo vazio")
-    if len(conteudo) > MAX_PORTARIA_PDF_SIZE:
-        raise HTTPException(status_code=400, detail="Arquivo excede o limite de 20MB")
+    conteudo = await _ler_pdf_validado(file, contexto=campo)
     file_path = _solicitacao_registro_dir() / f"{uuid.uuid4().hex}.pdf"
     async with aiofiles.open(file_path, "wb") as f:
         await f.write(conteudo)

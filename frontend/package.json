@@ -35,7 +35,7 @@
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.0",
     "ajv": "^8.18.0",
-    "axios": "^1.8.4",
+    "axios": "^1.20.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -57,7 +57,7 @@
     "react-leaflet": "^5.0.0",
     "react-leaflet-cluster": "^4.1.3",
     "react-resizable-panels": "^3.0.1",
-    "react-router-dom": "^7.5.1",
+    "react-router-dom": "^7.18.3",
     "react-scripts": "5.0.1",
     "recharts": "^3.6.0",
     "sonner": "^2.0.3",
@@ -98,6 +98,10 @@
     "globals": "15.15.0",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17"
+  },
+  "overrides": {
+    "shell-quote": "^1.10.0",
+    "websocket-driver": "^0.7.5"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

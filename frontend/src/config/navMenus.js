@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, Building2, FileText, Search, Bell,
   ChevronRight, Plus, Map, Archive, Landmark, CreditCard,
-  Settings, UserCog, FileCheck, Inbox, ListChecks,
+  Settings, UserCog, FileCheck, Inbox, ListChecks, ScrollText,
 } from 'lucide-react';
 
 // Menus por perfil — única fonte de verdade, consumida pela sidebar
@@ -57,6 +57,7 @@ export const NAV_ADMIN_EXTRA = [
   { path: '/financeiras',   icon: CreditCard,      label: 'Financeiras' },
   { path: '/detran/conferencia', icon: ListChecks, label: 'Painel de Conferência' },
   { path: '/usuarios',      icon: UserCog,         label: 'Gestão de Usuários' },
+  { path: '/auditoria',     icon: ScrollText,      label: 'Auditoria' },
   { path: '/configuracoes', icon: Settings,        label: 'Configurações' },
 ];
 
