@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { FileText, Plus, Download, CheckCircle, Clock, XCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -40,10 +40,7 @@ const SolicitacaoRegistro = () => {
   const [contratoPdf, setContratoPdf] = useState(null);
   const [salvando, setSalvando] = useState(false);
 
-  useEffect(() => { if (!initialized || !user) return; fetchCompanies(); }, [initialized, user]);
-  useEffect(() => { if (!initialized || !user) return; fetchSolicitacoes(); }, [initialized, user]);
-
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     try { await getToken(); } catch {}
     try {
       const response = await axios.get(`${API}/companies`, {
@@ -56,9 +53,9 @@ const SolicitacaoRegistro = () => {
     } catch (error) {
       console.error('Erro ao carregar empresas:', error);
     }
-  };
+  }, [getToken]);
 
-  const fetchSolicitacoes = async () => {
+  const fetchSolicitacoes = useCallback(async () => {
     setLoading(true);
     try {
       const response = await axios.get(`${API}/solicitacoes-registro`, { withCredentials: true });
@@ -69,7 +66,10 @@ const SolicitacaoRegistro = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => { if (!initialized || !user) return; fetchCompanies(); }, [initialized, user, fetchCompanies]);
+  useEffect(() => { if (!initialized || !user) return; fetchSolicitacoes(); }, [initialized, user, fetchSolicitacoes]);
 
   const resetForm = () => {
     setFormData(emptyFormData());

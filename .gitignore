@@ -81,6 +81,8 @@ android-sdk/ -e
 # Environment files
 *.env
 *.env.*
+!backend/.env.production.example
+!frontend/.env.production.example
 
 # SIGCR: releases/atomic-symlink frontend deploy artifacts (built, not source)
 frontend/build.snapshot-*/
@@ -91,3 +93,5 @@ frontend/current
 # SIGCR: runtime data, not source
 backend/uploads/
 ollama-data/
+frontend/test-results/
+frontend/playwright-report/

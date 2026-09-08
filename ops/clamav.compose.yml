@@ -1,0 +1,23 @@
+services:
+  sigcr-clamav:
+    image: clamav/clamav:1.4
+    container_name: sigcr-clamav
+    restart: unless-stopped
+    networks: [sigcr-net]
+    volumes:
+      - clamav-db:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan --ping 1 --wait >/dev/null 2>&1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  sigcr-net:
+    external: true
+
+volumes:
+  clamav-db:

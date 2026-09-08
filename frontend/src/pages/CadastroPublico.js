@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Building2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,9 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import axios from 'axios';
 import { toast } from 'sonner';
+import TurnstileWidget from '@/components/TurnstileWidget';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
+const TURNSTILE_SITE_KEY = process.env.REACT_APP_TURNSTILE_SITE_KEY || '';
 const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 
 const emptyForm = () => ({
@@ -34,6 +36,8 @@ const CadastroPublico = () => {
   const [registradoras, setRegistradoras] = useState([]);
   const [enviando, setEnviando] = useState(false);
   const [concluido, setConcluido] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
+  const handleCaptchaToken = useCallback((token) => setCaptchaToken(token), []);
 
   useEffect(() => {
     if (formData.tipo_empresa !== 'financeira') return;
@@ -56,9 +60,13 @@ const CadastroPublico = () => {
       toast.error('Selecione a registradora à qual sua empresa está vinculada');
       return;
     }
+    if (TURNSTILE_SITE_KEY && !captchaToken) {
+      toast.error('Conclua a verificação anti-robô');
+      return;
+    }
     setEnviando(true);
     try {
-      const payload = { ...formData };
+      const payload = { ...formData, captcha_token: captchaToken || null };
       if (payload.tipo_empresa !== 'financeira') delete payload.registradora_id;
       await axios.post(`${API}/public/cadastro`, payload);
       setConcluido(true);
@@ -210,6 +218,8 @@ const CadastroPublico = () => {
                   <Input type="password" value={confirmSenha} onChange={(e) => setConfirmSenha(e.target.value)} className="bg-muted border-input text-foreground mt-1" required minLength={8} />
                 </div>
               </div>
+
+              <TurnstileWidget siteKey={TURNSTILE_SITE_KEY} onToken={handleCaptchaToken} />
 
               <Button type="submit" disabled={enviando} className="bg-primary-500 hover:bg-primary-600 text-white w-full">
                 {enviando ? 'Enviando...' : 'Cadastrar'}

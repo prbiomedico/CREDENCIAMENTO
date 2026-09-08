@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { Plus, Building2, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -45,7 +45,6 @@ const EmpresaFinanceira = () => {
   });
   const [registradorasDisponiveis, setRegistradorasDisponiveis] = useState([]);
 
-  useEffect(() => { if (!initialized || !user) return; fetchCompanies(); }, [initialized, user]);
   useEffect(() => {
     if (!initialized || !user) return;
     axios.get(`${API}/companies`, { withCredentials: true, params: { tipo_empresa: 'registradora' } })
@@ -115,7 +114,7 @@ const EmpresaFinanceira = () => {
     } catch { toast.error('Erro ao excluir'); }
   };
 
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     try { await getToken(); } catch {}
     try {
       const response = await axios.get(`${API}/companies`, { withCredentials: true, params: { tipo_empresa: 'financeira' } });
@@ -132,7 +131,9 @@ const EmpresaFinanceira = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getToken]);
+
+  useEffect(() => { if (!initialized || !user) return; fetchCompanies(); }, [initialized, user, fetchCompanies]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

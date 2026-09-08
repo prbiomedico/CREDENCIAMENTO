@@ -70,8 +70,12 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
         setCatalogo(Array.isArray(catalogoRes.data) ? catalogoRes.data : []);
         const tiposCarregados = Array.isArray(tiposRes.data) ? tiposRes.data : [];
         setTipos(tiposCarregados);
-        if (tiposCarregados.length && !tiposCarregados.some((t) => t.tipo_id === novoItemPerfil)) {
-          setNovoItemPerfil(tiposCarregados[0].tipo_id);
+        if (tiposCarregados.length) {
+          setNovoItemPerfil((perfilAtual) =>
+            tiposCarregados.some((t) => t.tipo_id === perfilAtual)
+              ? perfilAtual
+              : tiposCarregados[0].tipo_id
+          );
         }
       } catch (error) {
         console.error('Erro ao carregar catálogo de checklist:', error);
@@ -79,7 +83,6 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
       } finally {
         setCarregando(false);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     })();
   }, []);
 

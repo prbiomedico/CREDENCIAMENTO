@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../hooks/use-toast';
@@ -72,13 +72,7 @@ export default function GestaoUsuarios() {
 
   const UFS = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'];
 
-  useEffect(() => {
-    if (!initialized || !user) return;
-    fetchUsuarios();
-    fetchCadastrosPendentes();
-  }, [initialized, user]);
-
-  const fetchUsuarios = async () => {
+  const fetchUsuarios = useCallback(async () => {
     setLoading(true);
     try {
       const res = await axios.get(`${API}/admin/usuarios`, { withCredentials: true });
@@ -88,9 +82,9 @@ export default function GestaoUsuarios() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  const fetchCadastrosPendentes = async () => {
+  const fetchCadastrosPendentes = useCallback(async () => {
     setLoadingCadastros(true);
     try {
       const res = await axios.get(`${API}/admin/cadastros-pendentes`, { withCredentials: true });
@@ -100,7 +94,13 @@ export default function GestaoUsuarios() {
     } finally {
       setLoadingCadastros(false);
     }
-  };
+  }, [toast]);
+
+  useEffect(() => {
+    if (!initialized || !user) return;
+    fetchUsuarios();
+    fetchCadastrosPendentes();
+  }, [initialized, user, fetchUsuarios, fetchCadastrosPendentes]);
 
   const handleAprovar = async (cadastro) => {
     setProcessando(cadastro.company_id);

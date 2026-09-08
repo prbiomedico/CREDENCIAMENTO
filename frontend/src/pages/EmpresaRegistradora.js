@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { Plus, Building2, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -42,7 +42,6 @@ const EmpresaRegistradora = () => {
     detrans_atuacao: [],
   });
 
-  useEffect(() => { if (!initialized || !user) return; fetchCompanies(); }, [initialized, user]);
 
   const [showEditModal, setShowEditModal] = React.useState(false);
   const [editingCompany, setEditingCompany] = React.useState(null);
@@ -104,7 +103,7 @@ const EmpresaRegistradora = () => {
     } catch { toast.error('Erro ao excluir'); }
   };
 
-  const fetchCompanies = async () => {
+  const fetchCompanies = useCallback(async () => {
     try { await getToken(); } catch {}
     try {
       const response = await axios.get(`${API}/companies`, { withCredentials: true, params: { tipo_empresa: 'registradora' } });
@@ -121,7 +120,9 @@ const EmpresaRegistradora = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getToken]);
+
+  useEffect(() => { if (!initialized || !user) return; fetchCompanies(); }, [initialized, user, fetchCompanies]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
