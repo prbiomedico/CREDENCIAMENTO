@@ -5533,6 +5533,85 @@ async def get_tipos_sugeridos_documento(current_user: User = Depends(get_current
     return TIPOS_SUGERIDOS_DOCUMENTO
 
 
+@api_router.get("/companies/{company_id}/documentos-homologacao")
+async def listar_documentos_homologacao_empresa(
+    company_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    """Documentos oficiais de credenciamento/homologação da própria empresa.
+
+    O dossiê GOV continua restrito aos perfis internos. Esta visão expõe só
+    documentos explicitamente vinculados à empresa solicitada e reaproveita
+    a autorização canônica de dono/admin, evitando acesso cruzado entre
+    registradoras.
+    """
+    await _autorizar_acesso_empresa(company_id, current_user)
+    query = {
+        "company_id": company_id,
+        "categoria": {"$in": ["estado_detran", "espelho_homologacao"]},
+        "deleted_at": None,
+    }
+    return await db.documentos_gov.find(query, {"_id": 0}).sort(
+        [("estado_sigla", 1), ("created_at", -1)]
+    ).to_list(500)
+
+
+@api_router.get("/companies/{company_id}/credenciamentos-resumo")
+async def listar_credenciamentos_resumo_empresa(
+    company_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    """Visão operacional dos credenciamentos da própria registradora."""
+    await _autorizar_acesso_empresa(company_id, current_user)
+    return await db.credenciamentos.find(
+        {"company_id": company_id, "deleted_at": None},
+        {
+            "_id": 0,
+            "credenciamento_id": 1,
+            "estado_sigla": 1,
+            "categoria": 1,
+            "extrato_contrato": 1,
+            "status": 1,
+            "validade": 1,
+            "termo_credenciamento_path": 1,
+            "updated_at": 1,
+        },
+    ).sort("estado_sigla", 1).to_list(100)
+
+
+@api_router.get("/companies/{company_id}/documentos-homologacao/{documento_id}/download")
+async def download_documento_homologacao_empresa(
+    company_id: str,
+    documento_id: str,
+    current_user: User = Depends(get_current_user),
+):
+    scope = await _autorizar_acesso_empresa(company_id, current_user)
+    doc = await db.documentos_gov.find_one({
+        "documento_id": documento_id,
+        "company_id": company_id,
+        "categoria": {"$in": ["estado_detran", "espelho_homologacao"]},
+        "deleted_at": None,
+    }, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+    file_path = Path(doc["file_path"])
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="Arquivo não encontrado no armazenamento")
+    await registrar_auditoria(
+        current_user,
+        "download_documento_homologacao_empresa",
+        "documento_gov",
+        documento_id,
+        {"company_id": company_id, "estado_sigla": doc.get("estado_sigla")},
+        atuando_como_empresa=scope.viewing_as["id"] if scope.viewing_as else None,
+    )
+    return FileResponse(
+        path=file_path,
+        filename=doc["file_name"],
+        media_type=doc.get("content_type") or "application/octet-stream",
+    )
+
+
 @api_router.get("/atividades-raci")
 async def listar_atividades_raci(current_user: User = Depends(get_current_user)):
     atividades = await db.atividades_raci.find({}, {"_id": 0}).sort("numero", 1).to_list(100)
