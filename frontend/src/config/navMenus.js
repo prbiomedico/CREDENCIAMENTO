@@ -58,6 +58,8 @@ export const NAV_ADMIN_EXTRA = [
   { path: '/configuracoes', icon: Settings,        label: 'Configurações' },
 ];
 
+const ADMIN_GOVERNANCA_PATHS = new Set(['/usuarios', '/auditoria', '/configuracoes']);
+
 export const MENUS = {
   registradora: NAV_REGISTRADORA,
   detran: NAV_DETRAN,
@@ -73,7 +75,13 @@ export const MENUS = {
 export function buildNavStructure(perfilAtivo, isAdmin) {
   const todosItens = MENUS[perfilAtivo] || NAV_REGISTRADORA;
   const pathsDoBadge = new Set(todosItens.map((item) => item.path));
-  const navAdminExtra = isAdmin ? NAV_ADMIN_EXTRA.filter((item) => !pathsDoBadge.has(item.path)) : [];
+  // Operações regulatórias pertencem à visão DETRAN. Quando o administrador
+  // usa a visão Registradora ou Financeira, a seção Administração conserva
+  // apenas a governança da plataforma, sem repetir módulos de outro perfil.
+  const extrasPermitidos = perfilAtivo === 'detran'
+    ? NAV_ADMIN_EXTRA
+    : NAV_ADMIN_EXTRA.filter((item) => ADMIN_GOVERNANCA_PATHS.has(item.path));
+  const navAdminExtra = isAdmin ? extrasPermitidos.filter((item) => !pathsDoBadge.has(item.path)) : [];
 
   const navItems = todosItens.filter((item) => !item.section);
   const navDestaque = navItems.filter((item) => item.destaque);

@@ -321,7 +321,7 @@ const DashboardLayout = ({ children }) => {
     <div className="min-h-screen bg-background text-foreground flex flex-col">
       <div className="flex-1 flex min-h-0">
       {/* Sidebar desktop */}
-      <aside className="fixed lg:static inset-y-0 left-0 z-50 w-64 bg-[hsl(var(--sigcr-sidebar))] text-white border-r border-[hsl(var(--sigcr-sidebar-border))] transform transition-transform duration-200 lg:translate-x-0 lg:flex flex-col hidden">
+      <aside className="fixed inset-y-0 left-0 z-50 hidden w-64 flex-col border-r border-[hsl(var(--sigcr-sidebar-border))] bg-[hsl(var(--sigcr-sidebar))] text-white lg:flex">
         <SidebarContent />
       </aside>
 
@@ -336,7 +336,7 @@ const DashboardLayout = ({ children }) => {
       </aside>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex min-w-0 flex-1 flex-col lg:ml-64">
         <header className="sticky top-0 z-30 hidden h-16 items-center justify-between border-b border-border bg-white/95 px-6 lg:flex">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">SIGCR · {cfg.label}</p>
