@@ -166,9 +166,8 @@ const DashboardLayout = ({ children }) => {
   const cfg = PERFIS[perfilAtivo] || PERFIS.registradora;
   const PerfilIcon = cfg.icon;
 
-  // Deriva os itens/seções/admin-extra pro perfil ativo — lógica
-  // centralizada em navMenus.js pra ser reaproveitada pelo AppMenuBar do
-  // Dashboard sem duplicar as regras de dedupe (ver comentário lá).
+  // Deriva os itens/seções/admin-extra pro perfil ativo a partir da fonte
+  // única usada pela navegação lateral de todas as telas autenticadas.
   const { navItems, navSecoes, navAdminExtra } = buildNavStructure(perfilAtivo, isAdmin);
   const allNavItems = [...navItems, ...navSecoes.flatMap((section) => section.items), ...navAdminExtra];
   const activeNavItem = allNavItems.find((item) => location.pathname === item.path);

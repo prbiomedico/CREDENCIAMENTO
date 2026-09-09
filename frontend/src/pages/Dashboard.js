@@ -1,5 +1,4 @@
 import { MapaNacional } from '../components/ui/interactive-map';
-import AppMenuBar from '../components/ui/app-menu-bar';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
@@ -135,9 +134,6 @@ const Dashboard = () => {
         <div className="mb-8">
           <h1 className="text-4xl font-heading font-bold tracking-tight">Painel do DETRAN</h1>
           <p className="mt-2 text-sm text-slate-500">Empresas, atos regulatórios e conformidade documental na sua área de atuação.</p>
-          <div className="mt-4">
-            <AppMenuBar />
-          </div>
         </div>
 
         {loading ? (

@@ -4,14 +4,12 @@ import {
   Settings, UserCog, FileCheck, Inbox, ListChecks, ScrollText,
 } from 'lucide-react';
 
-// Menus por perfil — única fonte de verdade, consumida pela sidebar
-// (DashboardLayout) e pelo menu superior do Dashboard (AppMenuBar). Extraído
-// de DashboardLayout.js pra não duplicar essa lista (e a lógica de seções/
-// admin abaixo) em dois lugares.
+// Menus por perfil — única fonte de verdade consumida pela sidebar do
+// DashboardLayout. A barra horizontal foi removida por duplicar a navegação
+// global e competir visualmente com o conteúdo das páginas.
 //
-// `destaque: true` marca os itens mais usados por perfil — só afeta o
-// AppMenuBar (que mostra esses soltos na barra e agrupa o resto em "Mais",
-// ver buildNavStructure), a sidebar ignora a flag e continua listando tudo.
+// `destaque` é mantido nos dados por compatibilidade; a sidebar continua
+// exibindo todos os destinos de forma previsível.
 // `/portarias` é o ambiente único "Transparência" (fusão de Portarias +
 // Editais, PENDING_ACTIONS.md fatia 3) — abas internas (Portarias/Editais)
 // substituem os 2 itens de menu separados que existiam antes. `/editais`
@@ -70,9 +68,8 @@ export const MENUS = {
 // mesma lógica de dedupe que já vivia inline em DashboardLayout (seção
 // "Administração" só lista o que ainda não aparece no menu do badge ativo).
 //
-// `navDestaque`/`navSecundarios` são o split de `navItems` pela flag
-// `destaque` (ver comentário acima) — só o AppMenuBar consome esses dois; a
-// sidebar continua usando `navItems` inteiro, sem essa divisão.
+// `navDestaque`/`navSecundarios` permanecem no retorno por compatibilidade
+// com consumidores legados; a navegação oficial usa `navItems` completo.
 export function buildNavStructure(perfilAtivo, isAdmin) {
   const todosItens = MENUS[perfilAtivo] || NAV_REGISTRADORA;
   const pathsDoBadge = new Set(todosItens.map((item) => item.path));
