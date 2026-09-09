@@ -12,7 +12,7 @@ import { Textarea } from '../components/ui/textarea';
 import {
   UserCog, Plus, Search, Shield, Building2, Landmark,
   CreditCard, Trash2, RefreshCw, ChevronDown, Check, X, Eye, EyeOff,
-  ClipboardList, ThumbsUp, ThumbsDown
+  ClipboardList, ThumbsUp, ThumbsDown, Users, UserCheck, UserX
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br'}/api`;
@@ -54,10 +54,13 @@ export default function GestaoUsuarios() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [busca, setBusca] = useState('');
+  const [filtroPerfil, setFiltroPerfil] = useState('todos');
+  const [filtroStatus, setFiltroStatus] = useState('todos');
   const [showForm, setShowForm] = useState(false);
   const [showSenha, setShowSenha] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
   const [deletando, setDeletando] = useState(null);
+  const [alterandoStatus, setAlterandoStatus] = useState(null);
 
   const [cadastrosPendentes, setCadastrosPendentes] = useState([]);
   const [loadingCadastros, setLoadingCadastros] = useState(true);
@@ -163,14 +166,35 @@ export default function GestaoUsuarios() {
     }
   };
 
-  const usuariosFiltrados = usuarios.filter(u =>
-    u.username?.toLowerCase().includes(busca.toLowerCase()) ||
-    u.email?.toLowerCase().includes(busca.toLowerCase())
-  );
+  const handleStatus = async (usuario) => {
+    setAlterandoStatus(usuario.id);
+    try {
+      await axios.patch(`${API}/admin/usuarios/${usuario.id}/status`, { enabled: !usuario.enabled }, { withCredentials: true });
+      toast({ title: usuario.enabled ? 'Usuário desativado' : 'Usuário ativado', description: usuario.email });
+      await fetchUsuarios();
+    } catch (e) {
+      toast({ title: 'Não foi possível alterar o acesso', description: e.response?.data?.detail || 'Tente novamente', variant: 'destructive' });
+    } finally {
+      setAlterandoStatus(null);
+    }
+  };
+
+  const usuariosFiltrados = usuarios.filter(u => {
+    const termo = busca.toLowerCase().trim();
+    const combinaBusca = !termo || [u.username, u.email, u.firstName, u.lastName]
+      .some(valor => valor?.toLowerCase().includes(termo));
+    const combinaPerfil = filtroPerfil === 'todos' || u.perfil === filtroPerfil;
+    const combinaStatus = filtroStatus === 'todos' || (filtroStatus === 'ativos' ? u.enabled : !u.enabled);
+    return combinaBusca && combinaPerfil && combinaStatus;
+  });
+
+  const totalAtivos = usuarios.filter(u => u.enabled).length;
+  const totalInativos = usuarios.length - totalAtivos;
+  const totalDetran = usuarios.filter(u => ['detran', 'detran_admin'].includes(u.perfil)).length;
 
   return (
     <DashboardLayout>
-      <div className="p-6 lg:p-8 max-w-6xl mx-auto space-y-6">
+      <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
 
         {/* Header */}
         <div className="flex items-center justify-between flex-wrap gap-4">
@@ -179,10 +203,21 @@ export default function GestaoUsuarios() {
               <UserCog className="h-5 w-5 text-primary-500" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">Gestão de Usuários</h1>
-              <p className="text-slate-500 text-sm">Controle de acesso baseado na hierarquia LGPD</p>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground">Gestão de Usuários</h1>
+              <p className="text-slate-500 text-sm">Identidades, perfis, acesso por UF e aprovação de novas empresas.</p>
             </div>
           </div>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {[
+            { label: 'Usuários cadastrados', value: usuarios.length, detail: 'Identidades no Keycloak', icon: Users },
+            { label: 'Acessos ativos', value: totalAtivos, detail: `${usuarios.length ? Math.round((totalAtivos / usuarios.length) * 100) : 0}% da base`, icon: UserCheck },
+            { label: 'Acessos inativos', value: totalInativos, detail: 'Contas sem acesso', icon: UserX },
+            { label: 'Equipe DETRAN', value: totalDetran, detail: 'Operadores e administradores', icon: Landmark },
+          ].map(item => (
+            <Card key={item.label} className="bg-white"><CardContent className="p-4"><div className="flex items-start justify-between"><p className="text-xs font-medium text-slate-500">{item.label}</p><item.icon className="h-4 w-4 text-slate-400" /></div><p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{item.value}</p><p className="mt-1 text-xs text-slate-500">{item.detail}</p></CardContent></Card>
+          ))}
         </div>
 
         <Tabs defaultValue="usuarios" className="w-full">
@@ -333,12 +368,23 @@ export default function GestaoUsuarios() {
           </Card>
         )}
 
-        {/* Busca */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
-          <input value={busca} onChange={e => setBusca(e.target.value)}
-            placeholder="Buscar por username ou e-mail..."
-            className="w-full pl-10 pr-4 py-2.5 bg-card border border-border rounded-lg text-sm text-foreground placeholder-zinc-600 focus:outline-none focus:border-primary-500/40" />
+        {/* Filtros operacionais */}
+        <div className="flex flex-col gap-2 rounded-lg border border-border bg-white p-3 lg:flex-row">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <input value={busca} onChange={e => setBusca(e.target.value)}
+              placeholder="Buscar nome, usuário ou e-mail..."
+              className="h-9 w-full rounded-md border border-input bg-white pl-9 pr-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-slate-200" />
+          </div>
+          <select value={filtroPerfil} onChange={e => setFiltroPerfil(e.target.value)} className="h-9 rounded-md border border-input bg-white px-3 text-sm text-slate-700 lg:w-48">
+            <option value="todos">Todos os perfis</option>
+            {Object.entries(PERFIS).map(([value, config]) => <option key={value} value={value}>{config.label}</option>)}
+          </select>
+          <select value={filtroStatus} onChange={e => setFiltroStatus(e.target.value)} className="h-9 rounded-md border border-input bg-white px-3 text-sm text-slate-700 lg:w-40">
+            <option value="todos">Todos os status</option>
+            <option value="ativos">Ativos</option>
+            <option value="inativos">Inativos</option>
+          </select>
         </div>
 
         {/* Lista de usuários */}
@@ -355,52 +401,21 @@ export default function GestaoUsuarios() {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-2">
-            {usuariosFiltrados.map(u => {
-              const perfilCfg = PERFIS[u.perfil] || PERFIS['registradora'];
+          <Card className="overflow-hidden border-border bg-white"><CardContent className="p-0"><Table>
+            <TableHeader><TableRow><TableHead>Usuário</TableHead><TableHead>Perfil</TableHead><TableHead>Escopo</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Ação</TableHead></TableRow></TableHeader>
+            <TableBody>{usuariosFiltrados.map(u => {
+              const perfilCfg = PERFIS[u.perfil] || PERFIS.registradora;
               const PerfilIcon = perfilCfg.icon;
               const isConfirmDelete = deletando === u.id;
-              return (
-                <Card key={u.id} className="border-border bg-card hover:border-input transition-colors">
-                  <CardContent className="p-4 flex items-center gap-4">
-                    <div className="w-9 h-9 rounded-full bg-primary-500/20 border border-primary-500/20 flex items-center justify-center text-primary-400 font-bold text-sm shrink-0">
-                      {u.firstName?.[0] || u.username?.[0]?.toUpperCase() || '?'}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-semibold text-foreground">{u.firstName} {u.lastName}</span>
-                        <span className="text-xs text-slate-500 font-mono">@{u.username}</span>
-                        {!u.enabled && <Badge className="bg-red-900/30 text-red-400 border-red-800 text-[10px]">Desativado</Badge>}
-                      </div>
-                      <p className="text-xs text-slate-500 truncate">{u.email}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Badge className={`text-xs border flex items-center gap-1 ${perfilCfg.color}`}>
-                        <PerfilIcon className="h-3 w-3" />
-                        {perfilCfg.label}
-                      </Badge>
-                      {u.uf && <Badge className="bg-muted text-slate-600 border-input text-xs font-mono">{u.uf}</Badge>}
-                      {isConfirmDelete ? (
-                        <div className="flex gap-1">
-                          <Button size="sm" variant="destructive" onClick={() => handleDeletar(u.id, u.username)}>
-                            Confirmar
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setDeletando(null)}>
-                            <X className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button size="sm" variant="ghost" onClick={() => handleDeletar(u.id, u.username)}
-                          className="text-slate-400 hover:text-red-400 h-7 w-7 p-0">
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
+              return <TableRow key={u.id}>
+                <TableCell><div className="flex items-center gap-3"><div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">{u.firstName?.[0] || u.username?.[0]?.toUpperCase() || '?'}</div><div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-900">{[u.firstName, u.lastName].filter(Boolean).join(' ') || u.username}</p><p className="truncate text-xs text-slate-500">@{u.username} · {u.email}</p></div></div></TableCell>
+                <TableCell><Badge variant="outline" className="gap-1 border-slate-200 bg-slate-50 text-slate-700"><PerfilIcon className="h-3 w-3" />{perfilCfg.label}</Badge></TableCell>
+                <TableCell><span className="text-xs text-slate-600">{u.uf ? `DETRAN/${u.uf}` : u.perfil === 'sigcr_admin' ? 'Nacional' : 'Empresa vinculada'}</span></TableCell>
+                <TableCell><Badge variant="outline" className={u.enabled ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-700'}>{u.enabled ? 'Ativo' : 'Inativo'}</Badge></TableCell>
+                <TableCell className="text-right">{isConfirmDelete ? <div className="flex justify-end gap-1"><Button size="sm" variant="destructive" onClick={() => handleDeletar(u.id, u.username)}>Confirmar exclusão</Button><Button size="sm" variant="ghost" onClick={() => setDeletando(null)}><X className="h-4 w-4" /></Button></div> : <div className="flex justify-end gap-1"><Button size="sm" variant="outline" disabled={alterandoStatus === u.id} onClick={() => handleStatus(u)}>{alterandoStatus === u.id ? 'Salvando...' : u.enabled ? 'Desativar' : 'Ativar'}</Button><Button size="sm" variant="ghost" onClick={() => handleDeletar(u.id, u.username)} className="text-slate-500 hover:text-red-600"><Trash2 className="mr-2 h-4 w-4" />Excluir</Button></div>}</TableCell>
+              </TableRow>;
+            })}</TableBody>
+          </Table></CardContent></Card>
         )}
 
         <p className="text-center text-slate-400 text-xs font-mono">{usuariosFiltrados.length} usuário(s)</p>

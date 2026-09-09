@@ -3923,6 +3923,10 @@ class NovoUsuarioPayload(BaseModel):
     enabled: bool = True
 
 
+class AtualizarStatusUsuarioPayload(BaseModel):
+    enabled: bool
+
+
 @api_router.post("/admin/usuarios")
 async def criar_usuario(payload: NovoUsuarioPayload, current_user: User = Depends(require_perfil("sigcr_admin"))):
     # Hierarquia LGPD — cada perfil só pode criar abaixo do seu nível
@@ -3993,11 +3997,46 @@ async def criar_usuario(payload: NovoUsuarioPayload, current_user: User = Depend
             headers=headers,
             json=[role_obj],
         )
+    await registrar_auditoria(current_user, "criar_usuario", "usuario_keycloak", user_id, {
+        "username": payload.username, "role": payload.role, "uf": payload.uf or None,
+    })
     return {"message": "Usuário criado com sucesso", "user_id": user_id}
+
+
+@api_router.patch("/admin/usuarios/{user_id}/status")
+async def atualizar_status_usuario(
+    user_id: str,
+    payload: AtualizarStatusUsuarioPayload,
+    current_user: User = Depends(require_perfil("sigcr_admin")),
+):
+    if user_id == current_user.user_id and not payload.enabled:
+        raise HTTPException(status_code=409, detail="Você não pode desativar o próprio acesso")
+    import httpx
+    token = await get_kc_admin_token()
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    async with httpx.AsyncClient() as client:
+        consulta = await client.get(
+            f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}", headers=headers,
+        )
+        if consulta.status_code == 404:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        consulta.raise_for_status()
+        anterior = consulta.json().get("enabled", True)
+        resposta = await client.put(
+            f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}",
+            headers=headers, json={"enabled": payload.enabled},
+        )
+        resposta.raise_for_status()
+    await registrar_auditoria(current_user, "ativar_usuario" if payload.enabled else "desativar_usuario", "usuario_keycloak", user_id, {
+        "antes": anterior, "depois": payload.enabled,
+    })
+    return {"message": "Usuário ativado" if payload.enabled else "Usuário desativado"}
 
 
 @api_router.delete("/admin/usuarios/{user_id}")
 async def deletar_usuario(user_id: str, current_user: User = Depends(require_perfil("sigcr_admin"))):
+    if user_id == current_user.user_id:
+        raise HTTPException(status_code=409, detail="Você não pode excluir o próprio usuário")
     import httpx
     token = await get_kc_admin_token()
     headers = {"Authorization": f"Bearer {token}"}
@@ -4009,6 +4048,7 @@ async def deletar_usuario(user_id: str, current_user: User = Depends(require_per
         if r.status_code == 404:
             raise HTTPException(status_code=404, detail="Usuário não encontrado")
         r.raise_for_status()
+    await registrar_auditoria(current_user, "excluir_usuario", "usuario_keycloak", user_id)
     return {"message": "Usuário removido com sucesso"}
 
 
