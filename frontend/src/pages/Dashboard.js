@@ -3,14 +3,12 @@ import AppMenuBar from '../components/ui/app-menu-bar';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
-import { Building2, CreditCard, FileText, Search, TrendingUp, Shield, CheckCircle, Clock, AlertCircle, CalendarClock, ArrowRight } from 'lucide-react';
+import EmpresaRegistradora from './EmpresaRegistradora';
+import { Building2, CreditCard, Shield, CheckCircle, Clock, AlertCircle, CalendarClock, ArrowRight, ListChecks, Landmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BentoGrid, BentoCard } from '@/components/ui/bento-grid';
 import { useAuth } from '../contexts/AuthContext';
-import { useViewContext } from '../contexts/ViewContext';
 import { useApi } from '../hooks/useApi';
-import { toast } from 'sonner';
 
 // Dashboard mínimo pra Financeira (Fase A) — nada de compliance/vencimento/
 // portarias, que são conceitos de registradora. Só o essencial: status do
@@ -33,15 +31,19 @@ const DashboardFinanceira = () => {
 
   const resumo = checklist?.resumo;
   const temChecklist = resumo && resumo.total > 0;
+  const total = resumo?.total || 0;
+  const aprovados = resumo?.aprovados || 0;
+  const enviados = resumo?.enviados || 0;
+  const pendentes = resumo?.pendentes || 0;
+  const rejeitados = resumo?.rejeitados || 0;
+  const progresso = total ? Math.round((aprovados / total) * 100) : 0;
 
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-heading font-bold tracking-tight">
-            Olá, {user?.name?.split(' ')[0]} 👋
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">Bem-vindo ao SIGCR — {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <h1 className="text-4xl font-heading font-bold tracking-tight">Painel da Financeira</h1>
+          <p className="mt-2 text-sm text-slate-500">Documentação, credenciamento e operação de registros em uma visão executiva.</p>
         </div>
 
         {loading ? (
@@ -50,52 +52,22 @@ const DashboardFinanceira = () => {
           </div>
         ) : (
           <>
-            <Card className="bg-card border-border mb-8">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-heading flex items-center gap-2">
-                  <Shield className="h-4 w-4 text-primary-500" />
-                  Status do Credenciamento
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {temChecklist ? (
-                  <div className="grid grid-cols-4 gap-4">
-                    <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
-                      <p className="text-2xl font-bold font-mono text-emerald-400">{resumo.aprovados}</p>
-                      <p className="text-xs text-slate-500 mt-1">Aprovados</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-sky-500/10 border border-sky-500/20 text-center">
-                      <p className="text-2xl font-bold font-mono text-sky-400">{resumo.enviados}</p>
-                      <p className="text-xs text-slate-500 mt-1">Enviados</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-zinc-500/10 border border-zinc-500/20 text-center">
-                      <p className="text-2xl font-bold font-mono text-slate-600">{resumo.pendentes}</p>
-                      <p className="text-xs text-slate-500 mt-1">Pendentes</p>
-                    </div>
-                    <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
-                      <p className="text-2xl font-bold font-mono text-red-400">{resumo.rejeitados}</p>
-                      <p className="text-xs text-slate-500 mt-1">Rejeitados</p>
-                    </div>
-                  </div>
-                ) : (
-                  <p className="text-slate-600 text-sm py-4">
-                    A lista de documentos exigidos pra credenciamento de Financeira ainda não foi publicada. Assim que estiver disponível, ela aparece aqui e na tela de Documentos.
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card className="bg-card border-border">
-              <CardContent className="p-6 flex items-center justify-between">
-                <div>
-                  <p className="font-semibold text-foreground mb-1">Documentos</p>
-                  <p className="text-sm text-slate-500">Envie e acompanhe os documentos exigidos pra credenciamento.</p>
-                </div>
-                <Button onClick={() => navigate('/documentos')} className="bg-primary-500 hover:bg-primary-600 text-white gap-2 shrink-0">
-                  Ir para Documentos <ArrowRight className="h-4 w-4" />
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                { label: 'Itens do checklist', value: total, detail: 'Documentação exigida', icon: ListChecks },
+                { label: 'Documentos aprovados', value: aprovados, detail: `${progresso}% concluído`, icon: CheckCircle },
+                { label: 'Em análise', value: enviados, detail: 'Enviados ao responsável', icon: Clock },
+                { label: 'Pontos de atenção', value: pendentes + rejeitados, detail: `${pendentes} pendentes · ${rejeitados} rejeitados`, icon: AlertCircle },
+              ].map((item) => (
+                <Card key={item.label} className="bg-white"><CardContent className="p-4"><div className="flex items-start justify-between"><p className="text-xs font-medium text-slate-500">{item.label}</p><item.icon className="h-4 w-4 text-slate-400" /></div><p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{item.value}</p><p className="mt-1 text-xs text-slate-500">{item.detail}</p></CardContent></Card>
+              ))}
+            </div>
+            <div className="mt-4 grid gap-4 xl:grid-cols-[1.2fr_0.8fr]">
+              <Card className="bg-white"><CardHeader><CardTitle className="text-sm">Andamento documental</CardTitle><p className="text-xs text-slate-500">Evolução do checklist necessário para a operação.</p></CardHeader><CardContent>
+                {temChecklist ? <div className="space-y-5"><div><div className="mb-2 flex justify-between text-xs"><span className="text-slate-600">Progresso aprovado</span><span className="font-semibold">{aprovados}/{total}</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-emerald-600" style={{ width: `${progresso}%` }} /></div></div><div className="grid grid-cols-3 gap-3 text-center"><div className="rounded-md bg-emerald-50 p-3"><p className="text-xl font-semibold text-emerald-700">{aprovados}</p><p className="text-xs text-emerald-700">Aprovados</p></div><div className="rounded-md bg-amber-50 p-3"><p className="text-xl font-semibold text-amber-700">{enviados}</p><p className="text-xs text-amber-700">Em análise</p></div><div className="rounded-md bg-slate-100 p-3"><p className="text-xl font-semibold text-slate-700">{pendentes}</p><p className="text-xs text-slate-600">Pendentes</p></div></div></div> : <p className="py-8 text-sm text-slate-500">A lista de documentos exigidos ainda não foi publicada.</p>}
+              </CardContent></Card>
+              <Card className="bg-white"><CardHeader><CardTitle className="text-sm">Ações operacionais</CardTitle><p className="text-xs text-slate-500">Atalhos para as rotinas mais importantes.</p></CardHeader><CardContent className="space-y-2"><Button onClick={() => navigate('/documentos')} variant="outline" className="w-full justify-between">Gerenciar documentos <ArrowRight className="h-4 w-4" /></Button><Button onClick={() => navigate('/registro-contrato')} variant="outline" className="w-full justify-between">Registrar contrato <ArrowRight className="h-4 w-4" /></Button><Button onClick={() => navigate('/portarias')} variant="outline" className="w-full justify-between">Consultar transparência <ArrowRight className="h-4 w-4" /></Button></CardContent></Card>
+            </div>
           </>
         )}
       </div>
@@ -108,7 +80,6 @@ const Dashboard = () => {
   const [vencimentoResumo, setVencimentoResumo] = useState({ vencendo: [], vencidos: [] });
   const [loading, setLoading] = useState(true);
   const { user, initialized } = useAuth();
-  const { viewingAs } = useViewContext();
   const api = useApi();
   const navigate = useNavigate();
 
@@ -143,67 +114,27 @@ const Dashboard = () => {
   }, [api]);
 
   useEffect(() => {
-    if (!initialized || !user || user.perfil === 'financeira') return;
+    if (!initialized || !user || ['financeira', 'registradora'].includes(user.perfil)) return;
     fetchStats();
     fetchVencimentoResumo();
   }, [fetchStats, fetchVencimentoResumo, initialized, user]);
 
+  // A visão executiva da própria registradora é o dashboard canônico desse
+  // perfil. A rota histórica /registradoras-empresa continua apontando para
+  // o mesmo componente para preservar bookmarks e links já distribuídos.
+  if (user?.perfil === 'registradora') return <EmpresaRegistradora />;
   if (user?.perfil === 'financeira') return <DashboardFinanceira />;
 
-  // Item 1 do Dashboard (2026-08-27): cada card leva pra tela/filtro real
-  // que corresponde ao número mostrado. Mapeamento por perfil:
-  // - registradora (dona de 1 empresa própria): "Minha X" +
-  //   Documentos/Pendências/Semáforo apontam pra própria tela de Documentos,
-  //   com filtro por status/compliance.
-  // - sigcr_admin/detran/detran_admin: Empresas virou 2 cards reais
-  //   (Registradoras/Financeiras, visão agregada por UF) em vez do card
-  //   único; Documentos/Pendências/Semáforo apontam pra Registradoras
-  //   (mesmo escopo que GET /stats passou a usar pro DETRAN depois do fix
-  //   do bug de ownership) com o filtro correspondente.
-  const isEmpresaSelf = user?.perfil === 'registradora';
-  // Quando sigcr_admin está simulando uma empresa (Registradora/Financeira)
-  // via Trocar Visão, os cards/atalhos de gestão do DETRAN (Registradoras,
-  // Financeiras, visão agregada por UF) somem — mesmo com o JWT real ainda
-  // sendo sigcr_admin, a simulação precisa refletir exatamente o que a
-  // empresa vê.
-  const isDetranOuAdmin = ['sigcr_admin', 'detran', 'detran_admin'].includes(user?.perfil) && viewingAs?.tipo !== 'empresa';
-
-  const empresaCards = user?.perfil === 'registradora'
-    ? [{ label: 'Minha Registradora', value: stats?.total_companies || 0, icon: Building2, color: 'blue', to: '/registradoras-empresa' }]
-    : isDetranOuAdmin
-    ? [
-        { label: 'Registradoras', value: stats?.total_registradoras || 0, icon: Building2, color: 'blue', to: '/registradoras' },
-        { label: 'Financeiras', value: stats?.total_financeiras || 0, icon: CreditCard, color: 'blue', to: '/financeiras' },
-      ]
-    : [{ label: 'Empresas', value: stats?.total_companies || 0, icon: Building2, color: 'blue' }];
-
-  const documentosTo = isEmpresaSelf ? '/documentos' : (isDetranOuAdmin ? '/registradoras' : undefined);
-  const pendenciasTo = isEmpresaSelf ? '/documentos?status=pending' : (isDetranOuAdmin ? '/registradoras?pendencias=1' : undefined);
-  const portariasTo = '/portarias?status=vigente';
-
-  const CARDS = [
-    ...empresaCards,
-    { label: 'Documentos', value: stats?.total_documents || 0, icon: FileText, color: 'primary', to: documentosTo },
-    { label: 'Pendências', value: stats?.pending_validations || 0, icon: Clock, color: 'yellow', to: pendenciasTo },
-    { label: 'Portarias', value: stats?.active_portarias || 0, icon: Search, color: 'emerald', to: portariasTo },
-  ];
-
-  const semaforoTo = (bucket) => (isEmpresaSelf ? `/documentos?compliance=${bucket}` : (isDetranOuAdmin ? `/registradoras?compliance=${bucket}` : undefined));
-
-  const SEMAFORO = [
-    { label: 'Conformes', value: stats?.compliance_verde || 0, color: 'emerald', icon: CheckCircle, to: semaforoTo('valido') },
-    { label: 'Atenção', value: stats?.compliance_amarelo || 0, color: 'amber', icon: Clock, to: semaforoTo('vencendo') },
-    { label: 'Crítico', value: stats?.compliance_vermelho || 0, color: 'red', icon: AlertCircle, to: semaforoTo('vencido') },
-  ];
+  const totalCompliance = (stats?.compliance_verde || 0) + (stats?.compliance_amarelo || 0) + (stats?.compliance_vermelho || 0);
+  const percentualCompliance = totalCompliance ? Math.round(((stats?.compliance_verde || 0) / totalCompliance) * 100) : 0;
+  const documentosCriticos = [...vencimentoResumo.vencidos, ...vencimentoResumo.vencendo];
 
   return (
     <DashboardLayout>
       <div className="p-6 lg:p-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-heading font-bold tracking-tight">
-            Olá, {user?.name?.split(' ')[0]} 👋
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">Bem-vindo ao SIGCR — {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <h1 className="text-4xl font-heading font-bold tracking-tight">Painel do DETRAN</h1>
+          <p className="mt-2 text-sm text-slate-500">Empresas, atos regulatórios e conformidade documental na sua área de atuação.</p>
           <div className="mt-4">
             <AppMenuBar />
           </div>
@@ -215,124 +146,30 @@ const Dashboard = () => {
           </div>
         ) : (
           <>
-            {/* Métricas — BentoGrid (Fase 3, PENDING_ACTIONS.md item 36):
-                4 cards de stat (1x1, clicáveis quando têm destino real, ver
-                convenção de `interactive` em bento-grid.jsx) + Semáforo de
-                Compliance e Documentos Vencendo como células 2x1, mesma
-                linha, pra ficar lado a lado em vez de empilhado. */}
-            <BentoGrid className="mb-8">
-              {CARDS.map(({ label, value, icon: Icon, color, to }) => (
-                <BentoCard
-                  key={label}
-                  interactive={!!to}
-                  onClick={to ? () => navigate(to) : undefined}
-                  className="bg-card border-border hover:border-input transition-colors"
-                >
-                  <CardContent className="p-5">
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-xs text-slate-500 font-mono uppercase tracking-wider">{label}</p>
-                      <div className={`w-8 h-8 rounded-lg bg-${color}-500/10 flex items-center justify-center`}>
-                        <Icon className={`h-4 w-4 text-${color}-400`} />
-                      </div>
-                    </div>
-                    <p className={`text-3xl font-bold font-mono text-${color}-400`}>{value}</p>
-                  </CardContent>
-                </BentoCard>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {[
+                { label: 'Registradoras', value: stats?.total_registradoras || 0, detail: 'Empresas na área de atuação', icon: Building2, to: '/registradoras' },
+                { label: 'Financeiras', value: stats?.total_financeiras || 0, detail: 'Instituições vinculadas', icon: CreditCard, to: '/financeiras' },
+                { label: 'Portarias vigentes', value: stats?.active_portarias || 0, detail: 'Atos regulatórios ativos', icon: Landmark, to: '/portarias?status=vigente' },
+                { label: 'Pendências documentais', value: stats?.pending_validations || 0, detail: 'Itens aguardando validação', icon: AlertCircle, to: '/registradoras?pendencias=1' },
+              ].map((item) => (
+                <Card key={item.label} onClick={() => item.to && navigate(item.to)} className="cursor-pointer bg-white transition-colors hover:border-slate-400"><CardContent className="p-4"><div className="flex items-start justify-between"><p className="text-xs font-medium text-slate-500">{item.label}</p><item.icon className="h-4 w-4 text-slate-400" /></div><p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">{item.value}</p><p className="mt-1 text-xs text-slate-500">{item.detail}</p></CardContent></Card>
               ))}
+            </div>
 
-              {/* Semáforo de Compliance */}
-              <BentoCard size="2x1" interactive={false} className="bg-card border-border">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-heading flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-primary-500" />
-                    Semáforo de Compliance
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-3 gap-4">
-                    {SEMAFORO.map(({ label, value, color, icon: Icon, to }) => (
-                      <div
-                        key={label}
-                        onClick={to ? () => navigate(to) : undefined}
-                        className={`p-4 rounded-xl bg-${color}-500/10 border border-${color}-500/20 text-center${to ? ' cursor-pointer hover:brightness-125 transition-[filter]' : ''}`}
-                      >
-                        <Icon className={`h-6 w-6 text-${color}-400 mx-auto mb-2`} />
-                        <p className={`text-2xl font-bold font-mono text-${color}-400`}>{value}</p>
-                        <p className="text-xs text-slate-500 mt-1">{label}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </BentoCard>
+            <div className="mt-4 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+              <Card className="bg-white"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Shield className="h-4 w-4 text-slate-500" />Conformidade das registradoras</CardTitle><p className="text-xs text-slate-500">Situação documental consolidada no escopo atual.</p></CardHeader><CardContent className="space-y-5">
+                <div><div className="mb-2 flex justify-between text-xs"><span className="text-slate-600">Empresas conformes</span><span className="font-semibold">{stats?.compliance_verde || 0}/{totalCompliance}</span></div><div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-emerald-600" style={{ width: `${percentualCompliance}%` }} /></div></div>
+                <div className="grid grid-cols-3 gap-3 text-center"><button onClick={() => navigate('/registradoras?compliance=valido')} className="rounded-md bg-emerald-50 p-3"><p className="text-2xl font-semibold text-emerald-700">{stats?.compliance_verde || 0}</p><p className="text-xs text-emerald-700">Conformes</p></button><button onClick={() => navigate('/registradoras?compliance=vencendo')} className="rounded-md bg-amber-50 p-3"><p className="text-2xl font-semibold text-amber-700">{stats?.compliance_amarelo || 0}</p><p className="text-xs text-amber-700">Atenção</p></button><button onClick={() => navigate('/registradoras?compliance=vencido')} className="rounded-md bg-red-50 p-3"><p className="text-2xl font-semibold text-red-700">{stats?.compliance_vermelho || 0}</p><p className="text-xs text-red-700">Críticos</p></button></div>
+              </CardContent></Card>
 
-              {/* Documentos vencendo (30 dias) + vencidos */}
-              {(vencimentoResumo.vencendo.length > 0 || vencimentoResumo.vencidos.length > 0) && (
-                <BentoCard size="2x1" interactive={false} className="bg-card border-border">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-heading flex items-center gap-2">
-                      <CalendarClock className="h-4 w-4 text-amber-400" />
-                      Documentos Vencendo
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
-                        <p className="text-2xl font-bold font-mono text-amber-400">{vencimentoResumo.vencendo.length}</p>
-                        <p className="text-xs text-slate-500 mt-1">Vencendo em até 30 dias</p>
-                      </div>
-                      <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
-                        <p className="text-2xl font-bold font-mono text-red-400">{vencimentoResumo.vencidos.length}</p>
-                        <p className="text-xs text-slate-500 mt-1">Já vencidos</p>
-                      </div>
-                    </div>
+              <Card className="bg-white"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><CalendarClock className="h-4 w-4 text-slate-500" />Agenda documental</CardTitle><p className="text-xs text-slate-500">Vencimentos que exigem acompanhamento.</p></CardHeader><CardContent>
+                <div className="mb-4 grid grid-cols-2 gap-3"><div className="rounded-md bg-amber-50 p-3"><p className="text-2xl font-semibold text-amber-700">{vencimentoResumo.vencendo.length}</p><p className="text-xs text-amber-700">Até 30 dias</p></div><div className="rounded-md bg-red-50 p-3"><p className="text-2xl font-semibold text-red-700">{vencimentoResumo.vencidos.length}</p><p className="text-xs text-red-700">Vencidos</p></div></div>
+                <div className="divide-y divide-border rounded-md border border-border">{documentosCriticos.slice(0, 5).map((item) => <div key={`${item.origem}-${item.id}`} className="flex items-center justify-between gap-3 px-3 py-2.5"><span className="truncate text-xs text-slate-700">{item.nome}</span><span className="whitespace-nowrap text-xs font-medium text-slate-500">{item.vencimento ? new Date(item.vencimento).toLocaleDateString('pt-BR') : '—'}</span></div>)}{documentosCriticos.length === 0 && <p className="px-3 py-8 text-center text-sm text-slate-500">Nenhum vencimento crítico no momento.</p>}</div>
+              </CardContent></Card>
+            </div>
 
-                    {vencimentoResumo.vencidos.length > 0 && (
-                      <div>
-                        <p className="text-xs text-slate-500 font-mono uppercase tracking-wider mb-2">Vencidos</p>
-                        <div className="space-y-1.5">
-                          {vencimentoResumo.vencidos.map((item) => (
-                            <div key={`${item.origem}-${item.id}`} className="flex items-center justify-between text-sm p-2 rounded-lg bg-red-500/5 border border-red-500/10">
-                              <span className="text-slate-700">{item.nome}</span>
-                              <span className="text-red-400 font-mono text-xs">{new Date(item.vencimento).toLocaleDateString('pt-BR')}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {vencimentoResumo.vencendo.length > 0 && (
-                      <div>
-                        <p className="text-xs text-slate-500 font-mono uppercase tracking-wider mb-2">Vencendo em breve</p>
-                        <div className="space-y-1.5">
-                          {vencimentoResumo.vencendo.map((item) => (
-                            <div key={`${item.origem}-${item.id}`} className="flex items-center justify-between text-sm p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
-                              <span className="text-slate-700">{item.nome}</span>
-                              <span className="text-amber-400 font-mono text-xs">{new Date(item.vencimento).toLocaleDateString('pt-BR')}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </BentoCard>
-              )}
-            </BentoGrid>
-
-            {/* Info do perfil */}
-            <Card className="bg-card border-border">
-              <CardContent className="p-5">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-primary-500/20 flex items-center justify-center text-lg font-bold text-primary-400">
-                    {user?.name?.[0]?.toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-foreground">{user?.name}</p>
-                    <p className="text-sm text-slate-500">{user?.email}</p>
-                    <p className="text-xs font-mono text-primary-400 mt-0.5 uppercase">{user?.perfil}</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <Card className="mt-4 bg-white"><CardHeader><CardTitle className="text-sm">Operação regulatória</CardTitle><p className="text-xs text-slate-500">Acesso direto aos fluxos de trabalho do DETRAN.</p></CardHeader><CardContent className="grid gap-2 md:grid-cols-2 xl:grid-cols-4"><Button variant="outline" onClick={() => navigate('/detran/conferencia')} className="justify-between">Conferir processos <ArrowRight className="h-4 w-4" /></Button><Button variant="outline" onClick={() => navigate('/estados')} className="justify-between">Acompanhar estados <ArrowRight className="h-4 w-4" /></Button><Button variant="outline" onClick={() => navigate('/credenciamento/documentos')} className="justify-between">Dossiê documental <ArrowRight className="h-4 w-4" /></Button><Button variant="outline" onClick={() => navigate('/criar-evento')} className="justify-between">Criar evento <ArrowRight className="h-4 w-4" /></Button></CardContent></Card>
           </>
         )}
       </div>

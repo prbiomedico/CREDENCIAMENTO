@@ -19,7 +19,6 @@ import {
 export const NAV_REGISTRADORA = [
   { path: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard', destaque: true },
   { path: '/solicitacoes',  icon: ChevronRight,    label: 'Minhas Solicitações' },
-  { path: '/registradoras-empresa', icon: Building2, label: 'Minha Empresa' },
   { path: '/documentos',    icon: FileText,        label: 'Documentos' },
   { path: '/portarias',     icon: Search,          label: 'Transparência', destaque: true },
   { path: '/fila-registros', icon: Inbox,          label: 'Registro de Contrato' },
