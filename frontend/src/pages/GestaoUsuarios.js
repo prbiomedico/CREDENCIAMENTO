@@ -13,7 +13,7 @@ import {
   UserCog, Plus, Search, Shield, Building2, Landmark,
   CreditCard, Trash2, RefreshCw, Check, X, Eye, EyeOff,
   ClipboardList, ThumbsUp, ThumbsDown, Users, UserCheck, UserX,
-  Pencil, KeyRound, LogOut
+  Pencil, KeyRound, LogOut, Download, History, Smartphone, ShieldCheck
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br'}/api`;
@@ -70,6 +70,12 @@ export default function GestaoUsuarios() {
   const [senhaTemporaria, setSenhaTemporaria] = useState(true);
   const [redefinindoSenha, setRedefinindoSenha] = useState(false);
   const [encerrandoSessoes, setEncerrandoSessoes] = useState(null);
+  const [pagina, setPagina] = useState(1);
+  const [detalhesAlvo, setDetalhesAlvo] = useState(null);
+  const [historicoUsuario, setHistoricoUsuario] = useState([]);
+  const [sessoesUsuario, setSessoesUsuario] = useState([]);
+  const [loadingDetalhes, setLoadingDetalhes] = useState(false);
+  const [exigindoMfa, setExigindoMfa] = useState(null);
 
   const [cadastrosPendentes, setCadastrosPendentes] = useState([]);
   const [loadingCadastros, setLoadingCadastros] = useState(true);
@@ -256,6 +262,35 @@ export default function GestaoUsuarios() {
     }
   };
 
+  const abrirDetalhes = async (usuario) => {
+    setDetalhesAlvo(usuario);
+    setLoadingDetalhes(true);
+    try {
+      const [historico, sessoes] = await Promise.all([
+        axios.get(`${API}/admin/usuarios/${usuario.id}/historico`, { withCredentials: true }),
+        axios.get(`${API}/admin/usuarios/${usuario.id}/sessoes`, { withCredentials: true }),
+      ]);
+      setHistoricoUsuario(Array.isArray(historico.data) ? historico.data : []);
+      setSessoesUsuario(Array.isArray(sessoes.data) ? sessoes.data : []);
+    } catch (e) {
+      toast({ title: 'Não foi possível carregar os detalhes', description: e.response?.data?.detail || 'Tente novamente', variant: 'destructive' });
+    } finally {
+      setLoadingDetalhes(false);
+    }
+  };
+
+  const handleExigirMfa = async (usuario) => {
+    setExigindoMfa(usuario.id);
+    try {
+      await axios.post(`${API}/admin/usuarios/${usuario.id}/exigir-mfa`, {}, { withCredentials: true });
+      toast({ title: 'MFA obrigatório', description: `${usuario.email} configurará o autenticador no próximo acesso.` });
+    } catch (e) {
+      toast({ title: 'Não foi possível exigir MFA', description: e.response?.data?.detail || 'Tente novamente', variant: 'destructive' });
+    } finally {
+      setExigindoMfa(null);
+    }
+  };
+
   const usuariosFiltrados = usuarios.filter(u => {
     const termo = busca.toLowerCase().trim();
     const combinaBusca = !termo || [u.username, u.email, u.firstName, u.lastName]
@@ -264,6 +299,27 @@ export default function GestaoUsuarios() {
     const combinaStatus = filtroStatus === 'todos' || (filtroStatus === 'ativos' ? u.enabled : !u.enabled);
     return combinaBusca && combinaPerfil && combinaStatus;
   });
+  const ITENS_POR_PAGINA = 20;
+  const totalPaginas = Math.max(1, Math.ceil(usuariosFiltrados.length / ITENS_POR_PAGINA));
+  const paginaAtual = Math.min(pagina, totalPaginas);
+  const usuariosPaginados = usuariosFiltrados.slice((paginaAtual - 1) * ITENS_POR_PAGINA, paginaAtual * ITENS_POR_PAGINA);
+
+  useEffect(() => { setPagina(1); }, [busca, filtroPerfil, filtroStatus]);
+
+  const exportarUsuarios = () => {
+    const escape = value => `"${String(value ?? '').replaceAll('"', '""')}"`;
+    const linhas = [['Usuário', 'E-mail', 'Nome', 'Perfil', 'UF', 'Status', 'Criado em'], ...usuariosFiltrados.map(u => [
+      u.username, u.email, [u.firstName, u.lastName].filter(Boolean).join(' '),
+      PERFIS[u.perfil]?.label || u.perfil, u.uf || '', u.enabled ? 'Ativo' : 'Inativo', u.created_at || '',
+    ])];
+    const blob = new Blob([`\uFEFF${linhas.map(linha => linha.map(escape).join(';')).join('\n')}`], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `usuarios-sigcr-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   const totalAtivos = usuarios.filter(u => u.enabled).length;
   const totalInativos = usuarios.length - totalAtivos;
@@ -314,6 +370,9 @@ export default function GestaoUsuarios() {
 
           <TabsContent value="usuarios" className="space-y-6 mt-4">
         <div className="flex items-center justify-end gap-2">
+          <Button variant="outline" size="sm" onClick={exportarUsuarios} disabled={!usuariosFiltrados.length}>
+            <Download className="h-4 w-4 mr-2" /> Exportar CSV
+          </Button>
           <Button variant="outline" size="sm" onClick={fetchUsuarios}
             className="border-input text-slate-600 hover:text-foreground">
             <RefreshCw className="h-4 w-4 mr-2" /> Atualizar
@@ -480,7 +539,7 @@ export default function GestaoUsuarios() {
         ) : (
           <Card className="overflow-hidden border-border bg-white"><CardContent className="p-0"><Table>
             <TableHeader><TableRow><TableHead>Usuário</TableHead><TableHead>Perfil</TableHead><TableHead>Escopo</TableHead><TableHead>Criado em</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
-            <TableBody>{usuariosFiltrados.map(u => {
+            <TableBody>{usuariosPaginados.map(u => {
               const perfilCfg = PERFIS[u.perfil] || PERFIS.registradora;
               const PerfilIcon = perfilCfg.icon;
               const isConfirmDelete = deletando === u.id;
@@ -490,13 +549,13 @@ export default function GestaoUsuarios() {
                 <TableCell><span className="text-xs text-slate-600">{u.uf ? `DETRAN/${u.uf}` : u.perfil === 'sigcr_admin' ? 'Nacional' : 'Empresa vinculada'}</span></TableCell>
                 <TableCell><span className="text-xs text-slate-500">{u.created_at ? new Date(u.created_at).toLocaleDateString('pt-BR') : '—'}</span></TableCell>
                 <TableCell><Badge variant="outline" className={u.enabled ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-700'}>{u.enabled ? 'Ativo' : 'Inativo'}</Badge></TableCell>
-                <TableCell className="text-right">{isConfirmDelete ? <div className="flex justify-end gap-1"><Button size="sm" variant="destructive" onClick={() => handleDeletar(u.id, u.username)}>Confirmar exclusão</Button><Button size="sm" variant="ghost" onClick={() => setDeletando(null)}><X className="h-4 w-4" /></Button></div> : <div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Editar usuário" aria-label={`Editar ${u.username}`} onClick={() => abrirEdicao(u)}><Pencil className="h-4 w-4" /></Button><Button size="icon" variant="ghost" title="Redefinir senha" aria-label={`Redefinir senha de ${u.username}`} onClick={() => setSenhaAlvo(u)}><KeyRound className="h-4 w-4" /></Button><Button size="icon" variant="ghost" title="Encerrar sessões" aria-label={`Encerrar sessões de ${u.username}`} disabled={encerrandoSessoes === u.id} onClick={() => handleEncerrarSessoes(u)}><LogOut className="h-4 w-4" /></Button><Button size="sm" variant="outline" disabled={alterandoStatus === u.id} onClick={() => handleStatus(u)}>{alterandoStatus === u.id ? 'Salvando...' : u.enabled ? 'Desativar' : 'Ativar'}</Button><Button size="icon" variant="ghost" aria-label={`Excluir ${u.username}`} onClick={() => handleDeletar(u.id, u.username)} className="text-slate-500 hover:text-red-600"><Trash2 className="h-4 w-4" /></Button></div>}</TableCell>
+                <TableCell className="text-right">{isConfirmDelete ? <div className="flex justify-end gap-1"><Button size="sm" variant="destructive" onClick={() => handleDeletar(u.id, u.username)}>Confirmar exclusão</Button><Button size="sm" variant="ghost" onClick={() => setDeletando(null)}><X className="h-4 w-4" /></Button></div> : <div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Histórico e sessões" aria-label={`Histórico e sessões de ${u.username}`} onClick={() => abrirDetalhes(u)}><History className="h-4 w-4" /></Button><Button size="icon" variant="ghost" title="Exigir MFA" aria-label={`Exigir MFA de ${u.username}`} disabled={exigindoMfa === u.id} onClick={() => handleExigirMfa(u)}><ShieldCheck className="h-4 w-4" /></Button><Button size="icon" variant="ghost" title="Editar usuário" aria-label={`Editar ${u.username}`} onClick={() => abrirEdicao(u)}><Pencil className="h-4 w-4" /></Button><Button size="icon" variant="ghost" title="Redefinir senha" aria-label={`Redefinir senha de ${u.username}`} onClick={() => setSenhaAlvo(u)}><KeyRound className="h-4 w-4" /></Button><Button size="icon" variant="ghost" title="Encerrar sessões" aria-label={`Encerrar sessões de ${u.username}`} disabled={encerrandoSessoes === u.id} onClick={() => handleEncerrarSessoes(u)}><LogOut className="h-4 w-4" /></Button><Button size="sm" variant="outline" disabled={alterandoStatus === u.id} onClick={() => handleStatus(u)}>{alterandoStatus === u.id ? 'Salvando...' : u.enabled ? 'Desativar' : 'Ativar'}</Button><Button size="icon" variant="ghost" aria-label={`Excluir ${u.username}`} onClick={() => handleDeletar(u.id, u.username)} className="text-slate-500 hover:text-red-600"><Trash2 className="h-4 w-4" /></Button></div>}</TableCell>
               </TableRow>;
             })}</TableBody>
           </Table></CardContent></Card>
         )}
 
-        <p className="text-center text-slate-400 text-xs font-mono">{usuariosFiltrados.length} usuário(s)</p>
+        <div className="flex items-center justify-between text-xs text-slate-500"><span>{usuariosFiltrados.length} usuário(s)</span><div className="flex items-center gap-2"><Button size="sm" variant="outline" disabled={paginaAtual === 1} onClick={() => setPagina(p => Math.max(1, p - 1))}>Anterior</Button><span>Página {paginaAtual} de {totalPaginas}</span><Button size="sm" variant="outline" disabled={paginaAtual === totalPaginas} onClick={() => setPagina(p => Math.min(totalPaginas, p + 1))}>Próxima</Button></div></div>
           </TabsContent>
 
           <TabsContent value="pendentes" className="space-y-6 mt-4">
@@ -608,6 +667,22 @@ export default function GestaoUsuarios() {
                 <label className="block space-y-1 text-xs font-medium text-slate-600"><span>Nova senha</span><input aria-label="Nova senha" type="password" minLength={8} value={novaSenha} onChange={e => setNovaSenha(e.target.value)} className="h-10 w-full rounded-md border border-input bg-white px-3 text-sm text-slate-900" placeholder="Mínimo de 8 caracteres" /></label>
                 <label className="flex items-start gap-2 text-sm text-slate-700"><input type="checkbox" checked={senhaTemporaria} onChange={e => setSenhaTemporaria(e.target.checked)} className="mt-1" /><span>Exigir alteração no próximo acesso<span className="block text-xs text-slate-500">As sessões atuais serão encerradas.</span></span></label>
                 <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setSenhaAlvo(null)}>Cancelar</Button><Button onClick={handleRedefinirSenha} disabled={redefinindoSenha}>{redefinindoSenha ? 'Redefinindo...' : 'Redefinir senha'}</Button></div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {detalhesAlvo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Histórico e sessões">
+            <div className="absolute inset-0 bg-slate-950/60" onClick={() => setDetalhesAlvo(null)} />
+            <Card className="relative z-10 max-h-[85vh] w-full max-w-3xl overflow-auto border-slate-200 bg-white shadow-2xl">
+              <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><History className="h-4 w-4" />Histórico e sessões</CardTitle><p className="text-sm text-slate-500">{detalhesAlvo.email}</p></CardHeader>
+              <CardContent className="space-y-6">
+                {loadingDetalhes ? <p className="py-8 text-center text-sm text-slate-500">Carregando detalhes...</p> : <>
+                  <section><h3 className="mb-2 flex items-center gap-2 text-sm font-semibold"><Smartphone className="h-4 w-4" />Sessões ativas ({sessoesUsuario.length})</h3>{sessoesUsuario.length ? <div className="divide-y rounded-md border">{sessoesUsuario.map(sessao => <div key={sessao.id} className="flex items-center justify-between gap-4 p-3 text-xs"><div><p className="font-medium text-slate-800">{sessao.ip_address || 'IP não informado'}</p><p className="text-slate-500">{sessao.clientes?.join(', ') || 'Cliente não informado'}</p></div><p className="text-slate-500">Último acesso: {sessao.ultimo_acesso ? new Date(sessao.ultimo_acesso).toLocaleString('pt-BR') : '—'}</p></div>)}</div> : <p className="rounded-md border border-dashed p-4 text-sm text-slate-500">Nenhuma sessão ativa.</p>}</section>
+                  <section><h3 className="mb-2 text-sm font-semibold">Últimas operações ({historicoUsuario.length})</h3>{historicoUsuario.length ? <div className="divide-y rounded-md border">{historicoUsuario.map(log => <div key={log.log_id} className="flex items-start justify-between gap-4 p-3 text-xs"><div><p className="font-medium text-slate-800">{String(log.acao || '').replaceAll('_', ' ')}</p><p className="text-slate-500">por {log.user_name || log.user_email || 'Sistema'}</p></div><time className="whitespace-nowrap text-slate-500">{log.created_at ? new Date(log.created_at).toLocaleString('pt-BR') : '—'}</time></div>)}</div> : <p className="rounded-md border border-dashed p-4 text-sm text-slate-500">Nenhuma operação registrada.</p>}</section>
+                </>}
+                <div className="flex justify-end"><Button variant="outline" onClick={() => setDetalhesAlvo(null)}>Fechar</Button></div>
               </CardContent>
             </Card>
           </div>

@@ -61,6 +61,9 @@ def test_rotas_v3_exigem_dependencia_de_autorizacao():
         '/api/admin/usuarios/{user_id}',
         '/api/admin/usuarios/{user_id}/redefinir-senha',
         '/api/admin/usuarios/{user_id}/encerrar-sessoes',
+        '/api/admin/usuarios/{user_id}/sessoes',
+        '/api/admin/usuarios/{user_id}/historico',
+        '/api/admin/usuarios/{user_id}/exigir-mfa',
     }
     rotas = {route.path: route for route in server.api_router.routes if getattr(route, 'path', '') in caminhos}
     assert set(rotas) == caminhos
@@ -147,3 +150,40 @@ def test_desativacao_revoga_sessoes(monkeypatch):
 
     assert resposta['message'] == 'Usuário desativado'
     assert any(method == 'POST' and url.endswith('/logout') for method, url, _ in client.calls)
+
+
+def test_listagem_de_sessoes_remove_dados_sensiveis(monkeypatch):
+    client = KeycloakClientStub({
+        ('GET', 'sessions'): ResponseStub([{
+            'id': 'session-1', 'ipAddress': '127.0.0.1', 'start': 10, 'lastAccess': 20,
+            'clients': {'frontend': 'SIGCR'}, 'accessToken': 'nunca-expor',
+        }]),
+    })
+    instalar_httpx(monkeypatch, client)
+
+    resposta = run(server.listar_sessoes_usuario('user-1', admin()))
+
+    assert resposta == [{
+        'id': 'session-1', 'ip_address': '127.0.0.1', 'inicio': 10,
+        'ultimo_acesso': 20, 'clientes': ['SIGCR'],
+    }]
+    assert 'nunca-expor' not in repr(resposta)
+
+
+def test_exigir_mfa_preserva_acoes_e_revoga_sessoes(monkeypatch):
+    client = KeycloakClientStub({
+        ('GET', 'user-1'): ResponseStub({'id': 'user-1', 'requiredActions': ['VERIFY_EMAIL']}),
+        ('PUT', 'user-1'): ResponseStub({}, 204),
+        ('POST', 'logout'): ResponseStub({}, 204),
+    })
+    instalar_httpx(monkeypatch, client)
+    auditoria = AsyncMock()
+    monkeypatch.setattr(server, 'registrar_auditoria', auditoria)
+
+    resposta = run(server.exigir_mfa_usuario('user-1', admin()))
+
+    assert resposta['message'] == 'MFA será configurado no próximo acesso'
+    atualizacao = next(kwargs['json'] for method, url, kwargs in client.calls if method == 'PUT')
+    assert atualizacao['requiredActions'] == ['VERIFY_EMAIL', 'CONFIGURE_TOTP']
+    assert any(method == 'POST' and url.endswith('/logout') for method, url, _ in client.calls)
+    auditoria.assert_awaited_once()

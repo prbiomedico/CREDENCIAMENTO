@@ -1,5 +1,7 @@
 # SIGCR
 
+Estado e gates de operação: [docs/OPERATIONS_STATUS.md](docs/OPERATIONS_STATUS.md).
+
 Sistema de credenciamento de registradoras (backend FastAPI + Mongo, frontend CRA), rodando via Docker neste host.
 
 ## Deploy do backend — SEMPRE via `backend/deploy.sh`

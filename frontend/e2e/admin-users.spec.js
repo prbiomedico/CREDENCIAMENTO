@@ -113,3 +113,33 @@ test('perfil sem privilégio administrativo não acessa gestão de usuários', a
   await expect(page).toHaveURL(/\/dashboard$/);
   await expect(page.getByRole('main').getByText('Gestão de Usuários')).toHaveCount(0);
 });
+
+test('admin consulta histórico e sessões sem expor tokens', async ({ page }) => {
+  await page.route('http://api.test/api/admin/usuarios/kc-user-1/historico', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify([{
+      log_id: 'log-1', acao: 'editar_usuario', user_name: 'Admin SIGCR', created_at: '2026-09-10T12:00:00Z',
+    }]),
+  }));
+  await page.route('http://api.test/api/admin/usuarios/kc-user-1/sessoes', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify([{
+      id: 'session-1', ip_address: '10.0.0.1', clientes: ['SIGCR'], ultimo_acesso: 1789032000000,
+    }]),
+  }));
+
+  await page.goto('/usuarios');
+  await page.getByRole('button', { name: 'Histórico e sessões de maria.silva' }).click();
+  await expect(page.getByRole('dialog', { name: 'Histórico e sessões' })).toContainText('10.0.0.1');
+  await expect(page.getByRole('dialog', { name: 'Histórico e sessões' })).toContainText('editar usuario');
+});
+
+test('admin exige MFA no próximo acesso', async ({ page }) => {
+  let mfaCalled = false;
+  await page.route('http://api.test/api/admin/usuarios/kc-user-1/exigir-mfa', async route => {
+    mfaCalled = true;
+    await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+  });
+  await page.goto('/usuarios');
+  await page.getByRole('button', { name: 'Exigir MFA de maria.silva' }).click();
+  await expect.poll(() => mfaCalled).toBe(true);
+  await expect(page.getByText('MFA obrigatório', { exact: true })).toBeVisible();
+});

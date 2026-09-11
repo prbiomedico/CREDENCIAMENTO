@@ -4164,6 +4164,67 @@ async def encerrar_sessoes_usuario(user_id: str, current_user: User = Depends(re
     return {"message": "Sessões encerradas"}
 
 
+@api_router.get("/admin/usuarios/{user_id}/sessoes")
+async def listar_sessoes_usuario(user_id: str, current_user: User = Depends(require_perfil("sigcr_admin"))):
+    """Expõe somente metadados operacionais; tokens e segredos nunca saem do Keycloak."""
+    import httpx
+    token = await get_kc_admin_token()
+    async with httpx.AsyncClient() as client:
+        resposta = await client.get(
+            f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}/sessions",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+        if resposta.status_code == 404:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        resposta.raise_for_status()
+    return [{
+        "id": sessao.get("id"),
+        "ip_address": sessao.get("ipAddress"),
+        "inicio": sessao.get("start"),
+        "ultimo_acesso": sessao.get("lastAccess"),
+        "clientes": sorted((sessao.get("clients") or {}).values()),
+    } for sessao in resposta.json()]
+
+
+@api_router.get("/admin/usuarios/{user_id}/historico")
+async def listar_historico_usuario(user_id: str, current_user: User = Depends(require_perfil("sigcr_admin"))):
+    logs = await db.auditoria.find(
+        {"entidade": "usuario_keycloak", "entidade_id": user_id},
+        {"_id": 0},
+    ).sort("created_at", -1).limit(100).to_list(100)
+    return logs
+
+
+@api_router.post("/admin/usuarios/{user_id}/exigir-mfa")
+async def exigir_mfa_usuario(user_id: str, current_user: User = Depends(require_perfil("sigcr_admin"))):
+    """Exige TOTP no próximo login sem remover outras ações pendentes do usuário."""
+    import httpx
+    token = await get_kc_admin_token()
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    async with httpx.AsyncClient() as client:
+        consulta = await client.get(
+            f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}", headers=headers,
+        )
+        if consulta.status_code == 404:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        consulta.raise_for_status()
+        usuario = consulta.json()
+        acoes = list(dict.fromkeys([*(usuario.get("requiredActions") or []), "CONFIGURE_TOTP"]))
+        resposta = await client.put(
+            f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}",
+            headers=headers,
+            json={"requiredActions": acoes},
+        )
+        resposta.raise_for_status()
+        logout = await client.post(
+            f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}/logout", headers=headers,
+        )
+        if logout.status_code not in (204, 404):
+            logout.raise_for_status()
+    await registrar_auditoria(current_user, "exigir_mfa_usuario", "usuario_keycloak", user_id)
+    return {"message": "MFA será configurado no próximo acesso"}
+
+
 @api_router.delete("/admin/usuarios/{user_id}")
 async def deletar_usuario(user_id: str, current_user: User = Depends(require_perfil("sigcr_admin"))):
     if user_id == current_user.user_id:
