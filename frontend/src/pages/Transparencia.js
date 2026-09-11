@@ -34,11 +34,11 @@ export default function Transparencia() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav className="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-xl border-b border-border">
+      <nav className="fixed top-0 w-full z-50 border-b border-slate-200 bg-white/95 backdrop-blur-xl">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-            <BrandLogo variant="horizontal" className="h-10 w-auto brightness-0 invert" alt="SIGCR" />
-            <span className="text-slate-500 text-sm font-mono ml-1">/ Transparência</span>
+            <BrandLogo variant="horizontal" className="h-10 w-auto" alt="SIGCR" />
+            <span className="ml-1 font-mono text-sm text-slate-500">/ Transparência</span>
           </div>
         </div>
       </nav>
@@ -140,7 +140,7 @@ export default function Transparencia() {
                       <div className="mt-4 flex flex-col gap-3 rounded-lg border border-primary-200 bg-primary-50 p-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-start gap-3">
                           <LockKeyhole className="mt-0.5 h-5 w-5 shrink-0 text-primary-600" />
-                          <div><p className="text-sm font-semibold text-slate-900">Documento integral protegido</p><p className="mt-0.5 text-xs leading-5 text-slate-600">Faça login em uma conta habilitada ou adquira um plano para acessar o edital completo.</p></div>
+                          <div><p className="text-sm font-semibold text-slate-900">Documento integral protegido</p><p className="mt-0.5 text-xs leading-5 text-slate-600">Faça login em uma conta habilitada ou adquira um plano para acessar o ato e seus documentos completos.</p></div>
                         </div>
                         <div className="flex shrink-0 gap-2">
                           <Button size="sm" variant="outline" onClick={() => navigate('/cadastro')}><UserPlus className="mr-2 h-3.5 w-3.5" /> Criar conta</Button>
