@@ -210,6 +210,43 @@ def test_status_livre_nao_pode_corromper_vocabulario_de_empresa(monkeypatch):
     companies.update_one.assert_not_awaited()
 
 
+def test_download_publico_de_edital_exige_conta_com_acesso_integral(monkeypatch):
+    limitado = user("cliente", "registradora")
+    limitado.tipo_conta = "empresa"
+    limitado.account_status = "aprovado_acesso_limitado"
+
+    with pytest.raises(server.HTTPException) as exc:
+        run(server.download_anexo_publico("edital_1", 0, limitado))
+    assert exc.value.status_code == 403
+
+    habilitado = user("cliente_pro", "registradora")
+    habilitado.tipo_conta = "empresa"
+    habilitado.account_status = "ativo_contrato_assinado"
+    server._exigir_download_edital(habilitado)
+
+
+def test_previa_publica_transmite_imagem_e_nunca_o_pdf_original(monkeypatch, tmp_path):
+    arquivo = tmp_path / "edital.pdf"
+    arquivo.write_bytes(b"%PDF-1.7\nconteudo reservado")
+    editais = install_editais_db(monkeypatch, [{
+        "edital_id": "edital_1", "status": "aberto",
+        "anexos": [{"nome": "Edital completo.pdf", "path": str(arquivo)}],
+    }])
+    monkeypatch.setattr(server, "UPLOAD_DIR", tmp_path)
+    monkeypatch.setattr(server, "_renderizar_primeira_pagina", lambda _: b"\xff\xd8\xffprevia-jpeg")
+    monkeypatch.setattr(server, "_rate_limit", lambda *args, **kwargs: None)
+    request = SimpleNamespace(headers={}, client=SimpleNamespace(host="127.0.0.1"))
+
+    resposta = run(server.preview_documento_edital("edital_1", "anexo", 0, request))
+
+    assert editais.docs
+    assert resposta.media_type == "image/jpeg"
+    assert resposta.body.startswith(b"\xff\xd8\xff")
+    assert b"%PDF" not in resposta.body
+    assert resposta.headers["content-disposition"].startswith("inline")
+    assert resposta.headers["cache-control"] == "private, no-store"
+
+
 def test_atualizacao_notifica_registradoras_da_uf_sem_duplicar(monkeypatch):
     class Cursor:
         async def to_list(self, limit):

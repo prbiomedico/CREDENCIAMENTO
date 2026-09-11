@@ -19,6 +19,7 @@ import shutil
 import aiofiles
 import asyncio
 import struct
+from io import BytesIO
 
 
 ROOT_DIR = Path(__file__).parent
@@ -4729,7 +4730,7 @@ async def upload_arquivo_edital(
 
 
 # ============ ÁREA PÚBLICA DE TRANSPARÊNCIA (sem autenticação) ============
-# Expõe só o edital vigente por UF + anexos/termo de adesão para download.
+# Expõe só o edital vigente por UF e prévias rasterizadas da primeira página.
 # Nunca deve retornar dados de companies/solicitações/usuários — só o que já é
 # público por natureza (o próprio edital, publicado pelo DETRAN).
 
@@ -4750,6 +4751,47 @@ def _resolver_path_seguro(path_str: str) -> Optional[Path]:
         return None
 
 
+def _documento_edital(edital: dict, tipo: str, indice: int = 0):
+    """Resolve um documento do edital sem aceitar um path enviado pelo cliente."""
+    if tipo == "termo":
+        caminho = _resolver_path_seguro(edital.get("termo_adesao_path") or "")
+        return caminho, "Termo de adesão"
+    if tipo == "anexo":
+        anexos = edital.get("anexos", [])
+        if indice < 0 or indice >= len(anexos):
+            return None, None
+        anexo = anexos[indice]
+        return _resolver_path_seguro(anexo.get("path", "")), anexo.get("nome", f"Anexo {indice + 1}")
+    return None, None
+
+
+def _renderizar_primeira_pagina(caminho: Path) -> bytes:
+    """Transforma somente a página 1 em JPEG; o PDF original nunca é enviado."""
+    from pdf2image import convert_from_path
+    from PIL import ImageDraw, ImageFont
+
+    paginas = convert_from_path(
+        str(caminho), dpi=120, first_page=1, last_page=1, fmt="jpeg",
+        thread_count=1, timeout=20,
+    )
+    if not paginas:
+        raise RuntimeError("PDF sem páginas renderizáveis")
+    imagem = paginas[0].convert("RGB")
+    draw = ImageDraw.Draw(imagem, "RGBA")
+    texto = "PRÉVIA PÚBLICA · SIGCR · PÁGINA 1"
+    fonte = ImageFont.load_default(size=max(16, imagem.width // 55))
+    caixa = draw.textbbox((0, 0), texto, font=fonte)
+    largura = caixa[2] - caixa[0]
+    altura = caixa[3] - caixa[1]
+    x = max(20, (imagem.width - largura) // 2)
+    y = max(20, imagem.height - altura - 28)
+    draw.rounded_rectangle((x - 18, y - 10, x + largura + 18, y + altura + 10), radius=8, fill=(17, 24, 39, 205))
+    draw.text((x, y), texto, font=fonte, fill=(255, 255, 255, 245))
+    saida = BytesIO()
+    imagem.save(saida, format="JPEG", quality=82, optimize=True)
+    return saida.getvalue()
+
+
 @api_router.get("/public/editais/{uf}")
 async def get_editais_publicos_por_uf(uf: str):
     """Edital(is) vigente(s) de um estado — rota pública, sem autenticação.
@@ -4767,7 +4809,7 @@ async def get_editais_publicos_por_uf(uf: str):
     resultado = []
     for e in editais:
         anexos_publicos = [
-            {"nome": a.get("nome", "Anexo"), "download_url": f"/api/public/editais/{e['edital_id']}/anexos/{i}"}
+            {"nome": a.get("nome", "Anexo"), "preview_url": f"/api/public/editais/{e['edital_id']}/preview/anexo/{i}"}
             for i, a in enumerate(e.get("anexos", []))
             if _resolver_path_seguro(a.get("path", "")) is not None
         ]
@@ -4780,34 +4822,67 @@ async def get_editais_publicos_por_uf(uf: str):
             "data_encerramento": e.get("data_encerramento"),
             "documentos_obrigatorios": e.get("documentos_obrigatorios", []),
             "anexos": anexos_publicos,
-            "termo_adesao_download_url": (
-                f"/api/public/editais/{e['edital_id']}/termo-adesao"
+            "termo_adesao_preview_url": (
+                f"/api/public/editais/{e['edital_id']}/preview/termo/0"
                 if _resolver_path_seguro(e.get("termo_adesao_path") or "") is not None else None
             ),
         })
     return {"uf": uf, "uf_nome": UF_NOMES.get(uf, uf), "editais": resultado}
 
 
+@api_router.get("/public/editais/{edital_id}/preview/{tipo}/{indice}")
+async def preview_documento_edital(edital_id: str, tipo: str, indice: int, request: Request):
+    _rate_limit(request, "preview-edital", 30, 60)
+    edital = await db.editais.find_one({"edital_id": edital_id}, {"_id": 0})
+    if not edital or edital.get("status") != "aberto":
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+    caminho, _ = _documento_edital(edital, tipo, indice)
+    if not caminho:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+    try:
+        conteudo = await asyncio.to_thread(_renderizar_primeira_pagina, caminho)
+    except Exception:
+        logger.exception("Falha ao renderizar prévia pública do edital %s", edital_id)
+        raise HTTPException(status_code=422, detail="Não foi possível gerar a prévia deste documento")
+    return Response(
+        content=conteudo,
+        media_type="image/jpeg",
+        headers={
+            "Content-Disposition": "inline; filename=previa-sigcr.jpg",
+            "Cache-Control": "private, no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
+
+
+def _exigir_download_edital(current_user: User):
+    if not _ve_editais_completo(current_user):
+        raise HTTPException(status_code=403, detail="Acesso integral disponível somente para contas habilitadas")
+
+
 @api_router.get("/public/editais/{edital_id}/anexos/{indice}")
-async def download_anexo_publico(edital_id: str, indice: int):
+async def download_anexo_publico(
+    edital_id: str, indice: int, current_user: User = Depends(get_current_user)
+):
+    _exigir_download_edital(current_user)
     edital = await db.editais.find_one({"edital_id": edital_id}, {"_id": 0})
     if not edital or edital.get("status") != "aberto":
         raise HTTPException(status_code=404, detail="Anexo não encontrado")
-    anexos = edital.get("anexos", [])
-    if indice < 0 or indice >= len(anexos):
-        raise HTTPException(status_code=404, detail="Anexo não encontrado")
-    caminho = _resolver_path_seguro(anexos[indice].get("path", ""))
+    caminho, nome = _documento_edital(edital, "anexo", indice)
     if not caminho:
         raise HTTPException(status_code=404, detail="Anexo não encontrado")
-    return FileResponse(caminho, filename=anexos[indice].get("nome", f"anexo_{indice}"))
+    return FileResponse(caminho, filename=nome)
 
 
 @api_router.get("/public/editais/{edital_id}/termo-adesao")
-async def download_termo_adesao_publico(edital_id: str):
+async def download_termo_adesao_publico(
+    edital_id: str, current_user: User = Depends(get_current_user)
+):
+    _exigir_download_edital(current_user)
     edital = await db.editais.find_one({"edital_id": edital_id}, {"_id": 0})
     if not edital or edital.get("status") != "aberto":
         raise HTTPException(status_code=404, detail="Termo de adesão não encontrado")
-    caminho = _resolver_path_seguro(edital.get("termo_adesao_path") or "")
+    caminho, _ = _documento_edital(edital, "termo")
     if not caminho:
         raise HTTPException(status_code=404, detail="Termo de adesão não encontrado")
     return FileResponse(caminho, filename=f"termo_adesao_{edital_id}.pdf")
