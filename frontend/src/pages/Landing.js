@@ -26,8 +26,7 @@ const LANDING_DATA = {
 const Landing = () => {
   const navigate = useNavigate();
   const handleLogin = () => {
-    // /dashboard mantém o contrato atual de autenticação; não usar URL externa.
-    navigate('/dashboard');
+    navigate('/login');
   };
   return <HeroSection data={LANDING_DATA} onLogin={handleLogin} />;
 };

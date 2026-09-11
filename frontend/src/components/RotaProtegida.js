@@ -1,7 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Shield } from 'lucide-react';
 
 /**
  * Envolve uma rota exigindo login e, opcionalmente, um perfil específico.
@@ -10,7 +9,7 @@ import { Shield } from 'lucide-react';
  * sigcr_admin sempre passa (superusuário), espelhando a regra do backend.
  */
 const RotaProtegida = ({ perfilPermitido, children }) => {
-  const { user, loading, initialized, login } = useAuth();
+  const { user, loading, initialized } = useAuth();
 
   if (!initialized || loading) {
     return (
@@ -24,15 +23,7 @@ const RotaProtegida = ({ perfilPermitido, children }) => {
   }
 
   if (!user) {
-    login();
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <Shield className="h-10 w-10 text-primary-500 mx-auto" />
-          <p className="text-slate-600 text-sm">Redirecionando para login...</p>
-        </div>
-      </div>
-    );
+    return <Navigate to="/login" replace />;
   }
 
   const permitidos = Array.isArray(perfilPermitido)

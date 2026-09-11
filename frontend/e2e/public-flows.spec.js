@@ -11,6 +11,13 @@ test('landing expõe os caminhos públicos principais', async ({ page }) => {
   await expect(page.getByRole('button', { name: /acessar plataforma/i })).toBeVisible();
 });
 
+test('entrada institucional apresenta o novo acesso seguro', async ({ page }) => {
+  await page.goto('/login');
+  await expect(page.getByRole('heading', { name: 'Entre no ambiente SIGCR' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Continuar para autenticação/ })).toBeVisible();
+  await expect(page.getByText('Sessão protegida.')).toBeVisible();
+});
+
 test('cadastro de financeira carrega registradoras e exige vínculo', async ({ page }) => {
   await page.route('http://api.test/api/public/registradoras', (route) => route.fulfill({
     status: 200,

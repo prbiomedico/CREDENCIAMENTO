@@ -8,6 +8,7 @@ import { Toaster as LegacyToaster } from '@/components/ui/toaster';
 import RotaProtegida from './components/RotaProtegida';
 import ErrorBoundary from './components/ErrorBoundary';
 import Landing from './pages/Landing';
+import Login from './pages/Login';
 import Planos from './pages/Planos';
 import Checkout from './pages/Checkout';
 import PagamentoAguardando from './pages/PagamentoAguardando';
@@ -55,6 +56,7 @@ function AppRoutes() {
   return (
     <Routes>
         <Route path="/" element={b(<Landing />)} />
+        <Route path="/login" element={b(<Login />)} />
         <Route path="/dashboard" element={b(<RotaProtegida><Dashboard /></RotaProtegida>)} />
         <Route path="/registradoras-empresa" element={b(<RotaProtegida perfilPermitido="registradora"><EmpresaRegistradora /></RotaProtegida>)} />
         <Route path="/financeiras-empresa" element={b(<RotaProtegida perfilPermitido="financeira"><EmpresaFinanceira /></RotaProtegida>)} />
