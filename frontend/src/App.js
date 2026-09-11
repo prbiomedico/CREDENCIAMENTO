@@ -69,8 +69,8 @@ function AppRoutes() {
           <Route path="/checkout" element={b(<Checkout />)} />
           <Route path="/pagamento/aguardando" element={b(<PagamentoAguardando />)} />
           <Route path="/app-mobile" element={b(<AppMobile />)} />
-          <Route path="/documentos/upload" element={b(<UploadDocumentos />)} />
-          <Route path="/mapa-nacional" element={b(<MapaNacional />)} />
+          <Route path="/documentos/upload" element={b(<RotaProtegida><UploadDocumentos /></RotaProtegida>)} />
+          <Route path="/mapa-nacional" element={b(<RotaProtegida><MapaNacional /></RotaProtegida>)} />
           <Route path="/documentos" element={b(<RotaProtegida perfilPermitido={["registradora", "financeira"]}><Documentos /></RotaProtegida>)} />
           <Route path="/registro-contrato" element={b(<RotaProtegida perfilPermitido="financeira"><SolicitacaoRegistro /></RotaProtegida>)} />
           <Route path="/fila-registros" element={b(<RotaProtegida perfilPermitido="registradora"><FilaRegistros /></RotaProtegida>)} />

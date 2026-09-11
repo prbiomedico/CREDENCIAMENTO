@@ -18,6 +18,15 @@ test('entrada institucional apresenta o novo acesso seguro', async ({ page }) =>
   await expect(page.getByText('Sessão protegida.')).toBeVisible();
 });
 
+test('rotas operacionais não renderizam o sistema sem login', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sigcr_e2e_anonymous', '1'));
+  for (const rota of ['/mapa-nacional', '/documentos/upload']) {
+    await page.goto(rota);
+    await expect(page).toHaveURL(/\/login$/);
+    await expect(page.getByRole('heading', { name: 'Entre no ambiente SIGCR' })).toBeVisible();
+  }
+});
+
 test('consulta pública limita edital à primeira página e oferece acesso integral', async ({ page }) => {
   await page.route('http://api.test/api/public/editais/SP', (route) => route.fulfill({
     status: 200,
