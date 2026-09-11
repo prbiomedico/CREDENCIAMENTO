@@ -3,12 +3,13 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { usePerfilAtivo } from '../contexts/PerfilAtivoContext';
 import { useViewContext } from '../contexts/ViewContext';
-import {Building2, FileText, Search, LogOut, Shield,
+import {Building2, FileText, Search, LogOut,
   Menu, X, Bell, ChevronDown, Landmark, CreditCard} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { buildNavStructure } from '../config/navMenus';
 import axios from 'axios';
+import BrandLogo from './BrandLogo';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
@@ -176,14 +177,8 @@ const DashboardLayout = ({ children }) => {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="p-4 border-b border-white/10">
-        <Link to="/dashboard" className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-white/5 border border-white/10 rounded-md flex items-center justify-center">
-            <Shield className="h-5 w-5 text-sky-400" />
-          </div>
-          <div>
-            <span className="text-base font-heading font-bold block leading-none">sigcr</span>
-            <span className="text-xs text-slate-400 font-mono font-semibold">SIGCR</span>
-          </div>
+        <Link to="/dashboard" className="flex items-center">
+          <BrandLogo variant="horizontal" className="h-14 w-auto max-w-[190px] brightness-0 invert" alt="SIGCR" />
         </Link>
       </div>
 
@@ -355,10 +350,7 @@ const DashboardLayout = ({ children }) => {
             <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
-            <div className="flex items-center gap-2">
-              <Shield className="h-5 w-5 text-primary-500" />
-              <span className="font-heading font-bold text-sm">sigcr SIGCR</span>
-            </div>
+            <BrandLogo variant="horizontal" className="h-9 w-auto" alt="SIGCR" />
             <Link to="/notificacoes" data-testid="mobile-notif-link" className="relative">
               <Bell className="h-5 w-5 text-zinc-400" />
               {notifCount > 0 && <span className="absolute -top-1 -right-1 bg-primary-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{notifCount}</span>}

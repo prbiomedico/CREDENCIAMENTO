@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowRight, Building2, CalendarDays, CheckCircle2, ChevronDown, FileCheck2, FileText, Menu, Search, ShieldCheck, Upload, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import BrandLogo from '@/components/BrandLogo';
 import { Button } from '@/components/ui/button';
 
 const STATUS_STYLES = {
@@ -12,7 +13,7 @@ const STATUS_STYLES = {
 const PREVIEW_TABS = ['Portarias', 'Credenciamentos', 'Documentos'];
 
 function Brand() {
-  return <a href="/" className="flex items-center gap-2.5" aria-label="SIGCR — início"><span className="grid h-9 w-9 place-items-center rounded-md bg-slate-950 text-white"><ShieldCheck className="h-5 w-5" /></span><span><strong className="block text-base leading-none tracking-tight text-slate-950">SIGCR</strong><span className="mt-1 block text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Gestão de credenciamento</span></span></a>;
+  return <a href="/" aria-label="SIGCR — início"><BrandLogo variant="horizontal" className="h-11 w-auto sm:h-12" /></a>;
 }
 
 function Navbar({ links, onLogin }) {

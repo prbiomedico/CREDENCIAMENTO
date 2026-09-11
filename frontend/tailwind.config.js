@@ -70,17 +70,16 @@ module.exports = {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         primary: {
-          50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1',
-          400: '#94a3b8', 500: '#475569', 600: '#334155', 700: '#273449',
-          800: '#1f2937', 900: '#172033', 950: '#0f172a',
+          50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a', 300: '#d8b64f',
+          400: '#c59b27', 500: '#1f2937', 600: '#111827', 700: '#111827',
+          800: '#1f2937', 900: '#111827', 950: '#080c14',
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
         },
         secondary: {
-          // Escala 50-950 idêntica ao antigo "purple".
-          50: '#ede7f6', 100: '#d1c4e9', 200: '#b39ddb', 300: '#9575cd',
-          400: '#7e57c2', 500: '#7c4dff', 600: '#651fff', 700: '#6200ea',
-          800: '#5600e8', 900: '#4a00c2', 950: '#33008a',
+          50: '#fffbeb', 100: '#fef3c7', 200: '#fde68a', 300: '#e4c45f',
+          400: '#d3aa34', 500: '#c59b27', 600: '#aa7f18', 700: '#896313',
+          800: '#704f16', 900: '#5d4217', 950: '#352208',
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
         },

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { QrCode, FileText, ArrowLeft, Copy, Check, Loader } from "lucide-react";
+import BrandLogo from "../components/BrandLogo";
 
 const PLANOS_INFO = {
   starter:    { nome: "Starter",    preco: { mensal: 497,  anual: Math.round(497*0.85*12)  } },
@@ -53,7 +54,7 @@ export default function Checkout() {
           <span style={{ fontSize:"16px" }}></span> Incio
         </a>
         <span style={{ color:"rgba(255,255,255,0.15)" }}>|</span>
-        <span style={{ fontSize:"13px", color:"rgba(33,150,243,0.8)", fontWeight:600 }}>sigcr SIGCR</span>
+        <BrandLogo variant="horizontal" className="h-8 w-auto brightness-0 invert" alt="SIGCR" />
       </div>
       <div style={{ height:"48px" }} />
 
@@ -101,7 +102,7 @@ export default function Checkout() {
                         style={{
                           flex: 1, border: metodo === m.id ? "2px solid hsl(var(--sigcr-accent))" : "1.5px solid rgba(255,255,255,0.08)",
                           borderRadius: "12px", padding: "12px", cursor: "pointer",
-                          background: metodo === m.id ? "rgba(33,150,243,0.08)" : "transparent",
+                          background: metodo === m.id ? "rgba(197,155,39,0.08)" : "transparent",
                           display: "flex", flexDirection: "column", alignItems: "center", gap: "6px",
                           transition: "all 0.2s",
                         }}>
@@ -114,7 +115,7 @@ export default function Checkout() {
                 </div>
 
                 <button onClick={handlePagar}
-                  style={{ width: "100%", marginTop: "24px", padding: "14px", borderRadius: "11px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,hsl(var(--sigcr-accent)),hsl(var(--sigcr-accent)))", color: "#fff", fontSize: "15px", fontWeight: 800, boxShadow: "0 4px 20px rgba(33,150,243,0.3)" }}>
+                  style={{ width: "100%", marginTop: "24px", padding: "14px", borderRadius: "11px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,hsl(var(--sigcr-accent)),hsl(var(--sigcr-accent)))", color: "#fff", fontSize: "15px", fontWeight: 800, boxShadow: "0 4px 20px rgba(197,155,39,0.3)" }}>
                   Gerar {metodo === "pix" ? "QR Code Pix" : "Boleto"}
                 </button>
 
@@ -126,7 +127,7 @@ export default function Checkout() {
 
             {step === "processando" && (
               <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "320px", gap: "16px" }}>
-                <div style={{ width: "52px", height: "52px", border: "3px solid rgba(33,150,243,0.2)", borderTopColor: "hsl(var(--sigcr-accent))", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                <div style={{ width: "52px", height: "52px", border: "3px solid rgba(197,155,39,0.2)", borderTopColor: "hsl(var(--sigcr-accent))", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
                 <div style={{ fontWeight: 700, fontSize: "16px", color: "#fff" }}>Gerando cobrana...</div>
                 <div style={{ fontSize: "13px", color: "hsl(var(--muted-foreground))" }}>Conectando ao Pagar.me</div>
                 <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
@@ -153,7 +154,7 @@ export default function Checkout() {
                 <div style={{ fontSize: "12px", color: "hsl(var(--muted-foreground))", textAlign: "center" }}>
                    Expira em <strong style={{ color: "hsl(var(--sigcr-warning))" }}>30 minutos</strong>  Valor: <strong style={{ color: "#fff" }}>R$ {valor.toLocaleString("pt-BR")}</strong>
                 </div>
-                <button onClick={() => navigate("/pagamento/aguardando")} style={{ width: "100%", padding: "13px", borderRadius: "11px", border: "1.5px solid rgba(33,150,243,0.3)", background: "transparent", color: "hsl(var(--sigcr-accent))", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>
+                <button onClick={() => navigate("/pagamento/aguardando")} style={{ width: "100%", padding: "13px", borderRadius: "11px", border: "1.5px solid rgba(197,155,39,0.3)", background: "transparent", color: "hsl(var(--sigcr-accent))", fontSize: "14px", fontWeight: 700, cursor: "pointer" }}>
                   J paguei  verificar
                 </button>
               </div>

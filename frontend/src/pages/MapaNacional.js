@@ -67,7 +67,7 @@ export default function MapaNacionalPage() {
         <div style={{ width:"280px", display:"flex", flexDirection:"column", gap:"12px" }}>
           {/* Info selecionado */}
           {selected ? (
-            <div style={{ background:"rgba(33,150,243,0.08)", border:"1.5px solid rgba(33,150,243,0.3)", borderRadius:"14px", padding:"20px" }}>
+            <div style={{ background:"rgba(197,155,39,0.08)", border:"1.5px solid rgba(197,155,39,0.3)", borderRadius:"14px", padding:"20px" }}>
               <div style={{ fontWeight:800, fontSize:"16px", color:"hsl(var(--foreground))", marginBottom:"4px" }}>DETRAN-{selected.sigla}</div>
               <div style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))", marginBottom:"16px" }}>Estado: {selected.nome}</div>
               <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"10px" }}>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Shield, FileText, Download, Calendar, Paperclip, ArrowLeft } from 'lucide-react';
+import { FileText, Download, Calendar, Paperclip, ArrowLeft } from 'lucide-react';
+import BrandLogo from '../components/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -34,8 +35,7 @@ export default function Transparencia() {
       <nav className="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-xl border-b border-border">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-            <Shield className="h-7 w-7 text-primary-500" />
-            <span className="text-xl font-bold tracking-tight">SIGCR</span>
+            <BrandLogo variant="horizontal" className="h-10 w-auto brightness-0 invert" alt="SIGCR" />
             <span className="text-slate-500 text-sm font-mono ml-1">/ Transparência</span>
           </div>
         </div>

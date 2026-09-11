@@ -1,6 +1,6 @@
 {
-  "short_name": "NAXXOS SIGCR",
-  "name": "NAXXOS SIGCR — Sistema de Credenciamento",
+  "short_name": "SIGCR",
+  "name": "SIGCR — Sistema Integrado de Gestão de Credenciamento de Registradoras",
   "description": "Sistema Integrado de Gestão de Credenciamento de Registradoras",
   "icons": [
     {
@@ -18,8 +18,8 @@
   ],
   "start_url": "/",
   "display": "standalone",
-  "theme_color": "#f97316",
-  "background_color": "#09090b",
+  "theme_color": "#1F2937",
+  "background_color": "#F9FAFB",
   "orientation": "portrait-primary",
   "lang": "pt-BR",
   "categories": ["business", "government", "productivity"]

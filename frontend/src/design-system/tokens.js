@@ -8,12 +8,12 @@ export const statusToneClasses = Object.freeze({
   success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
   warning: 'border-amber-200 bg-amber-50 text-amber-900',
   error: 'border-red-200 bg-red-50 text-red-800',
-  info: 'border-sky-200 bg-sky-50 text-sky-800',
+  info: 'border-primary-200 bg-primary-50 text-primary-600',
   pending: 'border-amber-200 bg-amber-50 text-amber-900',
   neutral: 'border-slate-200 bg-slate-50 text-slate-700',
   revoked: 'border-red-200 bg-red-50 text-red-800',
   approved: 'border-emerald-200 bg-emerald-50 text-emerald-800',
-  analysis: 'border-sky-200 bg-sky-50 text-sky-800',
+  analysis: 'border-primary-200 bg-primary-50 text-primary-600',
   diligence: 'border-amber-200 bg-amber-50 text-amber-900',
 });
 export const layoutTokens = Object.freeze({

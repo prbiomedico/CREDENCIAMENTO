@@ -103,13 +103,8 @@
   <div class="sigcr-card">
     <aside class="sigcr-brand-panel" aria-hidden="true">
       <div class="sigcr-brand-content">
-        <div class="sigcr-brand-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>
-          </svg>
-        </div>
-        <div class="sigcr-brand-name">SIGCR</div>
-        <p class="sigcr-brand-tagline">Sistema Integrado de Gestão de Credenciamento</p>
+        <img class="sigcr-brand-logo" src="${url.resourcesPath}/img/sigcr-logo-horizontal.png" alt="SIGCR — Sistema Integrado de Gestão de Credenciamento de Registradoras">
+        <p class="sigcr-brand-tagline">Identidade institucional, acesso seguro e rastreabilidade.</p>
         <div class="sigcr-illustration">
           <svg viewBox="0 0 220 160" fill="none" xmlns="http://www.w3.org/2000/svg">
             <rect x="30" y="20" width="110" height="130" rx="10" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.35" stroke-width="1.5"/>

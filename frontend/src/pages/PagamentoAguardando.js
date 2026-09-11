@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle, Clock, RefreshCw } from "lucide-react";
+import BrandLogo from "../components/BrandLogo";
 
 export default function PagamentoAguardando() {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ export default function PagamentoAguardando() {
           <span style={{ fontSize:"16px" }}></span> Incio
         </a>
         <span style={{ color:"rgba(255,255,255,0.15)" }}>|</span>
-        <span style={{ fontSize:"13px", color:"rgba(33,150,243,0.8)", fontWeight:600 }}>sigcr SIGCR</span>
+        <BrandLogo variant="horizontal" className="h-8 w-auto brightness-0 invert" alt="SIGCR" />
       </div>
       <div style={{ height:"48px" }} />
 
@@ -35,9 +36,9 @@ export default function PagamentoAguardando() {
           <>
             {/* Anel pulsante */}
             <div style={{ position: "relative", width: "120px", height: "120px", margin: "0 auto 28px" }}>
-              <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "rgba(33,150,243,0.1)", animation: "ping 1.5s cubic-bezier(0,0,0.2,1) infinite" }} />
-              <div style={{ position: "absolute", inset: "12px", borderRadius: "50%", background: "rgba(33,150,243,0.15)", animation: "ping 1.5s cubic-bezier(0,0,0.2,1) infinite 0.3s" }} />
-              <div style={{ position: "absolute", inset: "24px", borderRadius: "50%", background: "rgba(33,150,243,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ position: "absolute", inset: 0, borderRadius: "50%", background: "rgba(197,155,39,0.1)", animation: "ping 1.5s cubic-bezier(0,0,0.2,1) infinite" }} />
+              <div style={{ position: "absolute", inset: "12px", borderRadius: "50%", background: "rgba(197,155,39,0.15)", animation: "ping 1.5s cubic-bezier(0,0,0.2,1) infinite 0.3s" }} />
+              <div style={{ position: "absolute", inset: "24px", borderRadius: "50%", background: "rgba(197,155,39,0.12)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Clock size={32} color="hsl(var(--sigcr-accent))" />
               </div>
             </div>
@@ -71,7 +72,7 @@ export default function PagamentoAguardando() {
             </div>
             <h2 style={{ fontSize: "26px", fontWeight: 800, color: "#fff", marginBottom: "10px" }}>Pagamento confirmado!</h2>
             <p style={{ fontSize: "14px", color: "hsl(var(--muted-foreground))", marginBottom: "28px" }}>
-              Sua assinatura est ativa. Bem-vindo ao sigcr SIGCR Pro!
+              Sua assinatura est ativa. Bem-vindo ao SIGCR Pro!
             </p>
             <div style={{ background: "rgba(34,197,94,0.05)", border: "1px solid rgba(34,197,94,0.2)", borderRadius: "14px", padding: "20px", marginBottom: "24px", textAlign: "left" }}>
               {[
@@ -86,7 +87,7 @@ export default function PagamentoAguardando() {
                 </div>
               ))}
             </div>
-            <button onClick={() => navigate("/dashboard")} style={{ width: "100%", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,hsl(var(--sigcr-accent)),hsl(var(--sigcr-accent)))", color: "#fff", fontSize: "15px", fontWeight: 800, boxShadow: "0 4px 20px rgba(33,150,243,0.3)" }}>
+            <button onClick={() => navigate("/dashboard")} style={{ width: "100%", padding: "14px", borderRadius: "12px", border: "none", cursor: "pointer", background: "linear-gradient(135deg,hsl(var(--sigcr-accent)),hsl(var(--sigcr-accent)))", color: "#fff", fontSize: "15px", fontWeight: 800, boxShadow: "0 4px 20px rgba(197,155,39,0.3)" }}>
               Acessar o painel 
             </button>
           </>

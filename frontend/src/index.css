@@ -17,34 +17,34 @@ code {
 
 @layer base {
     :root {
-        /* V2 Neutral Enterprise: canvas claro, superfícies brancas e CTA
-           grafite. O azul fica reservado ao accent contextual/foco. */
+        /* Identidade oficial SIGCR: grafite #1F2937, dourado #C59B27,
+           canvas #F9FAFB e tinta #111827. */
         --background: 210 20% 98%;
-        --foreground: 220 24% 14%;
+        --foreground: 221 39% 11%;
         --card: 0 0% 100%;
         --card-foreground: 220 24% 14%;
         --popover: 0 0% 100%;
         --popover-foreground: 220 24% 14%;
-        --primary: 220 22% 18%;
+        --primary: 215 28% 17%;
         --primary-foreground: 0 0% 100%;
         --secondary: 215 16% 94%;
         --secondary-foreground: 220 22% 18%;
         --muted: 215 18% 95%;
         --muted-foreground: 215 12% 43%;
-        --accent: 211 86% 45%;
-        --accent-foreground: 0 0% 100%;
+        --accent: 44 68% 46%;
+        --accent-foreground: 221 39% 11%;
         --destructive: 0 72% 46%;
         --destructive-foreground: 0 0% 98%;
         --border: 214 18% 87%;
         --input: 214 18% 82%;
-        --ring: 211 86% 45%;
+        --ring: 44 68% 46%;
         --radius: 0.5rem;
         --card-radius: 0.5rem;
 
-        --sigcr-sidebar: 222 25% 13%;
-        --sigcr-sidebar-raised: 220 22% 17%;
+        --sigcr-sidebar: 221 39% 11%;
+        --sigcr-sidebar-raised: 215 28% 17%;
         --sigcr-sidebar-border: 218 15% 25%;
-        --sigcr-accent: 211 86% 45%;
+        --sigcr-accent: 44 68% 46%;
         --sigcr-success: 151 55% 34%;
         --sigcr-warning: 38 92% 38%;
         --sigcr-danger: 0 72% 46%;

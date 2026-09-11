@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, Building2, CheckCircle2 } from 'lucide-react';
+import { Building2, CheckCircle2 } from 'lucide-react';
+import BrandLogo from '../components/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -106,15 +107,7 @@ const CadastroPublico = () => {
   return (
     <div className="min-h-screen bg-background text-foreground py-10 px-4">
       <div className="max-w-2xl mx-auto">
-        <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 bg-primary-500/10 border border-primary-500/20 rounded-lg flex items-center justify-center">
-            <Shield className="h-5 w-5 text-primary-500" />
-          </div>
-          <div>
-            <span className="text-lg font-heading font-bold block leading-none">sigcr</span>
-            <span className="text-xs text-primary-500 font-mono font-bold">SIGCR</span>
-          </div>
-        </div>
+        <BrandLogo variant="horizontal" className="mb-8 h-16 w-auto" alt="SIGCR" />
 
         <Card className="bg-card border-border">
           <CardHeader>

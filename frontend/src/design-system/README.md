@@ -74,7 +74,7 @@ Os sinais mais fortes de “UI de IA” são a combinação de gradiente + glow,
 
 - Fontes: Inter (interface), Barlow Condensed (títulos), JetBrains Mono (dados/códigos).
 - Tema escuro único: `background #1a223f`, `card #111936`, níveis `#212946/#29314f`.
-- Marca: azul `#2196f3`; secundária roxa `#7c4dff`.
+- Marca: grafite `#1F2937`; acento institucional dourado `#C59B27`.
 - Semânticas disponíveis: verde, âmbar e vermelho em escalas 50–950.
 - Radius: `--radius: .8rem`, `--card-radius: 1rem`.
 - Primitives Radix/shadcn: Button, Card, Badge, Input, Select, Table, Dialog, Tabs e demais controles.

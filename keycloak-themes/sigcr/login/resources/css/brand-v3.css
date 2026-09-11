@@ -2,15 +2,15 @@
    azul aparece somente como acento contextual de foco e confiança. */
 
 :root {
-  --sigcr-primary: #0369a1;
-  --sigcr-primary-hover: #0f172a;
-  --sigcr-primary-light: #38bdf8;
+  --sigcr-primary: #c59b27;
+  --sigcr-primary-hover: #111827;
+  --sigcr-primary-light: #e4c45f;
   --pf-v5-global--primary-color--100: var(--sigcr-primary);
   --pf-v5-global--link--Color: var(--sigcr-primary);
 }
 
 body#keycloak-bg {
-  background: #f1f5f9;
+  background: #f9fafb;
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -46,8 +46,8 @@ body#keycloak-bg {
   justify-content: center;
   padding: 2.5rem;
   background:
-    radial-gradient(circle 420px at 30% 20%, rgba(56, 189, 248, 0.16), transparent 70%),
-    linear-gradient(160deg, #0f172a 0%, #020617 100%);
+    radial-gradient(circle 420px at 30% 20%, rgba(197, 155, 39, 0.16), transparent 70%),
+    linear-gradient(160deg, #1f2937 0%, #111827 100%);
   border-right: 1px solid #e2e8f0;
 }
 
@@ -69,29 +69,13 @@ body#keycloak-bg {
   color: #fafafa;
 }
 
-.sigcr-brand-icon {
-  width: 3.5rem;
-  height: 3.5rem;
+.sigcr-brand-logo {
+  display: block;
+  width: 100%;
+  max-width: 20rem;
+  height: auto;
   margin: 0 auto 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 0.85rem;
-  background-color: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--sigcr-primary);
-}
-
-.sigcr-brand-icon svg {
-  width: 1.75rem;
-  height: 1.75rem;
-}
-
-.sigcr-brand-name {
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  margin-bottom: 0.5rem;
+  filter: brightness(0) invert(1);
 }
 
 .sigcr-brand-tagline {
@@ -161,7 +145,7 @@ h1#kc-page-title.pf-v5-c-title {
 .pf-v5-c-form-control:focus-within {
   border-color: var(--sigcr-primary) !important;
   outline: none;
-  box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.12) !important;
+  box-shadow: 0 0 0 3px rgba(197, 155, 39, 0.18) !important;
 }
 
 .pf-v5-c-input-group,

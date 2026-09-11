@@ -84,7 +84,7 @@ export default function UploadDocumentos() {
               onDragOver={e => { e.preventDefault(); setDragOver(cat.id); }}
               onDragLeave={() => setDragOver(null)}
               onDrop={e => { e.preventDefault(); setDragOver(null); handleFile(cat.id, e.dataTransfer.files[0]); }}
-              style={{ background:isDrag?"rgba(33,150,243,0.06)":arq?"rgba(0,230,118,0.04)":"rgba(255,255,255,0.02)", border:`1.5px solid ${isDrag?"rgba(33,150,243,0.4)":arq?"rgba(0,230,118,0.25)":"rgba(255,255,255,0.07)"}`, borderRadius:"14px", padding:"18px", cursor:"pointer", transition:"all 0.2s" }}
+              style={{ background:isDrag?"rgba(197,155,39,0.06)":arq?"rgba(0,230,118,0.04)":"rgba(255,255,255,0.02)", border:`1.5px solid ${isDrag?"rgba(197,155,39,0.4)":arq?"rgba(0,230,118,0.25)":"rgba(255,255,255,0.07)"}`, borderRadius:"14px", padding:"18px", cursor:"pointer", transition:"all 0.2s" }}
               onClick={() => { if(!arq){ setCatSelecionada(cat.id); inputRef.current.click(); } }}
             >
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:"12px" }}>
@@ -96,7 +96,7 @@ export default function UploadDocumentos() {
               </div>
               {isUploading ? (
                 <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-                  <div style={{ width:"20px", height:"20px", border:"2px solid rgba(33,150,243,0.2)", borderTopColor:"hsl(var(--sigcr-accent))", borderRadius:"50%", animation:"spin 0.8s linear infinite", flexShrink:0 }}/>
+                  <div style={{ width:"20px", height:"20px", border:"2px solid rgba(197,155,39,0.2)", borderTopColor:"hsl(var(--sigcr-accent))", borderRadius:"50%", animation:"spin 0.8s linear infinite", flexShrink:0 }}/>
                   <span style={{ fontSize:"12px", color:"hsl(var(--muted-foreground))" }}>Enviando...</span>
                   <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
                 </div>
@@ -125,7 +125,7 @@ export default function UploadDocumentos() {
       {/* Boto enviar */}
       {total > 0 && (
         <div style={{ position:"sticky", bottom:"24px", display:"flex", justifyContent:"center", marginTop:"28px" }}>
-          <button disabled={obrigPendentes>0} style={{ padding:"14px 40px", borderRadius:"12px", border:"none", cursor:obrigPendentes===0?"pointer":"not-allowed", background:obrigPendentes===0?"linear-gradient(135deg,hsl(var(--sigcr-accent)),hsl(var(--sigcr-accent)))":"rgba(255,255,255,0.06)", color:obrigPendentes===0?"#fff":"hsl(var(--muted-foreground))", fontSize:"15px", fontWeight:800, boxShadow:obrigPendentes===0?"0 4px 20px rgba(33,150,243,0.3)":"none" }}>
+          <button disabled={obrigPendentes>0} style={{ padding:"14px 40px", borderRadius:"12px", border:"none", cursor:obrigPendentes===0?"pointer":"not-allowed", background:obrigPendentes===0?"linear-gradient(135deg,hsl(var(--sigcr-accent)),hsl(var(--sigcr-accent)))":"rgba(255,255,255,0.06)", color:obrigPendentes===0?"#fff":"hsl(var(--muted-foreground))", fontSize:"15px", fontWeight:800, boxShadow:obrigPendentes===0?"0 4px 20px rgba(197,155,39,0.3)":"none" }}>
             {obrigPendentes===0 ? " Submeter documentos ao DETRAN" : `Faltam ${obrigPendentes} documento(s) obrigatrio(s)`}
           </button>
         </div>

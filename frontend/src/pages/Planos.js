@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Check, Zap, Shield, Star } from "lucide-react";
+import BrandLogo from "../components/BrandLogo";
 
 const PLANOS = [
   {
@@ -74,13 +75,13 @@ export default function Planos() {
           <span style={{ fontSize:"16px" }}></span> Incio
         </a>
         <span style={{ color:"rgba(255,255,255,0.15)" }}>|</span>
-        <span style={{ fontSize:"13px", color:"rgba(33,150,243,0.8)", fontWeight:600 }}>sigcr SIGCR</span>
+        <BrandLogo variant="horizontal" className="h-8 w-auto brightness-0 invert" alt="SIGCR" />
       </div>
       <div style={{ height:"48px" }} />
 
       {/* Header */}
       <div style={{ textAlign: "center", maxWidth: "680px", margin: "0 auto 48px" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(33,150,243,0.1)", border: "1px solid rgba(33,150,243,0.3)", borderRadius: "20px", padding: "6px 16px", marginBottom: "20px" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", background: "rgba(197,155,39,0.1)", border: "1px solid rgba(197,155,39,0.3)", borderRadius: "20px", padding: "6px 16px", marginBottom: "20px" }}>
           <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "hsl(var(--sigcr-accent))", animation: "pulse 2s infinite" }} />
           <span style={{ fontSize: "12px", fontWeight: 700, color: "hsl(var(--sigcr-accent))", textTransform: "uppercase", letterSpacing: "0.1em" }}>Escolha seu plano</span>
         </div>
@@ -110,11 +111,11 @@ export default function Planos() {
         {PLANOS.map(plano => (
           <div key={plano.id} style={{
             flex: "1 1 280px", maxWidth: "320px",
-            background: plano.destaque ? "rgba(33,150,243,0.06)" : "rgba(255,255,255,0.02)",
-            border: plano.destaque ? "2px solid rgba(33,150,243,0.5)" : "1.5px solid rgba(255,255,255,0.07)",
+            background: plano.destaque ? "rgba(197,155,39,0.06)" : "rgba(255,255,255,0.02)",
+            border: plano.destaque ? "2px solid rgba(197,155,39,0.5)" : "1.5px solid rgba(255,255,255,0.07)",
             borderRadius: "20px", padding: "28px 24px",
             position: "relative",
-            boxShadow: plano.destaque ? "0 0 40px rgba(33,150,243,0.12)" : "none",
+            boxShadow: plano.destaque ? "0 0 40px rgba(197,155,39,0.12)" : "none",
           }}>
             {plano.destaque && (
               <div style={{ position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg,hsl(var(--sigcr-accent)),hsl(var(--sigcr-accent)))", color: "#fff", fontSize: "11px", fontWeight: 800, padding: "4px 16px", borderRadius: "20px", letterSpacing: "0.08em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
@@ -170,7 +171,7 @@ export default function Planos() {
                 background: plano.destaque ? "linear-gradient(135deg,hsl(var(--sigcr-accent)),hsl(var(--sigcr-accent)))" : "rgba(255,255,255,0.06)",
                 color: "#fff", fontSize: "14px", fontWeight: 700,
                 transition: "all 0.2s",
-                boxShadow: plano.destaque ? "0 4px 20px rgba(33,150,243,0.3)" : "none",
+                boxShadow: plano.destaque ? "0 4px 20px rgba(197,155,39,0.3)" : "none",
               }}>
               {plano.id === "enterprise" ? "Falar com Vendas" : "Assinar agora"}
             </button>

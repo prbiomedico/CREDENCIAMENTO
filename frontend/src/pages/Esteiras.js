@@ -39,7 +39,7 @@ function ModalNovaEsteira({ onClose, onSave, token }) {
   };
   return (
     <div style={{ position:"fixed", inset:0, zIndex:1000, background:"rgba(0,0,0,0.7)", backdropFilter:"blur(8px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ background:"hsl(var(--background))", border:"1.5px solid rgba(33,150,243,0.25)", borderRadius:20, padding:32, width:460 }}>
+      <div style={{ background:"hsl(var(--background))", border:"1.5px solid rgba(197,155,39,0.25)", borderRadius:20, padding:32, width:460 }}>
         <div style={{ fontWeight:800, fontSize:17, color:"hsl(var(--muted))", marginBottom:6 }}>Nova Esteira</div>
         <div style={{ fontSize:12, color:"hsl(var(--muted-foreground))", marginBottom:22 }}>Iniciar processo de credenciamento</div>
         <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
@@ -84,7 +84,7 @@ function ModalEvento({ esteira, onClose, onSave, token }) {
   };
   return (
     <div style={{ position:"fixed", inset:0, zIndex:1000, background:"rgba(0,0,0,0.7)", backdropFilter:"blur(8px)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-      <div style={{ background:"hsl(var(--background))", border:"1.5px solid rgba(33,150,243,0.25)", borderRadius:20, padding:32, width:500, maxHeight:"90vh", overflowY:"auto" }}>
+      <div style={{ background:"hsl(var(--background))", border:"1.5px solid rgba(197,155,39,0.25)", borderRadius:20, padding:32, width:500, maxHeight:"90vh", overflowY:"auto" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
           <div>
             <div style={{ fontWeight:800, fontSize:17, color:"hsl(var(--muted))" }}>Criar Evento</div>
@@ -169,8 +169,8 @@ export default function Esteiras() {
   );
 
   const cardStyle = (sel) => ({
-    background: sel ? "rgba(33,150,243,0.07)" : "rgba(255,255,255,0.02)",
-    border: sel ? "1.5px solid rgba(33,150,243,0.4)" : "1.5px solid rgba(255,255,255,0.06)",
+    background: sel ? "rgba(197,155,39,0.07)" : "rgba(255,255,255,0.02)",
+    border: sel ? "1.5px solid rgba(197,155,39,0.4)" : "1.5px solid rgba(255,255,255,0.06)",
     borderRadius:14, padding:"18px 20px", cursor:"pointer", transition:"all 0.2s", marginBottom:10,
   });
 
@@ -199,7 +199,7 @@ export default function Esteiras() {
                   <div style={{ fontWeight:800, fontSize:14, color:"hsl(var(--muted))", marginBottom:2 }}>{est.registradora}</div>
                   <div style={{ fontSize:11, color:"hsl(var(--muted-foreground))" }}>{est.cnpj}  {est.detran}</div>
                 </div>
-                <span style={{ fontSize:9, fontWeight:700, padding:"3px 7px", borderRadius:20, background:"rgba(33,150,243,0.1)", color:"hsl(var(--sigcr-accent))", textTransform:"uppercase", flexShrink:0 }}>{est.esteira_id?.slice(0,8)}</span>
+                <span style={{ fontSize:9, fontWeight:700, padding:"3px 7px", borderRadius:20, background:"rgba(197,155,39,0.1)", color:"hsl(var(--sigcr-accent))", textTransform:"uppercase", flexShrink:0 }}>{est.esteira_id?.slice(0,8)}</span>
               </div>
               <div style={{ marginBottom:8 }}>
                 <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
