@@ -247,6 +247,61 @@ def test_previa_publica_transmite_imagem_e_nunca_o_pdf_original(monkeypatch, tmp
     assert resposta.headers["cache-control"] == "private, no-store"
 
 
+class CursorStub:
+    def __init__(self, docs):
+        self.docs = docs
+
+    def sort(self, *args):
+        return self
+
+    async def to_list(self, _limit):
+        return [dict(doc) for doc in self.docs]
+
+
+class CollectionStub:
+    def __init__(self, docs):
+        self.docs = docs
+
+    def find(self, _query, _projection=None):
+        return CursorStub(self.docs)
+
+    async def find_one(self, query, _projection=None):
+        for doc in self.docs:
+            if all(doc.get(key) == value for key, value in query.items() if not isinstance(value, dict)):
+                return dict(doc)
+        return None
+
+
+def test_transparencia_consolida_portaria_edital_e_termo_sem_expor_paths(monkeypatch, tmp_path):
+    portaria_pdf = tmp_path / "portaria.pdf"
+    edital_pdf = tmp_path / "edital.pdf"
+    termo_pdf = tmp_path / "termo.pdf"
+    for arquivo in (portaria_pdf, edital_pdf, termo_pdf):
+        arquivo.write_bytes(b"%PDF-1.7\n%%EOF")
+    monkeypatch.setattr(server, "UPLOAD_DIR", tmp_path)
+    monkeypatch.setattr(server, "db", SimpleNamespace(
+        portarias=CollectionStub([{
+            "portaria_id": "port_1", "title": "Portaria 185/2026", "numero": "185/2026",
+            "estado_sigla": "MT", "status": "vigente", "link_pdf": str(portaria_pdf),
+            "date": "2026-09-01T00:00:00", "criado_via": "manual",
+        }]),
+        editais=CollectionStub([{
+            "edital_id": "edital_1", "titulo": "Edital de credenciamento", "uf": "MT",
+            "status": "aberto", "created_at": "2026-09-02T00:00:00",
+            "anexos": [{"nome": "Edital.pdf", "path": str(edital_pdf)}],
+            "termo_adesao_path": str(termo_pdf),
+        }]),
+    ))
+
+    resposta = run(server.get_atos_credenciamento_publicos("mt"))
+
+    assert resposta["uf"] == "MT"
+    assert {ato["tipo_documento"] for ato in resposta["atos"]} == {"Portaria", "Edital"}
+    assert sum(len(ato["documentos"]) for ato in resposta["atos"]) == 3
+    assert "path" not in str(resposta)
+    assert all("download_url" not in str(ato) for ato in resposta["atos"])
+
+
 def test_atualizacao_notifica_registradoras_da_uf_sem_duplicar(monkeypatch):
     class Cursor:
         async def to_list(self, limit):

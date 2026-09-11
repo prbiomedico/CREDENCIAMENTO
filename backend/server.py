@@ -2219,6 +2219,11 @@ async def get_portarias(
         query["link_pdf"] = {"$nin": [None, ""]}
         query["$or"] = [{"criado_via": {"$ne": "wizard"}}, {"publicado_at": {"$ne": None}}]
     portarias = await db.portarias.find(query, {"_id": 0}).sort("date", -1).to_list(1000)
+    if not _ve_editais_completo(current_user):
+        # Inclusive URLs externas são conteúdo integral: conta limitada recebe
+        # metadados, mas nunca o endereço capaz de contornar o paywall.
+        for portaria in portarias:
+            portaria["link_pdf"] = None
     return portarias
 
 
@@ -2637,6 +2642,8 @@ async def get_portaria(portaria_id: str, scope: EffectiveScope = Depends(get_eff
             portaria["checklist_itens"] = [
                 i for i in (portaria.get("checklist_itens") or []) if i.get("perfil_alvo") in categorias_empresa
             ]
+    if not _ve_editais_completo(current_user):
+        portaria["link_pdf"] = None
     return portaria
 
 
@@ -2655,6 +2662,7 @@ async def download_portaria_pdf(portaria_id: str, scope: EffectiveScope = Depend
     GET /portarias/{id} aqui. EffectiveScope (em vez de current_user direto)
     também pra ficar consistente com a simulação "ver como" adicionada nesta
     mesma leva de fixes."""
+    _exigir_download_edital(scope.as_user())
     portaria = await get_portaria(portaria_id, scope)
     if not portaria.get("link_pdf") or not Path(portaria["link_pdf"]).exists():
         raise HTTPException(status_code=404, detail="Nenhum PDF anexado a esta portaria")
@@ -4828,6 +4836,124 @@ async def get_editais_publicos_por_uf(uf: str):
             ),
         })
     return {"uf": uf, "uf_nome": UF_NOMES.get(uf, uf), "editais": resultado}
+
+
+@api_router.get("/public/atos-credenciamento/{uf}")
+async def get_atos_credenciamento_publicos(uf: str):
+    """Visão pública canônica que agrega portarias e editais sem migrar dados.
+
+    `Termo` não é um terceiro tipo de processo: aparece como documento
+    vinculado ao ato. Somente metadados e URLs de prévia são públicos.
+    """
+    uf = uf.upper()
+    if uf not in UF_VALIDAS:
+        raise HTTPException(status_code=400, detail="UF inválida")
+
+    portarias = await db.portarias.find(
+        {
+            "estado_sigla": uf,
+            "status": "vigente",
+            "deleted_at": None,
+            "link_pdf": {"$nin": [None, ""]},
+            "$or": [{"criado_via": {"$ne": "wizard"}}, {"publicado_at": {"$ne": None}}],
+        },
+        {"_id": 0},
+    ).sort("date", -1).to_list(100)
+    editais = await db.editais.find(
+        {"uf": uf, "status": "aberto"}, {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+
+    atos = []
+    for portaria in portarias:
+        caminho = _resolver_path_seguro(portaria.get("link_pdf") or "")
+        documento = ([{
+            "nome": f"Portaria {portaria.get('numero') or ''}".strip(),
+            "categoria": "portaria",
+            "preview_url": f"/api/public/atos-credenciamento/portaria/{portaria['portaria_id']}/preview",
+        }] if caminho else [])
+        atos.append({
+            "ato_id": portaria["portaria_id"],
+            "origem_registro": "portaria",
+            "tipo_documento": "Portaria",
+            "titulo": portaria.get("title"),
+            "descricao": portaria.get("summary") or portaria.get("content"),
+            "numero": portaria.get("numero"),
+            "orgao_emissor": portaria.get("orgao_emissor") or portaria.get("detran"),
+            "uf": portaria.get("estado_sigla"),
+            "status": portaria.get("status"),
+            "data_publicacao": portaria.get("date"),
+            "data_encerramento": portaria.get("data_encerramento"),
+            "documentos_obrigatorios": [],
+            "documentos": documento,
+        })
+
+    for edital in editais:
+        documentos = [
+            {
+                "nome": anexo.get("nome", "Anexo"),
+                "categoria": "anexo",
+                "preview_url": f"/api/public/editais/{edital['edital_id']}/preview/anexo/{indice}",
+            }
+            for indice, anexo in enumerate(edital.get("anexos", []))
+            if _resolver_path_seguro(anexo.get("path", "")) is not None
+        ]
+        if _resolver_path_seguro(edital.get("termo_adesao_path") or "") is not None:
+            documentos.append({
+                "nome": "Termo de adesão",
+                "categoria": "termo",
+                "preview_url": f"/api/public/editais/{edital['edital_id']}/preview/termo/0",
+            })
+        atos.append({
+            "ato_id": edital["edital_id"],
+            "origem_registro": "edital",
+            "tipo_documento": "Edital",
+            "titulo": edital.get("titulo"),
+            "descricao": edital.get("descricao"),
+            "numero": edital.get("numero"),
+            "orgao_emissor": edital.get("orgao_emissor") or f"DETRAN-{uf}",
+            "uf": edital.get("uf"),
+            "status": edital.get("status"),
+            "data_publicacao": edital.get("created_at"),
+            "data_encerramento": edital.get("data_encerramento"),
+            "documentos_obrigatorios": edital.get("documentos_obrigatorios", []),
+            "documentos": documentos,
+        })
+
+    atos.sort(key=lambda ato: str(ato.get("data_publicacao") or ""), reverse=True)
+    return {"uf": uf, "uf_nome": UF_NOMES.get(uf, uf), "atos": atos}
+
+
+@api_router.get("/public/atos-credenciamento/portaria/{portaria_id}/preview")
+async def preview_portaria_credenciamento(portaria_id: str, request: Request):
+    _rate_limit(request, "preview-portaria", 30, 60)
+    portaria = await db.portarias.find_one(
+        {
+            "portaria_id": portaria_id,
+            "status": "vigente",
+            "deleted_at": None,
+            "link_pdf": {"$nin": [None, ""]},
+        },
+        {"_id": 0},
+    )
+    if not portaria or (portaria.get("criado_via") == "wizard" and not portaria.get("publicado_at")):
+        raise HTTPException(status_code=404, detail="Portaria não encontrada")
+    caminho = _resolver_path_seguro(portaria.get("link_pdf") or "")
+    if not caminho:
+        raise HTTPException(status_code=404, detail="Prévia não disponível")
+    try:
+        conteudo = await asyncio.to_thread(_renderizar_primeira_pagina, caminho)
+    except Exception:
+        logger.exception("Falha ao renderizar prévia pública da portaria %s", portaria_id)
+        raise HTTPException(status_code=422, detail="Não foi possível gerar a prévia deste documento")
+    return Response(
+        content=conteudo,
+        media_type="image/jpeg",
+        headers={
+            "Content-Disposition": "inline; filename=previa-sigcr.jpg",
+            "Cache-Control": "private, no-store",
+            "X-Content-Type-Options": "nosniff",
+        },
+    )
 
 
 @api_router.get("/public/editais/{edital_id}/preview/{tipo}/{indice}")

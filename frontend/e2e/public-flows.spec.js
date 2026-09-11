@@ -27,16 +27,16 @@ test('rotas operacionais não renderizam o sistema sem login', async ({ page }) 
   }
 });
 
-test('consulta pública limita edital à primeira página e oferece acesso integral', async ({ page }) => {
-  await page.route('http://api.test/api/public/editais/SP', (route) => route.fulfill({
+test('consulta pública consolida portarias e editais e limita documentos à primeira página', async ({ page }) => {
+  await page.route('http://api.test/api/public/atos-credenciamento/SP', (route) => route.fulfill({
     status: 200,
     contentType: 'application/json',
-    body: JSON.stringify({ uf: 'SP', uf_nome: 'São Paulo', editais: [{
-      edital_id: 'edital_1', titulo: 'Edital de credenciamento 01/2026',
+    body: JSON.stringify({ uf: 'SP', uf_nome: 'São Paulo', atos: [{
+      ato_id: 'edital_1', origem_registro: 'edital', tipo_documento: 'Edital',
+      titulo: 'Edital de credenciamento 01/2026',
       descricao: 'Credenciamento estadual', status: 'aberto',
       documentos_obrigatorios: ['Contrato social'],
-      anexos: [{ nome: 'Edital completo.pdf', preview_url: '/api/public/editais/edital_1/preview/anexo/0' }],
-      termo_adesao_preview_url: null,
+      documentos: [{ nome: 'Edital completo.pdf', categoria: 'anexo', preview_url: '/api/public/editais/edital_1/preview/anexo/0' }],
     }] }),
   }));
   await page.route('http://api.test/api/public/editais/edital_1/preview/anexo/0', (route) => route.fulfill({
@@ -44,7 +44,9 @@ test('consulta pública limita edital à primeira página e oferece acesso integ
   }));
 
   await page.goto('/transparencia/SP');
+  await expect(page.getByRole('heading', { name: 'Portarias e Editais de Credenciamento' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Edital de credenciamento 01/2026' })).toBeVisible();
+  await expect(page.getByText('Edital', { exact: true })).toBeVisible();
   await expect(page.getByText('Documento integral protegido')).toBeVisible();
   await expect(page.locator('a[download]')).toHaveCount(0);
   await page.getByRole('button', { name: /Prévia: Edital completo/i }).click();

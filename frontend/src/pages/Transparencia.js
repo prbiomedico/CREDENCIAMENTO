@@ -26,7 +26,7 @@ export default function Transparencia() {
     if (!uf) return;
     setLoading(true);
     setErro(null);
-    axios.get(`${API}/public/editais/${uf}`)
+    axios.get(`${API}/public/atos-credenciamento/${uf}`)
       .then(res => setDados(res.data))
       .catch(() => setErro('Não foi possível carregar os editais deste estado.'))
       .finally(() => setLoading(false));
@@ -45,9 +45,9 @@ export default function Transparencia() {
 
       <div className="max-w-5xl mx-auto px-6 pt-28 pb-16">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold mb-1">Editais de Credenciamento</h1>
+          <h1 className="text-2xl font-bold mb-1">Portarias e Editais de Credenciamento</h1>
           <p className="text-slate-500 text-sm">
-            Consulte os editais vigentes por estado e visualize gratuitamente a primeira página. O conteúdo integral é exclusivo para contas habilitadas.
+            Consulte em um único acervo os atos vigentes por estado. Portarias e editais preservam sua classificação jurídica; termos e anexos aparecem vinculados ao respectivo ato.
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export default function Transparencia() {
           <Card className="bg-card border-border">
             <CardContent className="p-12 text-center">
               <FileText className="h-12 w-12 text-zinc-700 mx-auto mb-3" />
-              <p className="text-slate-600">Selecione um estado acima para ver os editais vigentes</p>
+              <p className="text-slate-600">Selecione um estado acima para consultar os atos de credenciamento</p>
             </CardContent>
           </Card>
         )}
@@ -89,25 +89,28 @@ export default function Transparencia() {
             <h2 className="text-sm font-mono uppercase tracking-wider text-slate-500 mb-4">
               {dados.uf_nome} ({dados.uf})
             </h2>
-            {dados.editais.length === 0 ? (
+            {dados.atos.length === 0 ? (
               <Card className="bg-card border-border">
                 <CardContent className="p-12 text-center">
                   <FileText className="h-12 w-12 text-zinc-700 mx-auto mb-3" />
-                  <p className="text-slate-600">Nenhum edital vigente neste estado no momento</p>
+                  <p className="text-slate-600">Nenhum ato de credenciamento vigente neste estado</p>
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-4">
-                {dados.editais.map(e => (
-                  <Card key={e.edital_id} className="bg-card border-border">
+                {dados.atos.map(e => (
+                  <Card key={`${e.origem_registro}-${e.ato_id}`} className="bg-card border-border">
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
                         <div>
+                          <div className="mb-2 flex flex-wrap items-center gap-2"><Badge variant="outline" className="border-primary-300 bg-primary-50 text-primary-700">{e.tipo_documento}</Badge>{e.numero && <span className="font-mono text-xs text-slate-500">Nº {e.numero}</span>}</div>
                           <h3 className="text-lg font-semibold text-foreground">{e.titulo}</h3>
                           {e.descricao && <p className="text-sm text-slate-600 mt-1">{e.descricao}</p>}
                         </div>
-                        <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30">Aberto</Badge>
+                        <Badge className="bg-emerald-500/10 text-emerald-700 border-emerald-500/30">Vigente</Badge>
                       </div>
+
+                      {(e.orgao_emissor || e.data_publicacao) && <div className="mb-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-slate-500">{e.orgao_emissor && <span>{e.orgao_emissor}</span>}{e.data_publicacao && <span>Publicado em {new Date(e.data_publicacao).toLocaleDateString('pt-BR')}</span>}</div>}
 
                       {e.data_encerramento && (
                         <div className="flex items-center gap-1.5 text-xs text-slate-500 mb-3">
@@ -128,14 +131,9 @@ export default function Transparencia() {
                       )}
 
                       <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
-                        {e.termo_adesao_preview_url && (
-                          <Button size="sm" variant="outline" onClick={() => setPreview({ nome: 'Termo de adesão', url: `${BACKEND_URL}${e.termo_adesao_preview_url}` })}>
-                            <Eye className="h-3.5 w-3.5 mr-2" /> Prévia do termo
-                          </Button>
-                        )}
-                        {e.anexos.map((a, i) => (
+                        {e.documentos.map((a, i) => (
                           <Button key={i} size="sm" variant="outline" onClick={() => setPreview({ nome: a.nome, url: `${BACKEND_URL}${a.preview_url}` })}>
-                            <Paperclip className="h-3.5 w-3.5 mr-2" /> Prévia: {a.nome}
+                            {a.categoria === 'portaria' ? <Eye className="h-3.5 w-3.5 mr-2" /> : <Paperclip className="h-3.5 w-3.5 mr-2" />} Prévia: {a.nome}
                           </Button>
                         ))}
                       </div>
