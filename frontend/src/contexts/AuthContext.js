@@ -98,6 +98,18 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    if (process.env.REACT_APP_E2E_AUTH === '1') {
+      let e2eUser = null;
+      try { e2eUser = JSON.parse(localStorage.getItem('sigcr_e2e_user')); } catch { /* usa o administrador padrão */ }
+      setUser(e2eUser || {
+        user_id: 'e2e-admin', email: 'admin@sigcr.test', name: 'Admin E2E',
+        perfil: 'sigcr_admin', detran_uf: null, roles: ['sigcr_admin'],
+      });
+      setInitialized(true);
+      setLoading(false);
+      _resolveKcReady();
+      return undefined;
+    }
     keycloak.init({
       onLoad: 'check-sso',
       silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',

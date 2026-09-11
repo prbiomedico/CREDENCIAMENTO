@@ -17,7 +17,7 @@ module.exports = defineConfig({
   webServer: {
     command: 'npm start -- --host 127.0.0.1',
     url: 'http://127.0.0.1:4173',
-    env: { ...process.env, PORT: '4173', BROWSER: 'none', REACT_APP_BACKEND_URL: 'http://api.test' },
+    env: { ...process.env, PORT: '4173', BROWSER: 'none', REACT_APP_BACKEND_URL: 'http://api.test', REACT_APP_E2E_AUTH: '1' },
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
   },

@@ -3,7 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-route
 import { AuthProvider } from './contexts/AuthContext';
 import { ViewProvider } from './contexts/ViewContext';
 import { PerfilAtivoProvider } from './contexts/PerfilAtivoContext';
-import { Toaster } from '@/components/ui/sonner';
+import { Toaster as SonnerToaster } from '@/components/ui/sonner';
+import { Toaster as LegacyToaster } from '@/components/ui/toaster';
 import RotaProtegida from './components/RotaProtegida';
 import ErrorBoundary from './components/ErrorBoundary';
 import Landing from './pages/Landing';
@@ -104,7 +105,8 @@ function App() {
           <PerfilAtivoProvider>
             <AppRoutes />
             <CookieBanner />
-            <Toaster position="top-right" />
+            <LegacyToaster />
+            <SonnerToaster position="top-right" />
           </PerfilAtivoProvider>
         </ViewProvider>
       </AuthProvider>

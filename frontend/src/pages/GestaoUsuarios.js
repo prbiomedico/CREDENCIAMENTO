@@ -11,8 +11,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Textarea } from '../components/ui/textarea';
 import {
   UserCog, Plus, Search, Shield, Building2, Landmark,
-  CreditCard, Trash2, RefreshCw, ChevronDown, Check, X, Eye, EyeOff,
-  ClipboardList, ThumbsUp, ThumbsDown, Users, UserCheck, UserX
+  CreditCard, Trash2, RefreshCw, Check, X, Eye, EyeOff,
+  ClipboardList, ThumbsUp, ThumbsDown, Users, UserCheck, UserX,
+  Pencil, KeyRound, LogOut
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br'}/api`;
@@ -26,11 +27,11 @@ const PERFIS = {
 };
 
 const TODAS_ROLES = [
-  { value: 'registradora',  label: 'Registradora',    desc: 'Acesso ao mdulo de credenciamento e documentos', icon: Building2,  color: 'primary' },
-  { value: 'detran',        label: 'Operador DETRAN',  desc: 'Acesso ao painel DETRAN e gesto de editais',     icon: Landmark,   color: 'blue' },
-  { value: 'detran_admin',  label: 'Admin DETRAN',     desc: 'Acesso total ao mdulo DETRAN + configuraes',   icon: Landmark,   color: 'blue' },
+  { value: 'registradora',  label: 'Registradora',    desc: 'Acesso ao módulo de credenciamento e documentos', icon: Building2,  color: 'primary' },
+  { value: 'detran',        label: 'Operador DETRAN',  desc: 'Acesso ao painel DETRAN e gestão de editais',     icon: Landmark,   color: 'primary' },
+  { value: 'detran_admin',  label: 'Admin DETRAN',     desc: 'Acesso total ao módulo DETRAN e configurações',   icon: Landmark,   color: 'primary' },
   { value: 'financeira',    label: 'Financeira',       desc: 'Acesso a contratos e gravames',                   icon: CreditCard, color: 'emerald' },
-  { value: 'sigcr_admin',   label: 'Admin SIGCR',      desc: 'Acesso total ao sistema  todas as camadas',      icon: Shield,     color: 'primary' },
+  { value: 'sigcr_admin',   label: 'Admin SIGCR',      desc: 'Acesso total ao sistema e a todas as camadas',    icon: Shield,     color: 'primary' },
 ];
 
 // Hierarquia LGPD: cada perfil s cria quem est abaixo dele
@@ -61,6 +62,14 @@ export default function GestaoUsuarios() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [deletando, setDeletando] = useState(null);
   const [alterandoStatus, setAlterandoStatus] = useState(null);
+  const [editando, setEditando] = useState(null);
+  const [editForm, setEditForm] = useState(null);
+  const [salvandoEdicao, setSalvandoEdicao] = useState(false);
+  const [senhaAlvo, setSenhaAlvo] = useState(null);
+  const [novaSenha, setNovaSenha] = useState('');
+  const [senhaTemporaria, setSenhaTemporaria] = useState(true);
+  const [redefinindoSenha, setRedefinindoSenha] = useState(false);
+  const [encerrandoSessoes, setEncerrandoSessoes] = useState(null);
 
   const [cadastrosPendentes, setCadastrosPendentes] = useState([]);
   const [loadingCadastros, setLoadingCadastros] = useState(true);
@@ -140,10 +149,18 @@ export default function GestaoUsuarios() {
       toast({ title: 'Preencha todos os campos obrigatórios', variant: 'destructive' });
       return;
     }
+    if (form.password.length < 8) {
+      toast({ title: 'A senha deve ter no mínimo 8 caracteres', variant: 'destructive' });
+      return;
+    }
+    if (['detran', 'detran_admin'].includes(form.role) && !form.uf) {
+      toast({ title: 'Informe a UF do DETRAN', variant: 'destructive' });
+      return;
+    }
     setSaving(true);
     try {
       await axios.post(`${API}/admin/usuarios`, form, { withCredentials: true });
-      toast({ title: ' Usuário criado com sucesso', description: `${form.email}  perfil: ${PERFIS[form.role]?.label}` });
+      toast({ title: 'Usuário criado com sucesso', description: `${form.email} · perfil: ${PERFIS[form.role]?.label}` });
       setForm(EMPTY_FORM);
       setShowForm(false);
       await fetchUsuarios();
@@ -176,6 +193,66 @@ export default function GestaoUsuarios() {
       toast({ title: 'Não foi possível alterar o acesso', description: e.response?.data?.detail || 'Tente novamente', variant: 'destructive' });
     } finally {
       setAlterandoStatus(null);
+    }
+  };
+
+  const abrirEdicao = (usuario) => {
+    setEditando(usuario);
+    setEditForm({
+      username: usuario.username || '', email: usuario.email || '',
+      firstName: usuario.firstName || '', lastName: usuario.lastName || '',
+      role: usuario.perfil || 'registradora', uf: usuario.uf || '',
+    });
+  };
+
+  const handleEditar = async () => {
+    if (!editando || !editForm?.username || !editForm?.email || !editForm?.role) return;
+    if (['detran', 'detran_admin'].includes(editForm.role) && !editForm.uf) {
+      toast({ title: 'Informe a UF do DETRAN', variant: 'destructive' });
+      return;
+    }
+    setSalvandoEdicao(true);
+    try {
+      await axios.patch(`${API}/admin/usuarios/${editando.id}`, editForm, { withCredentials: true });
+      toast({ title: 'Usuário atualizado', description: 'As sessões anteriores foram encerradas por segurança.' });
+      setEditando(null);
+      setEditForm(null);
+      await fetchUsuarios();
+    } catch (e) {
+      toast({ title: 'Não foi possível atualizar', description: e.response?.data?.detail || 'Tente novamente', variant: 'destructive' });
+    } finally {
+      setSalvandoEdicao(false);
+    }
+  };
+
+  const handleRedefinirSenha = async () => {
+    if (!senhaAlvo || novaSenha.length < 8) {
+      toast({ title: 'A senha deve ter no mínimo 8 caracteres', variant: 'destructive' });
+      return;
+    }
+    setRedefinindoSenha(true);
+    try {
+      await axios.post(`${API}/admin/usuarios/${senhaAlvo.id}/redefinir-senha`, { password: novaSenha, temporary: senhaTemporaria }, { withCredentials: true });
+      toast({ title: 'Senha redefinida', description: senhaTemporaria ? 'O usuário deverá alterá-la no próximo acesso.' : 'A nova senha já está ativa.' });
+      setSenhaAlvo(null);
+      setNovaSenha('');
+      setSenhaTemporaria(true);
+    } catch (e) {
+      toast({ title: 'Não foi possível redefinir a senha', description: e.response?.data?.detail || 'Tente novamente', variant: 'destructive' });
+    } finally {
+      setRedefinindoSenha(false);
+    }
+  };
+
+  const handleEncerrarSessoes = async (usuario) => {
+    setEncerrandoSessoes(usuario.id);
+    try {
+      await axios.post(`${API}/admin/usuarios/${usuario.id}/encerrar-sessoes`, {}, { withCredentials: true });
+      toast({ title: 'Sessões encerradas', description: `${usuario.email} precisará entrar novamente.` });
+    } catch (e) {
+      toast({ title: 'Não foi possível encerrar as sessões', description: e.response?.data?.detail || 'Tente novamente', variant: 'destructive' });
+    } finally {
+      setEncerrandoSessoes(null);
     }
   };
 
@@ -402,7 +479,7 @@ export default function GestaoUsuarios() {
           </Card>
         ) : (
           <Card className="overflow-hidden border-border bg-white"><CardContent className="p-0"><Table>
-            <TableHeader><TableRow><TableHead>Usuário</TableHead><TableHead>Perfil</TableHead><TableHead>Escopo</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Ação</TableHead></TableRow></TableHeader>
+            <TableHeader><TableRow><TableHead>Usuário</TableHead><TableHead>Perfil</TableHead><TableHead>Escopo</TableHead><TableHead>Criado em</TableHead><TableHead>Status</TableHead><TableHead className="text-right">Ações</TableHead></TableRow></TableHeader>
             <TableBody>{usuariosFiltrados.map(u => {
               const perfilCfg = PERFIS[u.perfil] || PERFIS.registradora;
               const PerfilIcon = perfilCfg.icon;
@@ -411,8 +488,9 @@ export default function GestaoUsuarios() {
                 <TableCell><div className="flex items-center gap-3"><div className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700">{u.firstName?.[0] || u.username?.[0]?.toUpperCase() || '?'}</div><div className="min-w-0"><p className="truncate text-sm font-semibold text-slate-900">{[u.firstName, u.lastName].filter(Boolean).join(' ') || u.username}</p><p className="truncate text-xs text-slate-500">@{u.username} · {u.email}</p></div></div></TableCell>
                 <TableCell><Badge variant="outline" className="gap-1 border-slate-200 bg-slate-50 text-slate-700"><PerfilIcon className="h-3 w-3" />{perfilCfg.label}</Badge></TableCell>
                 <TableCell><span className="text-xs text-slate-600">{u.uf ? `DETRAN/${u.uf}` : u.perfil === 'sigcr_admin' ? 'Nacional' : 'Empresa vinculada'}</span></TableCell>
+                <TableCell><span className="text-xs text-slate-500">{u.created_at ? new Date(u.created_at).toLocaleDateString('pt-BR') : '—'}</span></TableCell>
                 <TableCell><Badge variant="outline" className={u.enabled ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-red-200 bg-red-50 text-red-700'}>{u.enabled ? 'Ativo' : 'Inativo'}</Badge></TableCell>
-                <TableCell className="text-right">{isConfirmDelete ? <div className="flex justify-end gap-1"><Button size="sm" variant="destructive" onClick={() => handleDeletar(u.id, u.username)}>Confirmar exclusão</Button><Button size="sm" variant="ghost" onClick={() => setDeletando(null)}><X className="h-4 w-4" /></Button></div> : <div className="flex justify-end gap-1"><Button size="sm" variant="outline" disabled={alterandoStatus === u.id} onClick={() => handleStatus(u)}>{alterandoStatus === u.id ? 'Salvando...' : u.enabled ? 'Desativar' : 'Ativar'}</Button><Button size="sm" variant="ghost" onClick={() => handleDeletar(u.id, u.username)} className="text-slate-500 hover:text-red-600"><Trash2 className="mr-2 h-4 w-4" />Excluir</Button></div>}</TableCell>
+                <TableCell className="text-right">{isConfirmDelete ? <div className="flex justify-end gap-1"><Button size="sm" variant="destructive" onClick={() => handleDeletar(u.id, u.username)}>Confirmar exclusão</Button><Button size="sm" variant="ghost" onClick={() => setDeletando(null)}><X className="h-4 w-4" /></Button></div> : <div className="flex justify-end gap-1"><Button size="icon" variant="ghost" title="Editar usuário" aria-label={`Editar ${u.username}`} onClick={() => abrirEdicao(u)}><Pencil className="h-4 w-4" /></Button><Button size="icon" variant="ghost" title="Redefinir senha" aria-label={`Redefinir senha de ${u.username}`} onClick={() => setSenhaAlvo(u)}><KeyRound className="h-4 w-4" /></Button><Button size="icon" variant="ghost" title="Encerrar sessões" aria-label={`Encerrar sessões de ${u.username}`} disabled={encerrandoSessoes === u.id} onClick={() => handleEncerrarSessoes(u)}><LogOut className="h-4 w-4" /></Button><Button size="sm" variant="outline" disabled={alterandoStatus === u.id} onClick={() => handleStatus(u)}>{alterandoStatus === u.id ? 'Salvando...' : u.enabled ? 'Desativar' : 'Ativar'}</Button><Button size="icon" variant="ghost" aria-label={`Excluir ${u.username}`} onClick={() => handleDeletar(u.id, u.username)} className="text-slate-500 hover:text-red-600"><Trash2 className="h-4 w-4" /></Button></div>}</TableCell>
               </TableRow>;
             })}</TableBody>
           </Table></CardContent></Card>
@@ -503,6 +581,37 @@ export default function GestaoUsuarios() {
             <p className="text-center text-slate-400 text-xs font-mono">{cadastrosPendentes.length} cadastro(s) pendente(s)</p>
           </TabsContent>
         </Tabs>
+
+        {editando && editForm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Editar usuário">
+            <div className="absolute inset-0 bg-slate-950/60" onClick={() => setEditando(null)} />
+            <Card className="relative z-10 w-full max-w-2xl border-slate-200 bg-white shadow-2xl">
+              <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><Pencil className="h-4 w-4" />Editar usuário</CardTitle><p className="text-sm text-slate-500">Identidade, perfil e escopo. A alteração encerra as sessões atuais.</p></CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {[['username','Usuário'],['email','E-mail'],['firstName','Nome'],['lastName','Sobrenome']].map(([key, label]) => <label key={key} className="space-y-1 text-xs font-medium text-slate-600"><span>{label}</span><input aria-label={label} value={editForm[key]} onChange={e => setEditForm(p => ({ ...p, [key]: e.target.value }))} className="h-10 w-full rounded-md border border-input bg-white px-3 text-sm text-slate-900" /></label>)}
+                  <label className="space-y-1 text-xs font-medium text-slate-600"><span>Perfil</span><select aria-label="Perfil" value={editForm.role} onChange={e => setEditForm(p => ({ ...p, role: e.target.value, uf: ['detran','detran_admin'].includes(e.target.value) ? p.uf : '' }))} className="h-10 w-full rounded-md border border-input bg-white px-3 text-sm text-slate-900">{TODAS_ROLES.map(role => <option key={role.value} value={role.value}>{role.label}</option>)}</select></label>
+                  {['detran','detran_admin'].includes(editForm.role) && <label className="space-y-1 text-xs font-medium text-slate-600"><span>UF do DETRAN</span><select aria-label="UF do DETRAN" value={editForm.uf} onChange={e => setEditForm(p => ({ ...p, uf: e.target.value }))} className="h-10 w-full rounded-md border border-input bg-white px-3 text-sm text-slate-900"><option value="">Selecione</option>{UFS.map(uf => <option key={uf}>{uf}</option>)}</select></label>}
+                </div>
+                <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setEditando(null)}>Cancelar</Button><Button onClick={handleEditar} disabled={salvandoEdicao}>{salvandoEdicao ? 'Salvando...' : 'Salvar alterações'}</Button></div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {senhaAlvo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Redefinir senha">
+            <div className="absolute inset-0 bg-slate-950/60" onClick={() => setSenhaAlvo(null)} />
+            <Card className="relative z-10 w-full max-w-md border-slate-200 bg-white shadow-2xl">
+              <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><KeyRound className="h-4 w-4" />Redefinir senha</CardTitle><p className="text-sm text-slate-500">{senhaAlvo.email}</p></CardHeader>
+              <CardContent className="space-y-4">
+                <label className="block space-y-1 text-xs font-medium text-slate-600"><span>Nova senha</span><input aria-label="Nova senha" type="password" minLength={8} value={novaSenha} onChange={e => setNovaSenha(e.target.value)} className="h-10 w-full rounded-md border border-input bg-white px-3 text-sm text-slate-900" placeholder="Mínimo de 8 caracteres" /></label>
+                <label className="flex items-start gap-2 text-sm text-slate-700"><input type="checkbox" checked={senhaTemporaria} onChange={e => setSenhaTemporaria(e.target.checked)} className="mt-1" /><span>Exigir alteração no próximo acesso<span className="block text-xs text-slate-500">As sessões atuais serão encerradas.</span></span></label>
+                <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setSenhaAlvo(null)}>Cancelar</Button><Button onClick={handleRedefinirSenha} disabled={redefinindoSenha}>{redefinindoSenha ? 'Redefinindo...' : 'Redefinir senha'}</Button></div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Modal de rejeição */}
         {rejeicaoAlvo && (

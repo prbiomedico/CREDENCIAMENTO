@@ -3875,6 +3875,21 @@ def _extract_perfil(roles: list) -> str:
     return "registradora"
 
 
+async def _proteger_ultimo_admin_keycloak(client, headers: dict, user_id: str) -> None:
+    """Impede que o realm fique sem um administrador SIGCR ativo."""
+    resposta = await client.get(
+        f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/roles/sigcr_admin/users?first=0&max=200",
+        headers=headers,
+    )
+    resposta.raise_for_status()
+    admins_ativos = [usuario for usuario in resposta.json() if usuario.get("enabled", True)]
+    if any(usuario.get("id") == user_id for usuario in admins_ativos) and len(admins_ativos) <= 1:
+        raise HTTPException(
+            status_code=409,
+            detail="A operação deixaria o SIGCR sem um administrador ativo",
+        )
+
+
 @api_router.get("/admin/usuarios")
 async def listar_usuarios(current_user: User = Depends(require_perfil("sigcr_admin"))):
     import httpx
@@ -3908,16 +3923,17 @@ async def listar_usuarios(current_user: User = Depends(require_perfil("sigcr_adm
                 "perfil": perfil,
                 "roles": sigcr_roles,
                 "uf": u.get("attributes", {}).get("detran_uf", [None])[0],
+                "created_at": datetime.fromtimestamp(u["createdTimestamp"] / 1000, timezone.utc).isoformat() if u.get("createdTimestamp") else None,
             })
     return result
 
 
 class NovoUsuarioPayload(BaseModel):
     username: str
-    email: str
+    email: EmailStr
     firstName: str = ""
     lastName: str = ""
-    password: str
+    password: str = Field(min_length=8, max_length=128)
     role: str = "registradora"
     uf: str = ""
     enabled: bool = True
@@ -3925,6 +3941,20 @@ class NovoUsuarioPayload(BaseModel):
 
 class AtualizarStatusUsuarioPayload(BaseModel):
     enabled: bool
+
+
+class EditarUsuarioPayload(BaseModel):
+    username: str
+    email: EmailStr
+    firstName: str = ""
+    lastName: str = ""
+    role: str
+    uf: str = ""
+
+
+class RedefinirSenhaUsuarioPayload(BaseModel):
+    password: str = Field(min_length=8, max_length=128)
+    temporary: bool = True
 
 
 @api_router.post("/admin/usuarios")
@@ -3952,6 +3982,9 @@ async def criar_usuario(payload: NovoUsuarioPayload, current_user: User = Depend
         )
     if payload.role not in SIGCR_ROLES:
         raise HTTPException(status_code=400, detail=f"Role inválida: {payload.role}")
+    uf = payload.uf.upper()
+    if payload.role in ("detran", "detran_admin") and uf not in UF_VALIDAS:
+        raise HTTPException(status_code=400, detail="UF do DETRAN é obrigatória e deve ser válida")
     import httpx
     token = await get_kc_admin_token()
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
@@ -3963,8 +3996,8 @@ async def criar_usuario(payload: NovoUsuarioPayload, current_user: User = Depend
         "enabled": payload.enabled,
         "credentials": [{"type": "password", "value": payload.password, "temporary": False}],
     }
-    if payload.uf:
-        user_data["attributes"] = {"detran_uf": [payload.uf]}
+    if uf:
+        user_data["attributes"] = {"detran_uf": [uf]}
     async with httpx.AsyncClient() as client:
         # Cria usuário
         r = await client.post(
@@ -3992,13 +4025,14 @@ async def criar_usuario(payload: NovoUsuarioPayload, current_user: User = Depend
         rr.raise_for_status()
         role_obj = rr.json()
         # Atribui role
-        await client.post(
+        atribuicao = await client.post(
             f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}/role-mappings/realm",
             headers=headers,
             json=[role_obj],
         )
+        atribuicao.raise_for_status()
     await registrar_auditoria(current_user, "criar_usuario", "usuario_keycloak", user_id, {
-        "username": payload.username, "role": payload.role, "uf": payload.uf or None,
+        "username": payload.username, "role": payload.role, "uf": uf or None,
     })
     return {"message": "Usuário criado com sucesso", "user_id": user_id}
 
@@ -4022,15 +4056,112 @@ async def atualizar_status_usuario(
             raise HTTPException(status_code=404, detail="Usuário não encontrado")
         consulta.raise_for_status()
         anterior = consulta.json().get("enabled", True)
+        if anterior and not payload.enabled:
+            await _proteger_ultimo_admin_keycloak(client, headers, user_id)
         resposta = await client.put(
             f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}",
             headers=headers, json={"enabled": payload.enabled},
         )
         resposta.raise_for_status()
+        if not payload.enabled:
+            logout = await client.post(
+                f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}/logout",
+                headers=headers,
+            )
+            if logout.status_code not in (204, 404):
+                logout.raise_for_status()
     await registrar_auditoria(current_user, "ativar_usuario" if payload.enabled else "desativar_usuario", "usuario_keycloak", user_id, {
         "antes": anterior, "depois": payload.enabled,
     })
     return {"message": "Usuário ativado" if payload.enabled else "Usuário desativado"}
+
+
+@api_router.patch("/admin/usuarios/{user_id}")
+async def editar_usuario(user_id: str, payload: EditarUsuarioPayload, current_user: User = Depends(require_perfil("sigcr_admin"))):
+    if payload.role not in SIGCR_ROLES:
+        raise HTTPException(status_code=400, detail=f"Role inválida: {payload.role}")
+    uf = payload.uf.upper()
+    if payload.role in ("detran", "detran_admin") and uf not in UF_VALIDAS:
+        raise HTTPException(status_code=400, detail="UF do DETRAN é obrigatória e deve ser válida")
+    if user_id == current_user.user_id and payload.role != "sigcr_admin":
+        raise HTTPException(status_code=409, detail="Você não pode remover o próprio perfil de administrador")
+    import httpx
+    token = await get_kc_admin_token()
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    async with httpx.AsyncClient() as client:
+        atual = await client.get(f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}", headers=headers)
+        if atual.status_code == 404:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        atual.raise_for_status()
+        antes = atual.json()
+        mappings = await client.get(f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}/role-mappings/realm", headers=headers)
+        mappings.raise_for_status()
+        atuais = [r for r in mappings.json() if r.get("name") in SIGCR_ROLES]
+        if payload.role != "sigcr_admin" and any(r.get("name") == "sigcr_admin" for r in atuais):
+            await _proteger_ultimo_admin_keycloak(client, headers, user_id)
+        role = await client.get(f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/roles/{payload.role}", headers=headers)
+        role.raise_for_status()
+        attrs = dict(antes.get("attributes") or {})
+        attrs["detran_uf"] = [uf] if payload.role in ("detran", "detran_admin") else []
+        resposta = await client.put(f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}", headers=headers, json={
+            "username": payload.username, "email": str(payload.email), "firstName": payload.firstName,
+            "lastName": payload.lastName, "attributes": attrs,
+        })
+        if resposta.status_code == 409:
+            raise HTTPException(status_code=409, detail="Username ou e-mail já existe")
+        resposta.raise_for_status()
+        if not any(r.get("name") == payload.role for r in atuais):
+            atribuicao = await client.post(f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}/role-mappings/realm", headers=headers, json=[role.json()])
+            atribuicao.raise_for_status()
+        remover = [r for r in atuais if r.get("name") != payload.role]
+        if remover:
+            remocao = await client.request("DELETE", f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}/role-mappings/realm", headers=headers, json=remover)
+            remocao.raise_for_status()
+        logout = await client.post(f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}/logout", headers=headers)
+        if logout.status_code not in (204, 404):
+            logout.raise_for_status()
+    await db.users.update_one({"user_id": user_id}, {"$set": {
+        "email": str(payload.email),
+        "name": " ".join(filter(None, [payload.firstName, payload.lastName])).strip() or payload.username,
+        "perfil": payload.role,
+        "detran_uf": uf if payload.role in ("detran", "detran_admin") else None,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }})
+    await registrar_auditoria(current_user, "editar_usuario", "usuario_keycloak", user_id, {
+        "username_anterior": antes.get("username"), "username": payload.username,
+        "role": payload.role, "uf": uf or None,
+    })
+    return {"message": "Usuário atualizado"}
+
+
+@api_router.post("/admin/usuarios/{user_id}/redefinir-senha")
+async def redefinir_senha_usuario(user_id: str, payload: RedefinirSenhaUsuarioPayload, current_user: User = Depends(require_perfil("sigcr_admin"))):
+    import httpx
+    token = await get_kc_admin_token()
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    async with httpx.AsyncClient() as client:
+        resposta = await client.put(f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}/reset-password", headers=headers, json={"type": "password", "value": payload.password, "temporary": payload.temporary})
+        if resposta.status_code == 404:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        resposta.raise_for_status()
+        logout = await client.post(f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}/logout", headers=headers)
+        if logout.status_code not in (204, 404):
+            logout.raise_for_status()
+    await registrar_auditoria(current_user, "redefinir_senha_usuario", "usuario_keycloak", user_id, {"temporary": payload.temporary})
+    return {"message": "Senha temporária definida"}
+
+
+@api_router.post("/admin/usuarios/{user_id}/encerrar-sessoes")
+async def encerrar_sessoes_usuario(user_id: str, current_user: User = Depends(require_perfil("sigcr_admin"))):
+    import httpx
+    token = await get_kc_admin_token()
+    async with httpx.AsyncClient() as client:
+        resposta = await client.post(f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}/logout", headers={"Authorization": f"Bearer {token}"})
+        if resposta.status_code == 404:
+            raise HTTPException(status_code=404, detail="Usuário não encontrado")
+        resposta.raise_for_status()
+    await registrar_auditoria(current_user, "encerrar_sessoes_usuario", "usuario_keycloak", user_id)
+    return {"message": "Sessões encerradas"}
 
 
 @api_router.delete("/admin/usuarios/{user_id}")
@@ -4041,6 +4172,7 @@ async def deletar_usuario(user_id: str, current_user: User = Depends(require_per
     token = await get_kc_admin_token()
     headers = {"Authorization": f"Bearer {token}"}
     async with httpx.AsyncClient() as client:
+        await _proteger_ultimo_admin_keycloak(client, headers, user_id)
         r = await client.delete(
             f"{KC_INTERNAL_URL}/admin/realms/{KEYCLOAK_REALM}/users/{user_id}",
             headers=headers,
