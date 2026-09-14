@@ -22,13 +22,8 @@
  */
 import axios from 'axios';
 
-// keycloak-js é distribuído só como ESM puro (export default class ...) e o
-// preset de Jest do CRA/craco não transforma pacotes de node_modules por
-// padrão — sem mockar, o require abaixo quebra com SyntaxError antes de
-// qualquer teste rodar. Só precisamos de um construtor inofensivo: o
-// keycloak.init() real (chamado pelo useEffect do AuthProvider) não entra
-// em cena neste arquivo, que testa o interceptor via window.__kc/__kcReady
-// diretamente.
+// O teste não deve inicializar uma sessão Keycloak real; o mock mantém o
+// construtor inofensivo e concentra a verificação nos interceptors.
 jest.mock('keycloak-js', () => class { constructor() {} });
 
 // Carrega o módulo real — roda os efeitos de topo de arquivo (window.__kc,

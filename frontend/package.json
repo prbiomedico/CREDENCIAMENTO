@@ -65,9 +65,9 @@
     "zod": "^3.24.4"
   },
   "scripts": {
-    "start": "craco start",
-    "build": "craco build",
-    "test": "craco test",
+    "start": "vite",
+    "build": "vite build",
+    "test": "jest --runInBand",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
@@ -84,27 +84,36 @@
     ]
   },
   "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@craco/craco": "^7.1.0",
-    "@emergentbase/visual-edits": "https://assets.emergent.sh/npm/emergentbase-visual-edits-1.0.8.tgz",
-    "@eslint/js": "9.23.0",
+    "@babel/preset-env": "^7.29.7",
+    "@babel/preset-react": "^7.29.7",
+    "@eslint/js": "^9.39.5",
     "@playwright/test": "^1.63.0",
-    "ajv": "^8.18.0",
+    "@vitejs/plugin-react": "^5.2.0",
     "autoprefixer": "^10.4.20",
-    "cra-template": "1.2.0",
-    "eslint": "9.23.0",
+    "eslint": "^9.39.5",
     "eslint-plugin-import": "2.31.0",
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-react": "7.37.4",
     "eslint-plugin-react-hooks": "5.2.0",
     "globals": "15.15.0",
-    "postcss": "^8.4.49",
-    "react-scripts": "5.0.1",
-    "tailwindcss": "^3.4.17"
+    "babel-jest": "^30.5.1",
+    "jest": "^30.5.1",
+    "jest-environment-jsdom": "^30.5.1",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.17",
+    "vite": "^7.3.6"
   },
   "overrides": {
+    "@eslint/plugin-kit": "^0.3.4",
+    "@tootallnate/once": "^2.0.1",
     "fflate": "^0.8.3",
+    "nth-check": "^2.1.1",
+    "postcss": "$postcss",
+    "qs": "^6.16.0",
+    "serialize-javascript": "^7.1.1",
     "shell-quote": "^1.10.0",
+    "underscore": "^1.13.8",
+    "uuid": "^11.1.1",
     "websocket-driver": "^0.7.5"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
