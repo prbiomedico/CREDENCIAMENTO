@@ -20,10 +20,10 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.
 const API = `${BACKEND_URL}/api`;
 
 const STATUS_CFG = {
-  pendente: { label: 'Pendente', icon: Clock, className: 'bg-muted text-slate-600 border-input' },
-  enviado: { label: 'Enviado', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  aprovado: { label: 'Aprovado', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
-  rejeitado: { label: 'Rejeitado', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
+  pendente: { label: 'Pendente', icon: Clock, className: 'border-slate-300 bg-slate-100 text-slate-700' },
+  enviado: { label: 'Enviado', icon: FileText, className: 'border-secondary-300 bg-secondary-100 text-secondary-900' },
+  aprovado: { label: 'Aprovado', icon: CheckCircle, className: 'border-emerald-200 bg-emerald-50 text-emerald-900' },
+  rejeitado: { label: 'Rejeitado', icon: XCircle, className: 'border-red-200 bg-red-50 text-red-900' },
 };
 
 // Tipo de documento derivado do nome do item do checklist — o backend guarda
@@ -66,8 +66,8 @@ const getVencimentoStatus = (vencimento) => {
   hoje.setHours(0, 0, 0, 0);
   const dataVenc = new Date(vencimento);
   const diffDias = Math.round((dataVenc - hoje) / (1000 * 60 * 60 * 24));
-  if (diffDias < 0) return { label: 'Vencido', className: 'bg-red-500/10 text-red-400 border-red-500/20' };
-  if (diffDias <= 30) return { label: `Vence em ${diffDias}d`, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' };
+  if (diffDias < 0) return { label: 'Vencido', className: 'border-red-200 bg-red-50 text-red-900' };
+  if (diffDias <= 30) return { label: `Vence em ${diffDias}d`, className: 'border-amber-200 bg-amber-50 text-amber-900' };
   return { label: 'Válido', className: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' };
 };
 
@@ -440,7 +440,7 @@ const ChecklistContran = ({ companyId }) => {
                                   <>
                                     <span>Vence {new Date(doc.vencimento).toLocaleDateString('pt-BR')}</span>
                                     {vencStatus && <Badge className={`${vencStatus.className} text-[9px] px-1 py-0`}>{vencStatus.label}</Badge>}
-                                    {doc.vencimento_fonte === 'ocr' && <Sparkles className="h-2.5 w-2.5 text-sky-400" title="Sugerido por OCR" />}
+                                    {doc.vencimento_fonte === 'ocr' && <Sparkles className="h-2.5 w-2.5 text-accent" title="Sugerido por OCR" />}
                                   </>
                                 ) : <span className="italic">definir vencimento</span>}
                                 <Pencil className="h-2.5 w-2.5 opacity-0 group-hover:opacity-60" />
@@ -453,7 +453,7 @@ const ChecklistContran = ({ companyId }) => {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className="bg-muted text-slate-600 border-input text-[10px] font-mono">{TIPO_LABELS[item.tipo]}</Badge>
+                      <Badge className="border-slate-300 bg-slate-100 text-slate-700 text-[10px] font-mono">{TIPO_LABELS[item.tipo]}</Badge>
                     </TableCell>
                     <TableCell className="text-xs text-slate-600 font-mono">{doc ? formatFileSize(doc.file_size) : '—'}</TableCell>
                     <TableCell className="text-xs text-slate-600">{doc ? new Date(doc.created_at).toLocaleDateString('pt-BR') : '—'}</TableCell>

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Shield, FileText, Calendar, ListChecks, ArrowRight, UserPlus } from 'lucide-react';
+import { FileText, Calendar, ListChecks, ArrowRight, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import BrandLogo from '@/components/BrandLogo';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
@@ -30,17 +31,16 @@ const PortariaPublica = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav className="fixed top-0 w-full z-50 bg-black/40 backdrop-blur-xl border-b border-border">
-        <div className="max-w-3xl mx-auto px-6 py-4 flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-          <Shield className="h-7 w-7 text-sky-500" />
-          <span className="text-xl font-bold tracking-tight">SIGCR</span>
+      <nav className="fixed top-0 w-full z-50 border-b border-border bg-background/95 backdrop-blur-xl">
+        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center cursor-pointer" onClick={() => navigate('/')}>
+          <BrandLogo variant="horizontal" className="h-9 w-auto" />
         </div>
       </nav>
 
       <div className="max-w-3xl mx-auto px-6 pt-28 pb-16">
         {loading ? (
           <div className="flex items-center justify-center py-24">
-            <div className="w-8 h-8 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
+            <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
           </div>
         ) : erro || !portaria ? (
           <Card className="bg-card border-border">
@@ -54,10 +54,10 @@ const PortariaPublica = () => {
             <div>
               <div className="flex gap-2 mb-3">
                 {portaria.estado_sigla && (
-                  <Badge className="bg-sky-500/10 text-sky-400 border-sky-500/20 font-mono text-xs">DETRAN-{portaria.estado_sigla}</Badge>
+                  <Badge className="border-accent/25 bg-accent/10 text-accent font-mono text-xs">DETRAN-{portaria.estado_sigla}</Badge>
                 )}
                 {portaria.tipo && (
-                  <Badge className="bg-sky-500/10 text-sky-400 border-sky-500/20 font-mono text-xs">{portaria.tipo}</Badge>
+                  <Badge className="border-accent/25 bg-accent/10 text-accent font-mono text-xs">{portaria.tipo}</Badge>
                 )}
               </div>
               <h1 className="text-2xl font-bold mb-2">{portaria.title}</h1>
@@ -93,7 +93,7 @@ const PortariaPublica = () => {
                 <CardContent className="p-5">
                   <p className="text-sm font-mono uppercase text-slate-500 mb-2">Prazo</p>
                   <div className="flex items-center gap-2 text-sm text-slate-700">
-                    <Calendar className="h-4 w-4 text-sky-500 shrink-0" />
+                    <Calendar className="h-4 w-4 text-accent shrink-0" />
                     <span>
                       {portaria.data_abertura ? new Date(portaria.data_abertura).toLocaleDateString('pt-BR') : '—'}
                       {' até '}
@@ -104,11 +104,11 @@ const PortariaPublica = () => {
               </Card>
             )}
 
-            <Card className="bg-sky-500/5 border-sky-500/20">
+            <Card className="border-accent/25 bg-accent/5">
               <CardContent className="p-5 space-y-3">
                 <p className="text-sm text-slate-700">Pra participar, sua empresa precisa estar cadastrada no SIGCR.</p>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Button onClick={() => navigate('/credenciamento-portaria')} className="bg-primary hover:bg-primary/90 text-white gap-2 flex-1">
+                  <Button onClick={() => navigate('/credenciamento-portaria')} className="gap-2 flex-1">
                     Já tenho cadastro — enviar documentação <ArrowRight className="h-4 w-4" />
                   </Button>
                   <Button onClick={() => navigate('/cadastro')} variant="outline" className="gap-2 flex-1">

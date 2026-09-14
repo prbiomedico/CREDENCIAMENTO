@@ -337,7 +337,7 @@ export default function QueridoDiarioBusca({ estadoFixo, onPromover }) {
                           Edição {item.edition}
                         </Badge>
                       )}
-                      <Badge className="bg-sky-500/10 text-sky-400 border-sky-500/20 font-mono text-xs">
+                      <Badge className="bg-accent/10 text-accent border-accent/25 font-mono text-xs">
                         {qdEstado.sigla}
                       </Badge>
                     </div>

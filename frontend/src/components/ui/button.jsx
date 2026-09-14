@@ -49,7 +49,7 @@ const buttonVariants = cva(
         // ativa), então app-menu-bar.js aplica a mesma cor via className
         // condicional em vez de depender do atributo — ver comentário lá.
         tab:
-          "text-muted-foreground shadow-none hover:text-foreground hover:bg-muted data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-none",
+          "border border-transparent text-muted-foreground shadow-none hover:bg-muted hover:text-foreground data-[state=active]:border-accent/30 data-[state=active]:bg-accent/10 data-[state=active]:text-foreground data-[state=active]:shadow-none",
       },
       size: {
         default: "h-9 px-4 py-2",

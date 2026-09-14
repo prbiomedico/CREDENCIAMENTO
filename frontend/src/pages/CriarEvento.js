@@ -27,7 +27,7 @@ const TEMPLATES_DISPONIVEIS = ['credenciamento'];
 const ICONS = { credenciamento: Shield, licitacao: Shield, dispensa: Zap, chamamento: Users };
 const CORES = {
   credenciamento: { ativo: 'bg-primary-500/20 border-primary-500/50', inativo: 'bg-card border-border', badge: 'bg-primary-500/10 text-primary-400' },
-  licitacao: { ativo: 'bg-sky-500/20 border-sky-500/50', inativo: 'bg-card border-border', badge: 'bg-sky-500/10 text-sky-400' },
+  licitacao: { ativo: 'bg-accent/15 border-accent/40', inativo: 'bg-card border-border', badge: 'bg-accent/10 text-accent' },
   dispensa: { ativo: 'bg-emerald-500/20 border-emerald-500/50', inativo: 'bg-card border-border', badge: 'bg-emerald-500/10 text-emerald-400' },
   chamamento: { ativo: 'bg-secondary-500/20 border-secondary-500/50', inativo: 'bg-card border-border', badge: 'bg-secondary-500/10 text-secondary-400' },
 };
@@ -250,7 +250,7 @@ const CriarEvento = () => {
             <Card className="bg-card border-border">
               <CardHeader className="pb-3">
                 <div className="flex items-center gap-3">{Icon && <Icon className="h-5 w-5 text-primary-400" />}<CardTitle className="text-lg font-heading">{form.titulo}</CardTitle></div>
-                <div className="flex gap-2 mt-2"><Badge className={`${cor?.badge} text-xs font-mono`}>{tmpl?.nome}</Badge><Badge className="bg-sky-500/10 text-sky-400 text-xs font-mono">DETRAN-{form.uf}</Badge></div>
+                <div className="flex gap-2 mt-2"><Badge className={`${cor?.badge} text-xs font-mono`}>{tmpl?.nome}</Badge><Badge className="bg-accent/10 text-accent text-xs font-mono">DETRAN-{form.uf}</Badge></div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-slate-600">{form.descricao}</p>

@@ -20,8 +20,8 @@ const API = `${process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br'}/
 
 const PERFIS = {
   sigcr_admin:       { label: 'Admin SIGCR',    color: 'bg-primary-500/20 text-primary-400 border-primary-500/30',   icon: Shield },
-  detran_admin:      { label: 'Admin DETRAN',   color: 'bg-sky-500/20 text-sky-400 border-sky-500/30',         icon: Landmark },
-  detran:            { label: 'Operador DETRAN', color: 'bg-sky-500/10 text-sky-300 border-sky-500/20',         icon: Landmark },
+  detran_admin:      { label: 'Admin DETRAN',   color: 'bg-accent/15 text-accent border-accent/30',            icon: Landmark },
+  detran:            { label: 'Operador DETRAN', color: 'bg-accent/10 text-accent border-accent/25',            icon: Landmark },
   registradora:      { label: 'Registradora',   color: 'bg-zinc-500/20 text-slate-700 border-zinc-500/30',         icon: Building2 },
   financeira:        { label: 'Financeira',     color: 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30', icon: CreditCard },
 };
@@ -391,7 +391,7 @@ export default function GestaoUsuarios() {
               {[
                 { label: 'Admin SIGCR', color: 'text-primary-400', desc: 'Todas as camadas' },
                 { label: '', color: 'text-slate-400', desc: '' },
-                { label: 'DETRAN', color: 'text-sky-400', desc: 'Registradoras sob sua jurisdio' },
+                { label: 'DETRAN', color: 'text-accent', desc: 'Registradoras sob sua jurisdio' },
                 { label: '', color: 'text-slate-400', desc: '' },
                 { label: 'Registradora', color: 'text-slate-700', desc: 'Financeiras que usam seus servios' },
                 { label: '', color: 'text-slate-400', desc: '' },

@@ -10,30 +10,10 @@ module.exports = {
         mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
-        // ===== Identidade visual "Berry" (referência MUI, licença MIT) =====
-        // Repaginação de cores só — sem migrar pra MUI.
-        //
-        // primary/secondary -> escala completa (50-950) da marca Berry
-        //   (azul/roxo), MESMOS valores hex que viviam em orange/purple
-        //   antes do redesign de 2026-08-25 (SIGCR-Design-System-Fase1.md,
-        //   PENDING_ACTIONS.md item 30) — só renomeados, zero mudança
-        //   visual. orange/purple mapeavam pra essas cores de um jeito que
-        //   parecia armadilha (orange-500 renderizava azul, não laranja) —
-        //   causou bug 2x (título Compliance, card Atenção) antes de ser
-        //   corrigido. primary/secondary têm nome que já diz o que são.
-        // emerald/green -> sucesso Berry (mantido — nome já é consistente
-        //   com a cor real, sem armadilha)
-        // red      -> erro Berry (idem, sem armadilha)
-        // amber/yellow  -> aviso Berry (idem, sem armadilha)
-        // zinc     -> escala de cinza Berry + superfícies paper/background/
-        //             níveis + tons de texto (título/primário/secundário)
-        //
-        // orange/purple (chaves originais "cru"): removidas em 2026-08-25
-        // depois de confirmar zero uso restante fora deste arquivo e do
-        // marcador de mapa (ver item 30) — a armadilha (orange-500
-        // renderizando azul) deixa de existir porque o nome nem existe mais
-        // como escala de cor; quem usar "orange-500" agora cai no laranja
-        // de verdade do Tailwind (comportamento óbvio, não silencioso).
+        // ===== Identidade oficial SIGCR =====
+        // Grafite conduz navegação e ações; dourado identifica seleção e
+        // contexto. Verde, amarelo e vermelho ficam reservados a estados
+        // operacionais, sem competir com a marca.
         emerald: {
           50: '#f0fff5', 100: '#b9f6ca', 200: '#69f0ae', 300: '#3ee88f',
           400: '#1eec82', 500: '#00e676', 600: '#00c853', 700: '#00b34a',

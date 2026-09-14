@@ -36,7 +36,7 @@ export const BLOCOS_POR_PERFIL = {
 // conhecidas). Categoria nova cai no fallback dentro do render — nome vem
 // do próprio catálogo de tipos, sem cor/fonte fixas.
 const PERFIL_SECAO = {
-  registradora: { label: 'Registradora', fonte: 'Resolução CONTRAN 807', badge: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
+  registradora: { label: 'Registradora', fonte: 'Resolução CONTRAN 807', badge: 'bg-accent/10 text-accent border-accent/25' },
   financeira: { label: 'Financeira', fonte: 'Edital DETRAN-DF nº 003/2022', badge: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
 };
 
@@ -219,7 +219,7 @@ const ChecklistCatalogoPicker = ({ selecionados, onToggle }) => {
               className="bg-background border-border text-foreground"
             />
             <div className="flex gap-2">
-              <Button type="button" onClick={criarItemCatalogo} disabled={criando} className="bg-zinc-700 hover:bg-zinc-600 text-foreground gap-1">
+              <Button type="button" onClick={criarItemCatalogo} disabled={criando} className="gap-1">
                 <Plus className="h-4 w-4" />
                 {criando ? 'Salvando...' : 'Salvar no catálogo'}
               </Button>

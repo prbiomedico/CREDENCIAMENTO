@@ -567,7 +567,7 @@ const EmpresaFinanceira = () => {
                       <p className="text-xs text-slate-500 mb-2">DETRANs de Atuação:</p>
                       <div className="flex flex-wrap gap-2">
                         {company.detrans_atuacao.map((detran) => (
-                          <Badge key={detran} className="bg-sky-500/10 text-sky-500 border-sky-500/20 text-xs">
+                          <Badge key={detran} className="bg-accent/10 text-accent border-accent/25 text-xs">
                             DETRAN-{detran}
                           </Badge>
                         ))}

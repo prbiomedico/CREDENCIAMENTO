@@ -526,7 +526,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
                                 {getVencimentoStatus(doc.vencimento).label}
                               </Badge>
                             )}
-                            {doc.vencimento_fonte === 'ocr' && <Sparkles className="h-3 w-3 text-sky-400" title="Sugerido por OCR" />}
+                            {doc.vencimento_fonte === 'ocr' && <Sparkles className="h-3 w-3 text-accent" title="Sugerido por OCR" />}
                           </div>
                         ) : (
                           <span className="text-slate-400 italic">—</span>
@@ -623,7 +623,7 @@ const DocumentosEstadoTab = ({ estadoFixo, compact = false }) => {
               <Label className="text-slate-700 flex items-center gap-1.5">
                 Vencimento
                 {editDialog.doc?.vencimento_fonte === 'ocr' && (
-                  <span className="text-xs text-sky-400 flex items-center gap-1"><Sparkles className="h-3 w-3" /> sugerido por OCR</span>
+                  <span className="text-xs text-accent flex items-center gap-1"><Sparkles className="h-3 w-3" /> sugerido por OCR</span>
                 )}
               </Label>
               <Input

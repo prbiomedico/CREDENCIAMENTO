@@ -25,9 +25,9 @@ const PERFIS = {
   },
   detran: {
     label: 'DETRAN',
-    color: 'text-sky-300',
-    dot: 'bg-sky-400',
-    badge: 'bg-sky-400/10 border-sky-400/25 text-sky-200',
+    color: 'text-primary-300',
+    dot: 'bg-primary-400',
+    badge: 'bg-primary-400/10 border-primary-400/25 text-primary-300',
     icon: Landmark,
   },
   financeira: {
@@ -62,11 +62,11 @@ const NavItemLink = ({ item, location, onNavigate }) => {
           : 'text-slate-400 border border-transparent hover:bg-white/5 hover:text-white'
       }`}
     >
-      {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-sky-400 rounded-r-full" />}
+      {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 rounded-r-full bg-primary-400" />}
       <item.icon className="h-4 w-4 shrink-0" />
       <span className="text-sm">{item.label}</span>
       {item.badge > 0 && (
-        <span className="ml-auto bg-primary-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+        <span className="ml-auto min-w-[18px] rounded-full bg-primary-400 px-1.5 py-0.5 text-center text-[10px] font-bold text-slate-950">
           {item.badge > 99 ? '99+' : item.badge}
         </span>
       )}
@@ -340,7 +340,7 @@ const DashboardLayout = ({ children }) => {
           <div className="flex items-center gap-2">
             <Link to="/notificacoes" data-testid="desktop-notif-link" className="relative grid h-9 w-9 place-items-center rounded-md border border-border bg-white text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Notificações">
               <Bell className="h-4 w-4" />
-              {notifCount > 0 && <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-slate-950 px-1 text-[9px] font-bold text-white">{notifCount > 9 ? '9+' : notifCount}</span>}
+              {notifCount > 0 && <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-primary-400 px-1 text-[9px] font-bold text-slate-950">{notifCount > 9 ? '9+' : notifCount}</span>}
             </Link>
             <div className="ml-1 text-right"><p className="max-w-48 truncate text-xs font-semibold text-foreground">{user?.name}</p><p className="max-w-48 truncate text-[10px] text-muted-foreground">{user?.email}</p></div>
           </div>
@@ -353,7 +353,7 @@ const DashboardLayout = ({ children }) => {
             <BrandLogo variant="horizontal" className="h-9 w-auto" alt="SIGCR" />
             <Link to="/notificacoes" data-testid="mobile-notif-link" className="relative">
               <Bell className="h-5 w-5 text-zinc-400" />
-              {notifCount > 0 && <span className="absolute -top-1 -right-1 bg-primary-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">{notifCount}</span>}
+              {notifCount > 0 && <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary-400 text-[9px] font-bold text-slate-950">{notifCount}</span>}
             </Link>
           </div>
         </header>

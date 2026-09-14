@@ -1,8 +1,8 @@
 /**
  * SIGCR Design System V2 — contratos semânticos.
  *
- * Estes aliases usam apenas tokens já disponíveis no Tailwind atual. Eles são
- * deliberadamente isolados: nenhuma tela produtiva os consome nesta missão.
+ * Estes aliases são a fonte semântica para superfícies, ações e estados. As
+ * telas devem consumir intenção visual, nunca uma cor de marca hardcoded.
  */
 export const statusToneClasses = Object.freeze({
   success: 'border-emerald-200 bg-emerald-50 text-emerald-800',
@@ -28,4 +28,10 @@ export const semanticTokens = Object.freeze({
   surfaceMuted: 'border border-border bg-muted/45',
   primaryAction: 'bg-primary text-primary-foreground hover:bg-primary/90',
   contextualAccent: 'text-accent',
+});
+
+export const navigationTokens = Object.freeze({
+  active: 'border-accent/30 bg-accent/10 text-foreground',
+  accent: 'text-accent',
+  badge: 'bg-accent text-accent-foreground',
 });

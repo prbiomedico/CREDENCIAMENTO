@@ -7,9 +7,9 @@ semânticos e da camada de compatibilidade, para migração estrutural gradual.
 ## Implementação V2 Neutral Enterprise
 
 - Canvas claro e superfícies brancas/cinza-claro; sidebar grafite.
-- CTA principal grafite; azul somente em foco, link, informação e seleção contextual.
+- CTA principal grafite; dourado para foco, seleção e contexto institucional.
 - Button, Card e Dialog sem gradiente/glow decorativo.
-- Classes `blue-*` removidas do código produtivo; cores inline das páginas públicas
+- Classes cromáticas antigas removidas do código produtivo; cores inline das páginas públicas
   convertidas para custom properties semânticas.
 - PageContainer, PageHeader, TableToolbar, StatusBadge e EmptyState seguem como
   composições oficiais; DataTableSurface, DescriptionList, FormSection e AsyncState
@@ -73,7 +73,7 @@ Os sinais mais fortes de “UI de IA” são a combinação de gradiente + glow,
 ### O que existe
 
 - Fontes: Inter (interface), Barlow Condensed (títulos), JetBrains Mono (dados/códigos).
-- Tema escuro único: `background #1a223f`, `card #111936`, níveis `#212946/#29314f`.
+- Canvas claro `#F9FAFB`, superfícies brancas e shell autenticado grafite.
 - Marca: grafite `#1F2937`; acento institucional dourado `#C59B27`.
 - Semânticas disponíveis: verde, âmbar e vermelho em escalas 50–950.
 - Radius: `--radius: .8rem`, `--card-radius: 1rem`.
@@ -83,9 +83,8 @@ Os sinais mais fortes de “UI de IA” são a combinação de gradiente + glow,
 
 ### Conflitos e lacunas
 
-- `Button` default e secondary impõem gradientes e glow, contrários à direção V2.
-- `Dialog` usa blur/glow; Card aplica sombra por padrão.
-- Azul aparece também como `blue-*`, concorrendo com `primary-*`.
+- Variantes de `Button`, `Badge` e tabs precisam permanecer sem cores diretas nas telas.
+- Conflitos de classes devem ser resolvidos pelo utilitário global `cn`.
 - Não há escala documentada de spacing, elevação, largura ou densidade.
 - Breadcrumb existe, mas não é usado pelas telas.
 - Table é primitive, não DataTable; faltam toolbar, paginação e responsividade oficial.
@@ -104,9 +103,9 @@ Substituir composições locais de header/filtro/tabela/status; estilos inline; 
 
 ### Cores
 
-- `canvas`: fundo sólido neutro escuro; `surface`: conteúdo; `surface-raised`: menus/modais.
+- `canvas`: cinza muito claro; `surface`: branco; `surface-raised`: menus/modais brancos.
 - `border-subtle` e `border-strong`: estrutura, nunca decoração.
-- `action-primary`: azul institucional; `action-secondary`: controle neutro. Roxo deixa de ser ação rotineira.
+- `action-primary`: grafite; `action-secondary`: controle neutro; `accent`: dourado institucional.
 - Semânticas: `success`, `warning`, `error`, `info`, `pending`, `neutral`, `revoked`, `approved`, `analysis`, `diligence`.
 - Status do domínio deve ser traduzido para `tone`; a biblioteca não conhece strings da API.
 

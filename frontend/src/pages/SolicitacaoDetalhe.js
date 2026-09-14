@@ -17,7 +17,7 @@ const API = process.env.REACT_APP_API_URL || 'https://api.sigcr.com.br';
 
 const STATUS_DOC = {
   pendente:    { label: 'Faltando Preencher', color: 'bg-muted text-slate-600 border-input',     icon: Clock,       dot: 'bg-zinc-500' },
-  em_analise:  { label: 'Em Anlise',         color: 'bg-sky-900/40 text-sky-400 border-sky-700',  icon: RefreshCw,   dot: 'bg-sky-400 animate-pulse' },
+  em_analise:  { label: 'Em Anlise',         color: 'bg-accent/10 text-accent border-accent/30',  icon: RefreshCw,   dot: 'bg-accent animate-pulse' },
   aprovado:    { label: 'Aprovado',            color: 'bg-emerald-900/40 text-emerald-400 border-emerald-700', icon: CheckCircle, dot: 'bg-emerald-400' },
   reprovado:   { label: 'Reprovado',           color: 'bg-red-900/40 text-red-400 border-red-700',    icon: XCircle,     dot: 'bg-red-400' },
 };
@@ -186,7 +186,7 @@ export default function SolicitacaoDetalhe() {
             </div>
             <div className="flex gap-4 mt-3 text-xs text-slate-500">
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400 inline-block"/>Aprovado</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse inline-block"/>Em anlise</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-accent animate-pulse inline-block"/>Em anlise</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block"/>Reprovado</span>
               <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-zinc-500 inline-block"/>Pendente</span>
             </div>
@@ -214,7 +214,7 @@ export default function SolicitacaoDetalhe() {
                 className={`border transition-all duration-200 ${
                   status === 'aprovado' ? 'border-emerald-800/50 bg-muted/40' :
                   status === 'reprovado' ? 'border-red-800/50 bg-muted/40' :
-                  status === 'em_analise' ? 'border-sky-800/50 bg-muted/40' :
+                  status === 'em_analise' ? 'border-accent/30 bg-accent/5' :
                   'border-border bg-card'
                 }`}>
 
@@ -251,7 +251,7 @@ export default function SolicitacaoDetalhe() {
                           {docData.file_size ? `${(docData.file_size / 1024).toFixed(1)} KB` : ''}
                         </span>
                         <Button variant="ghost" size="sm"
-                          className="text-sky-400 hover:text-sky-300 h-7 px-2"
+                          className="text-accent hover:text-accent/80 h-7 px-2"
                           onClick={() => window.open(`${API}/solicitacoes/${id}/documentos/${encodeURIComponent(docNome)}/download`, '_blank')}>
                           <Eye className="h-3.5 w-3.5 mr-1" /> Visualizar
                         </Button>
@@ -332,7 +332,7 @@ export default function SolicitacaoDetalhe() {
 
                     {/* Status info */}
                     {status === 'em_analise' && !isAnalista && (
-                      <div className="flex items-center gap-2 text-sm text-sky-400">
+                      <div className="flex items-center gap-2 text-sm text-accent">
                         <Bell className="h-4 w-4" />
                         <span>Documento em reviso pelo analista. Voc ser notificado ao concluir.</span>
                       </div>

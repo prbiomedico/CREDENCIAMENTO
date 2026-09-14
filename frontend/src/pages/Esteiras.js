@@ -18,7 +18,7 @@ const STATUS_CFG = {
   em_andamento: { label: "Em Andamento", color: "hsl(var(--sigcr-accent))", bg: "rgba(79,195,247,0.12)" },
   concluido:    { label: "Concluido",    color: "hsl(var(--sigcr-success))", bg: "rgba(129,199,132,0.12)" },
   reprovado:    { label: "Reprovado",    color: "hsl(var(--sigcr-danger))", bg: "rgba(239,154,154,0.12)" },
-  aguardando:   { label: "Aguardando",   color: "hsl(var(--foreground))", bg: "rgba(206,147,216,0.12)" },
+  aguardando:   { label: "Aguardando",   color: "hsl(var(--foreground))", bg: "rgba(197,155,39,0.12)" },
 };
 
 function prog(eventos) {

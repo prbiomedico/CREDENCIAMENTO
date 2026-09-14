@@ -19,7 +19,7 @@ const STATUS_EMPRESA_CFG = {
   pending: { label: 'Pendente', icon: Clock, className: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
   pendente_aprovacao: { label: 'Pendente', icon: Clock, className: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
   approved: { label: 'Aprovada', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
-  aprovado_acesso_limitado: { label: 'Acesso Limitado', icon: CheckCircle, className: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
+  aprovado_acesso_limitado: { label: 'Acesso Limitado', icon: CheckCircle, className: 'bg-accent/10 text-accent border-accent/25' },
   ativo_contrato_assinado: { label: 'Contrato Ativo', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
   rejected: { label: 'Rejeitada', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
   rejeitado: { label: 'Rejeitada', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
@@ -28,7 +28,7 @@ const STATUS_EMPRESA_CFG = {
 const STATUS_SUBMISSAO_CFG = {
   rascunho: { label: 'Rascunho', className: 'bg-muted text-slate-600 border-input' },
   submetido: { label: 'Submetido', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
+  em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-accent/10 text-accent border-accent/25' },
   em_diligencia: { label: 'Em Diligência', icon: FileText, className: 'bg-primary-500/10 text-primary-400 border-primary-500/20' },
   homologado: { label: 'Homologado', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
 };
@@ -196,7 +196,7 @@ const Financeiras = () => {
                             <p className="text-xs text-slate-500 mb-2">DETRANs de Atuação:</p>
                             <div className="flex flex-wrap gap-2">
                               {f.detrans_atuacao.map((uf) => (
-                                <Badge key={uf} className="bg-sky-500/10 text-sky-500 border-sky-500/20 text-xs">DETRAN-{uf}</Badge>
+                                <Badge key={uf} className="bg-accent/10 text-accent border-accent/25 text-xs">DETRAN-{uf}</Badge>
                               ))}
                             </div>
                           </div>

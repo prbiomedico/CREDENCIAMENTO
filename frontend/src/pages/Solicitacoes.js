@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 
 const STATUS_CONFIG = {
   rascunho: { label: 'Rascunho', bg: 'bg-muted', text: 'text-slate-600', icon: FileText },
-  submetida: { label: 'Submetida', bg: 'bg-sky-500/10', text: 'text-sky-400', icon: Send },
+  submetida: { label: 'Submetida', bg: 'bg-accent/10', text: 'text-accent', icon: Send },
   em_analise: { label: 'Em Análise', bg: 'bg-primary-500/10', text: 'text-primary-400', icon: Clock },
   aprovada: { label: 'Aprovada', bg: 'bg-emerald-500/10', text: 'text-emerald-400', icon: CheckCircle },
   rejeitada: { label: 'Rejeitada', bg: 'bg-red-500/10', text: 'text-red-400', icon: XCircle },
@@ -79,7 +79,7 @@ const Solicitacoes = () => {
                     <div className="flex items-start justify-between gap-4 flex-wrap">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <Badge className="bg-sky-500/10 text-sky-400 border-sky-500/20 font-mono text-xs">DETRAN-{sol.uf}</Badge>
+                          <Badge className="bg-accent/10 text-accent border-accent/25 font-mono text-xs">DETRAN-{sol.uf}</Badge>
                           <Badge className={`${cfg.bg} ${cfg.text} text-xs font-mono`}>
                             <Icon className="h-3 w-3 mr-1" />{cfg.label}
                           </Badge>

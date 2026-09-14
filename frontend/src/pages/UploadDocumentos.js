@@ -66,7 +66,7 @@ export default function UploadDocumentos() {
       </div>
 
       {/* Aviso LGPD */}
-      <div style={{ display:"flex", gap:"10px", alignItems:"flex-start", background:"rgba(59,130,246,0.06)", border:"1px solid rgba(59,130,246,0.2)", borderRadius:"12px", padding:"14px 16px", marginBottom:"24px" }}>
+      <div style={{ display:"flex", gap:"10px", alignItems:"flex-start", background:"rgba(197,155,39,0.06)", border:"1px solid rgba(197,155,39,0.22)", borderRadius:"12px", padding:"14px 16px", marginBottom:"24px" }}>
         <Shield size={16} color="hsl(var(--sigcr-accent))" style={{ flexShrink:0, marginTop:"1px" }}/>
         <div style={{ fontSize:"12px", color:"hsl(var(--sigcr-accent))", lineHeight:1.6 }}>
           <strong>Proteo LGPD:</strong> Todos os documentos so armazenados com criptografia AES-256 e acessados apenas por agentes autorizados. O envio implica consentimento para uso exclusivo no processo de credenciamento DETRAN.

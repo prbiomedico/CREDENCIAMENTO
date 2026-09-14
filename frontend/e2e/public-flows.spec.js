@@ -8,13 +8,18 @@ test('landing expõe os caminhos públicos principais', async ({ page }) => {
   await page.goto('/');
   await expect(page).toHaveTitle(/SIGCR/i);
   await expect(page.getByRole('heading', { name: /credenciamento regulatório/i })).toBeVisible();
-  await expect(page.getByRole('button', { name: /acessar plataforma/i })).toBeVisible();
+  const acesso = page.getByRole('button', { name: /acessar plataforma/i });
+  await expect(acesso).toBeVisible();
+  await expect(acesso).toHaveCSS('background-color', 'rgb(31, 41, 55)');
+  await expect(page.getByRole('img', { name: 'SIGCR' }).first()).toHaveAttribute('src', /sigcr-logo-horizontal\.png$/);
 });
 
 test('entrada institucional apresenta o novo acesso seguro', async ({ page }) => {
   await page.goto('/login');
   await expect(page.getByRole('heading', { name: 'Entre no ambiente SIGCR' })).toBeVisible();
-  await expect(page.getByRole('button', { name: /Continuar para autenticação/ })).toBeVisible();
+  const acesso = page.getByRole('button', { name: /Continuar para autenticação/ });
+  await expect(acesso).toBeVisible();
+  await expect(acesso).toHaveCSS('background-color', 'rgb(2, 6, 23)');
   await expect(page.getByText('Sessão protegida.')).toBeVisible();
 });
 

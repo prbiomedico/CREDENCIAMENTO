@@ -21,7 +21,7 @@ const API = `${BACKEND_URL}/api`;
 const STATUS_SUBMISSAO_CFG = {
   rascunho: { label: 'Rascunho', className: 'bg-muted text-slate-600 border-input' },
   submetido: { label: 'Submetido', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
-  em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-sky-500/10 text-sky-400 border-sky-500/20' },
+  em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-accent/10 text-accent border-accent/25' },
   em_diligencia: { label: 'Em Diligência', icon: AlertTriangle, className: 'bg-primary-500/10 text-primary-400 border-primary-500/20' },
   homologado: { label: 'Homologado', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
 };

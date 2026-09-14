@@ -706,7 +706,7 @@ export default function EstadoDetalhe() {
                                 {portaria.status === 'revogada' ? 'Revogada' : 'Vigente'}
                               </Badge>
                               {portaria.tipo && (
-                                <Badge className="bg-purple-500/10 text-purple-400 border-purple-500/20 text-xs">
+                                <Badge className="bg-accent/10 text-accent border-accent/25 text-xs">
                                   {TIPOS_PORTARIA.find((t) => t.value === portaria.tipo)?.label || portaria.tipo}
                                 </Badge>
                               )}
