@@ -41,6 +41,16 @@ test('landing expõe os caminhos públicos principais', async ({ page }) => {
   await expect(page.getByRole('img', { name: 'SIGCR' }).first()).toHaveAttribute('src', /sigcr-logo-horizontal\.png$/);
 });
 
+test('navegação institucional permanece fixa em todas as entradas públicas', async ({ page }) => {
+  for (const rota of ['/', '/login', '/transparencia', '/planos', '/cadastro']) {
+    await page.goto(rota);
+    const header = page.locator('header').first();
+    await expect(header).toBeVisible();
+    await expect(header).toHaveCSS('position', 'fixed');
+    await expect(header.getByRole('link', { name: /SIGCR — início/ })).toBeVisible();
+  }
+});
+
 test('entrada institucional apresenta o novo acesso seguro', async ({ page }) => {
   await page.goto('/login');
   await expect(page.getByRole('heading', { name: 'Entre no ambiente SIGCR' })).toBeVisible();

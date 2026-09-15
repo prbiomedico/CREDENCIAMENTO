@@ -3,12 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import HeroSection, { heroIcons } from '@/components/ui/hero-section';
 
 const LANDING_DATA = {
-  navLinks: [
-    { text: 'Produto', href: '#produto' },
-    { text: 'Segurança', href: '#seguranca' },
-    { text: 'Cobertura nacional', href: '/mapa-nacional' },
-    { text: 'Contato', href: '/planos' },
-  ],
   previewRows: [
     { number: 'PORTARIA 142/2026', title: 'Credenciamento de registradoras', agency: 'DETRAN', uf: 'Distrito Federal', status: 'Vigente', tone: 'vigente', date: '02/09/2026' },
     { number: 'EDITAL 031/2026', title: 'Processo de habilitação técnica', agency: 'DETRAN', uf: 'São Paulo', status: 'Em análise', tone: 'analise', date: '29/08/2026' },

@@ -7,6 +7,7 @@ import { Toaster as SonnerToaster } from '@/components/ui/sonner';
 import { Toaster as LegacyToaster } from '@/components/ui/toaster';
 import RotaProtegida from './components/RotaProtegida';
 import ErrorBoundary from './components/ErrorBoundary';
+import PublicHeader from './components/PublicHeader';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Planos from './pages/Planos';
@@ -37,6 +38,7 @@ import SolicitacaoRegistro from './pages/SolicitacaoRegistro';
 import FilaRegistros from './pages/FilaRegistros';
 import CadastroPublico from './pages/CadastroPublico';
 import SeloPublico from './pages/SeloPublico';
+import PortariaPublica from './pages/PortariaPublica';
 import Auditoria from './pages/Auditoria';
 import '@/App.css';
 
@@ -50,9 +52,17 @@ function RouteBoundary({ children }) {
 }
 
 function AppRoutes() {
+  const location = useLocation();
   const b = (el) => <RouteBoundary>{el}</RouteBoundary>;
+  const publicPath = location.pathname === '/'
+    || ['/login', '/planos', '/cadastro', '/transparencia', '/app-mobile'].includes(location.pathname)
+    || location.pathname.startsWith('/transparencia/')
+    || location.pathname.startsWith('/selo/')
+    || location.pathname.startsWith('/portarias/publico/');
   return (
-    <Routes>
+    <>
+      {publicPath && <PublicHeader />}
+      <Routes>
         <Route path="/" element={b(<Landing />)} />
         <Route path="/login" element={b(<Login />)} />
         <Route path="/dashboard" element={b(<RotaProtegida><Dashboard /></RotaProtegida>)} />
@@ -64,6 +74,7 @@ function AppRoutes() {
         <Route path="/selo/:companyId" element={b(<SeloPublico />)} />
         <Route path="/transparencia" element={b(<Transparencia />)} />
         <Route path="/transparencia/:uf" element={b(<Transparencia />)} />
+        <Route path="/portarias/publico/:token" element={b(<PortariaPublica />)} />
           <Route path="/checkout" element={<Navigate to="/planos" replace />} />
           <Route path="/pagamento/aguardando" element={<Navigate to="/planos" replace />} />
           <Route path="/app-mobile" element={b(<AppMobile />)} />
@@ -93,7 +104,8 @@ function AppRoutes() {
       <Route path="/auditoria" element={b(<RotaProtegida perfilPermitido="sigcr_admin"><Auditoria /></RotaProtegida>)} />
       <Route path="/configuracoes" element={b(<RotaProtegida perfilPermitido="sigcr_admin"><GestaoUsuarios /></RotaProtegida>)} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
-    </Routes>
+      </Routes>
+    </>
   );
 }
 

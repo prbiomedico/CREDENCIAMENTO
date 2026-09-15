@@ -5,7 +5,6 @@ import { FileText, Calendar, ListChecks, ArrowRight, UserPlus } from 'lucide-rea
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import BrandLogo from '@/components/BrandLogo';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
@@ -31,13 +30,7 @@ const PortariaPublica = () => {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav className="fixed top-0 w-full z-50 border-b border-border bg-background/95 backdrop-blur-xl">
-        <div className="max-w-3xl mx-auto px-6 py-3 flex items-center cursor-pointer" onClick={() => navigate('/')}>
-          <BrandLogo variant="horizontal" className="h-9 w-auto" />
-        </div>
-      </nav>
-
-      <div className="max-w-3xl mx-auto px-6 pt-28 pb-16">
+      <div className="max-w-3xl mx-auto px-6 py-16">
         {loading ? (
           <div className="flex items-center justify-center py-24">
             <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />

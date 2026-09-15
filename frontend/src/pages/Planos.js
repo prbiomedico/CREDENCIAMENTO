@@ -1,8 +1,6 @@
 import React, { useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Check, Mail, Send, ShieldCheck } from 'lucide-react';
-import BrandLogo from '../components/BrandLogo';
 import TurnstileWidget from '@/components/TurnstileWidget';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,7 +20,6 @@ const entregas = [
 ];
 
 export default function Planos() {
-  const navigate = useNavigate();
   const [form, setForm] = useState({ nome: '', email: '', telefone: '', website: '' });
   const [captchaToken, setCaptchaToken] = useState('');
   const [enviando, setEnviando] = useState(false);
@@ -50,13 +47,6 @@ export default function Planos() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border bg-card/95">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
-          <BrandLogo variant="horizontal" className="h-10 w-auto" alt="SIGCR" />
-          <Button variant="outline" onClick={() => navigate('/')}>Voltar ao início</Button>
-        </div>
-      </header>
-
       <main className="mx-auto max-w-6xl px-5 py-12 lg:py-16">
         <div className="max-w-3xl">
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-accent">Atendimento consultivo</p>

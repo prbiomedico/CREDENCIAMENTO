@@ -3,9 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import {
   ArrowLeft, ArrowRight, BadgeCheck, Calendar, Eye, FileSearch,
-  LockKeyhole, LogIn, Mail, MapPin, Paperclip, Search, ShieldCheck,
+  LockKeyhole, LogIn, MapPin, Paperclip, Search, ShieldCheck,
 } from 'lucide-react';
-import BrandLogo from '../components/BrandLogo';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -61,19 +60,6 @@ export default function Transparencia() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <nav className="sticky top-0 z-50 border-b border-border bg-card/95 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
-          <button className="flex items-center gap-3" onClick={() => navigate('/')} aria-label="Voltar ao início">
-            <BrandLogo variant="horizontal" className="h-10 w-auto" alt="SIGCR" />
-            <span className="hidden border-l border-border pl-3 text-xs font-semibold text-muted-foreground sm:block">Consulta pública</span>
-          </button>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={() => navigate('/planos')}><Mail className="mr-2 h-4 w-4" /> <span className="hidden sm:inline">Fale conosco</span></Button>
-            <Button size="sm" onClick={() => navigate('/login')}><LogIn className="mr-2 h-4 w-4" /> Entrar</Button>
-          </div>
-        </div>
-      </nav>
-
       <section className="relative overflow-hidden border-b border-border bg-[hsl(var(--sigcr-sidebar))] text-white">
         <div className="absolute inset-y-0 right-0 w-1/2 bg-[radial-gradient(circle_at_70%_35%,rgba(197,155,39,0.22),transparent_58%)]" />
         <div className="relative mx-auto max-w-6xl px-5 py-14 sm:py-20">
