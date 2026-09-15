@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Building2, CheckCircle2 } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Building2, CheckCircle2, ShieldCheck } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,7 +14,6 @@ import TurnstileWidget from '@/components/TurnstileWidget';
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
 const TURNSTILE_SITE_KEY = process.env.REACT_APP_TURNSTILE_SITE_KEY || '';
-const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 
 const emptyForm = () => ({
   tipo_empresa: 'registradora',
@@ -26,19 +25,35 @@ const emptyForm = () => ({
   email_comercial: '',
   whatsapp: '',
   gestor_contrato: '',
-  detrans_atuacao: [],
   password: '',
 });
 
 const CadastroPublico = () => {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const tokenPortaria = params.get('portaria') || '';
   const [formData, setFormData] = useState(emptyForm());
   const [confirmSenha, setConfirmSenha] = useState('');
   const [registradoras, setRegistradoras] = useState([]);
   const [enviando, setEnviando] = useState(false);
   const [concluido, setConcluido] = useState(false);
   const [captchaToken, setCaptchaToken] = useState('');
+  const [portaria, setPortaria] = useState(null);
+  const [portariaErro, setPortariaErro] = useState(false);
+  const [cnpjValidado, setCnpjValidado] = useState(null);
+  const [validandoCnpj, setValidandoCnpj] = useState(false);
   const handleCaptchaToken = useCallback((token) => setCaptchaToken(token), []);
+
+  useEffect(() => {
+    if (!tokenPortaria) return;
+    axios.get(`${API}/portarias/publico/${tokenPortaria}`)
+      .then(({ data }) => {
+        setPortaria(data);
+        const perfis = data.perfis_habilitados || [];
+        if (perfis.length === 1) setFormData((atual) => ({ ...atual, tipo_empresa: perfis[0] }));
+      })
+      .catch(() => setPortariaErro(true));
+  }, [tokenPortaria]);
 
   useEffect(() => {
     if (formData.tipo_empresa !== 'financeira') return;
@@ -47,8 +62,40 @@ const CadastroPublico = () => {
       .catch(() => setRegistradoras([]));
   }, [formData.tipo_empresa]);
 
+  const validarCnpj = async () => {
+    if (!formData.cnpj || !tokenPortaria) return;
+    setValidandoCnpj(true);
+    setCnpjValidado(null);
+    try {
+      const { data } = await axios.post(`${API}/public/portarias/${tokenPortaria}/validar-cnpj`, {
+        cnpj: formData.cnpj,
+        tipo_empresa: formData.tipo_empresa,
+      });
+      setFormData((atual) => ({ ...atual, cnpj: data.cnpj }));
+      setCnpjValidado(data);
+    } catch (error) {
+      toast.error(error?.response?.data?.detail || 'Não foi possível validar o CNPJ');
+    } finally {
+      setValidandoCnpj(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!tokenPortaria || !portaria) {
+      toast.error('Inicie o cadastro por uma Portaria publicada');
+      return;
+    }
+    if (!cnpjValidado
+      || cnpjValidado.cnpj !== formData.cnpj.replace(/\D/g, '')
+      || cnpjValidado.tipo_empresa !== formData.tipo_empresa) {
+      toast.error('Valide o CNPJ antes de continuar');
+      return;
+    }
+    if (cnpjValidado.empresa_ja_cadastrada) {
+      toast.error('Este CNPJ já possui cadastro. Entre com a conta existente.');
+      return;
+    }
     if (formData.password.length < 8) {
       toast.error('Senha deve ter pelo menos 8 caracteres');
       return;
@@ -67,7 +114,7 @@ const CadastroPublico = () => {
     }
     setEnviando(true);
     try {
-      const payload = { ...formData, captcha_token: captchaToken || null };
+      const payload = { ...formData, token_publico: tokenPortaria, captcha_token: captchaToken || null };
       if (payload.tipo_empresa !== 'financeira') delete payload.registradora_id;
       await axios.post(`${API}/public/cadastro`, payload);
       setConcluido(true);
@@ -78,12 +125,24 @@ const CadastroPublico = () => {
     }
   };
 
-  const toggleDetran = (uf) => {
-    setFormData((p) => ({
-      ...p,
-      detrans_atuacao: p.detrans_atuacao.includes(uf) ? p.detrans_atuacao.filter((d) => d !== uf) : [...p.detrans_atuacao, uf],
-    }));
-  };
+  if (!tokenPortaria || portariaErro) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <Card className="max-w-lg border-border bg-card">
+          <CardContent className="p-8 text-center">
+            <ShieldCheck className="mx-auto mb-4 h-12 w-12 text-accent" />
+            <h1 className="text-xl font-bold">Cadastro protegido por Portaria</h1>
+            <p className="mt-2 text-sm text-muted-foreground">O cadastro de Financeiras e Registradoras começa pelo edital publicado pelo DETRAN. Nenhum estado pode ser escolhido livremente.</p>
+            <Button className="mt-6" onClick={() => navigate('/transparencia')}>Consultar Portarias disponíveis</Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (!portaria) {
+    return <div className="min-h-screen bg-background flex items-center justify-center text-sm text-muted-foreground">Validando Portaria publicada…</div>;
+  }
 
   if (concluido) {
     return (
@@ -115,18 +174,19 @@ const CadastroPublico = () => {
               <Building2 className="h-5 w-5 text-primary-400" />
               Cadastro de Empresa
             </CardTitle>
+            {portaria && <p className="text-sm text-muted-foreground">DETRAN-{portaria.estado_sigla} · {portaria.title}</p>}
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <Label className="text-slate-700">Tipo de Empresa</Label>
-                <Select value={formData.tipo_empresa} onValueChange={(value) => setFormData({ ...formData, tipo_empresa: value, registradora_id: '' })}>
+                <Select value={formData.tipo_empresa} onValueChange={(value) => { setFormData({ ...formData, tipo_empresa: value, registradora_id: '' }); setCnpjValidado(null); }}>
                   <SelectTrigger className="bg-muted border-input text-foreground mt-1">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-card border-input text-foreground">
-                    <SelectItem value="registradora">Registradora</SelectItem>
-                    <SelectItem value="financeira">Financeira</SelectItem>
+                    {(portaria?.perfis_habilitados || []).includes('registradora') && <SelectItem value="registradora">Registradora</SelectItem>}
+                    {(portaria?.perfis_habilitados || []).includes('financeira') && <SelectItem value="financeira">Financeira</SelectItem>}
                   </SelectContent>
                 </Select>
               </div>
@@ -165,7 +225,10 @@ const CadastroPublico = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-slate-700">CNPJ</Label>
-                  <Input value={formData.cnpj} onChange={(e) => setFormData({ ...formData, cnpj: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
+                  <Input value={formData.cnpj} onChange={(e) => { setFormData({ ...formData, cnpj: e.target.value }); setCnpjValidado(null); }} onBlur={validarCnpj} className="bg-muted border-input text-foreground mt-1" required />
+                  <p className={`mt-1 text-xs ${cnpjValidado?.empresa_ja_cadastrada ? 'text-amber-700' : 'text-muted-foreground'}`}>
+                    {validandoCnpj ? 'Validando CNPJ...' : cnpjValidado?.empresa_ja_cadastrada ? 'CNPJ já cadastrado — utilize o login existente.' : cnpjValidado ? 'CNPJ válido para esta Portaria.' : 'A validação é obrigatória antes do envio.'}
+                  </p>
                 </div>
                 <div>
                   <Label className="text-slate-700">WhatsApp</Label>
@@ -183,16 +246,8 @@ const CadastroPublico = () => {
                 <Input value={formData.gestor_contrato} onChange={(e) => setFormData({ ...formData, gestor_contrato: e.target.value })} className="bg-muted border-input text-foreground mt-1" required />
               </div>
 
-              <div>
-                <Label className="text-slate-700 mb-2 block">DETRANs de Atuação</Label>
-                <div className="grid grid-cols-5 gap-2 max-h-32 overflow-y-auto p-3 bg-muted border border-input rounded-md">
-                  {UFS.map((uf) => (
-                    <label key={uf} className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer">
-                      <input type="checkbox" checked={formData.detrans_atuacao.includes(uf)} onChange={() => toggleDetran(uf)} className="rounded border-zinc-600" />
-                      {uf}
-                    </label>
-                  ))}
-                </div>
+              <div className="rounded-md border border-accent/25 bg-accent/5 p-3 text-sm text-foreground">
+                Estado vinculado automaticamente: <strong>DETRAN-{portaria?.estado_sigla}</strong>. Estados adicionais dependem do escopo contratado.
               </div>
 
               <div className="border-t border-border pt-4">

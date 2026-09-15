@@ -108,10 +108,10 @@ const PortariaPublica = () => {
               <CardContent className="p-5 space-y-3">
                 <p className="text-sm text-slate-700">Pra participar, sua empresa precisa estar cadastrada no SIGCR.</p>
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Button onClick={() => navigate('/credenciamento-portaria')} className="gap-2 flex-1">
-                    Já tenho cadastro — enviar documentação <ArrowRight className="h-4 w-4" />
+                  <Button onClick={() => navigate('/login')} className="gap-2 flex-1">
+                    Já tenho cadastro — entrar <ArrowRight className="h-4 w-4" />
                   </Button>
-                  <Button onClick={() => navigate('/cadastro')} variant="outline" className="gap-2 flex-1">
+                  <Button onClick={() => navigate(`/cadastro?portaria=${encodeURIComponent(token)}`)} variant="outline" className="gap-2 flex-1">
                     <UserPlus className="h-4 w-4" />
                     Cadastrar minha empresa
                   </Button>

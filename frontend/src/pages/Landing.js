@@ -7,7 +7,7 @@ const LANDING_DATA = {
     { text: 'Produto', href: '#produto' },
     { text: 'Segurança', href: '#seguranca' },
     { text: 'Cobertura nacional', href: '/mapa-nacional' },
-    { text: 'Planos', href: '/planos' },
+    { text: 'Contato', href: '/planos' },
   ],
   previewRows: [
     { number: 'PORTARIA 142/2026', title: 'Credenciamento de registradoras', agency: 'DETRAN', uf: 'Distrito Federal', status: 'Vigente', tone: 'vigente', date: '02/09/2026' },

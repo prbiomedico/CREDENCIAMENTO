@@ -10,8 +10,6 @@ import ErrorBoundary from './components/ErrorBoundary';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Planos from './pages/Planos';
-import Checkout from './pages/Checkout';
-import PagamentoAguardando from './pages/PagamentoAguardando';
 import AppMobile from './pages/AppMobile';
 import UploadDocumentos from './pages/UploadDocumentos';
 import { CookieBanner } from './components/ui/cookie-banner';
@@ -66,8 +64,8 @@ function AppRoutes() {
         <Route path="/selo/:companyId" element={b(<SeloPublico />)} />
         <Route path="/transparencia" element={b(<Transparencia />)} />
         <Route path="/transparencia/:uf" element={b(<Transparencia />)} />
-          <Route path="/checkout" element={b(<Checkout />)} />
-          <Route path="/pagamento/aguardando" element={b(<PagamentoAguardando />)} />
+          <Route path="/checkout" element={<Navigate to="/planos" replace />} />
+          <Route path="/pagamento/aguardando" element={<Navigate to="/planos" replace />} />
           <Route path="/app-mobile" element={b(<AppMobile />)} />
           <Route path="/documentos/upload" element={b(<RotaProtegida><UploadDocumentos /></RotaProtegida>)} />
           <Route path="/mapa-nacional" element={b(<RotaProtegida><MapaNacional /></RotaProtegida>)} />

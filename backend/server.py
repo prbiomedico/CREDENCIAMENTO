@@ -19,6 +19,7 @@ import shutil
 import aiofiles
 import asyncio
 import struct
+import html as html_lib
 from io import BytesIO
 
 
@@ -76,6 +77,10 @@ _cnpj_validator = _CNPJValidator()
 def _validar_cnpj(cnpj: str):
     if not _cnpj_validator.validate(cnpj):
         raise HTTPException(status_code=400, detail="CNPJ inválido")
+
+
+def _normalizar_cnpj(cnpj: str) -> str:
+    return "".join(ch for ch in (cnpj or "") if ch.isdigit())
 
 
 async def _verificar_captcha(captcha_token: Optional[str]):
@@ -1506,8 +1511,113 @@ async def listar_registradoras_publico():
 
 
 class CadastroPublicoPayload(CompanyCreate):
+    token_publico: str
+    # Legado de CompanyCreate: o cliente não controla mais este campo. A UF é
+    # sempre derivada da Portaria publicada no servidor.
+    detrans_atuacao: List[str] = []
     password: str
     captcha_token: Optional[str] = None
+
+
+class ValidacaoCNPJPortariaPayload(BaseModel):
+    cnpj: str
+    tipo_empresa: Literal["registradora", "financeira"]
+
+
+class ContatoComercialPayload(BaseModel):
+    nome: str
+    email: EmailStr
+    telefone: str
+    captcha_token: Optional[str] = None
+    website: str = ""  # honeypot invisível para robôs
+
+
+def _cnpj_formatado(cnpj: str) -> str:
+    return f"{cnpj[:2]}.{cnpj[2:5]}.{cnpj[5:8]}/{cnpj[8:12]}-{cnpj[12:]}"
+
+
+async def _buscar_empresa_por_cnpj(cnpj: str):
+    normalizado = _normalizar_cnpj(cnpj)
+    candidatos = [normalizado]
+    if len(normalizado) == 14:
+        candidatos.append(_cnpj_formatado(normalizado))
+    return await db.companies.find_one(
+        {"cnpj": {"$in": candidatos}, "deleted_at": None}, {"_id": 0}
+    )
+
+
+async def _obter_portaria_publica_para_cadastro(token: str, tipo_empresa: str):
+    portaria = await db.portarias.find_one(
+        {"token_publico": token, "publicado_at": {"$ne": None}, "deleted_at": None},
+        {"_id": 0},
+    )
+    if not portaria or not portaria.get("estado_sigla"):
+        raise HTTPException(status_code=404, detail="Portaria pública não encontrada")
+    perfis = {
+        item.get("perfil_alvo") for item in (portaria.get("checklist_itens") or [])
+        if item.get("perfil_alvo")
+    }
+    if tipo_empresa not in perfis:
+        raise HTTPException(status_code=400, detail="Tipo de empresa não habilitado nesta Portaria")
+    return portaria
+
+
+@api_router.post("/public/contato-comercial", status_code=201)
+async def registrar_contato_comercial(payload: ContatoComercialPayload, request: Request):
+    """Registra um pedido de diagnóstico e avisa a equipe comercial."""
+    _rate_limit(request, "contato_comercial", max_hits=5, window_s=900)
+    await _verificar_captcha(payload.captcha_token)
+    if payload.website:
+        return {"recebido": True}
+    nome = payload.nome.strip()
+    telefone = payload.telefone.strip()
+    if len(nome) < 3 or len(nome) > 120:
+        raise HTTPException(status_code=400, detail="Informe um nome válido")
+    if len(_normalizar_cnpj(telefone)) < 10 or len(telefone) > 30:
+        raise HTTPException(status_code=400, detail="Informe um telefone válido")
+    contato_id = f"contato_{uuid.uuid4().hex[:12]}"
+    criado_em = datetime.now(timezone.utc).isoformat()
+    await db.contatos_comerciais.insert_one({
+        "contato_id": contato_id,
+        "nome": nome,
+        "email": str(payload.email).lower(),
+        "telefone": telefone,
+        "status": "novo",
+        "origem": "site",
+        "criado_em": criado_em,
+    })
+    await enviar_email(
+        db,
+        os.environ.get("CONTACT_EMAIL", "contato@sigcr.com.br"),
+        f"Novo contato comercial — {nome}",
+        "<h2>Novo pedido de contato pelo SIGCR</h2>"
+        f"<p><strong>Nome:</strong> {html_lib.escape(nome)}</p>"
+        f"<p><strong>E-mail:</strong> {html_lib.escape(str(payload.email))}</p>"
+        f"<p><strong>Telefone:</strong> {html_lib.escape(telefone)}</p>",
+        {"tipo": "contato_comercial", "contato_id": contato_id},
+    )
+    return {"recebido": True, "contato_id": contato_id}
+
+
+@api_router.post("/public/portarias/{token}/validar-cnpj")
+async def validar_cnpj_para_portaria(
+    token: str, payload: ValidacaoCNPJPortariaPayload, request: Request
+):
+    _rate_limit(request, "validar_cnpj_portaria", max_hits=15, window_s=300)
+    cnpj = _normalizar_cnpj(payload.cnpj)
+    _validar_cnpj(cnpj)
+    portaria = await _obter_portaria_publica_para_cadastro(token, payload.tipo_empresa)
+    empresa = await _buscar_empresa_por_cnpj(cnpj)
+    return {
+        "valido": True,
+        "cnpj": cnpj,
+        "empresa_ja_cadastrada": bool(empresa),
+        "portaria_id": portaria["portaria_id"],
+        "estado_sigla": portaria["estado_sigla"],
+        "tipo_empresa": payload.tipo_empresa,
+        "validacao": "digitos_verificadores",
+        "validacao_oficial_pendente": True,
+    }
 
 
 @api_router.post("/public/cadastro")
@@ -1526,13 +1636,15 @@ async def autocadastro_publico(payload: CadastroPublicoPayload, request: Request
     PENDING_ACTIONS.md item 19."""
     _rate_limit(request, "public_cadastro", max_hits=5, window_s=300)
     await _verificar_captcha(payload.captcha_token)
-    _validar_cnpj(payload.cnpj)
+    cnpj = _normalizar_cnpj(payload.cnpj)
+    _validar_cnpj(cnpj)
+    portaria = await _obter_portaria_publica_para_cadastro(payload.token_publico, payload.tipo_empresa)
     await _validar_tipo_e_vinculo_empresa(payload.tipo_empresa, payload.registradora_id)
 
     if len(payload.password) < 8:
         raise HTTPException(status_code=400, detail="Senha deve ter pelo menos 8 caracteres")
 
-    if await db.companies.find_one({"cnpj": payload.cnpj, "deleted_at": None}, {"_id": 0}):
+    if await _buscar_empresa_por_cnpj(cnpj):
         raise HTTPException(status_code=409, detail="CNPJ já cadastrado")
 
     token = await get_kc_admin_token()
@@ -1580,12 +1692,12 @@ async def autocadastro_publico(payload: CadastroPublicoPayload, request: Request
                 user_id=user_id,
                 name=payload.name,
                 nome_fantasia=payload.nome_fantasia,
-                cnpj=payload.cnpj,
+                cnpj=cnpj,
                 endereco=payload.endereco,
                 email_comercial=payload.email_comercial,
                 whatsapp=payload.whatsapp,
                 gestor_contrato=payload.gestor_contrato,
-                detrans_atuacao=payload.detrans_atuacao,
+                detrans_atuacao=[portaria["estado_sigla"]],
                 tipo_empresa=payload.tipo_empresa,
                 registradora_id=payload.registradora_id,
                 status="pendente_aprovacao",
@@ -2607,6 +2719,10 @@ async def get_portaria_publica(token: str):
         "data_abertura": portaria.get("data_abertura"),
         "data_encerramento": portaria.get("data_encerramento"),
         "publicado_at": portaria.get("publicado_at"),
+        "perfis_habilitados": sorted({
+            item.get("perfil_alvo") for item in (portaria.get("checklist_itens") or [])
+            if item.get("perfil_alvo") in {"registradora", "financeira"}
+        }),
     }
 
 
@@ -4885,6 +5001,10 @@ async def get_atos_credenciamento_publicos(uf: str):
             "data_encerramento": portaria.get("data_encerramento"),
             "documentos_obrigatorios": [],
             "documentos": documento,
+            "cadastro_url": (
+                f"/cadastro?portaria={portaria.get('token_publico')}"
+                if portaria.get("publicado_at") and portaria.get("token_publico") else None
+            ),
         })
 
     for edital in editais:
@@ -4917,6 +5037,7 @@ async def get_atos_credenciamento_publicos(uf: str):
             "data_encerramento": edital.get("data_encerramento"),
             "documentos_obrigatorios": edital.get("documentos_obrigatorios", []),
             "documentos": documentos,
+            "cadastro_url": None,
         })
 
     atos.sort(key=lambda ato: str(ato.get("data_publicacao") or ""), reverse=True)
