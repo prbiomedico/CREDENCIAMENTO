@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { Bell, CheckCheck, Folder, TrendingUp, FileText, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Bell, CheckCheck, Folder, TrendingUp, FileText, CheckCircle, XCircle, AlertTriangle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import axios from 'axios';
@@ -21,6 +21,15 @@ const ROTA_POR_TIPO = {
   submissao_recebida: (dados) => dados?.submissao_id ? `/detran/conferencia?submissao_id=${dados.submissao_id}` : null,
   checklist_inconforme: (dados) => dados?.submissao_id ? `/credenciamento-portaria?submissao_id=${dados.submissao_id}` : null,
   submissao_homologada: (dados) => dados?.submissao_id ? `/credenciamento-portaria?submissao_id=${dados.submissao_id}` : null,
+  poc_agendada: (dados) => dados?.submissao_id ? `/credenciamento-portaria?submissao_id=${dados.submissao_id}` : null,
+  pagamento_poc_recebido: (dados) => dados?.submissao_id ? `/detran/conferencia?submissao_id=${dados.submissao_id}` : null,
+  pagamento_poc_atualizado: (dados) => dados?.submissao_id ? `/credenciamento-portaria?submissao_id=${dados.submissao_id}` : null,
+  resultado_poc: (dados) => dados?.submissao_id ? `/credenciamento-portaria?submissao_id=${dados.submissao_id}` : null,
+  taxa_credenciamento: (dados) => dados?.submissao_id ? `/credenciamento-portaria?submissao_id=${dados.submissao_id}` : null,
+  taxa_credenciamento_recebida: (dados) => dados?.submissao_id ? `/detran/conferencia?submissao_id=${dados.submissao_id}` : null,
+  taxa_credenciamento_atualizada: (dados) => dados?.submissao_id ? `/credenciamento-portaria?submissao_id=${dados.submissao_id}` : null,
+  contrato_disponivel: (dados) => dados?.submissao_id ? `/credenciamento-portaria?submissao_id=${dados.submissao_id}` : null,
+  contrato_assinado: (dados) => dados?.submissao_id ? `/detran/conferencia?submissao_id=${dados.submissao_id}` : null,
 };
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
@@ -39,6 +48,15 @@ const TIPO_CONFIG = {
   submissao_recebida: { icon: FileText, color: 'blue', label: 'Submissão de Credenciamento' },
   checklist_inconforme: { icon: AlertTriangle, color: 'primary', label: 'Pendência no Credenciamento' },
   submissao_homologada: { icon: CheckCircle, color: 'emerald', label: 'Credenciamento Homologado' },
+  poc_agendada: { icon: Clock, color: 'primary', label: 'POC Agendada' },
+  pagamento_poc_recebido: { icon: FileText, color: 'primary', label: 'Pagamento da POC' },
+  pagamento_poc_atualizado: { icon: CheckCircle, color: 'emerald', label: 'Pagamento da POC' },
+  resultado_poc: { icon: FileText, color: 'primary', label: 'Resultado da POC' },
+  taxa_credenciamento: { icon: FileText, color: 'primary', label: 'Taxa de Credenciamento' },
+  taxa_credenciamento_recebida: { icon: FileText, color: 'primary', label: 'Taxa Recebida' },
+  taxa_credenciamento_atualizada: { icon: CheckCircle, color: 'emerald', label: 'Taxa Analisada' },
+  contrato_disponivel: { icon: FileText, color: 'primary', label: 'Contrato Disponível' },
+  contrato_assinado: { icon: CheckCircle, color: 'emerald', label: 'Contrato Assinado' },
 };
 
 const Notificacoes = () => {

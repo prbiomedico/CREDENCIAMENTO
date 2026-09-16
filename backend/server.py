@@ -832,7 +832,7 @@ class Submissao(BaseModel):
     estado_sigla: str
     company_id: str
     perfil_empresa: str  # Fatia 2: era Literal["registradora","financeira"] — agora É a categoria de credenciamento (TipoCredenciamento.tipo_id) desta submissão, não só um "perfil"
-    status: Literal["rascunho", "submetido", "em_analise", "em_diligencia", "homologado"] = "rascunho"
+    status: str = "rascunho"
     itens: List[SubmissaoItem] = []
     submetido_em: Optional[str] = None
     analisado_em: Optional[str] = None
@@ -843,11 +843,36 @@ class Submissao(BaseModel):
     deleted_at: Optional[str] = None
     deleted_by: Optional[str] = None
     ambiente_homologacao: bool = False
+    fluxo_credenciamento_v2: bool = True
+    tentativas_poc: List[dict] = []
+    taxa_credenciamento: Optional[dict] = None
+    contrato: Optional[dict] = None
+    publicacao_oficial: Optional[dict] = None
 
 
 class SubmissaoItemAnalise(BaseModel):
     status: Literal["conforme", "inconforme"]
     justificativa: Optional[str] = None
+
+
+class AgendarPOCPayload(BaseModel):
+    data_agendada: datetime
+    modalidade: Literal["presencial", "remota", "hibrida"]
+    local: str
+    responsavel: str
+    valor_taxa: float = Field(ge=0)
+    instrucoes: Optional[str] = None
+
+
+class ValidarPagamentoPayload(BaseModel):
+    status: Literal["aprovado", "rejeitado"]
+    justificativa: Optional[str] = None
+
+
+class ConfigurarTaxaCredenciamentoPayload(BaseModel):
+    valor: float = Field(ge=0)
+    vencimento: Optional[datetime] = None
+    instrucoes: Optional[str] = None
 
 
 class SystemUser(BaseModel):
@@ -3794,6 +3819,261 @@ async def analisar_item_submissao(
     return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
 
 
+async def _empresa_e_submissao_do_dono(submissao_id: str, current_user: User) -> tuple[dict, dict]:
+    empresa = await _empresa_do_usuario(current_user)
+    submissao = await db.submissoes.find_one(
+        {"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0}
+    )
+    if not submissao:
+        raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    if not empresa or empresa["company_id"] != submissao["company_id"]:
+        raise HTTPException(status_code=403, detail="Sem acesso a esta submissão")
+    return empresa, submissao
+
+
+async def _notificar_empresa_submissao(submissao: dict, tipo: str, titulo: str, mensagem: str):
+    empresa = await db.companies.find_one(
+        {"company_id": submissao["company_id"]}, {"_id": 0, "user_id": 1}
+    )
+    if empresa and empresa.get("user_id"):
+        await criar_notificacao(
+            empresa["user_id"], tipo, titulo, mensagem,
+            {"submissao_id": submissao["submissao_id"]},
+        )
+
+
+@api_router.post("/submissoes/{submissao_id}/poc/agendar")
+async def agendar_poc(
+    submissao_id: str, payload: AgendarPOCPayload,
+    current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin")),
+):
+    submissao = await db.submissoes.find_one({"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0})
+    if not submissao:
+        raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    await _checar_permissao_escrita_estado(current_user, submissao["estado_sigla"])
+    if not submissao.get("itens") or any(i.get("status") != "conforme" for i in submissao["itens"]):
+        raise HTTPException(status_code=409, detail="A análise documental precisa estar integralmente conforme")
+    if submissao.get("status") not in ("em_analise", "poc_reprovada"):
+        raise HTTPException(status_code=409, detail="A POC não pode ser agendada na etapa atual")
+    tentativas = list(submissao.get("tentativas_poc") or [])
+    numero = len(tentativas) + 1
+    agora = datetime.now(timezone.utc).isoformat()
+    tentativa = {
+        "tentativa_id": f"poc_{uuid.uuid4().hex[:10]}", "numero": numero,
+        "data_agendada": payload.data_agendada.isoformat(), "modalidade": payload.modalidade,
+        "local": payload.local.strip(), "responsavel": payload.responsavel.strip(),
+        "valor_taxa": payload.valor_taxa, "instrucoes": payload.instrucoes,
+        "pagamento_status": "isento" if payload.valor_taxa == 0 else "pendente",
+        "resultado": "aguardando", "agendado_por": current_user.user_id, "agendado_em": agora,
+    }
+    tentativas.append(tentativa)
+    await db.submissoes.update_one(
+        {"submissao_id": submissao_id},
+        {"$set": {"tentativas_poc": tentativas, "status": "poc_agendada", "updated_at": agora}},
+    )
+    await registrar_auditoria(current_user, "agendar_poc", "submissao", submissao_id, {
+        "tentativa": numero, "data_agendada": tentativa["data_agendada"], "valor_taxa": payload.valor_taxa,
+    })
+    await _notificar_empresa_submissao(submissao, "poc_agendada", "POC agendada",
+        f"O DETRAN agendou a tentativa {numero} da POC. Consulte data, instruções e eventual taxa.")
+    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+
+
+@api_router.post("/submissoes/{submissao_id}/poc/{tentativa_id}/comprovante")
+async def enviar_comprovante_poc(
+    submissao_id: str, tentativa_id: str, file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    _, submissao = await _empresa_e_submissao_do_dono(submissao_id, current_user)
+    tentativas = list(submissao.get("tentativas_poc") or [])
+    tentativa = next((t for t in tentativas if t.get("tentativa_id") == tentativa_id), None)
+    if not tentativa:
+        raise HTTPException(status_code=404, detail="Tentativa de POC não encontrada")
+    if tentativa.get("pagamento_status") not in ("pendente", "rejeitado"):
+        raise HTTPException(status_code=409, detail="Esta cobrança não aceita novo comprovante")
+    conteudo = await _ler_pdf_validado(file, contexto="comprovante da POC")
+    pasta = UPLOAD_DIR / "poc" / submissao_id
+    pasta.mkdir(parents=True, exist_ok=True)
+    caminho = pasta / f"{tentativa_id}_pagamento_{uuid.uuid4().hex[:8]}.pdf"
+    async with aiofiles.open(caminho, "wb") as destino:
+        await destino.write(conteudo)
+    tentativa.update({"comprovante_path": str(caminho), "pagamento_status": "em_analise",
+                      "comprovante_enviado_em": datetime.now(timezone.utc).isoformat()})
+    await db.submissoes.update_one({"submissao_id": submissao_id}, {"$set": {"tentativas_poc": tentativas}})
+    await _notificar_detran_uf(submissao["estado_sigla"], "pagamento_poc_recebido", "Pagamento da POC recebido",
+        f"A empresa enviou o comprovante da tentativa {tentativa['numero']}.", {"submissao_id": submissao_id},
+        bool(submissao.get("ambiente_homologacao")))
+    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+
+
+@api_router.patch("/submissoes/{submissao_id}/poc/{tentativa_id}/pagamento")
+async def validar_pagamento_poc(
+    submissao_id: str, tentativa_id: str, payload: ValidarPagamentoPayload,
+    current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin")),
+):
+    submissao = await db.submissoes.find_one({"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0})
+    if not submissao: raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    await _checar_permissao_escrita_estado(current_user, submissao["estado_sigla"])
+    tentativas = list(submissao.get("tentativas_poc") or [])
+    tentativa = next((t for t in tentativas if t.get("tentativa_id") == tentativa_id), None)
+    if not tentativa: raise HTTPException(status_code=404, detail="Tentativa de POC não encontrada")
+    if tentativa.get("pagamento_status") != "em_analise":
+        raise HTTPException(status_code=409, detail="Pagamento não está aguardando análise")
+    tentativa.update({"pagamento_status": payload.status, "pagamento_justificativa": payload.justificativa,
+                      "pagamento_analisado_por": current_user.user_id,
+                      "pagamento_analisado_em": datetime.now(timezone.utc).isoformat()})
+    await db.submissoes.update_one({"submissao_id": submissao_id}, {"$set": {"tentativas_poc": tentativas}})
+    await _notificar_empresa_submissao(submissao, "pagamento_poc_atualizado", "Pagamento da POC analisado",
+        f"O pagamento da tentativa {tentativa['numero']} foi {payload.status}.")
+    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+
+
+@api_router.post("/submissoes/{submissao_id}/poc/{tentativa_id}/resultado")
+async def registrar_resultado_poc(
+    submissao_id: str, tentativa_id: str, resultado: str = Form(...),
+    justificativa: str = Form(""), file: UploadFile = File(...),
+    current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin")),
+):
+    if resultado not in ("aprovada", "reprovada"):
+        raise HTTPException(status_code=400, detail="resultado deve ser aprovada ou reprovada")
+    submissao = await db.submissoes.find_one({"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0})
+    if not submissao: raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    await _checar_permissao_escrita_estado(current_user, submissao["estado_sigla"])
+    tentativas = list(submissao.get("tentativas_poc") or [])
+    tentativa = next((t for t in tentativas if t.get("tentativa_id") == tentativa_id), None)
+    if not tentativa: raise HTTPException(status_code=404, detail="Tentativa de POC não encontrada")
+    if tentativa.get("pagamento_status") not in ("aprovado", "isento"):
+        raise HTTPException(status_code=409, detail="O pagamento da tentativa precisa estar aprovado")
+    if tentativa.get("resultado") != "aguardando":
+        raise HTTPException(status_code=409, detail="Esta tentativa já possui resultado")
+    if resultado == "reprovada" and not justificativa.strip():
+        raise HTTPException(status_code=400, detail="Justificativa é obrigatória na reprovação")
+    conteudo = await _ler_pdf_validado(file, contexto="resultado da POC")
+    pasta = UPLOAD_DIR / "poc" / submissao_id
+    pasta.mkdir(parents=True, exist_ok=True)
+    caminho = pasta / f"{tentativa_id}_{resultado}_{uuid.uuid4().hex[:8]}.pdf"
+    async with aiofiles.open(caminho, "wb") as destino: await destino.write(conteudo)
+    agora = datetime.now(timezone.utc).isoformat()
+    tentativa.update({"resultado": resultado, "resultado_documento_path": str(caminho),
+                      "resultado_justificativa": justificativa.strip() or None,
+                      "resultado_por": current_user.user_id, "resultado_em": agora})
+    novo_status = "poc_aprovada" if resultado == "aprovada" else "poc_reprovada"
+    await db.submissoes.update_one({"submissao_id": submissao_id}, {"$set": {
+        "tentativas_poc": tentativas, "status": novo_status, "updated_at": agora,
+    }})
+    await registrar_auditoria(current_user, "registrar_resultado_poc", "submissao", submissao_id,
+        {"tentativa": tentativa["numero"], "resultado": resultado, "justificativa": justificativa})
+    await _notificar_empresa_submissao(submissao, "resultado_poc", f"POC {resultado}",
+        "O DETRAN anexou o documento oficial do resultado. " +
+        ("O processo seguirá para a taxa de credenciamento." if resultado == "aprovada" else "Uma nova tentativa poderá ser agendada mediante nova cobrança."))
+    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+
+
+@api_router.post("/submissoes/{submissao_id}/taxa-credenciamento")
+async def configurar_taxa_credenciamento(
+    submissao_id: str, payload: ConfigurarTaxaCredenciamentoPayload,
+    current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin")),
+):
+    submissao = await db.submissoes.find_one({"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0})
+    if not submissao: raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    await _checar_permissao_escrita_estado(current_user, submissao["estado_sigla"])
+    if submissao.get("status") != "poc_aprovada":
+        raise HTTPException(status_code=409, detail="A taxa final só pode ser emitida após aprovação na POC")
+    taxa = {"valor": payload.valor, "vencimento": payload.vencimento.isoformat() if payload.vencimento else None,
+            "instrucoes": payload.instrucoes, "status": "isento" if payload.valor == 0 else "pendente",
+            "emitida_por": current_user.user_id, "emitida_em": datetime.now(timezone.utc).isoformat()}
+    await db.submissoes.update_one({"submissao_id": submissao_id}, {"$set": {
+        "taxa_credenciamento": taxa,
+        "status": "contrato_pendente" if payload.valor == 0 else "taxa_credenciamento",
+    }})
+    await _notificar_empresa_submissao(submissao, "taxa_credenciamento", "Taxa de credenciamento emitida",
+        "A POC foi aprovada. Consulte e quite a taxa de credenciamento para avançar ao contrato.")
+    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+
+
+@api_router.post("/submissoes/{submissao_id}/taxa-credenciamento/comprovante")
+async def enviar_comprovante_taxa_credenciamento(
+    submissao_id: str, file: UploadFile = File(...), current_user: User = Depends(get_current_user),
+):
+    _, submissao = await _empresa_e_submissao_do_dono(submissao_id, current_user)
+    taxa = dict(submissao.get("taxa_credenciamento") or {})
+    if taxa.get("status") not in ("pendente", "rejeitado"):
+        raise HTTPException(status_code=409, detail="A taxa não aceita novo comprovante")
+    conteudo = await _ler_pdf_validado(file, contexto="comprovante da taxa de credenciamento")
+    pasta = UPLOAD_DIR / "credenciamento" / submissao_id; pasta.mkdir(parents=True, exist_ok=True)
+    caminho = pasta / f"taxa_{uuid.uuid4().hex[:8]}.pdf"
+    async with aiofiles.open(caminho, "wb") as destino: await destino.write(conteudo)
+    taxa.update({"comprovante_path": str(caminho), "status": "em_analise",
+                 "comprovante_enviado_em": datetime.now(timezone.utc).isoformat()})
+    await db.submissoes.update_one({"submissao_id": submissao_id}, {"$set": {"taxa_credenciamento": taxa}})
+    await _notificar_detran_uf(submissao["estado_sigla"], "taxa_credenciamento_recebida", "Taxa de credenciamento recebida",
+        "A empresa enviou o comprovante da taxa final.", {"submissao_id": submissao_id}, bool(submissao.get("ambiente_homologacao")))
+    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+
+
+@api_router.patch("/submissoes/{submissao_id}/taxa-credenciamento/pagamento")
+async def validar_taxa_credenciamento(
+    submissao_id: str, payload: ValidarPagamentoPayload,
+    current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin")),
+):
+    submissao = await db.submissoes.find_one({"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0})
+    if not submissao: raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    await _checar_permissao_escrita_estado(current_user, submissao["estado_sigla"])
+    taxa = dict(submissao.get("taxa_credenciamento") or {})
+    if taxa.get("status") != "em_analise": raise HTTPException(status_code=409, detail="Pagamento não está em análise")
+    taxa.update({"status": payload.status, "justificativa": payload.justificativa,
+                 "analisado_por": current_user.user_id, "analisado_em": datetime.now(timezone.utc).isoformat()})
+    novo_status = "contrato_pendente" if payload.status == "aprovado" else "taxa_credenciamento"
+    await db.submissoes.update_one({"submissao_id": submissao_id}, {"$set": {"taxa_credenciamento": taxa, "status": novo_status}})
+    await _notificar_empresa_submissao(submissao, "taxa_credenciamento_atualizada", "Taxa de credenciamento analisada",
+        f"O pagamento da taxa de credenciamento foi {payload.status}.")
+    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+
+
+@api_router.post("/submissoes/{submissao_id}/contrato")
+async def disponibilizar_contrato(
+    submissao_id: str, file: UploadFile = File(...),
+    current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin")),
+):
+    submissao = await db.submissoes.find_one({"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0})
+    if not submissao: raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    await _checar_permissao_escrita_estado(current_user, submissao["estado_sigla"])
+    taxa = submissao.get("taxa_credenciamento") or {}
+    if taxa.get("status") not in ("aprovado", "isento"):
+        raise HTTPException(status_code=409, detail="A taxa de credenciamento precisa estar quitada ou isenta")
+    conteudo = await _ler_pdf_validado(file, contexto="contrato de credenciamento")
+    pasta = UPLOAD_DIR / "credenciamento" / submissao_id; pasta.mkdir(parents=True, exist_ok=True)
+    caminho = pasta / f"contrato_detran_{uuid.uuid4().hex[:8]}.pdf"
+    async with aiofiles.open(caminho, "wb") as destino: await destino.write(conteudo)
+    contrato = {"minuta_path": str(caminho), "status": "aguardando_assinatura",
+                "disponibilizado_por": current_user.user_id, "disponibilizado_em": datetime.now(timezone.utc).isoformat()}
+    await db.submissoes.update_one({"submissao_id": submissao_id}, {"$set": {"contrato": contrato, "status": "contrato_assinatura"}})
+    await _notificar_empresa_submissao(submissao, "contrato_disponivel", "Contrato disponível para assinatura",
+        "O DETRAN disponibilizou o contrato. Assine e envie a versão final.")
+    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+
+
+@api_router.post("/submissoes/{submissao_id}/contrato/assinado")
+async def enviar_contrato_assinado(
+    submissao_id: str, file: UploadFile = File(...), current_user: User = Depends(get_current_user),
+):
+    _, submissao = await _empresa_e_submissao_do_dono(submissao_id, current_user)
+    contrato = dict(submissao.get("contrato") or {})
+    if contrato.get("status") != "aguardando_assinatura":
+        raise HTTPException(status_code=409, detail="O contrato não está aguardando assinatura")
+    conteudo = await _ler_pdf_validado(file, contexto="contrato assinado")
+    pasta = UPLOAD_DIR / "credenciamento" / submissao_id; pasta.mkdir(parents=True, exist_ok=True)
+    caminho = pasta / f"contrato_assinado_{uuid.uuid4().hex[:8]}.pdf"
+    async with aiofiles.open(caminho, "wb") as destino: await destino.write(conteudo)
+    contrato.update({"assinado_path": str(caminho), "status": "assinado",
+                     "assinado_em": datetime.now(timezone.utc).isoformat()})
+    await db.submissoes.update_one({"submissao_id": submissao_id}, {"$set": {"contrato": contrato, "status": "homologacao_pendente"}})
+    await _notificar_detran_uf(submissao["estado_sigla"], "contrato_assinado", "Contrato assinado recebido",
+        "A empresa enviou o contrato assinado. O processo pode ser homologado e publicado.",
+        {"submissao_id": submissao_id}, bool(submissao.get("ambiente_homologacao")))
+    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+
+
 @api_router.post("/submissoes/{submissao_id}/homologar")
 async def homologar_submissao(
     submissao_id: str, current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin"))
@@ -3805,6 +4085,11 @@ async def homologar_submissao(
     if not submissao:
         raise HTTPException(status_code=404, detail="Submissão não encontrada")
     await _checar_permissao_escrita_estado(current_user, submissao["estado_sigla"])
+    if submissao.get("fluxo_credenciamento_v2"):
+        raise HTTPException(
+            status_code=409,
+            detail="Novo fluxo: conclua POC, taxa, contrato e publicação oficial antes da homologação",
+        )
     if submissao["status"] == "homologado":
         raise HTTPException(status_code=400, detail="Submissão já homologada")
     if not submissao["itens"] or any(i["status"] != "conforme" for i in submissao["itens"]):
@@ -3856,6 +4141,108 @@ async def homologar_submissao(
             {"submissao_id": submissao_id}
         )
     return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+
+
+@api_router.post("/submissoes/{submissao_id}/homologacao-publicacao")
+async def homologar_e_publicar_submissao(
+    submissao_id: str, numero_ato: str = Form(...), data_publicacao: str = Form(...),
+    veiculo_oficial: str = Form(...), link_publicacao: str = Form(""),
+    file: UploadFile = File(...),
+    current_user: User = Depends(require_perfil("sigcr_admin", "detran", "detran_admin")),
+):
+    submissao = await db.submissoes.find_one({"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0})
+    if not submissao: raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    await _checar_permissao_escrita_estado(current_user, submissao["estado_sigla"])
+    if submissao.get("status") != "homologacao_pendente" or (submissao.get("contrato") or {}).get("status") != "assinado":
+        raise HTTPException(status_code=409, detail="O contrato assinado é obrigatório antes da homologação")
+    try:
+        data_iso = datetime.fromisoformat(data_publicacao).date().isoformat()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="data_publicacao inválida (AAAA-MM-DD)")
+    conteudo = await _ler_pdf_validado(file, contexto="ato de homologação/publicação")
+    pasta = UPLOAD_DIR / "credenciamento" / submissao_id; pasta.mkdir(parents=True, exist_ok=True)
+    caminho = pasta / f"homologacao_{uuid.uuid4().hex[:8]}.pdf"
+    async with aiofiles.open(caminho, "wb") as destino: await destino.write(conteudo)
+    agora = datetime.now(timezone.utc).isoformat()
+    publicacao = {"numero_ato": numero_ato.strip(), "data_publicacao": data_iso,
+                  "veiculo_oficial": veiculo_oficial.strip(), "link_publicacao": link_publicacao.strip() or None,
+                  "documento_path": str(caminho), "registrado_por": current_user.user_id, "registrado_em": agora}
+    await db.submissoes.update_one({"submissao_id": submissao_id}, {"$set": {
+        "publicacao_oficial": publicacao, "status": "homologado",
+        "homologado_em": agora, "homologado_por": current_user.user_id,
+    }})
+    credenciamento_existente = await db.credenciamentos.find_one({
+        "company_id": submissao["company_id"], "estado_sigla": submissao["estado_sigla"],
+        "categoria": submissao["perfil_empresa"], "deleted_at": None,
+    }, {"_id": 0})
+    if credenciamento_existente:
+        await db.credenciamentos.update_one(
+            {"credenciamento_id": credenciamento_existente["credenciamento_id"]},
+            {"$set": {"status": "ativo", "extrato_contrato": f"Homologado pelo ato {numero_ato}", "updated_at": agora}},
+        )
+    else:
+        credenciamento = CredenciamentoDetalhes(
+            company_id=submissao["company_id"], estado_sigla=submissao["estado_sigla"],
+            categoria=submissao["perfil_empresa"], extrato_contrato=f"Homologado pelo ato {numero_ato}",
+            status="ativo", created_by=current_user.user_id,
+        )
+        doc = credenciamento.model_dump(); doc["created_at"] = doc["created_at"].isoformat()
+        await db.credenciamentos.insert_one(doc)
+    await registrar_auditoria(current_user, "homologar_publicar_submissao", "submissao", submissao_id, publicacao)
+    await _notificar_empresa_submissao(submissao, "submissao_homologada", "Credenciamento homologado e publicado",
+        f"O credenciamento foi publicado em {veiculo_oficial}, ato {numero_ato}.")
+    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+
+
+async def _arquivo_privado_submissao(submissao_id: str, current_user: User) -> dict:
+    submissao = await db.submissoes.find_one(
+        {"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0}
+    )
+    if not submissao:
+        raise HTTPException(status_code=404, detail="Submissão não encontrada")
+    await _autorizar_acesso_submissao(submissao, current_user)
+    return submissao
+
+
+def _responder_pdf_privado(path_str: str, nome: str):
+    caminho = _resolver_path_seguro(path_str or "")
+    if not caminho:
+        raise HTTPException(status_code=404, detail="Documento não encontrado")
+    return FileResponse(caminho, filename=nome, media_type="application/pdf")
+
+
+@api_router.get("/submissoes/{submissao_id}/poc/{tentativa_id}/resultado/download")
+async def download_resultado_poc(
+    submissao_id: str, tentativa_id: str, current_user: User = Depends(get_current_user),
+):
+    submissao = await _arquivo_privado_submissao(submissao_id, current_user)
+    tentativa = next((t for t in submissao.get("tentativas_poc", []) if t.get("tentativa_id") == tentativa_id), None)
+    if not tentativa:
+        raise HTTPException(status_code=404, detail="Tentativa de POC não encontrada")
+    return _responder_pdf_privado(
+        tentativa.get("resultado_documento_path"), f"resultado_poc_tentativa_{tentativa.get('numero', 1)}.pdf"
+    )
+
+
+@api_router.get("/submissoes/{submissao_id}/contrato/{tipo}/download")
+async def download_contrato_credenciamento(
+    submissao_id: str, tipo: str, current_user: User = Depends(get_current_user),
+):
+    submissao = await _arquivo_privado_submissao(submissao_id, current_user)
+    if tipo not in ("minuta", "assinado"):
+        raise HTTPException(status_code=400, detail="Tipo de contrato inválido")
+    campo = "minuta_path" if tipo == "minuta" else "assinado_path"
+    return _responder_pdf_privado((submissao.get("contrato") or {}).get(campo), f"contrato_{tipo}.pdf")
+
+
+@api_router.get("/submissoes/{submissao_id}/publicacao/download")
+async def download_publicacao_credenciamento(
+    submissao_id: str, current_user: User = Depends(get_current_user),
+):
+    submissao = await _arquivo_privado_submissao(submissao_id, current_user)
+    return _responder_pdf_privado(
+        (submissao.get("publicacao_oficial") or {}).get("documento_path"), "ato_homologacao.pdf"
+    )
 
 
 def _gerar_comprovante_pdf(submissao: dict, company: dict, portaria: dict) -> bytes:

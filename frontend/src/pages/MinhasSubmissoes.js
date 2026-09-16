@@ -14,6 +14,7 @@ import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import FluxoCredenciamento from '../components/FluxoCredenciamento';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
@@ -23,6 +24,13 @@ const STATUS_SUBMISSAO_CFG = {
   submetido: { label: 'Submetido', icon: FileText, className: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
   em_analise: { label: 'Em Análise', icon: Clock, className: 'bg-accent/10 text-accent border-accent/25' },
   em_diligencia: { label: 'Em Diligência', icon: AlertTriangle, className: 'bg-primary-500/10 text-primary-400 border-primary-500/20' },
+  poc_agendada: { label: 'POC Agendada', icon: Clock, className: 'bg-amber-500/10 text-amber-700 border-amber-200' },
+  poc_reprovada: { label: 'POC Reprovada', icon: XCircle, className: 'bg-red-500/10 text-red-600 border-red-200' },
+  poc_aprovada: { label: 'POC Aprovada', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-600 border-emerald-200' },
+  taxa_credenciamento: { label: 'Taxa de Credenciamento', icon: Clock, className: 'bg-amber-500/10 text-amber-700 border-amber-200' },
+  contrato_pendente: { label: 'Contrato Pendente', icon: FileText, className: 'bg-accent/10 text-accent border-accent/25' },
+  contrato_assinatura: { label: 'Aguardando Assinatura', icon: FileText, className: 'bg-accent/10 text-accent border-accent/25' },
+  homologacao_pendente: { label: 'Homologação Pendente', icon: Clock, className: 'bg-primary-500/10 text-primary-500 border-primary-200' },
   homologado: { label: 'Homologado', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
 };
 
@@ -267,7 +275,7 @@ const MinhasSubmissoes = () => {
               // categorias que essa portaria cobre.
               return cats.map((cat) => {
                 const sub = submissaoDe(portaria.portaria_id, cat);
-                const cfg = sub ? STATUS_SUBMISSAO_CFG[sub.status] : null;
+                const cfg = sub ? (STATUS_SUBMISSAO_CFG[sub.status] || { label: sub.status, className: 'bg-muted text-slate-600 border-input' }) : null;
                 const tipoInfo = tipos.find((t) => t.tipo_id === cat);
                 return (
                   <Card
@@ -331,8 +339,8 @@ const MinhasSubmissoes = () => {
                   <CardContent className="p-4 flex items-center justify-between">
                     <div>
                       <p className="text-xs text-slate-500 uppercase font-mono">Status do processo</p>
-                      <Badge className={`${STATUS_SUBMISSAO_CFG[submissaoSelecionada.status].className} mt-1 font-mono uppercase text-xs`}>
-                        {STATUS_SUBMISSAO_CFG[submissaoSelecionada.status].label}
+                      <Badge className={`${(STATUS_SUBMISSAO_CFG[submissaoSelecionada.status] || STATUS_SUBMISSAO_CFG.rascunho).className} mt-1 font-mono uppercase text-xs`}>
+                        {(STATUS_SUBMISSAO_CFG[submissaoSelecionada.status] || { label: submissaoSelecionada.status }).label}
                       </Badge>
                     </div>
                     {submissaoSelecionada.status === 'rascunho' && (
@@ -354,6 +362,14 @@ const MinhasSubmissoes = () => {
                     )}
                   </CardContent>
                 </Card>
+
+                {submissaoSelecionada.fluxo_credenciamento_v2 && (
+                  <FluxoCredenciamento
+                    submissao={submissaoSelecionada}
+                    modo="empresa"
+                    onAtualizar={(atualizada) => setSubmissoes((prev) => prev.map((s) => s.submissao_id === atualizada.submissao_id ? atualizada : s))}
+                  />
+                )}
 
                 <div className="space-y-2">
                   {submissaoSelecionada.itens.map((item) => {
