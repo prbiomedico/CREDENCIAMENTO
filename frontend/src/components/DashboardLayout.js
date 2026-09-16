@@ -232,7 +232,7 @@ const DashboardLayout = ({ children }) => {
                 data-testid="view-as-detran-select"
                 className="w-full text-[11px] font-mono bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-slate-200"
               >
-                <option value="">Visão irrestrita (sem simulação)</option>
+                <option value="">Admin de homologação (visão irrestrita)</option>
                 {UFS.map(uf => <option key={uf} value={uf}>Simular DETRAN {uf}</option>)}
               </select>
             ) : (
@@ -242,11 +242,16 @@ const DashboardLayout = ({ children }) => {
                 data-testid="view-as-empresa-select"
                 className="w-full text-[11px] font-mono bg-slate-900 border border-slate-700 rounded px-2 py-1.5 text-slate-200"
               >
-                <option value="">Visão irrestrita (sem simulação)</option>
+                <option value="">Admin de homologação (visão irrestrita)</option>
                 {empresasSimulacao.map(c => (
                   <option key={c.company_id} value={c.company_id}>Simular {c.nome_fantasia || c.name}</option>
                 ))}
               </select>
+            )}
+            {!viewingAs && (perfilAtivo === 'registradora' || perfilAtivo === 'financeira') && (
+              <p className="text-[10px] text-amber-400 font-mono mt-1 px-0.5">
+                Você recebe prévias de teste. Selecione uma empresa para validar também a visão operacional real.
+              </p>
             )}
             {viewingAs && (
               <p className="text-[10px] text-amber-400 font-mono mt-1 px-0.5">

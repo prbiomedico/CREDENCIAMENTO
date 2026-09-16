@@ -23,11 +23,14 @@ def test_acervo_e_mapa_por_visao(monkeypatch):
             await db.companies.insert_many([
                 {'company_id':'c1','user_id':'owner1','detrans_atuacao':['SP'],'tipo_empresa':'registradora'},
                 {'company_id':'c2','user_id':'owner2','detrans_atuacao':['RN'],'tipo_empresa':'registradora'},
+                {'company_id':'ch','user_id':'ownerh','detrans_atuacao':['SP'],'tipo_empresa':'registradora','ambiente_homologacao':True},
             ])
             await db.portarias.insert_many([
                 {'portaria_id':'ready','title':'Portaria teste','content':'Teste','source':'Teste','date':'2026-09-05','link_pdf':'/tmp/exemplo.pdf','estado_sigla':'SP'},
                 {'portaria_id':'missing','title':'Portaria teste','content':'Teste','source':'Teste','date':'2026-09-05','link_pdf':None,'estado_sigla':'SP'},
                 {'portaria_id':'draft','title':'Portaria teste','content':'Teste','source':'Teste','date':'2026-09-05','link_pdf':'/tmp/exemplo.pdf','estado_sigla':'SP','criado_via':'wizard'},
+                {'portaria_id':'published-no-pdf','title':'Portaria teste','content':'Teste','source':'Teste','date':'2026-09-05','link_pdf':None,'estado_sigla':'SP','criado_via':'wizard','publicado_at':'2026-09-16T00:00:00+00:00'},
+                {'portaria_id':'homolog','title':'Portaria teste','content':'Teste','source':'Teste','date':'2026-09-05','link_pdf':'/tmp/exemplo.pdf','estado_sigla':'SP','ambiente_homologacao':True},
                 {'portaria_id':'deleted','title':'Portaria teste','content':'Teste','source':'Teste','date':'2026-09-05','link_pdf':'/tmp/exemplo.pdf','deleted_at':'2026-01-01'},
             ])
             await db.credenciamentos.insert_many([
@@ -42,8 +45,9 @@ def test_acervo_e_mapa_por_visao(monkeypatch):
                 listed = await http.get('/api/portarias')
                 searched = await http.get('/api/portarias/search', params={'q':'teste'})
                 assert listed.status_code == searched.status_code == 200
-                assert [p['portaria_id'] for p in searched.json()] == ['ready']
-                assert [p['portaria_id'] for p in listed.json()] == ['ready']
+                assert {p['portaria_id'] for p in searched.json()} == {'ready', 'published-no-pdf'}
+                assert {p['portaria_id'] for p in listed.json()} == {'ready', 'published-no-pdf'}
+                assert (await http.get('/api/portarias/published-no-pdf')).status_code == 200
                 assert (await http.get('/api/portarias/draft/pdf')).status_code == 404
                 response = await http.get('/api/mapa-nacional')
                 assert response.status_code == 200
@@ -57,7 +61,10 @@ def test_acervo_e_mapa_por_visao(monkeypatch):
                 mapa = {x['sigla']:x for x in (await http.get('/api/mapa-nacional')).json()}
                 assert mapa['RN']['aprovadas'] == 1
                 searched = await http.get('/api/portarias/search', params={'q':'teste'})
-                assert len(searched.json()) == 3
+                assert len(searched.json()) == 5
+                active_scope = server.EffectiveScope(current_user=admin, effective_user_id='ownerh', effective_company_id='ch', effective_perfil='registradora', viewing_as={'tipo':'empresa'})
+                searched = await http.get('/api/portarias/search', params={'q':'teste'})
+                assert [p['portaria_id'] for p in searched.json()] == ['homolog']
                 active_scope = server.EffectiveScope(current_user=admin, effective_user_id='master', effective_perfil='detran', effective_detran_uf='SP')
                 assert [x['sigla'] for x in (await http.get('/api/mapa-nacional')).json()] == ['SP']
         finally:

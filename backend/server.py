@@ -442,6 +442,7 @@ class User(BaseModel):
     # (sigcr_admin/detran/detran_admin) que não têm companies nem contas_pf.
     tipo_conta: Optional[str] = None       # "empresa" | "pessoa_fisica" | None
     account_status: Optional[str] = None   # espelha companies.status ou contas_pf.status
+    ambiente_homologacao: bool = False
 
 
 class UserSession(BaseModel):
@@ -502,6 +503,7 @@ class Company(BaseModel):
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     deleted_at: Optional[str] = None
     deleted_by: Optional[str] = None
+    ambiente_homologacao: bool = False
 
 
 class ContaPF(BaseModel):
@@ -675,6 +677,7 @@ class Portaria(BaseModel):
     updated_at: Optional[datetime] = None
     deleted_at: Optional[str] = None
     deleted_by: Optional[str] = None
+    ambiente_homologacao: bool = False
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -1021,6 +1024,10 @@ async def get_current_user(request: Request) -> User:
                 upsert=True,
             )
 
+            usuario_operacional = await db.users.find_one(
+                {"user_id": user_id}, {"_id": 0, "ambiente_homologacao": 1}
+            ) or {}
+
             return await _anexar_status_conta(User(
                 user_id=user_id,
                 email=email,
@@ -1029,6 +1036,7 @@ async def get_current_user(request: Request) -> User:
                 perfil=perfil,
                 roles=sigcr_roles,
                 detran_uf=detran_uf,
+                ambiente_homologacao=bool(usuario_operacional.get("ambiente_homologacao")),
             ))
     except Exception as e:
         logger.warning(f"JWT Keycloak inválido: {e}")
@@ -1504,7 +1512,8 @@ async def listar_registradoras_publico():
     vínculo no autocadastro de Financeira (Fase A). Só o essencial pra exibir
     numa lista de escolha; nada de dados sensíveis da empresa."""
     registradoras = await db.companies.find(
-        {"tipo_empresa": "registradora", "status": "ativo_contrato_assinado", "deleted_at": None},
+        {"tipo_empresa": "registradora", "status": "ativo_contrato_assinado", "deleted_at": None,
+         "ambiente_homologacao": {"$ne": True}},
         {"_id": 0, "company_id": 1, "nome_fantasia": 1},
     ).sort("nome_fantasia", 1).to_list(1000)
     return registradoras
@@ -1548,7 +1557,8 @@ async def _buscar_empresa_por_cnpj(cnpj: str):
 
 async def _obter_portaria_publica_para_cadastro(token: str, tipo_empresa: str):
     portaria = await db.portarias.find_one(
-        {"token_publico": token, "publicado_at": {"$ne": None}, "deleted_at": None},
+        {"token_publico": token, "publicado_at": {"$ne": None}, "deleted_at": None,
+         "ambiente_homologacao": {"$ne": True}},
         {"_id": 0},
     )
     if not portaria or not portaria.get("estado_sigla"):
@@ -2285,6 +2295,28 @@ def _categorias_da_empresa(empresa: dict) -> set:
     return categorias
 
 
+async def _ambiente_homologacao_do_usuario(user: User) -> bool:
+    """Fonte única do isolamento real↔homologação.
+
+    Perfis DETRAN são marcados diretamente em users; empresas carregam a
+    marca no próprio cadastro. O fallback em User permite usar o valor já
+    anexado durante a autenticação sem depender de claim customizado no
+    Keycloak.
+    """
+    if user.ambiente_homologacao:
+        return True
+    empresa = await db.companies.find_one(
+        {"user_id": user.user_id, "deleted_at": None},
+        {"_id": 0, "ambiente_homologacao": 1},
+    )
+    if empresa:
+        return bool(empresa.get("ambiente_homologacao"))
+    doc = await db.users.find_one(
+        {"user_id": user.user_id}, {"_id": 0, "ambiente_homologacao": 1}
+    )
+    return bool((doc or {}).get("ambiente_homologacao"))
+
+
 # ============ Portaria Routes ============
 
 @api_router.get("/portarias", response_model=List[Portaria])
@@ -2311,6 +2343,9 @@ async def get_portarias(
     a lista irrestrita mesmo simulando registradora/financeira."""
     current_user = scope.as_user()
     query = {}
+    if current_user.perfil in ("registradora", "financeira", "detran", "detran_admin"):
+        em_homologacao = await _ambiente_homologacao_do_usuario(current_user)
+        query["ambiente_homologacao"] = True if em_homologacao else {"$ne": True}
     if estado_sigla:
         estado_sigla = estado_sigla.upper()
         if estado_sigla not in UF_VALIDAS:
@@ -2328,8 +2363,22 @@ async def get_portarias(
         # sem publicar — portarias legadas/manuais, sem esse campo, sempre
         # passam nesta condição). Combinado com AND: as duas guardas
         # precisam ser satisfeitas pra aparecer.
-        query["link_pdf"] = {"$nin": [None, ""]}
-        query["$or"] = [{"criado_via": {"$ne": "wizard"}}, {"publicado_at": {"$ne": None}}]
+        # Um evento publicado pelo wizard pode legitimamente não ter PDF: o
+        # próprio wizard permite anexá-lo depois. Antes, `link_pdf` vazio
+        # escondia inclusive esses eventos já publicados, contradizendo o
+        # estado "publicado" e o link público gerado. Mantemos ocultos os
+        # imports legados sem PDF e os rascunhos do wizard, mas liberamos o
+        # evento publicado (metadados + checklist; download segue ausente).
+        query["$and"] = [
+            {"$or": [
+                {"link_pdf": {"$nin": [None, ""]}},
+                {"criado_via": "wizard", "publicado_at": {"$ne": None}},
+            ]},
+            {"$or": [
+                {"criado_via": {"$ne": "wizard"}},
+                {"publicado_at": {"$ne": None}},
+            ]},
+        ]
     portarias = await db.portarias.find(query, {"_id": 0}).sort("date", -1).to_list(1000)
     if not _ve_editais_completo(current_user):
         # Inclusive URLs externas são conteúdo integral: conta limitada recebe
@@ -2364,7 +2413,11 @@ async def create_portaria(portaria_data: PortariaCreate, current_user: User = De
     if not dados.get("date"):
         dados["date"] = datetime.now(timezone.utc)
 
-    portaria = Portaria(**dados, created_by=current_user.user_id)
+    portaria = Portaria(
+        **dados,
+        created_by=current_user.user_id,
+        ambiente_homologacao=await _ambiente_homologacao_do_usuario(current_user),
+    )
 
     doc = portaria.model_dump()
     doc['date'] = doc['date'].isoformat()
@@ -2641,11 +2694,22 @@ async def search_portarias(q: str, scope: EffectiveScope = Depends(get_effective
         ],
         "deleted_at": None,
     }
+    if current_user.perfil in ("registradora", "financeira", "detran", "detran_admin"):
+        em_homologacao = await _ambiente_homologacao_do_usuario(current_user)
+        query["ambiente_homologacao"] = True if em_homologacao else {"$ne": True}
     if current_user.perfil not in ("sigcr_admin", "detran", "detran_admin"):
         # Mesma regra de GET /portarias: rascunho do wizard não aparece pra
         # fora do DETRAN/admin, nem por busca.
-        query["link_pdf"] = {"$nin": [None, ""]}
-        query["$and"] = [{"$or": [{"criado_via": {"$ne": "wizard"}}, {"publicado_at": {"$ne": None}}]}]
+        query["$and"] = [
+            {"$or": [
+                {"link_pdf": {"$nin": [None, ""]}},
+                {"criado_via": "wizard", "publicado_at": {"$ne": None}},
+            ]},
+            {"$or": [
+                {"criado_via": {"$ne": "wizard"}},
+                {"publicado_at": {"$ne": None}},
+            ]},
+        ]
     portarias = await db.portarias.find(query, {"_id": 0}).to_list(100)
     return portarias
 
@@ -2703,7 +2767,8 @@ async def get_portaria_publica(token: str):
     vir ANTES de GET /portarias/{portaria_id} nesta ordem de declaração,
     senão o FastAPI casaria "publico" como se fosse um portaria_id."""
     portaria = await db.portarias.find_one(
-        {"token_publico": token, "publicado_at": {"$ne": None}, "deleted_at": None},
+        {"token_publico": token, "publicado_at": {"$ne": None}, "deleted_at": None,
+         "ambiente_homologacao": {"$ne": True}},
         {"_id": 0}
     )
     if not portaria:
@@ -2743,10 +2808,16 @@ async def get_portaria(portaria_id: str, scope: EffectiveScope = Depends(get_eff
     portaria = await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
     if not portaria:
         raise HTTPException(status_code=404, detail="Portaria não encontrada")
+    if current_user.perfil != "sigcr_admin":
+        em_homologacao = await _ambiente_homologacao_do_usuario(current_user)
+        if bool(portaria.get("ambiente_homologacao")) != em_homologacao:
+            raise HTTPException(status_code=404, detail="Portaria não encontrada")
     eh_registradora_ou_financeira = current_user.perfil in ("registradora", "financeira")
     sem_pdf_anexado = not portaria.get("link_pdf")
     eh_rascunho_de_wizard = portaria.get("criado_via") == "wizard" and not portaria.get("publicado_at")
-    if eh_registradora_ou_financeira and (sem_pdf_anexado or eh_rascunho_de_wizard):
+    wizard_publicado = portaria.get("criado_via") == "wizard" and bool(portaria.get("publicado_at"))
+    indisponivel_sem_pdf = sem_pdf_anexado and not wizard_publicado
+    if eh_registradora_ou_financeira and (indisponivel_sem_pdf or eh_rascunho_de_wizard):
         raise HTTPException(status_code=404, detail="Portaria não encontrada")
     if portaria.get("estado_sigla"):
         empresa = await _empresa_do_usuario(current_user)
@@ -2829,6 +2900,11 @@ async def publicar_portaria(portaria_id: str, current_user: User = Depends(requi
     portaria = await db.portarias.find_one({"portaria_id": portaria_id, "deleted_at": None}, {"_id": 0})
     if not portaria:
         raise HTTPException(status_code=404, detail="Portaria não encontrada ou removida")
+    perfis_com_checklist = {
+        i.get("perfil_alvo") for i in (portaria.get("checklist_itens") or [])
+        if i.get("perfil_alvo") in {"registradora", "financeira"}
+    }
+    destinatarios_empresa = set()
     if portaria.get("estado_sigla"):
         await _checar_permissao_escrita_estado(current_user, portaria["estado_sigla"])
     if portaria.get("publicado_at"):
@@ -2850,10 +2926,6 @@ async def publicar_portaria(portaria_id: str, current_user: User = Depends(requi
         # isso, uma portaria com checklist só pra registradora notificava
         # financeiras da mesma UF do mesmo jeito (achado do levantamento do
         # ciclo Portaria→Submissão, PENDING_ACTIONS.md).
-        perfis_com_checklist = {
-            i.get("perfil_alvo") for i in (portaria.get("checklist_itens") or [])
-            if i.get("perfil_alvo")
-        }
         if perfis_com_checklist:
             # Fatia 2: uma empresa pode ter uma categoria via
             # categorias_credenciamento sem que bata com tipo_empresa (ex:
@@ -2863,6 +2935,7 @@ async def publicar_portaria(portaria_id: str, current_user: User = Depends(requi
                 {
                     "detrans_atuacao": portaria["estado_sigla"],
                     "deleted_at": None,
+                    "ambiente_homologacao": True if portaria.get("ambiente_homologacao") else {"$ne": True},
                     "$or": [
                         {"tipo_empresa": {"$in": list(perfis_com_checklist)}},
                         {"categorias_credenciamento": {"$in": list(perfis_com_checklist)}},
@@ -2871,16 +2944,40 @@ async def publicar_portaria(portaria_id: str, current_user: User = Depends(requi
                 {"_id": 0, "user_id": 1}
             ).to_list(1000)
             for empresa in empresas:
-                if empresa.get("user_id"):
+                if empresa.get("user_id") and empresa["user_id"] not in destinatarios_empresa:
+                    destinatarios_empresa.add(empresa["user_id"])
                     await criar_notificacao(
                         empresa["user_id"], "novo_edital",
                         f"Novo Credenciamento — DETRAN-{portaria['estado_sigla']}",
                         f"Portaria publicada: {portaria['title']}",
-                        {"portaria_id": portaria_id}
+                        {"portaria_id": portaria_id, "modo_homologacao": False}
                     )
 
+    # O administrador funciona também como perfil de homologação: recebe uma
+    # prévia sempre que ele próprio publica, mesmo quando ainda não existe
+    # empresa elegível na UF. Isso permite conferir rota, conteúdo e público
+    # sem cadastrar destinatários fictícios nem misturar a prévia com a
+    # entrega operacional das empresas.
+    if current_user.perfil == "sigcr_admin":
+        publicos = ", ".join(sorted(perfis_com_checklist)) or "nenhum público definido"
+        await criar_notificacao(
+            current_user.user_id,
+            "novo_edital",
+            f"Prévia administrativa — DETRAN-{portaria.get('estado_sigla') or '—'}",
+            f"Portaria publicada para {publicos}. Entrega real: {len(destinatarios_empresa)} empresa(s).",
+            {
+                "portaria_id": portaria_id,
+                "modo_homologacao": True,
+                "perfis_alvo": sorted(perfis_com_checklist),
+                "destinatarios_reais": len(destinatarios_empresa),
+            },
+        )
+
     await registrar_auditoria(current_user, "publicar_portaria", "portaria", portaria_id, {
-        "estado_sigla": portaria.get("estado_sigla")
+        "estado_sigla": portaria.get("estado_sigla"),
+        "perfis_alvo": sorted(perfis_com_checklist),
+        "destinatarios_reais": len(destinatarios_empresa),
+        "previa_administrativa": current_user.perfil == "sigcr_admin",
     })
     return await db.portarias.find_one({"portaria_id": portaria_id}, {"_id": 0})
 
@@ -3894,12 +3991,17 @@ async def get_stats(scope: EffectiveScope = Depends(get_effective_scope)):
     bug real e pré-existente (não introduzido aqui). Escopa pela mesma
     lógica já usada em GET /detran/registradoras: registradoras que atuam
     na UF do DETRAN (scope.effective_detran_uf), não por ownership."""
+    usuario_efetivo = scope.as_user()
+    em_homologacao = await _ambiente_homologacao_do_usuario(usuario_efetivo)
+    filtro_ambiente = {"ambiente_homologacao": True if em_homologacao else {"$ne": True}}
     if scope.current_user.perfil == "sigcr_admin" and not scope.is_viewing_as:
-        filtro_empresa = {}
+        # Contas institucionais de homologação existem em produção para o
+        # ciclo E2E, mas não representam clientes nem operação comercial.
+        filtro_empresa = filtro_ambiente
     elif scope.effective_detran_uf:
-        filtro_empresa = {"tipo_empresa": "registradora", "detrans_atuacao": scope.effective_detran_uf}
+        filtro_empresa = {**filtro_ambiente, "tipo_empresa": "registradora", "detrans_atuacao": scope.effective_detran_uf}
     else:
-        filtro_empresa = {"user_id": scope.effective_user_id}
+        filtro_empresa = {**filtro_ambiente, "user_id": scope.effective_user_id}
 
     total_companies = await db.companies.count_documents({**filtro_empresa, "deleted_at": None})
     # Split por tipo (Item 1 do Dashboard, 2026-08-27): o card único "Empresas"
@@ -3921,8 +4023,8 @@ async def get_stats(scope: EffectiveScope = Depends(get_effective_scope)):
     approved_companies = await db.companies.count_documents(
         {**filtro_empresa, "status": {"$in": ["approved", "ativo_contrato_assinado"]}, "deleted_at": None}
     )
-    total_portarias = await db.portarias.count_documents({"deleted_at": None})
-    active_portarias = await db.portarias.count_documents({"status": "vigente", "deleted_at": None})
+    total_portarias = await db.portarias.count_documents({**filtro_ambiente, "deleted_at": None})
+    active_portarias = await db.portarias.count_documents({**filtro_ambiente, "status": "vigente", "deleted_at": None})
 
     companies = await db.companies.find(
         {**filtro_empresa, "deleted_at": None}, {"_id": 0, "company_id": 1}
@@ -4970,6 +5072,7 @@ async def get_atos_credenciamento_publicos(uf: str):
             "estado_sigla": uf,
             "status": "vigente",
             "deleted_at": None,
+            "ambiente_homologacao": {"$ne": True},
             "link_pdf": {"$nin": [None, ""]},
             "$or": [{"criado_via": {"$ne": "wizard"}}, {"publicado_at": {"$ne": None}}],
         },
@@ -5052,6 +5155,7 @@ async def preview_portaria_credenciamento(portaria_id: str, request: Request):
             "portaria_id": portaria_id,
             "status": "vigente",
             "deleted_at": None,
+            "ambiente_homologacao": {"$ne": True},
             "link_pdf": {"$nin": [None, ""]},
         },
         {"_id": 0},

@@ -127,6 +127,11 @@ const Notificacoes = () => {
                       {!notif.lida && <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />}
                     </div>
                     <p className="text-xs text-slate-500">{notif.mensagem}</p>
+                    {notif.dados?.modo_homologacao && (
+                      <span className="inline-flex mt-2 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wide text-amber-800">
+                        Homologação administrativa
+                      </span>
+                    )}
                     <p className="text-[10px] text-slate-400 mt-1 font-mono">{new Date(notif.created_at).toLocaleString('pt-BR')}</p>
                   </div>
                 </div>

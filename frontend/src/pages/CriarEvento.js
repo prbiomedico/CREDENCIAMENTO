@@ -153,6 +153,7 @@ const CriarEvento = () => {
         titulo: portaria.title,
         link_publico: portaria.link_publico,
         status: publicar ? 'publicado' : 'rascunho',
+        ambiente_homologacao: Boolean(portaria.ambiente_homologacao),
       });
       setStep(4);
     } catch (e) { toast.error(e.response?.data?.detail || 'Erro ao salvar'); }
@@ -165,6 +166,8 @@ const CriarEvento = () => {
   const cor = CORES[form.template];
   const Icon = ICONS[form.template];
   const selecionadosCatalogo = new Set(form.checklist_itens.filter((i) => i.catalogo_item_id).map((i) => i.catalogo_item_id));
+  const perfisSelecionados = [...new Set(form.checklist_itens.map((i) => i.perfil_alvo).filter(Boolean))];
+  const rotuloPerfil = (perfil) => perfil === 'registradora' ? 'Registradoras' : perfil === 'financeira' ? 'Financeiras' : perfil;
 
   if (loading) return <DashboardLayout><div className="flex items-center justify-center h-screen"><div className="w-8 h-8 border-2 border-primary-500 border-t-transparent rounded-full animate-spin" /></div></DashboardLayout>;
 
@@ -240,8 +243,17 @@ const CriarEvento = () => {
           <div className="space-y-5">
             <p className="text-slate-600 text-sm">Selecione os itens do catálogo de checklist exigidos para este evento — os mesmos usados pela conferência do DETRAN e pelas submissões das empresas.</p>
             <ChecklistCatalogoPicker selecionados={selecionadosCatalogo} onToggle={toggleChecklistItem} />
+            <div className={`rounded-lg p-4 border ${perfisSelecionados.length ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'}`}>
+              <p className="text-xs font-mono uppercase tracking-wide text-slate-500 mb-2">Público-alvo definido pelo checklist</p>
+              {perfisSelecionados.length ? (
+                <div className="flex flex-wrap gap-2">{perfisSelecionados.map((perfil) => <Badge key={perfil} className="bg-slate-900 text-white">{rotuloPerfil(perfil)}</Badge>)}</div>
+              ) : (
+                <p className="text-sm text-red-700">Selecione ao menos um documento. Sem público-alvo, nenhuma empresa será notificada.</p>
+              )}
+              <p className="text-xs text-slate-600 mt-2">Somente empresas dessas categorias que atuem em {form.uf || 'a UF escolhida'} receberão a publicação.</p>
+            </div>
             <div className="bg-muted/40 rounded-lg p-3 border border-border"><p className="text-xs text-slate-500 mb-2">{form.checklist_itens.length} selecionado(s)</p><div className="flex flex-wrap gap-1">{form.checklist_itens.map(d => <span key={d.catalogo_item_id || d.nome} className="text-[10px] bg-primary-500/10 text-primary-300 px-2 py-0.5 rounded-full font-mono">{d.nome}</span>)}</div></div>
-            <div className="flex gap-3"><Button variant="outline" onClick={() => setStep(1)}>Voltar</Button><Button onClick={() => setStep(3)} className="bg-primary-500 hover:bg-primary-600 text-white">Revisar <ChevronRight className="h-4 w-4 ml-1" /></Button></div>
+            <div className="flex gap-3"><Button variant="outline" onClick={() => setStep(1)}>Voltar</Button><Button onClick={() => setStep(3)} disabled={!perfisSelecionados.length} className="bg-primary-500 hover:bg-primary-600 text-white">Revisar <ChevronRight className="h-4 w-4 ml-1" /></Button></div>
           </div>
         )}
 
@@ -254,6 +266,11 @@ const CriarEvento = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm text-slate-600">{form.descricao}</p>
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                  <p className="text-xs text-slate-500 mb-2 font-mono uppercase">Empresas que receberão esta publicação</p>
+                  <div className="flex flex-wrap gap-2">{perfisSelecionados.map((perfil) => <Badge key={perfil} className="bg-slate-900 text-white">{rotuloPerfil(perfil)} em {form.uf}</Badge>)}</div>
+                  <p className="text-xs text-slate-600 mt-2">Perfis fora desse público-alvo não verão notificação.</p>
+                </div>
                 <div><p className="text-xs text-slate-500 mb-2 font-mono uppercase">Checklist ({form.checklist_itens.length})</p><div className="flex flex-wrap gap-1">{form.checklist_itens.map(d => <span key={d.catalogo_item_id || d.nome} className="text-[10px] bg-muted text-slate-700 px-2 py-0.5 rounded font-mono">{d.nome}</span>)}</div></div>
                 <div><p className="text-xs text-slate-500 mb-2 font-mono uppercase">Prazo</p><p className="text-sm text-slate-700">{formatarData(form.data_abertura) || formatarData(form.data_encerramento) ? `${formatarData(form.data_abertura) || '—'} até ${formatarData(form.data_encerramento) || '—'}` : 'Não definido'}</p></div>
                 <div>
@@ -274,7 +291,7 @@ const CriarEvento = () => {
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => setStep(2)}>Voltar</Button>
               <Button onClick={() => handleSalvar(false)} disabled={saving} variant="outline">{saving ? 'Salvando...' : 'Salvar Rascunho'}</Button>
-              <Button onClick={() => handleSalvar(true)} disabled={saving} className="bg-primary-500 hover:bg-primary-600 text-white flex-1">{saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Globe className="h-4 w-4 mr-2" />}{saving ? 'Publicando...' : 'Publicar e Gerar Link'}</Button>
+              <Button onClick={() => handleSalvar(true)} disabled={saving || !perfisSelecionados.length} className="bg-primary-500 hover:bg-primary-600 text-white flex-1">{saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Globe className="h-4 w-4 mr-2" />}{saving ? 'Publicando...' : 'Publicar e Notificar'}</Button>
             </div>
           </div>
         )}
@@ -283,7 +300,10 @@ const CriarEvento = () => {
           <div className="text-center space-y-6">
             <div className="w-20 h-20 rounded-full bg-emerald-500/20 border-2 border-emerald-500/40 flex items-center justify-center mx-auto"><Check className="h-10 w-10 text-emerald-400" /></div>
             <div><h2 className="text-2xl font-heading font-bold mb-2">{eventoSalvo.status === 'publicado' ? 'Evento Publicado!' : 'Rascunho Salvo!'}</h2><p className="text-slate-600">{eventoSalvo.titulo}</p></div>
-            {eventoSalvo.status === 'publicado' && (
+            {eventoSalvo.ambiente_homologacao && (
+              <Badge className="bg-amber-100 text-amber-900 border border-amber-300">Ambiente de homologação · não publicado na consulta pública</Badge>
+            )}
+            {eventoSalvo.status === 'publicado' && !eventoSalvo.ambiente_homologacao && (
               <Card className="bg-card border-border text-left">
                 <CardContent className="p-5">
                   <p className="text-xs text-slate-500 mb-2 font-mono uppercase">Link para Divulgação no DOU</p>
