@@ -135,22 +135,22 @@ const Notificacoes = () => {
               const Icon = cfg.icon;
               return (
                 <div key={notif.notificacao_id} onClick={() => abrirNotificacao(notif)}
-                  className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer ${notif.lida ? 'bg-muted/40 border-border opacity-60' : 'bg-card border-input hover:border-zinc-600'}`}>
+                  className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer ${notif.lida ? 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300' : 'bg-white border-amber-300 shadow-sm hover:border-amber-400'}`}>
                   <div className={`w-9 h-9 rounded-lg bg-${cfg.color}-500/10 border border-${cfg.color}-500/20 flex items-center justify-center shrink-0`}>
                     <Icon className={`h-4 w-4 text-${cfg.color}-400`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <p className={`text-sm font-semibold ${notif.lida ? 'text-slate-600' : 'text-foreground'}`}>{notif.titulo}</p>
+                      <p className={`text-sm font-semibold ${notif.lida ? 'text-slate-800' : 'text-slate-950'}`}>{notif.titulo}</p>
                       {!notif.lida && <div className="w-1.5 h-1.5 rounded-full bg-primary-500" />}
                     </div>
-                    <p className="text-xs text-slate-500">{notif.mensagem}</p>
+                    <p className="text-xs leading-relaxed text-slate-600">{notif.mensagem}</p>
                     {notif.dados?.modo_homologacao && (
                       <span className="inline-flex mt-2 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-[10px] font-mono font-semibold uppercase tracking-wide text-amber-800">
                         Homologação administrativa
                       </span>
                     )}
-                    <p className="text-[10px] text-slate-400 mt-1 font-mono">{new Date(notif.created_at).toLocaleString('pt-BR')}</p>
+                    <p className="text-[10px] text-slate-500 mt-1 font-mono">{new Date(notif.created_at).toLocaleString('pt-BR')}</p>
                   </div>
                 </div>
               );
