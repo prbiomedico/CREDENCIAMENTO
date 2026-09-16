@@ -1,3 +1,4 @@
+import AcompanhamentoRegistradora from './pages/AcompanhamentoRegistradora';
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -98,6 +99,7 @@ function AppRoutes() {
         <Route path="/solicitacoes" element={b(<RotaProtegida perfilPermitido={["registradora", "detran", "detran_admin"]}><Solicitacoes /></RotaProtegida>)} />
         <Route path="/notificacoes" element={b(<RotaProtegida><Notificacoes /></RotaProtegida>)} />
         <Route path="/criar-evento" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><CriarEvento /></RotaProtegida>)} />
+      <Route path="/acompanhamento" element={b(<RotaProtegida perfilPermitido="registradora"><AcompanhamentoRegistradora /></RotaProtegida>)} />
       <Route path="/esteiras" element={b(<RotaProtegida><Esteiras /></RotaProtegida>)} />
       <Route path="/solicitacoes/:id" element={b(<RotaProtegida perfilPermitido={["registradora", "detran", "detran_admin"]}><SolicitacaoDetalhe /></RotaProtegida>)} />
       <Route path="/usuarios" element={b(<RotaProtegida perfilPermitido="sigcr_admin"><GestaoUsuarios /></RotaProtegida>)} />

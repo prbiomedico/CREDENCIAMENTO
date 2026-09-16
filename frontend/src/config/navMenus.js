@@ -16,6 +16,7 @@ import {
 // continua existindo só como redirect (ver App.js), não como item de menu.
 export const NAV_REGISTRADORA = [
   { path: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard', destaque: true },
+  { path: '/acompanhamento', icon: ListChecks, label: 'Acompanhamento', destaque: true },
   { path: '/solicitacoes',  icon: ChevronRight,    label: 'Minhas Solicitações' },
   { path: '/documentos',    icon: FileText,        label: 'Documentos' },
   { path: '/portarias',     icon: Search,          label: 'Transparência', destaque: true },
