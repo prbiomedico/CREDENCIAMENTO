@@ -7,10 +7,18 @@ import { useAuth } from './AuthContext';
 // segmento atualmente ativo.
 export const PERFIS_PERMITIDOS = {
   sigcr_admin:      ['registradora', 'detran', 'financeira'],
-  detran_admin:     ['detran', 'registradora'],
+  // Contas institucionais e clientes reais permanecem no próprio ambiente.
+  // A antiga hierarquia deixava detran_admin trocar apenas o menu para
+  // Registradora, sem trocar identidade/escopo no backend — exatamente a
+  // mistura visual que os perfis dedicados vieram eliminar.
+  detran_admin:     ['detran'],
+  detran:           ['detran'],
+  registradora:     ['registradora'],
+  financeira:       ['financeira'],
+  // Compatibilidade com tokens legados que ainda usam os aliases abaixo.
   detran_operator:  ['detran'],
   registradora_user:['registradora'],
-  financeira_user:  ['financeira'],
+  financeira_user: ['financeira'],
 };
 
 function perfilInicial(user) {
