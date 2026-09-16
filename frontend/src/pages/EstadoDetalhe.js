@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
 import DocumentosEstadoTab from '../components/DocumentosEstadoTab';
+import ProcessoSeiTab from '../components/ProcessoSeiTab';
 import QueridoDiarioBusca from '../components/QueridoDiarioBusca';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -386,10 +387,11 @@ export default function EstadoDetalhe() {
           </div>
         ) : (
           <Tabs defaultValue="dados-gerais">
-            <TabsList>
+            <TabsList className="h-auto flex-wrap justify-start">
               <TabsTrigger value="dados-gerais">Dados Gerais</TabsTrigger>
               <TabsTrigger value="portarias">Portarias</TabsTrigger>
               <TabsTrigger value="documentos">Documentos</TabsTrigger>
+              <TabsTrigger value="sei">Processo SEI</TabsTrigger>
             </TabsList>
 
             {/* ═══ ABA: DADOS GERAIS ═══ */}
@@ -750,6 +752,9 @@ export default function EstadoDetalhe() {
             {/* ═══ ABA: DOCUMENTOS ═══ */}
             <TabsContent value="documentos" className="mt-6">
               <DocumentosEstadoTab estadoFixo={siglaUpper} compact />
+            </TabsContent>
+            <TabsContent value="sei" className="mt-6">
+              <ProcessoSeiTab key={siglaUpper} estadoSigla={siglaUpper} />
             </TabsContent>
           </Tabs>
         )}

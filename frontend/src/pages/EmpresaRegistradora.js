@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
+import ProcessoSeiTab from '../components/ProcessoSeiTab';
 import { Plus, Building2, CheckCircle, XCircle, Clock, Download, FileText, MapPinned, ShieldCheck, Search, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -31,6 +32,7 @@ const EmpresaRegistradora = () => {
   const { user, initialized, getToken } = useAuth();
   const podeCriarEmpresa = user?.perfil === 'sigcr_admin';
   const [companies, setCompanies] = useState([]);
+  const [consultaSei, setConsultaSei] = useState(null);
   const [documentosHomologacao, setDocumentosHomologacao] = useState({});
   const [credenciamentos, setCredenciamentos] = useState({});
   const [filtroDocumento, setFiltroDocumento] = useState('');
@@ -665,6 +667,10 @@ const EmpresaRegistradora = () => {
                       <div>
                         <p className="text-sm font-semibold text-slate-900">Credenciamentos por estado</p>
                         <p className="mt-1 text-xs text-slate-500">Status, validade e documento oficial em uma única visão operacional.</p>
+                        <Button type="button" size="sm" variant="outline" className="mt-3"
+                          onClick={() => setConsultaSei({ companyId: company.company_id, nome: company.nome_fantasia || company.name, uf: '' })}>
+                          <Search className="h-4 w-4" /> Consultar processo SEI
+                        </Button>
                       </div>
                       <div className="flex flex-col gap-2 sm:flex-row">
                         <div className="relative">
@@ -719,6 +725,21 @@ const EmpresaRegistradora = () => {
           </div>
         )}
       </div>
+      <Dialog open={Boolean(consultaSei)} onOpenChange={(open) => { if (!open) setConsultaSei(null); }}>
+        <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-2xl" aria-describedby={undefined}>
+          <DialogHeader><DialogTitle>Consulta SEI · {consultaSei?.nome}</DialogTitle></DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="sei-uf-registradora">DETRAN para consulta</Label>
+            <select id="sei-uf-registradora" value={consultaSei?.uf || ''}
+              onChange={(event) => setConsultaSei((anterior) => ({ ...anterior, uf: event.target.value }))}
+              className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground">
+              <option value="">Selecione o estado</option>
+              {detransOptions.map((uf) => <option key={uf} value={uf}>DETRAN-{uf}</option>)}
+            </select>
+          </div>
+          {consultaSei?.uf && <ProcessoSeiTab key={`${consultaSei.companyId}-${consultaSei.uf}`} estadoSigla={consultaSei.uf} />}
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };
