@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
-import { Bell, CheckCheck, Folder, TrendingUp, FileText, CheckCircle, XCircle, AlertTriangle, Clock } from 'lucide-react';
+import { Bell, CheckCheck, Folder, TrendingUp, FileText, CheckCircle, XCircle, AlertTriangle, Clock, Trash2, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import axios from 'axios';
@@ -62,6 +62,8 @@ const TIPO_CONFIG = {
 const Notificacoes = () => {
   const [notifs, setNotifs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selecionadas, setSelecionadas] = useState([]);
+  const [processando, setProcessando] = useState(false);
 
   const { user, initialized, getToken } = useAuth();
   const navigate = useNavigate();
@@ -95,6 +97,34 @@ const Notificacoes = () => {
   };
 
   const naoLidas = notifs.filter(n => !n.lida).length;
+  const todasSelecionadas = notifs.length > 0 && selecionadas.length === notifs.length;
+  const alternarSelecao = (id) => setSelecionadas((atuais) =>
+    atuais.includes(id) ? atuais.filter((item) => item !== id) : [...atuais, id]
+  );
+  const alternarTodas = () => setSelecionadas(todasSelecionadas ? [] : notifs.map((n) => n.notificacao_id));
+
+  const excluirSelecionadas = async () => {
+    if (!selecionadas.length || !window.confirm(`Apagar ${selecionadas.length} notificação(ões)? Esta ação não pode ser desfeita.`)) return;
+    setProcessando(true);
+    try {
+      await axios.delete(`${API}/notificacoes`, { data: { notificacao_ids: selecionadas } });
+      setNotifs((atuais) => atuais.filter((n) => !selecionadas.includes(n.notificacao_id)));
+      setSelecionadas([]); toast.success('Notificações apagadas');
+    } catch (e) { toast.error(e?.response?.data?.detail || 'Não foi possível apagar as notificações'); }
+    finally { setProcessando(false); }
+  };
+
+  const exportarSelecionadas = async () => {
+    if (!selecionadas.length) return;
+    setProcessando(true);
+    try {
+      const res = await axios.post(`${API}/notificacoes/exportar`, { notificacao_ids: selecionadas }, { responseType: 'blob' });
+      const url = URL.createObjectURL(res.data); const link = document.createElement('a');
+      link.href = url; link.download = 'notificacoes_sigcr.pdf'; link.click(); URL.revokeObjectURL(url);
+      toast.success('PDF gerado com sucesso');
+    } catch (e) { toast.error(e?.response?.data?.detail || 'Não foi possível exportar o PDF'); }
+    finally { setProcessando(false); }
+  };
 
   return (
     <DashboardLayout>
@@ -110,11 +140,10 @@ const Notificacoes = () => {
               <p className="text-slate-500 text-sm">{naoLidas} não lidas</p>
             </div>
           </div>
-          {naoLidas > 0 && (
-            <Button onClick={marcarTodasLidas} variant="outline" size="sm">
-              <CheckCheck className="h-4 w-4 mr-2" /> Marcar todas como lidas
-            </Button>
-          )}
+          <div className="flex flex-wrap justify-end gap-2">
+            {naoLidas > 0 && <Button onClick={marcarTodasLidas} variant="outline" size="sm"><CheckCheck className="h-4 w-4 mr-2" /> Marcar todas como lidas</Button>}
+            {selecionadas.length > 0 && <><Button onClick={exportarSelecionadas} disabled={processando} variant="outline" size="sm"><Download className="h-4 w-4 mr-2" /> Exportar PDF ({selecionadas.length})</Button><Button onClick={excluirSelecionadas} disabled={processando} variant="destructive" size="sm"><Trash2 className="h-4 w-4 mr-2" /> Apagar ({selecionadas.length})</Button></>}
+          </div>
         </div>
 
         {loading ? (
@@ -130,12 +159,17 @@ const Notificacoes = () => {
           </Card>
         ) : (
           <div className="space-y-2">
+            <label className="mb-3 flex w-fit cursor-pointer items-center gap-2 text-sm font-medium text-slate-700">
+              <input type="checkbox" checked={todasSelecionadas} onChange={alternarTodas} className="h-4 w-4 rounded border-slate-300 accent-amber-500" />
+              Selecionar todas
+            </label>
             {notifs.map((notif) => {
               const cfg = TIPO_CONFIG[notif.tipo] || TIPO_CONFIG.status_atualizado;
               const Icon = cfg.icon;
               return (
                 <div key={notif.notificacao_id} onClick={() => abrirNotificacao(notif)}
                   className={`flex items-start gap-4 p-4 rounded-xl border transition-all cursor-pointer ${notif.lida ? 'bg-slate-50 border-slate-200 hover:bg-slate-100 hover:border-slate-300' : 'bg-white border-amber-300 shadow-sm hover:border-amber-400'}`}>
+                  <input type="checkbox" checked={selecionadas.includes(notif.notificacao_id)} onClick={(e) => e.stopPropagation()} onChange={() => alternarSelecao(notif.notificacao_id)} aria-label={`Selecionar ${notif.titulo}`} className="mt-2 h-4 w-4 shrink-0 rounded border-slate-300 accent-amber-500" />
                   <div className={`w-9 h-9 rounded-lg bg-${cfg.color}-500/10 border border-${cfg.color}-500/20 flex items-center justify-center shrink-0`}>
                     <Icon className={`h-4 w-4 text-${cfg.color}-400`} />
                   </div>

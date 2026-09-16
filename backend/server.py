@@ -875,6 +875,10 @@ class ConfigurarTaxaCredenciamentoPayload(BaseModel):
     instrucoes: Optional[str] = None
 
 
+class NotificacoesSelecaoPayload(BaseModel):
+    notificacao_ids: List[str] = Field(min_length=1, max_length=50)
+
+
 class SystemUser(BaseModel):
     model_config = ConfigDict(extra="ignore")
     system_user_id: str = Field(default_factory=lambda: f"sysuser_{uuid.uuid4().hex[:12]}")
@@ -6029,6 +6033,14 @@ async def get_notificacoes(scope: EffectiveScope = Depends(get_effective_scope))
     ).sort("created_at", -1).to_list(50)
     return notifs
 
+@api_router.patch("/notificacoes/todas/lidas")
+async def marcar_todas_lidas(current_user: User = Depends(get_current_user)):
+    await db.notificacoes.update_many(
+        {"user_id": current_user.user_id},
+        {"$set": {"lida": True}}
+    )
+    return {"message": "Todas marcadas como lidas"}
+
 @api_router.patch("/notificacoes/{notificacao_id}/lida")
 async def marcar_lida(notificacao_id: str, current_user: User = Depends(get_current_user)):
     await db.notificacoes.update_one(
@@ -6037,13 +6049,77 @@ async def marcar_lida(notificacao_id: str, current_user: User = Depends(get_curr
     )
     return {"message": "Marcada como lida"}
 
-@api_router.patch("/notificacoes/todas/lidas")
-async def marcar_todas_lidas(current_user: User = Depends(get_current_user)):
-    await db.notificacoes.update_many(
-        {"user_id": current_user.user_id},
-        {"$set": {"lida": True}}
+
+@api_router.delete("/notificacoes")
+async def excluir_notificacoes(
+    payload: NotificacoesSelecaoPayload, current_user: User = Depends(get_current_user),
+):
+    resultado = await db.notificacoes.delete_many({
+        "user_id": current_user.user_id,
+        "notificacao_id": {"$in": payload.notificacao_ids},
+    })
+    await registrar_auditoria(current_user, "excluir_notificacoes", "notificacao", None, {
+        "quantidade": resultado.deleted_count,
+    })
+    return {"message": "Notificações excluídas", "excluidas": resultado.deleted_count}
+
+
+@api_router.post("/notificacoes/exportar")
+async def exportar_notificacoes_pdf(
+    payload: NotificacoesSelecaoPayload, current_user: User = Depends(get_current_user),
+):
+    notificacoes = await db.notificacoes.find({
+        "user_id": current_user.user_id,
+        "notificacao_id": {"$in": payload.notificacao_ids},
+    }, {"_id": 0}).sort("created_at", -1).to_list(50)
+    if not notificacoes:
+        raise HTTPException(status_code=404, detail="Nenhuma notificação selecionada foi encontrada")
+
+    import io
+    import textwrap
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import cm
+    from reportlab.pdfgen import canvas
+
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=A4)
+    largura, altura = A4
+
+    def cabecalho():
+        pdf.setFont("Helvetica-Bold", 16)
+        pdf.drawString(2 * cm, altura - 2 * cm, "SIGCR — Relatório de notificações")
+        pdf.setFont("Helvetica", 8)
+        pdf.drawString(2 * cm, altura - 2.45 * cm, f"Emitido em {datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M UTC')}")
+        pdf.line(2 * cm, altura - 2.7 * cm, largura - 2 * cm, altura - 2.7 * cm)
+        return altura - 3.25 * cm
+
+    y = cabecalho()
+    for indice, notificacao in enumerate(notificacoes, 1):
+        linhas = textwrap.wrap(str(notificacao.get("mensagem") or ""), width=92) or [""]
+        altura_bloco = (2.1 + 0.35 * len(linhas)) * cm
+        if y - altura_bloco < 1.8 * cm:
+            pdf.showPage(); y = cabecalho()
+        pdf.setFont("Helvetica-Bold", 10)
+        pdf.drawString(2 * cm, y, f"{indice}. {notificacao.get('titulo', 'Notificação')}")
+        y -= 0.45 * cm
+        pdf.setFont("Helvetica", 8)
+        data = str(notificacao.get("created_at") or "").replace("T", " ")[:19]
+        pdf.drawString(2 * cm, y, f"Data: {data}  |  Situação: {'Lida' if notificacao.get('lida') else 'Não lida'}")
+        y -= 0.45 * cm
+        pdf.setFont("Helvetica", 9)
+        for linha in linhas:
+            pdf.drawString(2 * cm, y, linha)
+            y -= 0.35 * cm
+        y -= 0.45 * cm
+
+    pdf.save()
+    await registrar_auditoria(current_user, "exportar_notificacoes", "notificacao", None, {
+        "quantidade": len(notificacoes),
+    })
+    return Response(
+        content=buffer.getvalue(), media_type="application/pdf",
+        headers={"Content-Disposition": "attachment; filename=notificacoes_sigcr.pdf"},
     )
-    return {"message": "Todas marcadas como lidas"}
 
 
 async def criar_notificacao(user_id: str, tipo: str, titulo: str, mensagem: str, dados: dict = None):
