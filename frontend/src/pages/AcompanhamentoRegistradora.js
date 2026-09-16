@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { ETAPAS_ESTEIRA, STATUS_ETAPA, montarProcessos } from '../lib/acompanhamento';
 const API = `${process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br'}/api`;
 const selectClass = 'h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground';
@@ -83,20 +84,51 @@ export default function AcompanhamentoRegistradora() {
           {empresas.map(e => <option value={e.company_id} key={e.company_id}>{e.nome_fantasia || e.name}</option>)}
         </select></div>
       {erro ? <div role="alert" className="rounded-lg border border-destructive/40 bg-card p-4 text-sm">{erro}</div> : carregandoEmpresas || (companyId && !pronto) ? <p role="status" className="flex items-center gap-2 py-10 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" /> Carregando acompanhamento...</p> : !companyId ? <p className="rounded-lg border border-border p-5 text-muted-foreground">{empresas.length ? 'Selecione uma empresa para visualizar seus processos e pendências.' : 'Nenhuma registradora disponível para este acesso.'}</p> : <>
-        <dl className="grid divide-y divide-border rounded-lg border border-border bg-card sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-          {[[processos.length, 'Processos acompanhados'], [pendencias.length, 'Ações da empresa'], [processos.filter(p => p.aguardandoOrgao).length, 'Aguardando análise no SIGCR']].map(([n,label]) => <div key={label} className="p-4"><dt className="text-sm text-muted-foreground">{label}</dt><dd className="mt-2 text-2xl font-semibold tabular-nums">{n}</dd></div>)}
-        </dl>
-        <section className="space-y-3" aria-label="Pendências da empresa"><h2 className="text-lg font-semibold">Pendências da empresa</h2>
-          {!pendencias.length ? <div className="rounded-lg border border-border bg-card p-4"><p className="text-sm font-medium">Nenhuma ação da empresa registrada no fluxo digital.</p><p className="mt-1 text-sm text-muted-foreground">Para processos SEI, confira as notificações no acesso externo. Uma movimentação interna do órgão não cria uma pendência da empresa aqui.</p></div> : <ul className="divide-y divide-border rounded-lg border border-border bg-card">{pendencias.map(item => <li key={`${item.processo.id}-${item.id}`} className="flex flex-col justify-between gap-3 p-4 sm:flex-row sm:items-center"><div className="min-w-0"><p className="text-sm font-semibold">DETRAN-{item.processo.uf} · {item.titulo}</p><p className="mt-1 break-words text-sm text-muted-foreground">{item.descricao}</p><p className="mt-1 text-xs text-muted-foreground">Prazo: {item.prazo ? dataFormatada(item.prazo) : 'Não informado'} · Fonte: checklist e fluxo do SIGCR</p></div><Button asChild variant="outline" className="shrink-0"><Link to={item.processo.href}>Resolver pendência</Link></Button></li>)}</ul>}
-        </section>
-        <section className="space-y-3"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><h2 className="text-lg font-semibold">Processos por DETRAN</h2><div className="flex flex-col gap-2 sm:flex-row"><Input aria-label="Buscar processo" placeholder="Buscar UF, processo ou etapa" value={busca} onChange={e => setBusca(e.target.value)} /><select aria-label="Filtrar processos" className={selectClass} value={filtro} onChange={e => setFiltro(e.target.value)}><option value="todos">Todos os processos</option><option value="pendencias">Com ações da empresa</option><option value="abertos">Em acompanhamento</option><option value="concluidos">Concluídos</option></select></div></div>
-          <div className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card">{linhas.map(p => <article key={p.id} className="flex flex-col justify-between gap-4 p-4 md:flex-row md:items-center"><div className="min-w-0 space-y-2"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">DETRAN-{p.uf}</h3><Badge variant="outline">{p.etapa}</Badge></div><p className="break-all font-mono text-sm">{p.numero}</p><p className="text-xs text-muted-foreground">{p.origem} · Última atualização: {dataFormatada(p.atualizado)}</p><p className="text-sm text-muted-foreground">Responsável pela etapa: {p.responsavel}</p></div><div className="flex shrink-0 flex-wrap items-center gap-2"><span className="text-xs text-muted-foreground">{p.manual ? 'Conferir notificações no SEI' : `${p.pendencias.length} ação(ões) da empresa`}</span><Button variant="outline" onClick={() => setSelecionado(p.id)} aria-label={`Ver andamento ${p.numero}`}><ClipboardList className="h-4 w-4" /> Ver andamento</Button></div></article>)}{!linhas.length && <p className="p-8 text-center text-sm text-muted-foreground">{processos.length ? 'Nenhum processo corresponde aos filtros.' : 'Ainda não há processos registrados para esta empresa.'}</p>}</div>
+        <section className="space-y-4" aria-label="Processos e pendências por DETRAN">
+          <div className="flex flex-wrap gap-x-5 gap-y-2 border-y border-border py-3 text-sm text-muted-foreground" aria-label="Resumo do acompanhamento">
+            <span><strong className="text-foreground">{processos.length}</strong> processos</span>
+            <span><strong className="text-foreground">{pendencias.length}</strong> ações da empresa</span>
+            <span><strong className="text-foreground">{processos.filter(p => p.aguardandoOrgao).length}</strong> aguardando análise no SIGCR</span>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Input aria-label="Buscar processo" placeholder="Buscar DETRAN, processo ou etapa" value={busca} onChange={e => setBusca(e.target.value)} className="sm:max-w-md" />
+            <select aria-label="Filtrar processos" className={selectClass} value={filtro} onChange={e => setFiltro(e.target.value)}>
+              <option value="todos">Todos os processos</option><option value="pendencias">Com ações da empresa</option><option value="abertos">Em acompanhamento</option><option value="concluidos">Concluídos</option>
+            </select>
+          </div>
+          <div className="overflow-hidden rounded-lg border border-border bg-card">
+            <div className="hidden grid-cols-[1fr_1fr_1.3fr_auto] gap-4 border-b border-border bg-muted/40 px-4 py-3 text-xs font-semibold text-muted-foreground lg:grid" aria-hidden="true">
+              <span>DETRAN / Processo</span><span>Etapa atual</span><span>Pendência / Próxima ação</span><span className="w-36">Detalhes</span>
+            </div>
+            {Array.from(new Set(linhas.map(p => p.uf))).map(uf => <section key={uf} aria-label={`Processos DETRAN-${uf}`}>
+              <h2 className="border-b border-border bg-muted/20 px-4 py-2 text-sm font-semibold">DETRAN-{uf}</h2>
+              <div className="divide-y divide-border">{linhas.filter(p => p.uf === uf).map(p => <article key={p.id} className="grid gap-4 p-4 lg:grid-cols-[1fr_1fr_1.3fr_auto] lg:items-start">
+                <div className="min-w-0"><p className="break-all font-mono text-sm font-medium">{p.numero}</p><p className="mt-1 text-xs text-muted-foreground">{p.origem}</p><p className="mt-1 text-xs text-muted-foreground">Atualização: {dataFormatada(p.atualizado)}</p></div>
+                <div className="min-w-0"><Badge variant="outline" className="whitespace-normal">{p.etapa}</Badge><p className="mt-2 break-words text-xs text-muted-foreground">Responsável: {p.responsavel}</p></div>
+                <div className="min-w-0 space-y-3">
+                  {p.pendencias.length ? <><ul className="space-y-3">{p.pendencias.map(item => <li key={item.id}><p className="text-sm font-medium">DETRAN-{p.uf} · {item.titulo}</p><p className="mt-1 break-words text-xs text-muted-foreground">{item.descricao}</p>{item.prazo && <p className="mt-1 text-xs text-muted-foreground">Prazo: {dataFormatada(item.prazo)}</p>}</li>)}</ul><Button asChild size="sm"><Link to={p.href}>Resolver pendência</Link></Button></> : <p className="text-sm text-muted-foreground">{p.manual ? 'Conferir notificações no SEI.' : p.concluido ? 'Processo concluído.' : p.aguardandoOrgao ? 'Aguardar retorno do DETRAN.' : 'Nenhuma ação da empresa registrada no fluxo digital.'}</p>}
+                </div>
+                <Button variant="outline" className="lg:w-36" onClick={() => setSelecionado(p.id)} aria-label={`Ver andamento ${p.numero}`}><ClipboardList className="h-4 w-4" /> Ver andamento</Button>
+              </article>)}</div>
+            </section>)}
+            {!linhas.length && <p className="p-8 text-center text-sm text-muted-foreground">{processos.length ? 'Nenhum processo corresponde aos filtros.' : 'Ainda não há processos registrados para esta empresa.'}</p>}
+          </div>
+          <p className="text-xs leading-5 text-muted-foreground">As ações acima vêm do fluxo registrado no SIGCR. Movimentações internas do SEI não geram pendências automaticamente; confira as notificações destinadas à empresa no acesso externo.</p>
         </section>
       </>}
     </>}
     <Dialog open={Boolean(detalhe)} onOpenChange={open => { if (!open) setSelecionado(null); }}><DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-3xl" aria-describedby="acompanhamento-fonte"><DialogHeader><DialogTitle>Andamento · DETRAN-{detalhe?.uf}</DialogTitle></DialogHeader>
       {detalhe && <><p id="acompanhamento-fonte" className="break-all text-sm text-muted-foreground">{detalhe.numero} · {detalhe.origem}</p>
-        {detalhe.manual ? <><ol className="space-y-3">{detalhe.eventos.map(ev => <li key={ev.etapa_id} className="rounded-md border border-border p-4"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{ETAPAS_ESTEIRA[ev.etapa_id] || `Etapa ${ev.etapa_id}`}</h3><Badge variant="outline">{STATUS_ETAPA[ev.status] || 'Não informada'}</Badge></div><p className="mt-1 text-xs text-muted-foreground">Data: {dataFormatada(ev.data)} · Responsável: {ev.responsavel || 'Não informado'}</p>{ev.prazo && <p className="text-xs text-muted-foreground">Prazo registrado: {dataFormatada(ev.prazo)}</p>}{ev.obs && <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6">{ev.obs}</p>}{ev.docs && <p className="mt-2 whitespace-pre-wrap break-words text-sm text-muted-foreground">Documentos: {ev.docs}</p>}</li>)}</ol><ProcessoSeiTab key={detalhe.id} estadoSigla={detalhe.uf} /></> : <Button asChild><Link to={detalhe.href}><ExternalLink className="h-4 w-4" /> Abrir credenciamento e checklist</Link></Button>}
+        {detalhe.manual ? <Tabs defaultValue="resumo" key={detalhe.id}>
+          <TabsList className="h-auto flex-wrap justify-start"><TabsTrigger value="resumo">Resumo</TabsTrigger><TabsTrigger value="historico">Histórico</TabsTrigger><TabsTrigger value="documentos">Documentos</TabsTrigger><TabsTrigger value="sei">Consulta SEI</TabsTrigger></TabsList>
+          <TabsContent value="resumo" className="space-y-4 pt-3">
+            <dl className="grid gap-4 sm:grid-cols-2"><div><dt className="text-xs text-muted-foreground">Etapa atual</dt><dd className="mt-1 font-medium">{detalhe.etapa}</dd></div><div><dt className="text-xs text-muted-foreground">Responsável informado</dt><dd className="mt-1 font-medium">{detalhe.responsavel}</dd></div><div><dt className="text-xs text-muted-foreground">Atualização do registro</dt><dd className="mt-1">{dataFormatada(detalhe.atualizado)}</dd></div></dl>
+            <p className="border-t border-border pt-4 text-sm leading-6 text-muted-foreground">Este acompanhamento foi registrado manualmente. Consulte o histórico para as observações e o SEI para verificar notificações dirigidas à empresa.</p>
+          </TabsContent>
+          <TabsContent value="historico" className="pt-3"><ol className="divide-y divide-border">{detalhe.eventos.map(ev => <li key={ev.etapa_id} className="py-4 first:pt-0"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{ETAPAS_ESTEIRA[ev.etapa_id] || `Etapa ${ev.etapa_id}`}</h3><Badge variant="outline">{STATUS_ETAPA[ev.status] || 'Não informada'}</Badge></div><p className="mt-1 text-xs text-muted-foreground">Data: {dataFormatada(ev.data)} · Responsável: {ev.responsavel || 'Não informado'}</p>{ev.prazo && <p className="text-xs text-muted-foreground">Prazo registrado: {dataFormatada(ev.prazo)}</p>}{ev.obs && <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6">{ev.obs}</p>}</li>)}</ol></TabsContent>
+          <TabsContent value="documentos" className="space-y-4 pt-3"><p className="text-xs text-muted-foreground">Referências documentais informadas em cada etapa.</p>{detalhe.eventos.filter(ev => ev.docs).map(ev => <div key={ev.etapa_id} className="border-b border-border pb-4"><h3 className="text-sm font-semibold">{ETAPAS_ESTEIRA[ev.etapa_id]}</h3><p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-muted-foreground">{ev.docs}</p></div>)}{!detalhe.eventos.some(ev => ev.docs) && <p className="text-sm text-muted-foreground">Nenhuma referência documental registrada.</p>}</TabsContent>
+          <TabsContent value="sei" className="pt-3"><ProcessoSeiTab key={detalhe.id} estadoSigla={detalhe.uf} /></TabsContent>
+        </Tabs> : <Button asChild><Link to={detalhe.href}><ExternalLink className="h-4 w-4" /> Abrir credenciamento e checklist</Link></Button>}
       </>}
     </DialogContent></Dialog>
   </div></DashboardLayout>;

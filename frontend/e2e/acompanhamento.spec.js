@@ -24,8 +24,11 @@ test('registradora encontra acompanhamento, pendência e histórico RN', async (
   await expect(page.getByText('DETRAN-CE · Declaração conjunta')).toBeVisible();
   await expect(page.getByRole('link', { name: 'Resolver pendência' })).toHaveAttribute('href', '/credenciamento-portaria?submissao_id=s1');
   await page.getByRole('button', { name: 'Ver andamento 02910013.014739/2026-32' }).click();
+  await page.getByRole('tab', { name: 'Documentos', exact: true }).click();
   await expect(page.getByText('Declaração 01 — itens a/b/c no mesmo documento.', { exact: false })).toBeVisible();
+  await page.getByRole('tab', { name: 'Histórico', exact: true }).click();
   await expect(page.getByText('Diligência interna. Nenhuma notificação da empresa registrada.')).toBeVisible();
+  await page.getByRole('tab', { name: 'Consulta SEI', exact: true }).click();
   await expect(page.getByRole('link', { name: /Abrir consulta no SEI-RN/ })).toBeVisible();
   await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
   await page.getByLabel('Filtrar processos').selectOption('pendencias');
