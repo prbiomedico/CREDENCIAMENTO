@@ -842,6 +842,7 @@ class Submissao(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     deleted_at: Optional[str] = None
     deleted_by: Optional[str] = None
+    ambiente_homologacao: bool = False
 
 
 class SubmissaoItemAnalise(BaseModel):
@@ -3459,12 +3460,20 @@ async def dar_baixa_credenciamento(credenciamento_id: str, current_user: User = 
 # Processo paralelo ao checklist fixo de cadastro-base (CONTRAN 807/Edital
 # 003) — não o altera, só reaproveita a coleção db.documents pros arquivos.
 
-async def _notificar_detran_uf(estado_sigla: str, tipo: str, titulo: str, mensagem: str, dados: dict = None):
+async def _notificar_detran_uf(
+    estado_sigla: str, tipo: str, titulo: str, mensagem: str,
+    dados: dict = None, ambiente_homologacao: bool = False,
+):
     """Notifica todos os usuários detran/detran_admin da UF — usado quando uma
     empresa submete/reenvia, já que uma submissão não tem um usuário DETRAN
     individual dono, só um escopo de UF."""
     usuarios = await db.users.find(
-        {"perfil": {"$in": ["detran", "detran_admin"]}, "detran_uf": estado_sigla}, {"_id": 0, "user_id": 1}
+        {
+            "perfil": {"$in": ["detran", "detran_admin"]},
+            "detran_uf": estado_sigla,
+            "ambiente_homologacao": True if ambiente_homologacao else {"$ne": True},
+        },
+        {"_id": 0, "user_id": 1}
     ).to_list(50)
     for u in usuarios:
         await criar_notificacao(u["user_id"], tipo, titulo, mensagem, dados)
@@ -3475,6 +3484,10 @@ async def _autorizar_acesso_submissao(submissao: dict, current_user: User):
     empresa = await _empresa_do_usuario(current_user)
     if empresa and empresa["company_id"] == submissao["company_id"]:
         return
+    if current_user.perfil != "sigcr_admin":
+        em_homologacao = await _ambiente_homologacao_do_usuario(current_user)
+        if bool(submissao.get("ambiente_homologacao")) != em_homologacao:
+            raise HTTPException(status_code=404, detail="Submissão não encontrada")
     if _perfil_pode_ver_estado(current_user, submissao["estado_sigla"]):
         return
     raise HTTPException(status_code=403, detail="Sem acesso a esta submissão")
@@ -3499,6 +3512,7 @@ async def listar_submissoes(
     empresa = await _empresa_do_usuario(current_user)
     if empresa:
         query["company_id"] = empresa["company_id"]
+        query["ambiente_homologacao"] = True if empresa.get("ambiente_homologacao") else {"$ne": True}
     else:
         if not estado_sigla:
             raise HTTPException(status_code=400, detail="estado_sigla é obrigatório para este perfil")
@@ -3508,6 +3522,9 @@ async def listar_submissoes(
         if not _perfil_pode_ver_estado(current_user, estado_sigla):
             raise HTTPException(status_code=403, detail="Perfil sem acesso a este estado")
         query["estado_sigla"] = estado_sigla
+        if current_user.perfil != "sigcr_admin":
+            em_homologacao = await _ambiente_homologacao_do_usuario(current_user)
+            query["ambiente_homologacao"] = True if em_homologacao else {"$ne": True}
     if status:
         query["status"] = status
     return await db.submissoes.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
@@ -3545,6 +3562,8 @@ async def criar_submissao(portaria_id: str, categoria: Optional[str] = None, cur
         # Defesa em profundidade: mesmo que o portaria_id vaze por algum outro
         # caminho, um rascunho do wizard não pode virar submissão antes de publicado.
         raise HTTPException(status_code=404, detail="Portaria não encontrada")
+    if bool(portaria.get("ambiente_homologacao")) != bool(empresa.get("ambiente_homologacao")):
+        raise HTTPException(status_code=404, detail="Portaria não encontrada")
     estado_sigla = portaria.get("estado_sigla")
     if not estado_sigla or estado_sigla not in (empresa.get("detrans_atuacao") or []):
         raise HTTPException(status_code=403, detail="Empresa não atua na UF desta portaria")
@@ -3578,6 +3597,7 @@ async def criar_submissao(portaria_id: str, categoria: Optional[str] = None, cur
             for i in itens_portaria
         ],
         created_by=current_user.user_id,
+        ambiente_homologacao=bool(portaria.get("ambiente_homologacao")),
     )
     doc = submissao.model_dump()
     doc["created_at"] = doc["created_at"].isoformat()
@@ -3691,7 +3711,8 @@ async def upload_item_submissao(
     if volta_analise:
         await _notificar_detran_uf(
             submissao["estado_sigla"], "submissao_recebida", "Submissão atualizada",
-            f"Itens reenviados na submissão {submissao_id} — pronta para nova análise.", {"submissao_id": submissao_id}
+            f"Itens reenviados na submissão {submissao_id} — pronta para nova análise.",
+            {"submissao_id": submissao_id}, bool(submissao.get("ambiente_homologacao")),
         )
     return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
 
@@ -3716,7 +3737,7 @@ async def submeter_submissao(submissao_id: str, current_user: User = Depends(get
     await _notificar_detran_uf(
         submissao["estado_sigla"], "submissao_recebida", "Nova submissão de credenciamento",
         f"Uma empresa enviou uma submissão para análise (portaria {submissao['portaria_id']}).",
-        {"submissao_id": submissao_id}
+        {"submissao_id": submissao_id}, bool(submissao.get("ambiente_homologacao")),
     )
     return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
 
