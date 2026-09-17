@@ -70,3 +70,15 @@ for (const perfil of ['detran', 'financeira']) {
     await expect(page.getByRole('main').getByRole('heading', { name: 'Acompanhamento', exact: true })).toHaveCount(0);
   });
 }
+
+test('AP mostra ato externo e vigência sem atribuir processo ao SEI', async ({ page }) => {
+  await page.route('http://api.test/api/esteiras*', route => route.fulfill({ json: [{ company_id: 'hd', esteira_id: 'ap', detran: 'AP', numero_processo: '0053.0649.2804.0200/2025', credenciamento_externo: { documento_id: 'ato', validade: '2027-04-15' }, eventos: [{ etapa_id: 2, status: 'aguardando', obs: 'Etapa sem histórico individual.' }, { etapa_id: 5, status: 'concluido', docs: 'Portaria 0254/2025 e espelho Apto.' }] }] }));
+  await page.goto('/acompanhamento');
+  await expect(page.getByText('Credenciamento registrado — Apto')).toBeVisible();
+  await expect(page.getByText('Vigência registrada até 15/04/2027.')).toBeVisible();
+  await page.getByLabel('Filtrar processos').selectOption('concluidos');
+  await page.getByRole('button', { name: 'Ver andamento 0053.0649.2804.0200/2025' }).click();
+  await expect(page.getByRole('tab', { name: 'Consulta SEI' })).toHaveCount(0);
+  await page.getByRole('tab', { name: 'Documentos', exact: true }).click();
+  await expect(page.getByText('Portaria 0254/2025 e espelho Apto.')).toBeVisible();
+});

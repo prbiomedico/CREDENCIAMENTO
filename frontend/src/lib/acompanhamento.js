@@ -35,11 +35,12 @@ export function montarProcessos(empresa, esteiras, submissoes) {
   const manuais = esteiras.filter(e => e.company_id ? e.company_id === empresa.company_id : e.user_id === empresa.user_id && cnpj(e.cnpj) && cnpj(e.cnpj) === cnpj(empresa.cnpj)).map(e => {
     const eventos = [...(e.eventos || [])].sort((a, b) => a.etapa_id - b.etapa_id);
     const atual = eventos.find(ev => ['em_andamento', 'reprovado'].includes(ev.status)) || eventos.find(ev => ev.status !== 'concluido');
-    const concluido = eventos.length >= 5 && eventos.every(ev => ev.status === 'concluido');
-    return { id: `esteira-${e.esteira_id}`, uf: e.detran, numero: e.sei_processo || 'Número SEI não informado', origem: 'Acompanhamento manual',
-      etapa: concluido ? 'Homologação registrada' : ETAPAS_ESTEIRA[atual?.etapa_id] || 'Etapa não informada',
-      responsavel: atual?.responsavel || 'Não informado', atualizado: e.updated_at || e.created_at, concluido, eventos,
-      pendencias: [], manual: true, aguardandoOrgao: false };
+    const externo = e.credenciamento_externo?.documento_id && eventos.some(ev => ev.etapa_id === 5 && ev.status === 'concluido') ? e.credenciamento_externo : null;
+    const concluido = Boolean(externo) || (eventos.length >= 5 && eventos.every(ev => ev.status === 'concluido'));
+    return { id: `esteira-${e.esteira_id}`, uf: e.detran, numero: e.numero_processo || e.sei_processo || 'Processo sem número informado', origem: 'Acompanhamento manual',
+      etapa: externo ? 'Credenciamento registrado — Apto' : concluido ? 'Homologação registrada' : ETAPAS_ESTEIRA[atual?.etapa_id] || 'Etapa não informada',
+      responsavel: externo ? `DETRAN-${e.detran}` : atual?.responsavel || 'Não informado', atualizado: e.updated_at || e.created_at, concluido, eventos,
+      pendencias: [], manual: true, aguardandoOrgao: false, usaSei: Boolean(e.sei_processo), validade: externo?.validade || null };
   });
   const digitais = submissoes.filter(s => s.company_id === empresa.company_id && !s.deleted_at).map(s => {
     const pendencias = pendenciasSubmissao(s);

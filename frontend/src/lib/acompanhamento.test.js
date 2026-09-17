@@ -32,3 +32,10 @@ test('identificador interno não é apresentado como protocolo e mantém o vínc
   expect(p.numero).toBe('Solicitação sem protocolo');
   expect(p.href).toBe('/credenciamento-portaria?submissao_id=subm_4257b4d41bb0');
 });
+
+test('ato externo comprovado conclui o acompanhamento sem inventar etapas intermediárias', () => {
+  const [p] = montarProcessos(empresa, [{ company_id: 'hd', esteira_id: 'ap', detran: 'AP', numero_processo: '0053.0649.2804.0200/2025', credenciamento_externo: { documento_id: 'portaria-ap', validade: '2027-04-15' }, eventos: [{ etapa_id: 2, status: 'aguardando' }, { etapa_id: 5, status: 'concluido' }] }], []);
+  expect(p.concluido).toBe(true); expect(p.etapa).toBe('Credenciamento registrado — Apto');
+  expect(p.numero).toBe('0053.0649.2804.0200/2025'); expect(p.usaSei).toBe(false);
+  expect(p.validade).toBe('2027-04-15'); expect(p.eventos[0].status).toBe('aguardando');
+});
