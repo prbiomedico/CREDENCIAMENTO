@@ -43,7 +43,7 @@ export function montarProcessos(empresa, esteiras, submissoes) {
   });
   const digitais = submissoes.filter(s => s.company_id === empresa.company_id && !s.deleted_at).map(s => {
     const pendencias = pendenciasSubmissao(s);
-    return { id: `submissao-${s.submissao_id}`, uf: s.estado_sigla, numero: s.submissao_id, origem: 'Credenciamento por portaria',
+    return { id: `submissao-${s.submissao_id}`, uf: s.estado_sigla, numero: 'Solicitação sem protocolo', origem: 'Credenciamento por portaria',
       etapa: STATUS_PROCESSO[s.status] || 'Situação não reconhecida', responsavel: pendencias.length ? 'Empresa' : s.status === 'homologado' ? 'Concluído' : 'Consultar processo',
       atualizado: s.homologado_em || s.analisado_em || s.submetido_em || s.created_at, concluido: s.status === 'homologado', eventos: [], pendencias, manual: false,
       href: `/credenciamento-portaria?submissao_id=${encodeURIComponent(s.submissao_id)}`,

@@ -26,3 +26,9 @@ test('isola empresa, incluindo esteiras legadas por dono e CNPJ', () => {
 test('não une fontes só por compartilharem UF', () => {
   expect(montarProcessos(empresa, [{ company_id: 'hd', esteira_id: 'e', detran: 'RN' }], [{ company_id: 'hd', submissao_id: 's', estado_sigla: 'RN', status: 'em_analise' }])).toHaveLength(2);
 });
+
+test('identificador interno não é apresentado como protocolo e mantém o vínculo da ação', () => {
+  const [p] = montarProcessos(empresa, [], [{ company_id: 'hd', submissao_id: 'subm_4257b4d41bb0', estado_sigla: 'RN', status: 'em_analise' }]);
+  expect(p.numero).toBe('Solicitação sem protocolo');
+  expect(p.href).toBe('/credenciamento-portaria?submissao_id=subm_4257b4d41bb0');
+});

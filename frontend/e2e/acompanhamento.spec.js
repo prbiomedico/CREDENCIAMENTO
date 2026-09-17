@@ -32,7 +32,7 @@ test('registradora encontra acompanhamento, pendência e histórico RN', async (
   await expect(page.getByRole('link', { name: /Abrir consulta no SEI-RN/ })).toBeVisible();
   await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
   await page.getByLabel('Filtrar processos').selectOption('pendencias');
-  await expect(page.getByRole('button', { name: 'Ver andamento s1' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ver andamento Solicitação sem protocolo' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Ver andamento 02910013.014739/2026-32' })).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.getByLabel('Filtrar processos').selectOption('todos');
