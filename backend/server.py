@@ -14,6 +14,7 @@ from typing import List, Optional, Literal
 import uuid
 from datetime import datetime, timezone, timedelta
 import httpx
+from renovacao import janela_renovacao
 import tempfile
 import shutil
 import aiofiles
@@ -832,6 +833,9 @@ class Submissao(BaseModel):
     estado_sigla: str
     company_id: str
     perfil_empresa: str  # Fatia 2: era Literal["registradora","financeira"] — agora É a categoria de credenciamento (TipoCredenciamento.tipo_id) desta submissão, não só um "perfil"
+    finalidade: str = "credenciamento"
+    credenciamento_origem_id: Optional[str] = None
+    ciclo_validade: Optional[str] = None
     status: str = "rascunho"
     itens: List[SubmissaoItem] = []
     submetido_em: Optional[str] = None
@@ -3522,6 +3526,26 @@ async def _autorizar_acesso_submissao(submissao: dict, current_user: User):
     raise HTTPException(status_code=403, detail="Sem acesso a esta submissão")
 
 
+async def _janela_da_submissao(submissao):
+    if submissao.get("finalidade") != "renovacao":
+        return None
+    cred = await db.credenciamentos.find_one({
+        "credenciamento_id": submissao.get("credenciamento_origem_id"),
+        "company_id": submissao["company_id"], "estado_sigla": submissao["estado_sigla"],
+        "categoria": submissao["perfil_empresa"], "deleted_at": None,
+    }, {"_id": 0})
+    janela = janela_renovacao(cred or {})
+    if submissao.get("ciclo_validade") != janela.get("validade"):
+        return {**janela, "disponivel": False, "motivo": "Este acervo pertence a um ciclo anterior. Consulte o credenciamento vigente."}
+    return janela
+
+
+async def _exigir_janela_renovacao(submissao):
+    janela = await _janela_da_submissao(submissao)
+    if submissao.get("status") == "rascunho" and janela and not janela["disponivel"]:
+        raise HTTPException(status_code=409, detail=janela["motivo"])
+
+
 @api_router.get("/submissoes")
 async def listar_submissoes(
     estado_sigla: Optional[str] = None,
@@ -3556,7 +3580,10 @@ async def listar_submissoes(
             query["ambiente_homologacao"] = True if em_homologacao else {"$ne": True}
     if status:
         query["status"] = status
-    return await db.submissoes.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    rows = await db.submissoes.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
+    for row in rows:
+        row["renovacao"] = await _janela_da_submissao(row)
+    return rows
 
 
 @api_router.get("/submissoes/{submissao_id}")
@@ -3615,6 +3642,10 @@ async def criar_submissao(portaria_id: str, categoria: Optional[str] = None, cur
     }, {"_id": 0})
     if existente:
         return existente
+    ativo = await db.credenciamentos.find_one({"company_id": empresa["company_id"], "estado_sigla": estado_sigla, "categoria": categoria_efetiva, "status": "ativo", "deleted_at": None}, {"_id": 0})
+    if ativo:
+        raise HTTPException(status_code=409, detail="Já existe credenciamento ativo. Consulte o acompanhamento e a janela de renovação.")
+
 
     submissao = Submissao(
         portaria_id=portaria_id,
@@ -3656,6 +3687,7 @@ async def upload_item_submissao(
         raise HTTPException(status_code=404, detail="Submissão não encontrada")
     if not empresa or empresa["company_id"] != submissao["company_id"]:
         raise HTTPException(status_code=403, detail="Sem acesso a esta submissão")
+    await _exigir_janela_renovacao(submissao)
     if submissao["status"] not in ("rascunho", "em_diligencia"):
         raise HTTPException(status_code=400, detail="Submissão não aceita novos envios neste status")
 
@@ -3743,7 +3775,9 @@ async def upload_item_submissao(
             f"Itens reenviados na submissão {submissao_id} — pronta para nova análise.",
             {"submissao_id": submissao_id}, bool(submissao.get("ambiente_homologacao")),
         )
-    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+    updated = await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+    updated["renovacao"] = await _janela_da_submissao(updated)
+    return updated
 
 
 @api_router.post("/submissoes/{submissao_id}/submeter")
@@ -3754,6 +3788,7 @@ async def submeter_submissao(submissao_id: str, current_user: User = Depends(get
         raise HTTPException(status_code=404, detail="Submissão não encontrada")
     if not empresa or empresa["company_id"] != submissao["company_id"]:
         raise HTTPException(status_code=403, detail="Sem acesso a esta submissão")
+    await _exigir_janela_renovacao(submissao)
     if submissao["status"] != "rascunho":
         raise HTTPException(status_code=400, detail="Só é possível submeter uma submissão em rascunho")
     pendentes = [i["nome"] for i in submissao["itens"] if i["status"] != "enviado"]
@@ -3768,7 +3803,9 @@ async def submeter_submissao(submissao_id: str, current_user: User = Depends(get
         f"Uma empresa enviou uma submissão para análise (portaria {submissao['portaria_id']}).",
         {"submissao_id": submissao_id}, bool(submissao.get("ambiente_homologacao")),
     )
-    return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+    updated = await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
+    updated["renovacao"] = await _janela_da_submissao(updated)
+    return updated
 
 
 @api_router.patch("/submissoes/{submissao_id}/itens/{item_id}")
@@ -3818,7 +3855,7 @@ async def analisar_item_submissao(
             await criar_notificacao(
                 empresa_doc["user_id"], "checklist_inconforme", "Pendência no credenciamento",
                 f"O item \"{item['nome']}\" foi marcado como inconforme: {analise.justificativa}",
-                {"submissao_id": submissao_id, "item_id": item_id}
+                {"submissao_id": submissao_id, "item_id": item_id, "estado_sigla": submissao["estado_sigla"], "company_id": submissao["company_id"]}
             )
     return await db.submissoes.find_one({"submissao_id": submissao_id}, {"_id": 0})
 
@@ -3842,7 +3879,7 @@ async def _notificar_empresa_submissao(submissao: dict, tipo: str, titulo: str, 
     if empresa and empresa.get("user_id"):
         await criar_notificacao(
             empresa["user_id"], tipo, titulo, mensagem,
-            {"submissao_id": submissao["submissao_id"]},
+            {"submissao_id": submissao["submissao_id"], "estado_sigla": submissao["estado_sigla"], "company_id": submissao["company_id"]},
         )
 
 
@@ -5659,10 +5696,16 @@ async def get_solicitacoes(scope: EffectiveScope = Depends(get_effective_scope))
     financeira) restrinja à empresa simulada, em vez de sempre cair no ramo
     sigcr_admin (visão irrestrita) mesmo com a simulação ativa."""
     current_user = scope.as_user()
-    if current_user.perfil in ["detran", "detran_admin", "sigcr_admin"]:
+    if current_user.perfil == "sigcr_admin":
         query = {}
+    elif current_user.perfil in ("detran", "detran_admin"):
+        if not current_user.detran_uf:
+            raise HTTPException(status_code=403, detail="Usuário DETRAN sem UF configurada")
+        query = {"uf": current_user.detran_uf}
     else:
         query = {"user_id": current_user.user_id}
+        if scope.effective_company_id:
+            query["company_id"] = scope.effective_company_id
     solicitacoes = await db.solicitacoes.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
     return solicitacoes
 
@@ -5740,6 +5783,8 @@ async def atualizar_status_solicitacao(
 
     body = await request.json()
     status = body.get("status")
+    if status not in ("em_analise", "aprovada", "rejeitada"):
+        raise HTTPException(status_code=400, detail="Status de análise inválido")
     obs = body.get("observacoes")
     progresso = {"em_analise": 60, "aprovada": 100, "rejeitada": 0}.get(status, 50)
     result = await db.solicitacoes.update_one(
@@ -6697,6 +6742,81 @@ async def listar_documentos_homologacao_empresa(
     return await db.documentos_gov.find(query, {"_id": 0}).sort(
         [("estado_sigla", 1), ("created_at", -1)]
     ).to_list(500)
+
+
+# Acompanhamento por empresa e UF: credenciamento vigente, acervo e pedidos
+# permanecem entidades distintas, reunidas apenas para apresentação.
+@api_router.get("/companies/{company_id}/acompanhamento/{uf}")
+async def acompanhamento_empresa_estado(company_id: str, uf: str, scope: EffectiveScope = Depends(get_effective_scope)):
+    await _autorizar_acesso_empresa(company_id, scope.as_user())
+    uf = uf.upper()
+    if uf not in UF_VALIDAS:
+        raise HTTPException(status_code=400, detail="UF inválida")
+    empresa = await db.companies.find_one({"company_id": company_id, "deleted_at": None}, {"_id": 0})
+    credenciamentos = await db.credenciamentos.find({"company_id": company_id, "estado_sigla": uf, "deleted_at": None}, {"_id": 0}).to_list(100)
+    for cred in credenciamentos:
+        cred["renovacao"] = janela_renovacao(cred)
+    submissoes = await db.submissoes.find({"company_id": company_id, "estado_sigla": uf, "deleted_at": None}, {"_id": 0}).sort("created_at", -1).to_list(500)
+    for sub in submissoes:
+        sub["renovacao"] = await _janela_da_submissao(sub)
+    ids = [s["submissao_id"] for s in submissoes]
+    esteiras = await db.esteiras.find({"company_id": company_id, "detran": uf}, {"_id": 0}).to_list(100)
+    oficiais = await db.documentos_gov.find({"company_id": company_id, "estado_sigla": uf, "categoria": {"$in": ["estado_detran", "espelho_homologacao"]}, "deleted_at": None}, {"_id": 0}).to_list(500)
+    # Acervo da empresa: só anexos desta UF ou vinculados aos pedidos dela.
+    documentos = await db.documents.find({"company_id": company_id, "deleted_at": None, "$or": [{"estado_sigla": uf}, {"submissao_id": {"$in": ids}}]}, {"_id": 0}).to_list(500)
+    for doc in documentos:
+        doc["download_url"] = f"/documents/download/{doc['document_id']}"
+    for doc in oficiais:
+        doc["download_url"] = f"/companies/{company_id}/documentos-homologacao/{doc['documento_id']}/download"
+    portarias = await db.portarias.find({"estado_sigla": uf, "deleted_at": None, "ambiente_homologacao": True if empresa.get("ambiente_homologacao") else {"$ne": True}}, {"_id": 0, "content": 0}).to_list(100)
+    portarias = [p for p in portarias if p.get("criado_via") != "wizard" or p.get("publicado_at")]
+    # Notificações são mensagens do sistema ao destinatário, não um chat com o órgão.
+    comunicacoes = await db.notificacoes.find({"user_id": empresa["user_id"], "dados.submissao_id": {"$in": ids}}, {"_id": 0}).sort("created_at", -1).to_list(500)
+    solicitacoes = await db.solicitacoes.find({"company_id": company_id, "uf": uf}, {"_id": 0}).to_list(100)
+    return {"empresa": {k: empresa.get(k) for k in ("company_id", "name", "nome_fantasia", "cnpj")}, "uf": uf,
+            "credenciamentos": credenciamentos, "submissoes": submissoes, "esteiras": esteiras,
+            "documentos": documentos, "oficiais": oficiais, "portarias": portarias,
+            "comunicacoes": comunicacoes, "solicitacoes": solicitacoes}
+
+
+@api_router.post("/credenciamentos/{credenciamento_id}/renovacao")
+async def iniciar_renovacao(credenciamento_id: str, portaria_id: str, scope: EffectiveScope = Depends(get_effective_scope)):
+    cred = await db.credenciamentos.find_one({"credenciamento_id": credenciamento_id, "deleted_at": None}, {"_id": 0})
+    if not cred:
+        raise HTTPException(status_code=404, detail="Credenciamento não encontrado")
+    effective = scope.as_user()
+    if effective.perfil not in ("registradora", "financeira", "sigcr_admin"):
+        raise HTTPException(status_code=403, detail="A renovação deve ser solicitada pela empresa")
+    await _autorizar_acesso_empresa(cred["company_id"], effective)
+    janela = janela_renovacao(cred)
+    if not janela["disponivel"]:
+        raise HTTPException(status_code=409, detail=janela["motivo"])
+    empresa = await db.companies.find_one({"company_id": cred["company_id"], "deleted_at": None}, {"_id": 0})
+    portaria = await db.portarias.find_one({"portaria_id": portaria_id, "estado_sigla": cred["estado_sigla"], "status": "vigente", "deleted_at": None}, {"_id": 0})
+    if not portaria or bool(portaria.get("ambiente_homologacao")) != bool(empresa.get("ambiente_homologacao")) or (portaria.get("criado_via") == "wizard" and not portaria.get("publicado_at")):
+        raise HTTPException(status_code=400, detail="Selecione uma portaria vigente e publicada deste DETRAN")
+    categoria = cred.get("categoria") or empresa.get("tipo_empresa")
+    if categoria not in _categorias_da_empresa(empresa):
+        raise HTTPException(status_code=403, detail="Categoria não autorizada para a empresa")
+    itens = [i for i in portaria.get("checklist_itens", []) if i.get("perfil_alvo") == categoria]
+    if not itens:
+        raise HTTPException(status_code=400, detail="Portaria sem checklist para esta categoria")
+    existente = await db.submissoes.find_one({"company_id": cred["company_id"], "credenciamento_origem_id": credenciamento_id, "ciclo_validade": janela["validade"], "deleted_at": None}, {"_id": 0})
+    if existente:
+        return existente
+    # _id determinístico impede duas renovações no mesmo ciclo, inclusive em concorrência.
+    chave = f"renovacao:{credenciamento_id}:{janela['validade']}"
+    doc = Submissao(portaria_id=portaria_id, estado_sigla=cred["estado_sigla"], company_id=cred["company_id"], perfil_empresa=categoria,
+        finalidade="renovacao", credenciamento_origem_id=credenciamento_id, ciclo_validade=janela["validade"],
+        itens=[SubmissaoItem(item_id=i["item_id"], nome=i["nome"], descricao=i.get("descricao"), perfil_alvo=categoria) for i in itens],
+        created_by=scope.current_user.user_id, ambiente_homologacao=bool(empresa.get("ambiente_homologacao"))).model_dump()
+    doc["created_at"] = doc["created_at"].isoformat()
+    try:
+        await db.submissoes.insert_one({"_id": chave, **doc})
+    except DuplicateKeyError:
+        return await db.submissoes.find_one({"_id": chave}, {"_id": 0})
+    await registrar_auditoria(scope.current_user, "iniciar_renovacao", "submissao", doc["submissao_id"], {"credenciamento_origem_id": credenciamento_id, "ciclo_validade": janela["validade"]}, atuando_como_empresa=cred["company_id"] if scope.is_viewing_as else None)
+    return doc
 
 
 @api_router.get("/companies/{company_id}/credenciamentos-resumo")
