@@ -86,7 +86,8 @@ const Notificacoes = () => {
 
   const abrirNotificacao = (notif) => {
     if (!notif.lida) marcarLida(notif.notificacao_id);
-    const rota = ROTA_POR_TIPO[notif.tipo]?.(notif.dados);
+    const destinoEmpresa = user?.perfil === 'registradora' && notif.dados?.company_id && notif.dados?.estado_sigla && notif.dados?.submissao_id;
+    const rota = destinoEmpresa ? `/acompanhamento/${encodeURIComponent(notif.dados.estado_sigla)}?empresa=${encodeURIComponent(notif.dados.company_id)}&pedido=${encodeURIComponent(notif.dados.submissao_id)}` : ROTA_POR_TIPO[notif.tipo]?.(notif.dados);
     if (rota) navigate(rota);
   };
 

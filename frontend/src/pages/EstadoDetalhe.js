@@ -1,3 +1,5 @@
+import { useViewContext } from '../contexts/ViewContext';
+import { usePerfilAtivo } from '../contexts/PerfilAtivoContext';
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/DashboardLayout';
@@ -48,6 +50,8 @@ export default function EstadoDetalhe() {
   const navigate = useNavigate();
   const { user, initialized, isAdmin, isDetran } = useAuth();
 
+  const { verComoEmpresa } = useViewContext();
+  const { trocarPerfil } = usePerfilAtivo();
   const semAcesso = isDetran && !isAdmin && user?.detran_uf && user.detran_uf !== siglaUpper;
 
   const [estadoInfo, setEstadoInfo] = useState(null);
@@ -555,7 +559,8 @@ export default function EstadoDetalhe() {
                               <TableCell className="text-slate-600 text-sm">{cred.validade ? new Date(cred.validade).toLocaleDateString('pt-BR') : '—'}</TableCell>
                               <TableCell className="text-right">
                                 <div className="flex justify-end gap-1">
-                                  <Button variant="ghost" size="icon" title="Editar" onClick={() => abrirEdicaoCredenciamento(cred)}>
+                                  {isAdmin && <Button variant="outline" size="sm" onClick={() => { verComoEmpresa(cred.company_id, cred.empresa_nome || 'Registradora'); trocarPerfil('registradora'); navigate(`/acompanhamento/${siglaUpper}?empresa=${encodeURIComponent(cred.company_id)}`); }}>Acompanhar empresa</Button>}
+                                    <Button variant="ghost" size="icon" title="Editar" onClick={() => abrirEdicaoCredenciamento(cred)}>
                                     <Pencil className="h-4 w-4" />
                                   </Button>
                                   {!cred.deleted_at && (

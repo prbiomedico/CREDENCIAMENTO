@@ -41,8 +41,10 @@ const STATUS_ITEM_CFG = {
   inconforme: { label: 'Inconforme', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
 };
 
-const MinhasSubmissoes = () => {
-  const { user, initialized } = useAuth();
+const MinhasSubmissoes = ({ embedded = false, companyId = null, uf = null, submissaoId = null, somenteLeitura = false }) => {
+  const { user, initialized, isAdmin } = useAuth();
+  const Layout = embedded ? React.Fragment : DashboardLayout;
+  const scopeParams = isAdmin && companyId ? { view_as_company_id: companyId } : {};
   const [searchParams] = useSearchParams();
   const [company, setCompany] = useState(null);
   const [tipos, setTipos] = useState([]);
@@ -70,15 +72,16 @@ const MinhasSubmissoes = () => {
     try {
       const companiesRes = await axios.get(`${API}/companies`, {
         withCredentials: true,
-        params: { tipo_empresa: user.perfil },
+        params: { tipo_empresa: embedded ? 'registradora' : user.perfil, ...scopeParams },
       });
-      const minhaEmpresa = (Array.isArray(companiesRes.data) ? companiesRes.data : [])[0] || null;
+      const listaEmpresas = Array.isArray(companiesRes.data) ? companiesRes.data : [];
+      const minhaEmpresa = companyId ? listaEmpresas.find(e => e.company_id === companyId) : listaEmpresas.length === 1 ? listaEmpresas[0] : null;
       setCompany(minhaEmpresa);
       if (!minhaEmpresa) { setPortarias([]); setSubmissoes([]); return; }
 
       const [portariasRes, submissoesRes] = await Promise.all([
-        axios.get(`${API}/portarias`, { withCredentials: true }),
-        axios.get(`${API}/submissoes`, { withCredentials: true }),
+        axios.get(`${API}/portarias`, { withCredentials: true, params: scopeParams }),
+        axios.get(`${API}/submissoes`, { withCredentials: true, params: scopeParams }),
       ]);
       const atuacao = minhaEmpresa.detrans_atuacao || [];
       // Fatia 2: união de categorias_credenciamento (novo, N:N) com
@@ -88,7 +91,7 @@ const MinhasSubmissoes = () => {
       // não só as do seu tipo_empresa original.
       const categoriasParaFiltro = new Set([...(minhaEmpresa.categorias_credenciamento || []), minhaEmpresa.tipo_empresa].filter(Boolean));
       const relevantes = (Array.isArray(portariasRes.data) ? portariasRes.data : []).filter((p) =>
-        p.estado_sigla && atuacao.includes(p.estado_sigla) &&
+        p.estado_sigla && (!uf || p.estado_sigla === uf) && atuacao.includes(p.estado_sigla) &&
         (p.checklist_itens || []).some((i) => categoriasParaFiltro.has(i.perfil_alvo))
       );
       setPortarias(relevantes);
@@ -99,7 +102,7 @@ const MinhasSubmissoes = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, companyId, uf, isAdmin]);
 
   useEffect(() => { if (initialized) fetchTudo(); }, [initialized, fetchTudo]);
 
@@ -121,7 +124,7 @@ const MinhasSubmissoes = () => {
   // na lista (portaria/submissão de outra UF/perfil, notificação stale etc.).
   useEffect(() => {
     if (loading || portariaAtiva) return;
-    const submissaoIdParam = searchParams.get('submissao_id');
+    const submissaoIdParam = submissaoId || searchParams.get('submissao_id');
     const portariaIdParam = searchParams.get('portaria_id');
     if (submissaoIdParam) {
       const sub = submissoes.find((s) => s.submissao_id === submissaoIdParam);
@@ -138,7 +141,7 @@ const MinhasSubmissoes = () => {
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, portarias, submissoes]);
+  }, [loading, portarias, submissoes, submissaoId]);
 
   const categoriasEmpresa = React.useMemo(
     () => new Set([...(company?.categorias_credenciamento || []), company?.tipo_empresa].filter(Boolean)),
@@ -148,7 +151,7 @@ const MinhasSubmissoes = () => {
     [...categoriasEmpresa].filter((cat) => (portaria.checklist_itens || []).some((i) => i.perfil_alvo === cat));
 
   const submissaoDe = (portariaId, categoria) =>
-    submissoes.find((s) => s.portaria_id === portariaId && s.perfil_empresa === categoria) || null;
+    submissoes.find(s => s.submissao_id === (submissaoId || searchParams.get('submissao_id')) && s.portaria_id === portariaId && s.perfil_empresa === categoria) || submissoes.find((s) => s.portaria_id === portariaId && s.perfil_empresa === categoria) || null;
 
   const iniciarSubmissao = async (portariaId, categoria) => {
     setCriandoSubmissao(true);
@@ -238,7 +241,7 @@ const MinhasSubmissoes = () => {
   const submissaoSelecionada = portariaAtiva ? submissaoDe(portariaAtiva, categoriaAtiva) : null;
 
   return (
-    <DashboardLayout>
+    <Layout>
       <div className="p-6 lg:p-8 space-y-8">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Credenciamento por Portaria</h1>
@@ -326,7 +329,7 @@ const MinhasSubmissoes = () => {
                   <p className="text-slate-600 mb-4">Você ainda não iniciou o envio pra esta portaria.</p>
                   <Button
                     onClick={() => iniciarSubmissao(portariaSelecionada.portaria_id, categoriaAtiva)}
-                    disabled={criandoSubmissao}
+                    disabled={criandoSubmissao || somenteLeitura}
                     className="bg-primary-500 hover:bg-primary-600 text-white"
                   >
                     {criandoSubmissao ? 'Iniciando...' : 'Iniciar Credenciamento'}
@@ -335,6 +338,7 @@ const MinhasSubmissoes = () => {
               </Card>
             ) : (
               <>
+                {submissaoSelecionada.renovacao && <p className="rounded-lg border p-4 text-sm">{submissaoSelecionada.renovacao.motivo} Documentos anteriores permanecem no acervo.</p>}
                 <Card className="bg-card border-border">
                   <CardContent className="p-4 flex items-center justify-between">
                     <div>
@@ -343,7 +347,7 @@ const MinhasSubmissoes = () => {
                         {(STATUS_SUBMISSAO_CFG[submissaoSelecionada.status] || { label: submissaoSelecionada.status }).label}
                       </Badge>
                     </div>
-                    {submissaoSelecionada.status === 'rascunho' && (
+                    {!somenteLeitura && submissaoSelecionada.status === 'rascunho' && !(submissaoSelecionada.finalidade === 'renovacao' && !submissaoSelecionada.renovacao?.disponivel) && (
                       <Button
                         onClick={() => submeter(submissaoSelecionada.submissao_id)}
                         disabled={submetendo || submissaoSelecionada.itens.some((i) => i.status !== 'enviado')}
@@ -366,7 +370,7 @@ const MinhasSubmissoes = () => {
                 {submissaoSelecionada.fluxo_credenciamento_v2 && (
                   <FluxoCredenciamento
                     submissao={submissaoSelecionada}
-                    modo="empresa"
+                    modo={somenteLeitura ? "consulta" : "empresa"}
                     onAtualizar={(atualizada) => setSubmissoes((prev) => prev.map((s) => s.submissao_id === atualizada.submissao_id ? atualizada : s))}
                   />
                 )}
@@ -374,8 +378,7 @@ const MinhasSubmissoes = () => {
                 <div className="space-y-2">
                   {submissaoSelecionada.itens.map((item) => {
                     const cfg = STATUS_ITEM_CFG[item.status];
-                    const podeEnviar = item.status === 'pendente' ||
-                      (item.status === 'inconforme' && submissaoSelecionada.status === 'em_diligencia');
+                    const podeEnviar = !somenteLeitura && !(submissaoSelecionada.finalidade === 'renovacao' && submissaoSelecionada.status === 'rascunho' && !submissaoSelecionada.renovacao?.disponivel) && ((item.status === 'pendente' && submissaoSelecionada.status === 'rascunho') || (item.status === 'inconforme' && submissaoSelecionada.status === 'em_diligencia'));
                     return (
                       <Card key={item.item_id} className="bg-card border-border">
                         <CardContent className="p-4">
@@ -449,7 +452,7 @@ const MinhasSubmissoes = () => {
           )}
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </Layout>
   );
 };
 

@@ -32,6 +32,7 @@ import Estados from './pages/Estados';
 import EstadoDetalhe from './pages/EstadoDetalhe';
 import Transparencia from './pages/Transparencia';
 import MinhasSubmissoes from './pages/MinhasSubmissoes';
+import AcompanhamentoEstado from './pages/AcompanhamentoEstado';
 import PainelConferencia from './pages/PainelConferencia';
 import Registradoras from './pages/Registradoras';
 import Financeiras from './pages/Financeiras';
@@ -100,6 +101,7 @@ function AppRoutes() {
         <Route path="/notificacoes" element={b(<RotaProtegida><Notificacoes /></RotaProtegida>)} />
         <Route path="/criar-evento" element={b(<RotaProtegida perfilPermitido={["detran", "detran_admin"]}><CriarEvento /></RotaProtegida>)} />
       <Route path="/acompanhamento" element={b(<RotaProtegida perfilPermitido="registradora"><AcompanhamentoRegistradora /></RotaProtegida>)} />
+      <Route path="/acompanhamento/:uf" element={b(<RotaProtegida perfilPermitido="registradora"><AcompanhamentoEstado /></RotaProtegida>)} />
       <Route path="/esteiras" element={b(<RotaProtegida><Esteiras /></RotaProtegida>)} />
       <Route path="/solicitacoes/:id" element={b(<RotaProtegida perfilPermitido={["registradora", "detran", "detran_admin"]}><SolicitacaoDetalhe /></RotaProtegida>)} />
       <Route path="/usuarios" element={b(<RotaProtegida perfilPermitido="sigcr_admin"><GestaoUsuarios /></RotaProtegida>)} />

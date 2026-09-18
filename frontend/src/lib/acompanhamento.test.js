@@ -39,3 +39,9 @@ test('ato externo comprovado conclui o acompanhamento sem inventar etapas interm
   expect(p.numero).toBe('0053.0649.2804.0200/2025'); expect(p.usaSei).toBe(false);
   expect(p.validade).toBe('2027-04-15'); expect(p.eventos[0].status).toBe('aguardando');
 });
+
+test('acervo de renovação fora da janela não cobra documentos; diligência em curso continua acionável', () => {
+  const s = { finalidade: 'renovacao', renovacao: { disponivel: false }, status: 'rascunho', itens: [{ item_id: 'a', nome: 'Certidão', status: 'pendente' }] };
+  expect(pendenciasSubmissao(s)).toEqual([]);
+  expect(pendenciasSubmissao({ ...s, status: 'em_diligencia', itens: [{ item_id: 'a', status: 'inconforme' }] })).toHaveLength(1);
+});

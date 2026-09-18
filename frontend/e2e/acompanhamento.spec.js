@@ -82,3 +82,34 @@ test('AP mostra ato externo e vigência sem atribuir processo ao SEI', async ({ 
   await page.getByRole('tab', { name: 'Documentos', exact: true }).click();
   await expect(page.getByText('Portaria 0254/2025 e espelho Apto.')).toBeVisible();
 });
+
+const detalheAP = {
+  empresa, uf: 'AP', credenciamentos: [{ credenciamento_id: 'cred-ap', categoria: 'registradora', status: 'ativo', validade: '2027-04-15', extrato_contrato: 'Portaria 0254/2025', renovacao: { disponivel: false, abre_em: '2027-02-14', motivo: 'Renovação disponível a partir de 14/02/2027.' } }],
+  submissoes: [{ ...sub, estado_sigla: 'AP', finalidade: 'renovacao', status: 'rascunho', renovacao: { disponivel: false, motivo: 'Renovação disponível a partir de 14/02/2027.' } }], esteiras: [], oficiais: [], documentos: [{ document_id: 'doc1', document_name: 'Declaração conjunta', file_name: 'declaracao.pdf', download_url: '/documents/download/doc1' }], portarias: [], comunicacoes: [], solicitacoes: [],
+};
+test('acompanhamento completo mantém acervo e bloqueia renovação fora da janela', async ({ page }, testInfo) => {
+  await page.route('http://api.test/api/companies/hd/acompanhamento/AP*', route => route.fulfill({ json: detalheAP }));
+  await page.goto('/acompanhamento/AP?empresa=hd');
+  await expect(page.getByRole('heading', { name: /DETRAN-AP/ })).toBeVisible();
+  await expect(page.getByText('Renovação disponível a partir de 14/02/2027.')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Solicitar renovação' })).toHaveCount(0);
+  await page.screenshot({ path: testInfo.outputPath('acompanhamento-estado.png'), fullPage: true });
+  await page.getByRole('tab', { name: 'Documentos', exact: true }).click();
+  await expect(page.getByText('Declaração conjunta', { exact: true })).toBeVisible();
+  await page.getByRole('tab', { name: 'Pedidos e checklist' }).click();
+  await expect(page.getByText('Renovação · Acervo para futura renovação')).toBeVisible();
+  await page.getByRole('tab', { name: 'Comunicações' }).click();
+  await expect(page.getByText(/Nenhuma comunicação vinculada/)).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
+test('renovação disponível exige portaria e usa o credenciamento correto', async ({ page }) => {
+  await page.route('http://api.test/api/companies/hd/acompanhamento/AP*', route => route.fulfill({ json: { ...detalheAP, credenciamentos: [{ ...detalheAP.credenciamentos[0], renovacao: { disponivel: true, motivo: 'Renovação disponível.' } }], portarias: [{ portaria_id: 'p-ap', title: 'Portaria AP', status: 'vigente', checklist_itens: [{ perfil_alvo: 'registradora' }] }] } }));
+  let chamado = false;
+  await page.route('http://api.test/api/credenciamentos/cred-ap/renovacao*', route => { chamado = new URL(route.request().url()).searchParams.get('portaria_id') === 'p-ap' && route.request().method() === 'POST'; return route.fulfill({ status: 409, json: { detail: 'Janela encerrada. Atualize o acompanhamento.' } }); });
+  await page.goto('/acompanhamento/AP?empresa=hd');
+  await expect(page.getByRole('button', { name: 'Solicitar renovação' })).toBeDisabled();
+  await page.getByLabel('Portaria para renovação').selectOption('p-ap');
+  await page.getByRole('button', { name: 'Solicitar renovação' }).click();
+  await expect(page.getByRole('alert')).toContainText('Janela encerrada');
+  expect(chamado).toBe(true);
+});

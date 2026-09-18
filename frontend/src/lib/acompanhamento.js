@@ -8,6 +8,7 @@ export const STATUS_PROCESSO = {
 export const STATUS_ETAPA = { pendente: 'Não iniciada', aguardando: 'Aguardando', em_andamento: 'Em andamento', concluido: 'Concluída', reprovado: 'Reprovada' };
 
 export function pendenciasSubmissao(s) {
+  if (s.finalidade === 'renovacao' && s.status === 'rascunho' && !s.renovacao?.disponivel) return [];
   const rows = [];
   const add = (id, titulo, descricao, prazo = null) => rows.push({ id, titulo, descricao, prazo });
   if (s.status === 'rascunho' || s.status === 'em_diligencia') {
@@ -45,9 +46,10 @@ export function montarProcessos(empresa, esteiras, submissoes) {
   const digitais = submissoes.filter(s => s.company_id === empresa.company_id && !s.deleted_at).map(s => {
     const pendencias = pendenciasSubmissao(s);
     return { id: `submissao-${s.submissao_id}`, uf: s.estado_sigla, numero: 'Solicitação sem protocolo', origem: 'Credenciamento por portaria',
-      etapa: STATUS_PROCESSO[s.status] || 'Situação não reconhecida', responsavel: pendencias.length ? 'Empresa' : s.status === 'homologado' ? 'Concluído' : 'Consultar processo',
+      etapa: s.finalidade === 'renovacao' && s.status === 'rascunho' && !s.renovacao?.disponivel ? 'Acervo para futura renovação' : STATUS_PROCESSO[s.status] || 'Situação não reconhecida', responsavel: pendencias.length ? 'Empresa' : s.status === 'homologado' ? 'Concluído' : 'Consultar processo',
       atualizado: s.homologado_em || s.analisado_em || s.submetido_em || s.created_at, concluido: s.status === 'homologado', eventos: [], pendencias, manual: false,
       href: `/credenciamento-portaria?submissao_id=${encodeURIComponent(s.submissao_id)}`,
+      proximaAcao: s.finalidade === 'renovacao' && s.status === 'rascunho' ? s.renovacao?.motivo : null,
       aguardandoOrgao: !pendencias.length && ['submetido', 'em_analise', 'contrato_pendente', 'homologacao_pendente'].includes(s.status) };
   });
   // Sem vínculo explícito entre submissão e SEI, não fundir processos apenas por UF.
