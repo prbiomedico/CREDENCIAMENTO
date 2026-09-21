@@ -471,7 +471,7 @@ class Company(BaseModel):
     nome_fantasia: str
     cnpj: str
     endereco: str
-    email_comercial: EmailStr
+    email_comercial: Optional[EmailStr] = None
     whatsapp: str
     gestor_contrato: str
     logo_url: Optional[str] = None
