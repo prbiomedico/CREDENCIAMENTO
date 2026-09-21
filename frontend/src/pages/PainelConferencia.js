@@ -1,3 +1,4 @@
+import EntregasConferencia from '../components/EntregasConferencia';
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import {
@@ -83,6 +84,8 @@ const PainelConferencia = () => {
       .then((res) => setUfs(Array.isArray(res.data) ? res.data.filter((e) => e.configurado) : []))
       .catch(() => {});
   }, [ehAdmin]);
+
+  useEffect(() => { if (!ehAdmin && user?.detran_uf) setEstadoSigla(user.detran_uf); }, [ehAdmin, user?.detran_uf]);
 
   const fetchSubmissoes = useCallback(async () => {
     if (!estadoSigla) return;
@@ -237,6 +240,8 @@ const PainelConferencia = () => {
             </Select>
           )}
         </div>
+
+        {podeConferir && <EntregasConferencia ufs={ehAdmin ? ufs.map(e => e.sigla) : [user?.detran_uf].filter(Boolean)} onOpen={s => { setEstadoSigla(s.estado_sigla); setSubmissaoAtivaId(s.submissao_id); }} />}
 
         {loading ? (
           <div className="flex items-center justify-center py-16 text-slate-500 gap-3">

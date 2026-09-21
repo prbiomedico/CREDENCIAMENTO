@@ -133,3 +133,16 @@ test('acervo permanece em documentos e separa banco dos estados', async ({ page 
   await page.goto('/acompanhamento');
   await expect(page.getByRole('region', { name: 'Acervo da empresa', exact: true })).toHaveCount(0);
 });
+
+test('painel avisa entregas finalizadas antes de selecionar UF e exclui rascunhos', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('sigcr_e2e_user', JSON.stringify({ user_id: 'admin', perfil: 'sigcr_admin', roles: ['sigcr_admin'] })));
+  await page.route('http://api.test/api/estados', r => r.fulfill({ json: [{ sigla: 'SP', nome: 'São Paulo', configurado: true }] }));
+  await page.route('http://api.test/api/submissoes*', r => r.fulfill({ json: [
+    { ...sub, submissao_id: 'novo', estado_sigla: 'SP', status: 'submetido', itens: [{ status: 'enviado', document_id: 'd1' }] },
+    { ...sub, submissao_id: 'rascunho', estado_sigla: 'SP', status: 'rascunho' },
+  ] }));
+  await page.goto('/detran/conferencia');
+  const inbox = page.getByRole('region', { name: 'Envios aguardando conferência' });
+  await expect(inbox.getByText('DETRAN-SP · Novo envio para conferência')).toBeVisible();
+  await expect(inbox.getByRole('button', { name: 'Conferir documentos' })).toHaveCount(1);
+});

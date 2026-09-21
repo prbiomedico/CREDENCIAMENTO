@@ -353,7 +353,7 @@ const MinhasSubmissoes = ({ embedded = false, companyId = null, uf = null, submi
                         disabled={submetendo || submissaoSelecionada.itens.some((i) => i.status !== 'enviado')}
                         className="bg-primary-500 hover:bg-primary-600 text-white"
                       >
-                        {submetendo ? 'Enviando...' : 'Submeter pro DETRAN'}
+                        {submetendo ? 'Enviando...' : 'Finalizar envio e solicitar conferência'}
                       </Button>
                     )}
                     {submissaoSelecionada.status === 'homologado' && (
