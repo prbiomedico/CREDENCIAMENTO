@@ -331,13 +331,14 @@ const PainelConferencia = () => {
             <div className="space-y-3">
               {submissaoAtiva.itens.map((item) => {
                 const cfg = STATUS_ITEM_CFG[item.status];
-                const podeAnalisar = podeConferir && item.status === 'enviado';
+                const podeAnalisar = podeConferir && ['submetido', 'em_analise'].includes(submissaoAtiva.status) && item.status === 'enviado';
                 return (
                   <Card key={item.item_id} className="bg-card border-border">
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-center justify-between gap-4">
                         <div className="min-w-0">
                           <p className="text-sm text-zinc-200 font-medium">{item.nome}</p>
+                          {item.evidencia_observacao && <p className="text-xs text-amber-700 mt-1">{item.evidencia_observacao}</p>}
                           {item.descricao && <p className="text-xs text-slate-500 mt-0.5">{item.descricao}</p>}
                         </div>
                         <Badge className={`${cfg.className} font-mono uppercase text-[10px] px-2 py-0.5 shrink-0`}>
@@ -346,13 +347,12 @@ const PainelConferencia = () => {
                       </div>
 
                       {item.document_id && (
-                        <a
-                          href={`${API}/documents/download/${item.document_id}`}
-                          target="_blank" rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-primary-400 hover:text-primary-300"
-                        >
-                          <FileText className="h-3.5 w-3.5" /> Ver documento enviado
-                        </a>
+                        <Button variant="outline" size="sm" onClick={async () => {
+                          try {
+                            const res = await axios.get(`${API}/submissoes/${submissaoAtiva.submissao_id}/itens/${item.item_id}/documento`, { withCredentials: true, responseType: 'blob' });
+                            const url = URL.createObjectURL(res.data); const a = document.createElement('a'); a.href = url; a.download = item.evidencia_nome || 'documento.pdf'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+                          } catch { toast.error('Não foi possível baixar a evidência.'); }
+                        }}><FileText className="h-3.5 w-3.5" /> Baixar evidência</Button>
                       )}
 
                       {podeAnalisar && (

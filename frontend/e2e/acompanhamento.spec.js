@@ -140,9 +140,11 @@ test('painel avisa entregas finalizadas antes de selecionar UF e exclui rascunho
   await page.route('http://api.test/api/submissoes*', r => r.fulfill({ json: [
     { ...sub, submissao_id: 'novo', estado_sigla: 'SP', status: 'submetido', itens: [{ status: 'enviado', document_id: 'd1' }] },
     { ...sub, submissao_id: 'rascunho', estado_sigla: 'SP', status: 'rascunho' },
+    { ...sub, submissao_id: 'parcial', estado_sigla: 'SP', status: 'rascunho', evidencias_para_conferencia: true },
   ] }));
   await page.goto('/detran/conferencia');
   const inbox = page.getByRole('region', { name: 'Envios aguardando conferência' });
   await expect(inbox.getByText('DETRAN-SP · Novo envio para conferência')).toBeVisible();
-  await expect(inbox.getByRole('button', { name: 'Conferir documentos' })).toHaveCount(1);
+  await expect(inbox.getByRole('button', { name: 'Conferir documentos' })).toHaveCount(2);
+  await expect(inbox.getByText('DETRAN-SP · Evidências parciais organizadas — pedido incompleto')).toBeVisible();
 });
