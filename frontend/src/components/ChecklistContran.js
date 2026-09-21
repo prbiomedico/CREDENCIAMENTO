@@ -1,3 +1,4 @@
+import AcervoEmpresa from './AcervoEmpresa';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   CheckCircle, Clock, XCircle, Upload, FileText, Download, Trash2, Sparkles, Pencil,
@@ -307,6 +308,7 @@ const ChecklistContran = ({ companyId }) => {
 
   return (
     <div className="space-y-6" data-testid="checklist-contran">
+      <AcervoEmpresa companyId={companyId} />
       {/* Progresso geral */}
       <Card className="bg-card border-border">
         <CardContent className="p-6">
