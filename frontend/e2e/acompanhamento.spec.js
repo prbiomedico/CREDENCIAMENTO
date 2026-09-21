@@ -114,12 +114,13 @@ test('renovação disponível exige portaria e usa o credenciamento correto', as
   expect(chamado).toBe(true);
 });
 
-test('acervo importado aparece diretamente e separa banco dos estados', async ({ page }) => {
+test('acervo permanece em documentos e separa banco dos estados', async ({ page }) => {
   await page.route('http://api.test/api/documents/hd', route => route.fulfill({ json: [
     { document_id: 'sp1', document_type: 'anexo_credenciamento', document_name: 'SP — Requerimento assinado', file_name: 'pedido.pdf', status: 'pending' },
     { document_id: 'bb1', document_type: 'acervo_hd', document_name: 'Banco do Brasil — Declaração', file_name: 'bb.pdf', status: 'pending' },
   ] }));
-  await page.goto('/acompanhamento');
+  await page.route('http://api.test/api/checklist-contran*', route => route.fulfill({ json: { blocos: [], resumo: { total: 0 } } }));
+  await page.goto('/documentos');
   const acervo = page.getByRole('region', { name: 'Acervo da empresa', exact: true });
   await expect(acervo.getByRole('heading', { name: 'Acervo da empresa · 2 documentos' })).toBeVisible();
   await acervo.getByRole('button', { name: 'Instituições financeiras (1)', exact: true }).click();
@@ -129,4 +130,6 @@ test('acervo importado aparece diretamente e separa banco dos estados', async ({
   await expect(acervo.getByRole('link', { name: 'Abrir acompanhamento de SP' })).toHaveAttribute('href', '/acompanhamento/SP?empresa=hd');
   await expect(acervo.getByText('Banco do Brasil — Declaração', { exact: true })).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.goto('/acompanhamento');
+  await expect(page.getByRole('region', { name: 'Acervo da empresa', exact: true })).toHaveCount(0);
 });

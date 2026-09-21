@@ -1,3 +1,4 @@
+import AcervoEmpresa from '../components/AcervoEmpresa';
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { FileText } from 'lucide-react';
@@ -118,6 +119,7 @@ const Documentos = () => {
               </CardContent>
             </Card>
 
+            <div className="mb-6"><AcervoEmpresa key={selectedCompany} companyId={selectedCompany} /></div>
             <ChecklistContran companyId={selectedCompany} />
           </>
         )}

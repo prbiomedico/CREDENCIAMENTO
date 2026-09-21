@@ -1,4 +1,3 @@
-import AcervoEmpresa from '../components/AcervoEmpresa';
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
@@ -85,7 +84,6 @@ export default function AcompanhamentoRegistradora() {
           {empresas.map(e => <option value={e.company_id} key={e.company_id}>{e.nome_fantasia || e.name}</option>)}
         </select></div>
       {erro ? <div role="alert" className="rounded-lg border border-destructive/40 bg-card p-4 text-sm">{erro}</div> : carregandoEmpresas || (companyId && !pronto) ? <p role="status" className="flex items-center gap-2 py-10 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" /> Carregando acompanhamento...</p> : !companyId ? <p className="rounded-lg border border-border p-5 text-muted-foreground">{empresas.length ? 'Selecione uma empresa para visualizar seus processos e pendências.' : 'Nenhuma registradora disponível para este acesso.'}</p> : <>
-        <AcervoEmpresa key={`${companyId}:${contexto}:${versao}`} companyId={companyId} />
         <section className="space-y-4" aria-label="Processos e pendências por DETRAN">
           <div className="flex flex-wrap gap-x-5 gap-y-2 border-y border-border py-3 text-sm text-muted-foreground" aria-label="Resumo do acompanhamento">
             <span><strong className="text-foreground">{processos.length}</strong> processos</span>
