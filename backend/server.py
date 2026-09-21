@@ -3780,6 +3780,21 @@ async def upload_item_submissao(
     return updated
 
 
+@api_router.get("/submissoes/{submissao_id}/itens/{item_id}/documento")
+async def baixar_evidencia_item(submissao_id: str, item_id: str, scope: EffectiveScope = Depends(get_effective_scope)):
+    submissao = await db.submissoes.find_one({"submissao_id": submissao_id, "deleted_at": None}, {"_id": 0})
+    if not submissao:
+        raise HTTPException(status_code=404, detail="Pedido não encontrado")
+    await _autorizar_acesso_submissao(submissao, scope.as_user())
+    item = next((i for i in submissao.get("itens", []) if i["item_id"] == item_id), None)
+    if not item or not item.get("document_id"):
+        raise HTTPException(status_code=404, detail="Item sem documento")
+    doc = await db.documents.find_one({"document_id": item["document_id"], "company_id": submissao["company_id"], "deleted_at": None}, {"_id": 0})
+    if not doc or not Path(doc["file_path"]).is_file():
+        raise HTTPException(status_code=404, detail="Documento indisponível")
+    return FileResponse(path=doc["file_path"], filename=doc["file_name"], media_type="application/octet-stream")
+
+
 @api_router.post("/submissoes/{submissao_id}/submeter")
 async def submeter_submissao(submissao_id: str, current_user: User = Depends(get_current_user)):
     empresa = await _empresa_do_usuario(current_user)
