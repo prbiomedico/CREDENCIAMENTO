@@ -1,3 +1,4 @@
+import { reconcileSessionUser } from '../lib/sessionUser';
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import Keycloak from 'keycloak-js';
 import axios from 'axios';
@@ -118,11 +119,11 @@ export const AuthProvider = ({ children }) => {
       checkLoginIframe: false,
     }).then(authenticated => {
       if (authenticated) {
-        setUser(extractUser(keycloak.tokenParsed));
+        setUser(previous => reconcileSessionUser(previous, extractUser(keycloak.tokenParsed)));
         refreshRef.current = setInterval(async () => {
           try {
             await keycloak.updateToken(60);
-            setUser(extractUser(keycloak.tokenParsed));
+            setUser(previous => reconcileSessionUser(previous, extractUser(keycloak.tokenParsed)));
           } catch { keycloak.login(); }
         }, 30000);
       }
