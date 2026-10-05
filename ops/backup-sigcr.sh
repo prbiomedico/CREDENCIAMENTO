@@ -20,7 +20,8 @@ docker exec sigcr-mongodb sh -c 'exec mongodump --archive --gzip --username "$MO
 docker exec sigcr-keycloak-db sh -c 'exec pg_dumpall -U "$POSTGRES_USER"' | gzip > "$partial/keycloak-postgresql.sql.gz"
 tar -czf "$partial/uploads.tar.gz" -C /opt/sigcr/backend uploads
 tar -czf "$partial/runtime-config.tar.gz" -C / etc/nginx -C /opt/sigcr backend/.env frontend/.env.production
-for dir in /opt/sigcr/keycloak /opt/keycloak/themes/sigcr; do
+docker inspect sigcr-mongodb sigcr-keycloak-db sigcr-backend sigcr-keycloak sigcr-ollama | gzip > "$partial/container-config.json.gz"
+for dir in /opt/sigcr/keycloak-themes/sigcr /opt/sigcr/keycloak /opt/keycloak/themes/sigcr; do
   if [ -d "$dir" ]; then tar -czf "$partial/keycloak-theme.tar.gz" -C "$dir" .; break; fi
 done
 for archive in "$partial"/*.gz; do gzip -t "$archive"; done
