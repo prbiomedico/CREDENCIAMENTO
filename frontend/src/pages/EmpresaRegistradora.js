@@ -14,6 +14,7 @@ import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis
 import axios from 'axios';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
+import { coberturaDocumental } from '../lib/coberturaDocumental';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
@@ -192,6 +193,10 @@ const EmpresaRegistradora = () => {
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: { label: 'Pendente', icon: Clock, className: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+      pendente_aprovacao: { label: 'Pendente de aprovação', icon: Clock, className: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+      aprovado_acesso_limitado: { label: 'Acesso limitado', icon: Clock, className: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+      ativo_contrato_assinado: { label: 'Ativa', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
+      rejeitado: { label: 'Rejeitada', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
       approved: { label: 'Aprovada', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
       rejected: { label: 'Rejeitada', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
     };
@@ -560,6 +565,7 @@ const EmpresaRegistradora = () => {
             {companies.map((company) => {
               const docs = documentosHomologacao[company.company_id] || [];
               const creds = credenciamentos[company.company_id] || [];
+              const cobertura = coberturaDocumental(creds, docs);
               const docsPorUf = Object.fromEntries(docs.map((doc) => [doc.estado_sigla, doc]));
               const ativos = creds.filter((cred) => cred.status === 'ativo').length;
               const revisao = creds.filter((cred) => cred.status === 'sem_efeito').length;
@@ -652,8 +658,8 @@ const EmpresaRegistradora = () => {
                           <div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-emerald-600" style={{ width: `${creds.length ? (ativos / creds.length) * 100 : 0}%` }} /></div>
                         </div>
                         <div>
-                          <div className="mb-2 flex justify-between text-xs"><span className="text-slate-600">Estados com documento oficial</span><span className="font-semibold text-slate-900">{docs.length}/{creds.length}</span></div>
-                          <div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-slate-800" style={{ width: `${creds.length ? (docs.length / creds.length) * 100 : 0}%` }} /></div>
+                          <div className="mb-2 flex justify-between text-xs"><span className="text-slate-600">Estados com documento oficial</span><span className="font-semibold text-slate-900">{cobertura.comDocumento}/{cobertura.total}</span></div>
+                          <div className="h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-slate-800" style={{ width: `${cobertura.total ? (cobertura.comDocumento / cobertura.total) * 100 : 0}%` }} /></div>
                         </div>
                         <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-900">
                           <span className="font-semibold">Acompanhamento:</span> {revisao + pendentes === 0 ? 'nenhuma pendência identificada.' : `${revisao + pendentes} estado(s) precisam de revisão documental ou conclusão do processo.`}

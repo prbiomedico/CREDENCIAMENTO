@@ -179,6 +179,10 @@ const EmpresaFinanceira = () => {
   const getStatusBadge = (status) => {
     const statusConfig = {
       pending: { label: 'Pendente', icon: Clock, className: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+      pendente_aprovacao: { label: 'Pendente de aprovação', icon: Clock, className: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+      aprovado_acesso_limitado: { label: 'Acesso limitado', icon: Clock, className: 'bg-amber-500/10 text-amber-500 border-amber-500/20' },
+      ativo_contrato_assinado: { label: 'Ativa', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
+      rejeitado: { label: 'Rejeitada', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
       approved: { label: 'Aprovada', icon: CheckCircle, className: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' },
       rejected: { label: 'Rejeitada', icon: XCircle, className: 'bg-red-500/10 text-red-500 border-red-500/20' },
     };
