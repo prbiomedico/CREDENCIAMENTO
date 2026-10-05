@@ -68,6 +68,9 @@ mkdir -p "$FRONTEND_DIR/releases"
 cp -r "$WORKTREE_DIR/frontend/build" "$RELEASE_DIR"
 echo "Release nova pronta em $RELEASE_DIR."
 
+# Recursos de releases anteriores continuam acessíveis para abas já abertas.
+python3 "$FRONTEND_DIR/../ops/preserve-assets.py" "$RELEASE_DIR" "$FRONTEND_DIR/shared"
+
 ln -s "$RELEASE_DIR" "$FRONTEND_DIR/current.tmp"
 mv -T "$FRONTEND_DIR/current.tmp" "$FRONTEND_DIR/current"
 echo "Swap atomico concluido -- current agora aponta pra $RELEASE_DIR."
