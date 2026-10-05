@@ -1,0 +1,11 @@
+[Unit]
+Description=Backup dos bancos, uploads e configuração do SIGCR
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/sigcr/ops/backup-sigcr.sh
+UMask=0077
+TimeoutStartSec=1800
+Nice=10

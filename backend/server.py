@@ -4466,6 +4466,8 @@ async def get_stats(scope: EffectiveScope = Depends(get_effective_scope)):
         filtro_empresa = {**filtro_ambiente, "tipo_empresa": "registradora", "detrans_atuacao": scope.effective_detran_uf}
     else:
         filtro_empresa = {**filtro_ambiente, "user_id": scope.effective_user_id}
+        if scope.effective_company_id:
+            filtro_empresa["company_id"] = scope.effective_company_id
 
     total_companies = await db.companies.count_documents({**filtro_empresa, "deleted_at": None})
     # Split por tipo (Item 1 do Dashboard, 2026-08-27): o card único "Empresas"
@@ -4490,19 +4492,22 @@ async def get_stats(scope: EffectiveScope = Depends(get_effective_scope)):
     total_portarias = await db.portarias.count_documents({**filtro_ambiente, "deleted_at": None})
     active_portarias = await db.portarias.count_documents({**filtro_ambiente, "status": "vigente", "deleted_at": None})
 
-    companies = await db.companies.find(
+    companies = db.companies.find(
         {**filtro_empresa, "deleted_at": None}, {"_id": 0, "company_id": 1}
-    ).to_list(1000)
+    )
 
     total_documents = 0
     pending_validations = 0
     compliance_verde = compliance_amarelo = compliance_vermelho = 0
-    for company in companies:
-        docs = await db.documents.find({"company_id": company["company_id"]}, {"_id": 0}).to_list(100)
-        total_documents += len(docs)
-        pending_validations += len([d for d in docs if d.get("status") == "pending"])
+    async for company in companies:
+        docs = db.documents.find(
+            {"company_id": company["company_id"], "deleted_at": None},
+            {"_id": 0, "status": 1, "vencimento": 1},
+        )
         vencidos = vencendo = 0
-        for doc in docs:
+        async for doc in docs:
+            total_documents += 1
+            pending_validations += doc.get("status") == "pending"
             status = calcular_status_documento(doc)
             if status == "vencido":
                 vencidos += 1

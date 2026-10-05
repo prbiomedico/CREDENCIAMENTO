@@ -49,6 +49,13 @@ echo "Criando worktree isolado em $WORKTREE_DIR (a partir de HEAD, ja sincroniza
 # origin/main, usar HEAD aqui e equivalente e evita esse conflito.
 git -C "$FRONTEND_DIR/.." worktree add --detach "$WORKTREE_DIR" HEAD
 
+# O arquivo de ambiente não é versionado e precisa acompanhar o worktree.
+if [ ! -f "$FRONTEND_DIR/.env.production" ]; then
+  echo "ERRO: .env.production ausente -- deploy abortado antes do build." >&2
+  exit 1
+fi
+cp "$FRONTEND_DIR/.env.production" "$WORKTREE_DIR/frontend/.env.production"
+
 echo "Instalando dependencias e buildando..."
 (cd "$WORKTREE_DIR/frontend" && npm ci --legacy-peer-deps && npm run build)
 

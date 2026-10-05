@@ -62,7 +62,7 @@ Investigação da causa raiz (com aprovação do Pedro):
 
 **Correção aplicada:** recriado o usuário `sigcr` em `admin.system.users` com a
 mesma senha já documentada em `.env`/`.naxxos-secrets`
-(`X6kpIQZIAEfmJEwxNQQciMQIQ4`) e role mínima `readWrite` no banco `sigcr` (sem
+(`[CREDENCIAL REMOVIDA]`) e role mínima `readWrite` no banco `sigcr` (sem
 privilégio de root). Container reiniciado com sucesso depois disso.
 
 **Recomendação para o Pedro:** vale confirmar se existe alguma rotina de

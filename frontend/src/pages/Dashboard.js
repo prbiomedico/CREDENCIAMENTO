@@ -7,6 +7,8 @@ import { Building2, CreditCard, Shield, CheckCircle, Clock, AlertCircle, Calenda
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '../contexts/AuthContext';
+import { usePerfilAtivo } from '../contexts/PerfilAtivoContext';
+import { useViewContext } from '../contexts/ViewContext';
 import { useApi } from '../hooks/useApi';
 
 // Dashboard mínimo pra Financeira (Fase A) — nada de compliance/vencimento/
@@ -79,6 +81,9 @@ const Dashboard = () => {
   const [vencimentoResumo, setVencimentoResumo] = useState({ vencendo: [], vencidos: [] });
   const [loading, setLoading] = useState(true);
   const { user, initialized } = useAuth();
+  const { perfilAtivo } = usePerfilAtivo();
+  const { viewingAs } = useViewContext();
+  const perfilDashboard = user?.perfil === 'sigcr_admin' ? perfilAtivo : user?.perfil;
   const api = useApi();
   const navigate = useNavigate();
 
@@ -113,16 +118,16 @@ const Dashboard = () => {
   }, [api]);
 
   useEffect(() => {
-    if (!initialized || !user || ['financeira', 'registradora'].includes(user.perfil)) return;
+    if (!initialized || !user || ['financeira', 'registradora'].includes(perfilDashboard)) return;
     fetchStats();
     fetchVencimentoResumo();
-  }, [fetchStats, fetchVencimentoResumo, initialized, user]);
+  }, [fetchStats, fetchVencimentoResumo, initialized, user, perfilDashboard, viewingAs]);
 
   // A visão executiva da própria registradora é o dashboard canônico desse
   // perfil. A rota histórica /registradoras-empresa continua apontando para
   // o mesmo componente para preservar bookmarks e links já distribuídos.
-  if (user?.perfil === 'registradora') return <EmpresaRegistradora />;
-  if (user?.perfil === 'financeira') return <DashboardFinanceira />;
+  if (perfilDashboard === 'registradora') return <EmpresaRegistradora key={viewingAs?.id || 'registradoras-admin'} />;
+  if (perfilDashboard === 'financeira') return <DashboardFinanceira key={viewingAs?.id || 'financeiras-admin'} />;
 
   const totalCompliance = (stats?.compliance_verde || 0) + (stats?.compliance_amarelo || 0) + (stats?.compliance_vermelho || 0);
   const percentualCompliance = totalCompliance ? Math.round(((stats?.compliance_verde || 0) / totalCompliance) * 100) : 0;

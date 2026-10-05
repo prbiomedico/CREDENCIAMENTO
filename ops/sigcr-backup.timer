@@ -1,0 +1,11 @@
+[Unit]
+Description=Backup diário SIGCR às 03h de São Paulo
+
+[Timer]
+OnCalendar=*-*-* 06:00:00 UTC
+Persistent=true
+RandomizedDelaySec=300
+Unit=sigcr-backup.service
+
+[Install]
+WantedBy=timers.target
