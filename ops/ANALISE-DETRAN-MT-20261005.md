@@ -58,3 +58,7 @@ Não foram criados processos, enviados arquivos ou alterados cadastros no DETRAN
 ## Verificação
 
 Testes automatizados incluem preservação dos itens ao agrupar e filtrar, distinção entre anexo e conformidade, bloqueio da revisão para lista vazia/sem arquivo, revisão sem envio automático e consulta somente leitura. Resultado e publicação registrados ao final da entrega.
+
+Resultado: 43 testes passaram; build de produção concluído. Publicação realizada pelo script oficial em release `credenciamento-mt-20261005`, commit `289ce21`. Página, novo bundle JavaScript e API responderam HTTP 200 após a troca da release.
+
+A sessão do SIGCR disponível ao agente estava deslogada. A interação da melhoria foi verificada por testes de renderização e clique; a conferência visual no painel autenticado de produção ainda depende de uma sessão ativa. O build registra seis vulnerabilidades altas nas dependências e alerta de tamanho do bundle; a correção de dependências permanece no backlog da auditoria anterior.
