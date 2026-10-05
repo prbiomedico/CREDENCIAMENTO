@@ -59,7 +59,7 @@ docker rm sigcr-backend 2>/dev/null || true
 
 mkdir -p "$BACKEND_DIR/uploads"
 
-docker run -d --name sigcr-backend --restart no \
+docker run -d --name sigcr-backend --restart unless-stopped \
   --network sigcr-net -p 8003:8000 \
   --env-file "$BACKEND_DIR/.env" \
   -v "$BACKEND_DIR/uploads:/app/uploads" \
@@ -82,4 +82,4 @@ if ! echo "$MOUNTS" | grep -q "\"Source\":\"$BACKEND_DIR/uploads\""; then
 fi
 
 echo "Deploy concluído. Bind mount de uploads confirmado ativo."
-echo "Rollback disponível via: docker stop sigcr-backend && docker rm sigcr-backend && docker run -d --name sigcr-backend --restart no --network sigcr-net -p 8003:8000 --env-file $BACKEND_DIR/.env -v $BACKEND_DIR/uploads:/app/uploads $ROLLBACK_TAG"
+echo "Rollback disponível via: docker stop sigcr-backend && docker rm sigcr-backend && docker run -d --name sigcr-backend --restart unless-stopped --network sigcr-net -p 8003:8000 --env-file $BACKEND_DIR/.env -v $BACKEND_DIR/uploads:/app/uploads $ROLLBACK_TAG"
