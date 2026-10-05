@@ -15,6 +15,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import FluxoCredenciamento from '../components/FluxoCredenciamento';
+import { agruparChecklist, resumoChecklist } from '../lib/checklistProcesso';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
@@ -65,6 +66,10 @@ const MinhasSubmissoes = ({ embedded = false, companyId = null, uf = null, submi
   const [dataEmissao, setDataEmissao] = useState('');
   const [dataValidade, setDataValidade] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [buscaDocumento, setBuscaDocumento] = useState('');
+  const [filtroDocumento, setFiltroDocumento] = useState('todos');
+  const [revisando, setRevisando] = useState(false);
+  useEffect(() => { setBuscaDocumento(''); setFiltroDocumento('todos'); setRevisando(false); setItemUpload(null); }, [portariaAtiva, categoriaAtiva]);
 
   const fetchTudo = useCallback(async () => {
     if (!user) return;
@@ -181,7 +186,7 @@ const MinhasSubmissoes = ({ embedded = false, companyId = null, uf = null, submi
 
   const enviarItem = async (e) => {
     e.preventDefault();
-    const submissao = submissaoDe(portariaAtiva);
+    const submissao = submissaoDe(portariaAtiva, categoriaAtiva);
     if (!arquivo || !itemUpload || !submissao) return;
     setEnviando(true);
     try {
@@ -210,6 +215,7 @@ const MinhasSubmissoes = ({ embedded = false, companyId = null, uf = null, submi
     try {
       const res = await axios.post(`${API}/submissoes/${submissaoId}/submeter`, null, { withCredentials: true });
       setSubmissoes((prev) => prev.map((s) => (s.submissao_id === res.data.submissao_id ? res.data : s)));
+      setRevisando(false);
       toast.success('Submissão enviada para análise do DETRAN');
     } catch (error) {
       console.error('Erro ao submeter:', error);
@@ -237,8 +243,23 @@ const MinhasSubmissoes = ({ embedded = false, companyId = null, uf = null, submi
     }
   };
 
+  const baixarAnexo = async (documentId) => {
+    try {
+      const res = await axios.get(`${API}/documents/download/${documentId}`, { withCredentials: true, responseType: 'blob' });
+      const url = window.URL.createObjectURL(res.data);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `documento_${documentId}`;
+      link.click();
+      window.setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    } catch { toast.error('Não foi possível baixar o anexo. Verifique se o arquivo está disponível.'); }
+  };
+
   const portariaSelecionada = portarias.find((p) => p.portaria_id === portariaAtiva) || null;
   const submissaoSelecionada = portariaAtiva ? submissaoDe(portariaAtiva, categoriaAtiva) : null;
+
+  const resumo = resumoChecklist(submissaoSelecionada?.itens || []);
+  const gruposDocumentos = agruparChecklist(submissaoSelecionada?.itens || [], buscaDocumento, filtroDocumento);
 
   return (
     <Layout>
@@ -290,7 +311,7 @@ const MinhasSubmissoes = ({ embedded = false, companyId = null, uf = null, submi
                       <div>
                         <p className="text-foreground font-semibold">{portaria.numero ? `${portaria.numero} — ` : ''}{portaria.title}</p>
                         <p className="text-xs text-slate-500 mt-1">
-                          UF {portaria.estado_sigla} · {portaria.checklist_itens?.length || 0} item(ns) no checklist
+                          UF {portaria.estado_sigla} · {(portaria.checklist_itens || []).filter(i => i.perfil_alvo === cat).length} item(ns) no checklist
                           {cats.length > 1 && <> · categoria <span className="text-slate-600">{tipoInfo?.nome || cat}</span></>}
                         </p>
                       </div>
@@ -349,11 +370,11 @@ const MinhasSubmissoes = ({ embedded = false, companyId = null, uf = null, submi
                     </div>
                     {!somenteLeitura && submissaoSelecionada.status === 'rascunho' && !(submissaoSelecionada.finalidade === 'renovacao' && !submissaoSelecionada.renovacao?.disponivel) && (
                       <Button
-                        onClick={() => submeter(submissaoSelecionada.submissao_id)}
-                        disabled={submetendo || submissaoSelecionada.itens.some((i) => i.status !== 'enviado')}
+                        onClick={() => setRevisando(true)}
+                        disabled={submetendo || !resumo.prontoParaEnvio}
                         className="bg-primary-500 hover:bg-primary-600 text-white"
                       >
-                        {submetendo ? 'Enviando...' : 'Finalizar envio e solicitar conferência'}
+                        Revisar antes de enviar
                       </Button>
                     )}
                     {submissaoSelecionada.status === 'homologado' && (
@@ -375,22 +396,40 @@ const MinhasSubmissoes = ({ embedded = false, companyId = null, uf = null, submi
                   />
                 )}
 
-                <div className="space-y-2">
-                  {submissaoSelecionada.itens.map((item) => {
-                    const cfg = STATUS_ITEM_CFG[item.status];
+                <Card className="bg-card border-border">
+                  <CardContent className="p-5 space-y-4">
+                    <h3 className="font-semibold text-foreground">Preparação documental</h3>
+                    <p className="text-sm text-slate-600">{resumo.anexados} de {resumo.total} exigências com anexo · {resumo.conformes} conformes · {resumo.diligencias} em diligência</p>
+                    <progress className="w-full h-2 accent-primary-500" aria-label="Exigências com anexo" value={resumo.anexados} max={resumo.total || 1} />
+                    <p className="text-xs text-slate-500">Anexo enviado aguarda conferência. Os grupos organizam a navegação; as exigências são definidas pela portaria selecionada.</p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Input aria-label="Buscar exigência" placeholder="Buscar documento ou exigência" value={buscaDocumento} onChange={e => setBuscaDocumento(e.target.value)} />
+                      <select aria-label="Filtrar documentos por situação" className="rounded-md border border-input bg-background p-2 text-sm text-foreground" value={filtroDocumento} onChange={e => setFiltroDocumento(e.target.value)}>
+                        <option value="todos">Todas as situações</option><option value="pendente">Pendentes</option><option value="enviado">Enviados</option><option value="conforme">Conformes</option><option value="inconforme">Em diligência</option>
+                      </select>
+                    </div>
+                    {submissaoSelecionada.estado_sigla === 'MT' && <p className="text-sm rounded-lg bg-muted p-3">No DETRAN-MT, o cadastro de operadores no DETRANNET tem protocolo próprio pelo SIGADOC, conforme as orientações do portal de credenciamento. <a className="underline" href="https://portalcredenciamento.detran.mt.gov.br/login" target="_blank" rel="noreferrer">Consultar portal oficial</a>.</p>}
+                  </CardContent>
+                </Card>
+                {gruposDocumentos.length === 0 && <p className="text-sm text-slate-600">Nenhuma exigência corresponde aos filtros.</p>}
+                {gruposDocumentos.map(grupo => <section key={grupo.nome} className="space-y-2" aria-label={grupo.nome}>
+                  <h3 className="font-semibold text-foreground">{grupo.nome} <span className="text-sm font-normal text-slate-500">({grupo.itens.length})</span></h3>
+                  {grupo.itens.map((item) => {
+                    const cfg = STATUS_ITEM_CFG[item.status] || STATUS_ITEM_CFG.pendente;
                     const podeEnviar = !somenteLeitura && !(submissaoSelecionada.finalidade === 'renovacao' && submissaoSelecionada.status === 'rascunho' && !submissaoSelecionada.renovacao?.disponivel) && ((item.status === 'pendente' && submissaoSelecionada.status === 'rascunho') || (item.status === 'inconforme' && submissaoSelecionada.status === 'em_diligencia'));
                     return (
                       <Card key={item.item_id} className="bg-card border-border">
                         <CardContent className="p-4">
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="min-w-0">
-                              <p className="text-sm text-zinc-200 font-medium">{item.nome}</p>
+                          <div className="flex flex-wrap items-start justify-between gap-4">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm text-foreground font-medium">{item.nome}</p>
                               {item.descricao && <p className="text-xs text-slate-500 mt-0.5">{item.descricao}</p>}
                             </div>
                             <div className="flex items-center gap-2 shrink-0">
                               <Badge className={`${cfg.className} font-mono uppercase text-[10px] px-2 py-0.5`}>
                                 <cfg.icon className="h-3 w-3 mr-1" />{cfg.label}
                               </Badge>
+                              {item.document_id && <Button size="sm" variant="ghost" onClick={() => baixarAnexo(item.document_id)} aria-label={`Baixar anexo de ${item.nome}`}><Download className="h-3.5 w-3.5 mr-1" /> Anexo</Button>}
                               {podeEnviar && (
                                 <Button size="sm" variant="ghost" onClick={() => abrirUpload(item)}
                                   className="h-7 text-primary-500 hover:text-primary-400 hover:bg-primary-500/10">
@@ -408,12 +447,28 @@ const MinhasSubmissoes = ({ embedded = false, companyId = null, uf = null, submi
                       </Card>
                     );
                   })}
-                </div>
+                </section>)}
               </>
             )}
           </div>
         )}
       </div>
+
+      <Dialog open={revisando} onOpenChange={setRevisando}>
+        <DialogContent className="bg-card border-input text-foreground">
+          <DialogHeader><DialogTitle>Revisar solicitação de credenciamento</DialogTitle></DialogHeader>
+          <div className="space-y-3 text-sm">
+            <p><strong>Empresa:</strong> {company?.razao_social || company?.nome_fantasia || company?.name}</p>
+            <p><strong>CNPJ:</strong> {company?.cnpj || 'Não informado'}</p>
+            <p><strong>Estado:</strong> {portariaSelecionada?.estado_sigla} · <strong>Categoria:</strong> {tipos.find(t => t.tipo_id === categoriaAtiva)?.nome || categoriaAtiva}</p>
+            <p><strong>Portaria:</strong> {portariaSelecionada?.title}</p>
+            <p><strong>Finalidade:</strong> {submissaoSelecionada?.finalidade === 'renovacao' ? 'Renovação' : 'Credenciamento inicial'}</p>
+            <p>{resumo.anexados} de {resumo.total} exigências com anexo.</p>
+            <p className="rounded-lg bg-muted p-3">Confira os dados e documentos. O envio solicita a análise do processo; a aprovação depende da conferência do DETRAN.</p>
+            <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => setRevisando(false)}>Voltar aos documentos</Button><Button disabled={somenteLeitura || submetendo || !resumo.prontoParaEnvio} onClick={() => submeter(submissaoSelecionada.submissao_id)}>{submetendo ? 'Enviando...' : 'Enviar para análise'}</Button></div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={!!itemUpload} onOpenChange={(open) => !open && setItemUpload(null)}>
         <DialogContent className="bg-card border-input text-foreground">
@@ -442,7 +497,8 @@ const MinhasSubmissoes = ({ embedded = false, companyId = null, uf = null, submi
               </div>
               <div>
                 <Label className="text-slate-700">Arquivo</Label>
-                <Input type="file" onChange={(e) => setArquivo(e.target.files?.[0] || null)}
+                <p className="text-xs text-slate-500 mt-1">PDF ou imagem (JPEG, PNG, GIF, WebP), até 20 MB. Informe a validade quando constar no documento.</p>
+                <Input type="file" accept="application/pdf,image/jpeg,image/png,image/gif,image/webp" onChange={(e) => setArquivo(e.target.files?.[0] || null)}
                   className="bg-muted border-input text-foreground mt-1" required />
               </div>
               <Button type="submit" disabled={enviando} className="w-full bg-primary-500 hover:bg-primary-600 text-white">
