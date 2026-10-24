@@ -95,3 +95,6 @@ backend/uploads/
 ollama-data/
 frontend/test-results/
 frontend/playwright-report/
+
+# Recursos gerados preservados entre deploys
+/frontend/shared/
