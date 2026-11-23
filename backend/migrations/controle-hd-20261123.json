@@ -57,7 +57,9 @@
     "vencimento_tipo": "calculado",
     "dias_restantes_referencia": 129,
     "prioridade": "P2",
-    "documento_id": "docm_hd_ac_20260909"
+    "documento_id": "docm_hd_ac_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "AP",
@@ -117,7 +119,9 @@
     "vencimento_tipo": "expresso",
     "dias_restantes_referencia": 143,
     "prioridade": "P2",
-    "documento_id": "docm_hd_ap_20260909"
+    "documento_id": "docm_hd_ap_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "BA",
@@ -146,7 +150,9 @@
     "vencimento_tipo": null,
     "dias_restantes_referencia": null,
     "prioridade": "P1",
-    "documento_id": "docm_hd_ba_20260909"
+    "documento_id": "docm_hd_ba_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "CE",
@@ -206,7 +212,9 @@
     "vencimento_tipo": "calculado",
     "dias_restantes_referencia": 1631,
     "prioridade": "P3",
-    "documento_id": "docm_hd_ce_20260909"
+    "documento_id": "docm_hd_ce_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "DF",
@@ -266,7 +274,9 @@
     "vencimento_tipo": "calculado",
     "dias_restantes_referencia": 1477,
     "prioridade": "P3",
-    "documento_id": "docm_hd_df_20260909"
+    "documento_id": "docm_hd_df_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "ES",
@@ -295,7 +305,9 @@
     "vencimento_tipo": null,
     "dias_restantes_referencia": null,
     "prioridade": "P1",
-    "documento_id": "docm_hd_es_20260909"
+    "documento_id": "docm_hd_es_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "MG",
@@ -355,7 +367,9 @@
     "vencimento_tipo": "calculado",
     "dias_restantes_referencia": 79,
     "prioridade": "P1",
-    "documento_id": "docm_hd_mg_20260909"
+    "documento_id": "docm_hd_mg_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "MS",
@@ -384,7 +398,9 @@
     "vencimento_tipo": null,
     "dias_restantes_referencia": null,
     "prioridade": "P1",
-    "documento_id": "docm_hd_ms_20260909"
+    "documento_id": "docm_hd_ms_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "MT",
@@ -413,7 +429,9 @@
     "vencimento_tipo": null,
     "dias_restantes_referencia": null,
     "prioridade": "P1",
-    "documento_id": "docm_hd_mt_20260909"
+    "documento_id": "docm_hd_mt_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "PB",
@@ -473,7 +491,20 @@
     "vencimento_tipo": "expresso com ressalva",
     "dias_restantes_referencia": 511,
     "prioridade": "P2",
-    "documento_id": "docm_hd_pb_20260909"
+    "documento_id": "docm_hd_pb_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null,
+    "atos_relacionados": [
+      {
+        "ato": "Portaria 163/2023/DS",
+        "data_ato": "2023-05-16",
+        "publicacao": "2023-05-18"
+      },
+      {
+        "ato": "Ratificação 0098/2022",
+        "duracao_meses": 12
+      }
+    ]
   },
   {
     "uf": "PE",
@@ -511,7 +542,9 @@
       "duracao_meses": 60,
       "vencimento": "2023-08-23",
       "fundamento_calculo": "60 meses da publicação, conforme levantamento; PDF correspondente ainda não recuperado."
-    }
+    },
+    "substituicao_suspensa": true,
+    "assinatura_ato": null
   },
   {
     "uf": "PI",
@@ -571,7 +604,9 @@
     "vencimento_tipo": "calculado",
     "dias_restantes_referencia": 395,
     "prioridade": "P2",
-    "documento_id": "docm_hd_pi_20260909"
+    "documento_id": "docm_hd_pi_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "PR",
@@ -600,7 +635,9 @@
     "vencimento_tipo": null,
     "dias_restantes_referencia": null,
     "prioridade": "P1",
-    "documento_id": "docm_hd_pr_20260909"
+    "documento_id": "docm_hd_pr_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "RJ",
@@ -660,7 +697,9 @@
     "vencimento_tipo": "calculado",
     "dias_restantes_referencia": 476,
     "prioridade": "P3",
-    "documento_id": "docm_hd_rj_20260909"
+    "documento_id": "docm_hd_rj_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "RN",
@@ -720,7 +759,9 @@
     "vencimento_tipo": "calculado",
     "dias_restantes_referencia": -842,
     "prioridade": "P1",
-    "documento_id": "docm_hd_rn_20260909"
+    "documento_id": "docm_hd_rn_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "RO",
@@ -780,7 +821,9 @@
     "vencimento_tipo": "calculado",
     "dias_restantes_referencia": 1575,
     "prioridade": "P3",
-    "documento_id": "docm_hd_ro_20260909"
+    "documento_id": "docm_hd_ro_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "RR",
@@ -840,7 +883,9 @@
     "vencimento_tipo": "calculado",
     "dias_restantes_referencia": 1205,
     "prioridade": "P3",
-    "documento_id": "docm_hd_rr_20260909"
+    "documento_id": "docm_hd_rr_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "RS",
@@ -869,7 +914,9 @@
     "vencimento_tipo": null,
     "dias_restantes_referencia": null,
     "prioridade": "P1",
-    "documento_id": "docm_hd_rs_20260909"
+    "documento_id": "docm_hd_rs_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "SC",
@@ -898,36 +945,38 @@
     "vencimento_tipo": null,
     "dias_restantes_referencia": null,
     "prioridade": "P1",
-    "documento_id": "docm_hd_sc_20260909"
+    "documento_id": "docm_hd_sc_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "SP",
-    "ato": "Portaria 2192/2025 — informada no levantamento",
-    "natureza_documento": "Portaria informada, fonte pendente",
-    "data_ato": null,
+    "ato": "Portaria DETRAN-SP 14530/2026",
+    "natureza_documento": "Portaria de credenciamento",
+    "data_ato": "2026-08-18",
     "assinatura_contratual": null,
-    "publicacao": null,
+    "publicacao": "2026-08-20",
     "inicio_contagem": null,
     "duracao_meses": 60,
     "vencimento": null,
-    "fundamento_calculo": "Cinco anos da publicação conforme levantamento; fonte não corresponde ao PDF disponível.",
+    "fundamento_calculo": "Art. 3º: cinco anos da assinatura do Termo de Adesão. Art. 4º: entrada em vigor na publicação não define o marco de contagem.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Conflito de fonte — vigência pendente de conciliação",
-    "divergencias": "PDF local traz Portaria 14530 de 18/08/2026, com cinco anos contados da assinatura do Termo de Adesão; não comprova 17/08/2031 nem a data de 2030 do levantamento.",
-    "proxima_acao": "Obter Portaria 2192/2025 e Termo de Adesão da Portaria 14530/2026; conciliar ambos.",
-    "notas": "",
-    "pagina_secao": "PDF existente pp. 1–2 — Portaria 14530/2026, arts. 1º e 3º",
+    "status_documental": "Credenciamento documentado — início e vencimento dependem do Termo de Adesão",
+    "divergencias": "Levantamento inicial citava Portaria 2192/2025 e vencimento em 13/03/2030, sem fonte recuperada. Cadastro anterior adotava 17/08/2031. Documento recebido em 23/11/2026 comprova Portaria 14530, de 18/08/2026, publicada em 20/08/2026, contando cinco anos da assinatura do Termo de Adesão. Datas anteriores preservadas no histórico, sem adoção.",
+    "proxima_acao": "Obter Termo de Adesão assinado e conciliar a Portaria 2192/2025 mencionada no levantamento.",
+    "notas": "Publicação comprovada no cabeçalho em 20/08/2026. Assinatura do Termo de Adesão não consta neste PDF; não usar data do ato ou da publicação como assinatura.",
+    "pagina_secao": "PDF p. 1 — cabeçalho DOE, arts. 1º, 3º e 4º",
     "data_referencia": "2026-11-23",
     "fonte_dados": "Levantamento fornecido pelo usuário em 23/11/2026; conferência documental indicada separadamente",
-    "conferencia": "Conflito de fonte; substituição de dados suspensa",
-    "fonte": "SIGCR_HD_REGISTROS_DETRAN_SP_PORTARIA_14530_2026.pdf",
-    "sha256": "0261bfc8eb75591754f074d2e36b5c3ebb47208692a9704b209912e5f49b3fd1",
+    "conferencia": "PDF enviado diretamente pelo usuário em 23/11/2026; conteúdo textual e página renderizada conferidos; original anterior preservado",
+    "fonte": "HD-SP-Portaria-14530-2026-DOE-20260820.pdf",
+    "sha256": "df7c8c2a01f44f34eabfa222312b81b3e0470927bace2074e2562881341ffc11",
     "alertas_preventivos": [],
     "vencimento_tipo": null,
     "dias_restantes_referencia": null,
     "prioridade": "P1",
-    "documento_id": "docm_hd_sp_20260909",
+    "documento_id": "docm_hd_sp_20261123",
     "dados_propostos_aguardando_fonte": {
       "ato": "Portaria 2192/2025 — informada no levantamento",
       "data_ato": "2025-03-12",
@@ -936,7 +985,9 @@
       "duracao_meses": 60,
       "vencimento": "2030-03-13",
       "fundamento_calculo": "Cinco anos da publicação conforme levantamento; fonte não corresponde ao PDF disponível."
-    }
+    },
+    "substituicao_suspensa": false,
+    "assinatura_ato": null
   },
   {
     "uf": "TO",
@@ -996,7 +1047,9 @@
     "vencimento_tipo": "calculado",
     "dias_restantes_referencia": 312,
     "prioridade": "P3",
-    "documento_id": "docm_hd_to_20260909"
+    "documento_id": "docm_hd_to_20260909",
+    "substituicao_suspensa": false,
+    "assinatura_ato": "2025-10-01"
   },
   {
     "uf": "MA",
@@ -1024,6 +1077,11 @@
     "alertas_preventivos": [],
     "vencimento_tipo": null,
     "dias_restantes_referencia": null,
-    "prioridade": "P1"
+    "prioridade": "P1",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null,
+    "data_envio": null,
+    "protocolo": null,
+    "data_aprovacao": null
   }
 ]

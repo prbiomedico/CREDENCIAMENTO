@@ -5,7 +5,7 @@ from datetime import datetime,timezone
 from bson import json_util
 from pymongo import MongoClient
 COMPANY='company_hdregistros'
-DATE_FIELDS={'data_ato','assinatura_contratual','publicacao','inicio_contagem','vencimento','limite_protocolo','data_referencia','data'}
+DATE_FIELDS={'data_ato','assinatura_contratual','publicacao','inicio_contagem','vencimento','limite_protocolo','data_referencia','data','assinatura_ato','data_envio','data_aprovacao'}
 def dates(value):
  if isinstance(value,list):return [dates(v)for v in value]
  if isinstance(value,dict):return {k:(datetime.fromisoformat(v).replace(tzinfo=timezone.utc) if k in DATE_FIELDS and v else dates(v)) for k,v in value.items()}
@@ -38,15 +38,15 @@ def main():
   if 'controle_documental'in c:query['controle_documental']=c['controle_documental']
   else:query['controle_documental']={'$exists':False}
   fields={'controle_documental':dates(r)}
-  if r['uf'] not in ['SP','PE']:
+  if not r.get('substituicao_suspensa',r['uf'] in ['SP','PE']):
    fields['validade']=dates(r)['vencimento']
    fields['extrato_contrato']=(r['ato'] or 'Ato não comprovado')+' — '+r['status_documental']+'; '+r['fundamento_calculo']
    fields['status']='ativo' if r['vencimento'] and r['dias_restantes_referencia']>=0 else 'pendente'
   result=db.credenciamentos.update_one(query,{'$set':fields});assert result.matched_count==1,r['uf']
- db.auditoria.insert_one({'auditoria_id':'audit_hd_control_'+datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S'),'user_id':'operacao_autorizada_pelo_titular','acao':'atualizar_controle_documental_hd','entidade':'company','entidade_id':COMPANY,'detalhes':{'data_referencia':'2026-11-23','ufs':22,'escopo':'controle_documental e correções verificáveis de validade/extrato/status; demais campos preservados','fontes_conflitantes':['SP','PE'],'planilha_atual':'pendente','backup':str(backup)},'created_at':datetime.now(timezone.utc).isoformat()})
+ db.auditoria.insert_one({'auditoria_id':'audit_hd_control_'+datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S'),'user_id':'operacao_autorizada_pelo_titular','acao':'atualizar_controle_documental_hd','entidade':'company','entidade_id':COMPANY,'detalhes':{'data_referencia':'2026-11-23','ufs':22,'escopo':'controle_documental e correções verificáveis de validade/extrato/status; demais campos preservados','fontes_conflitantes':['PE'],'sp':'novo PDF conferido; aguarda Termo de Adesão','planilha_atual':'pendente','backup':str(backup)},'created_at':datetime.now(timezone.utc).isoformat()})
  after=list(db.credenciamentos.find({'company_id':COMPANY,'categoria':'registradora','deleted_at':None}));assert len(after)==22
  for c in after:
-  prior=byuf[c['estado_sigla']];allowed={'controle_documental','validade','extrato_contrato','status'} if c['estado_sigla'] not in ['SP','PE'] else {'controle_documental'}
+  prior=byuf[c['estado_sigla']];allowed={'controle_documental','validade','extrato_contrato','status'} if not c['controle_documental'].get('substituicao_suspensa',c['estado_sigla'] in ['SP','PE']) else {'controle_documental'}
   assert {k:v for k,v in c.items()if k not in allowed}=={k:v for k,v in prior.items()if k not in allowed}
  print('Applied: 22 existing records, unrelated fields unchanged, 21 PDFs preserved, backup='+str(backup))
 if __name__=='__main__':main()
