@@ -100,7 +100,7 @@ code {
     }
 
     .sigcr-app-main :where(input, textarea, select) {
-        color-scheme: light;
+        color-scheme: inherit;
     }
 }
 
@@ -135,3 +135,82 @@ code {
         border-bottom-color: inherit;
     }
 }
+
+/* Appearance tokens. Legacy surface utilities are scoped to page content;
+   the graphite navigation and brand assets keep their own contrast. */
+@layer base {
+ :root { color-scheme: light; }
+ .dark {
+  color-scheme: dark;
+  --background: 222 32% 8%; --foreground: 210 20% 96%;
+  --card: 220 25% 12%; --card-foreground: 210 20% 96%;
+  --popover: 220 25% 12%; --popover-foreground: 210 20% 96%;
+  --primary: 44 68% 58%; --primary-foreground: 222 35% 9%;
+  --secondary: 217 20% 18%; --secondary-foreground: 210 20% 96%;
+  --muted: 217 20% 17%; --muted-foreground: 215 17% 70%;
+  --accent: 44 68% 55%; --accent-foreground: 222 35% 9%;
+  --destructive: 0 66% 52%; --destructive-foreground: 0 0% 100%;
+  --border: 216 17% 25%; --input: 216 17% 30%; --ring: 44 68% 55%;
+ }
+}
+.dark .sigcr-app-main { background-color: hsl(var(--background)); }
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-white"]:not(.sigcr-brand-surface),
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-white/95"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-white/90"] { background-color: hsl(var(--card)); }
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-slate-50"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-slate-100"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-gray-50"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-gray-100"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-zinc-50"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-zinc-100"] { background-color: hsl(var(--muted)); }
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-slate-700"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-slate-800"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-slate-900"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-slate-950"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-gray-700"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-gray-800"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-gray-900"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-zinc-700"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-zinc-800"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-zinc-900"] { color: hsl(var(--foreground)); }
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-slate-500"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-slate-600"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-gray-500"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-gray-600"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-zinc-500"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-zinc-600"] { color: hsl(var(--muted-foreground)); }
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="border-slate-100"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="border-slate-200"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="border-slate-300"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="border-gray-100"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="border-gray-200"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="border-gray-300"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="border-zinc-200"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="border-zinc-300"] { border-color: hsl(var(--border)); }
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-red-50"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-red-100"] { background-color: rgb(127 29 29 / .24); }
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-red-700"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-red-800"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-red-900"] { color: #fca5a5; }
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="border-red-200"] { border-color: rgb(248 113 113 / .35); }
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-amber-50"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-amber-100"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-yellow-50"] { background-color: rgb(120 53 15 / .22); }
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-amber-700"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-amber-800"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-amber-900"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-amber-950"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-yellow-700"] { color: #fcd34d; }
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="border-amber-200"] { border-color: rgb(251 191 36 / .3); }
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-emerald-50"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="bg-green-50"] { background-color: rgb(6 78 59 / .25); }
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-emerald-700"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-emerald-800"],
+.dark :is(.sigcr-app-main, .sigcr-public-surface, [role="dialog"], [role="alertdialog"]) [class~="text-green-700"] { color: #6ee7b7; }
+
+.dark .sigcr-brand-surface { background-color: white; }
+.dark :is(.sigcr-app-main, .sigcr-public-surface) input,
+.dark :is(.sigcr-app-main, .sigcr-public-surface) textarea,
+.dark :is(.sigcr-app-main, .sigcr-public-surface) select { color-scheme: dark; }
+.dark :is(.sigcr-app-main, .sigcr-public-surface) :is([class~="hover:bg-slate-50"], [class~="hover:bg-slate-100"], [class~="hover:bg-white"]):hover { background-color: hsl(var(--muted)); }
+@media (prefers-reduced-motion: reduce) { .sigcr-theme-transition { transition: none; } }

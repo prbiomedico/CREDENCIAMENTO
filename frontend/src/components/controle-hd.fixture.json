@@ -12,7 +12,7 @@
     "fundamento_calculo": "12 meses da publicação do extrato",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Prazo documentado em curso — situação operacional não certificada",
+    "status_documental": "Credenciamento concedido",
     "divergencias": "",
     "proxima_acao": "Confirmar antecedência formal e preparar renovação.",
     "notas": "",
@@ -26,31 +26,31 @@
       {
         "antecedencia_dias": 180,
         "data": "2026-10-03",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Alcançado na referência"
       },
       {
         "antecedencia_dias": 120,
         "data": "2026-12-02",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 90,
         "data": "2027-01-01",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 60,
         "data": "2027-01-31",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 30,
         "data": "2027-03-02",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       }
     ],
@@ -59,7 +59,39 @@
     "prioridade": "P2",
     "documento_id": "docm_hd_ac_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Confirmar antecedência formal e preparar renovação.",
+    "fontes_consultadas": [
+      {
+        "documento": "Processo 0068.001042.00227/2026-11",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_AC_EXTRATO_CONTRATO_2026.pdf",
+        "documento_id": "docm_hd_ac_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — DA VIGÊNCIA e DATA DA ASSINATURA",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Processo 0068.001042.00227/2026-11",
+      "dispositivo": "PDF p. 1 — DA VIGÊNCIA e DATA DA ASSINATURA",
+      "marco_inicial": "2026-04-01",
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 12,
+      "data_final_expressa": null,
+      "calculo": "12 meses da publicação do extrato",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_AC_EXTRATO_CONTRATO_2026.pdf · PDF p. 1 — DA VIGÊNCIA e DATA DA ASSINATURA",
+      "documento_id": "docm_hd_ac_20260909"
+    }
   },
   {
     "uf": "AP",
@@ -74,7 +106,7 @@
     "fundamento_calculo": "Intervalo expresso de 15/04/2025 a 15/04/2027",
     "antecedencia_formal_dias": 60,
     "limite_protocolo": "2027-02-14",
-    "status_documental": "Prazo documentado em curso — situação operacional não certificada",
+    "status_documental": "Renovação concedida",
     "divergencias": "",
     "proxima_acao": "Confirmar regras de protocolo para 14/02/2027; renovar certidões e documentos anualmente.",
     "notas": "Limite calculado em dias corridos, sem ajuste automático de fim de semana ou feriado.",
@@ -88,31 +120,31 @@
       {
         "antecedencia_dias": 180,
         "data": "2026-10-17",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Alcançado na referência"
       },
       {
         "antecedencia_dias": 120,
         "data": "2026-12-16",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 90,
         "data": "2027-01-15",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 60,
         "data": "2027-02-14",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 30,
         "data": "2027-03-16",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       }
     ],
@@ -121,7 +153,39 @@
     "prioridade": "P2",
     "documento_id": "docm_hd_ap_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "renovado",
+    "situacao_credenciamento": "Renovação concedida",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Confirmar regras de protocolo para 14/02/2027; renovar certidões e documentos anualmente.",
+    "fontes_consultadas": [
+      {
+        "documento": "Portaria 0254/2025",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_AP_PORTARIA_0254_2025.pdf",
+        "documento_id": "docm_hd_ap_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — vigência e novo pedido",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Portaria 0254/2025",
+      "dispositivo": "PDF p. 1 — vigência e novo pedido",
+      "marco_inicial": "2025-04-15",
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 24,
+      "data_final_expressa": "2027-04-15",
+      "calculo": "Intervalo expresso de 15/04/2025 a 15/04/2027",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_AP_PORTARIA_0254_2025.pdf · PDF p. 1 — vigência e novo pedido",
+      "documento_id": "docm_hd_ap_20260909"
+    }
   },
   {
     "uf": "BA",
@@ -133,12 +197,12 @@
     "inicio_contagem": null,
     "duracao_meses": 60,
     "vencimento": null,
-    "fundamento_calculo": "Extrato não explicita o marco inicial dos 60 meses.",
+    "fundamento_calculo": "Nenhum vencimento adotado. 053/2022, art. 9º original e arts. 28–29 consultados; falta conciliar alteração 609/2023 e termo individual.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Vigência não determinável",
-    "divergencias": "",
-    "proxima_acao": "Obter termo integral antes de fixar vencimento.",
+    "status_documental": "Renovação concedida",
+    "divergencias": "Não contar automaticamente 60 meses de 20/06/2024 (assinatura) nem de 21/06/2024 (publicação). O extrato de renovação não define esse marco; redação originária da norma não equivale à redação aplicável em 2024.",
+    "proxima_acao": "Obter termo integral, publicação inicial e íntegra oficial da Portaria 609/2023; conferir Portaria 054/2022 e a incidência da transição, sem usar texto atual retroativamente.",
     "notas": "",
     "pagina_secao": "PDF p. 1 — TERMO DE RENOVAÇÃO AO CREDENCIAMENTO",
     "data_referencia": "2026-11-23",
@@ -152,7 +216,57 @@
     "prioridade": "P1",
     "documento_id": "docm_hd_ba_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "renovado",
+    "situacao_credenciamento": "Renovação concedida",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "O extrato confirma renovação e 60 meses, mas não o marco. A Portaria 053/2022 original trazia 12 meses e limite de 60; há alteração 609/2023 a conferir na íntegra oficial e regra de transição.",
+    "pendencia_documental": "Termo integral da renovação 049.4642.2024.0004835-45 e marco original, para conciliar regra inicial e transição normativa.",
+    "fontes_consultadas": [
+      {
+        "documento": "Processo 049.4642.2024.0004835-45",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_BA_TERMO_RENOVACAO_2024.pdf",
+        "documento_id": "docm_hd_ba_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — TERMO DE RENOVAÇÃO AO CREDENCIAMENTO",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      },
+      {
+        "documento": "Portaria 053/2022 — texto original oficial",
+        "arquivo": "BA-053.pdf",
+        "documento_id": "docm_hd_ba_revisao20261123_ba_053",
+        "url": "https://www.ba.gov.br/detran/sites/site-detran/files/migracao_2024/arquivos/upload/portarias/portarias-8648206.pdf",
+        "acesso_em": "23/11/2026",
+        "pagina": "PDF pp. 3–4, art. 9º; p. 8, arts. 28–29",
+        "resultado": "Texto original de 2022 conferido. Não aplicado como se fosse a versão vigente na renovação de 2024.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      },
+      {
+        "documento": "Portaria 054/2022 e alteração 609/2023; termo integral HD",
+        "url": "https://www.ba.gov.br/detran/publicacoes/Portaria",
+        "acesso_em": "23/11/2026",
+        "resultado": "Íntegra individual e cadeia temporal oficial não integralmente recuperadas no portal consultado; permanecem pendentes para cálculo.",
+        "pagina": null,
+        "aplicabilidade": "Pendência identificada; não foi aplicada redação atual retroativamente."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Processo 049.4642.2024.0004835-45",
+      "dispositivo": "PDF p. 1 — TERMO DE RENOVAÇÃO AO CREDENCIAMENTO",
+      "marco_inicial": null,
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 60,
+      "data_final_expressa": null,
+      "calculo": "Nenhum vencimento adotado. 053/2022, art. 9º original e arts. 28–29 consultados; falta conciliar alteração 609/2023 e termo individual.",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_BA_TERMO_RENOVACAO_2024.pdf · PDF p. 1 — TERMO DE RENOVAÇÃO AO CREDENCIAMENTO",
+      "documento_id": "docm_hd_ba_20260909"
+    }
   },
   {
     "uf": "CE",
@@ -167,7 +281,7 @@
     "fundamento_calculo": "Art. 3º: 60 meses da publicação.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Prazo documentado em curso — situação operacional não certificada",
+    "status_documental": "Credenciamento concedido",
     "divergencias": "",
     "proxima_acao": "Apresentar certidões anualmente e confirmar antecedência formal.",
     "notas": "",
@@ -181,31 +295,31 @@
       {
         "antecedencia_dias": 180,
         "data": "2030-11-13",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 120,
         "data": "2031-01-12",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 90,
         "data": "2031-02-11",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 60,
         "data": "2031-03-13",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 30,
         "data": "2031-04-12",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       }
     ],
@@ -214,7 +328,39 @@
     "prioridade": "P3",
     "documento_id": "docm_hd_ce_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Apresentar certidões anualmente e confirmar antecedência formal.",
+    "fontes_consultadas": [
+      {
+        "documento": "Portaria 914/2026",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_CE_PORTARIA_914_2026.pdf",
+        "documento_id": "docm_hd_ce_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — arts. 1º a 3º, §1º",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Portaria 914/2026",
+      "dispositivo": "PDF p. 1 — arts. 1º a 3º, §1º",
+      "marco_inicial": "2026-05-12",
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 60,
+      "data_final_expressa": null,
+      "calculo": "Art. 3º: 60 meses da publicação.",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_CE_PORTARIA_914_2026.pdf · PDF p. 1 — arts. 1º a 3º, §1º",
+      "documento_id": "docm_hd_ce_20260909"
+    }
   },
   {
     "uf": "DF",
@@ -229,7 +375,7 @@
     "fundamento_calculo": "60 meses da assinatura.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Prazo documentado em curso — situação operacional não certificada",
+    "status_documental": "Credenciamento concedido",
     "divergencias": "",
     "proxima_acao": "Confirmar antecedência formal de renovação.",
     "notas": "",
@@ -243,31 +389,31 @@
       {
         "antecedencia_dias": 180,
         "data": "2030-06-12",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 120,
         "data": "2030-08-11",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 90,
         "data": "2030-09-10",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 60,
         "data": "2030-10-10",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 30,
         "data": "2030-11-09",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       }
     ],
@@ -276,38 +422,158 @@
     "prioridade": "P3",
     "documento_id": "docm_hd_df_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Confirmar antecedência formal de renovação.",
+    "fontes_consultadas": [
+      {
+        "documento": "Termo de Credenciamento 06/2025",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_DF_TERMO_CREDENCIAMENTO_06_2025.pdf",
+        "documento_id": "docm_hd_df_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — Termo 06/2025",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Termo de Credenciamento 06/2025",
+      "dispositivo": "PDF p. 1 — Termo 06/2025",
+      "marco_inicial": "2025-12-09",
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 60,
+      "data_final_expressa": null,
+      "calculo": "60 meses da assinatura.",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_DF_TERMO_CREDENCIAMENTO_06_2025.pdf · PDF p. 1 — Termo 06/2025",
+      "documento_id": "docm_hd_df_20260909"
+    }
   },
   {
     "uf": "ES",
-    "ato": "Contrato 002/2026 — comissão gestora",
-    "natureza_documento": "Designação de comissão",
+    "ato": "Contrato de credenciamento 002/2026 — processo 2026-CCR5X",
+    "natureza_documento": "Contrato de credenciamento assinado",
     "data_ato": "2026-06-16",
-    "assinatura_contratual": null,
-    "publicacao": "2026-06-17",
+    "assinatura_contratual": "2026-06-09",
+    "publicacao": null,
     "inicio_contagem": null,
-    "duracao_meses": null,
-    "vencimento": null,
-    "fundamento_calculo": "",
+    "duracao_meses": 24,
+    "vencimento": "2028-06-10",
+    "fundamento_calculo": "Contrato, cláusula 13.1 (p. 9): início no dia subsequente à publicação do resumo no DOE/ES e 24 meses. PNCP contrato 53/2026 informa fim em 10/06/2028; adotado como data expressa com ressalva, sem recalcular por comissão gestora.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Vigência não comprovada no documento disponível",
-    "divergencias": "",
-    "proxima_acao": "Solicitar contrato e ato de credenciamento completos.",
+    "status_documental": "Credenciamento concedido",
+    "divergencias": "PNCP informa início 10/06/2026; cláusula 13.1 remete ao dia seguinte à publicação no DOE. Data de publicação PNCP não foi equiparada à publicação do resumo no DOE. Contrato menciona processo 2024-M409K no preâmbulo; registro oficial vincula 2026-CCR5X.",
+    "proxima_acao": "Obter resumo publicado no DOE e conciliar o início da cláusula 13.1. Comissão gestora de 16/06/2026 permanece como documento complementar.",
     "notas": "Data da comissão não equivale à assinatura contratual.",
-    "pagina_secao": "PDF p. 1 — COMISSÃO GESTORA",
+    "pagina_secao": "Contrato PDF p. 9 — cláusula 13.1; p. 10 — assinaturas; registro PNCP 28162105000166-2-000053/2026",
     "data_referencia": "2026-11-23",
     "fonte_dados": "Levantamento fornecido pelo usuário em 23/11/2026; conferência documental indicada separadamente",
     "conferencia": "PDF recuperado da conversa Prazo de vencimento; SHA-256 idêntico ao acervo local",
-    "fonte": "SIGCR_HD_REGISTROS_DETRAN_ES_CONTRATO_002_2026.pdf",
-    "sha256": "fdd8aad259a2890261dfd3f73adba0f8b284ac9adbb9747641e0f917e811e55f",
-    "alertas_preventivos": [],
-    "vencimento_tipo": null,
-    "dias_restantes_referencia": null,
-    "prioridade": "P1",
-    "documento_id": "docm_hd_es_20260909",
+    "fonte": "ES-contrato-1.pdf",
+    "sha256": "9aaf21374ce9e696f19e79074c5fb5a0e4dd73465fa576046a265f07e203f22c",
+    "alertas_preventivos": [
+      {
+        "antecedencia_dias": 180,
+        "data": "2027-12-13",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Programado"
+      },
+      {
+        "antecedencia_dias": 120,
+        "data": "2028-02-11",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Programado"
+      },
+      {
+        "antecedencia_dias": 90,
+        "data": "2028-03-12",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Programado"
+      },
+      {
+        "antecedencia_dias": 60,
+        "data": "2028-04-11",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Programado"
+      },
+      {
+        "antecedencia_dias": 30,
+        "data": "2028-05-11",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Programado"
+      }
+    ],
+    "vencimento_tipo": "data final expressa no PNCP — ressalva do marco contratual",
+    "dias_restantes_referencia": 565,
+    "prioridade": "P2",
+    "documento_id": "docm_hd_es_revisao20261123_es_contrato_1",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "Data do PNCP; conferir publicação do resumo no DOE.",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Resumo do contrato publicado no DOE/ES, para conciliar início da cláusula 13.1 com as datas do PNCP.",
+    "fontes_consultadas": [
+      {
+        "documento": "Contrato 002/2026 — comissão gestora",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_ES_CONTRATO_002_2026.pdf",
+        "documento_id": "docm_hd_es_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — COMISSÃO GESTORA",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      },
+      {
+        "documento": "Contrato HD 002/2026 — PNCP 53/2026",
+        "arquivo": "ES-contrato-1.pdf",
+        "documento_id": "docm_hd_es_revisao20261123_es_contrato_1",
+        "url": "https://pncp.gov.br/pncp-api/v1/orgaos/28162105000166/contratos/2026/53/arquivos/1",
+        "acesso_em": "23/11/2026",
+        "pagina": "PDF p. 9, cláusula 13.1; p. 10, assinaturas",
+        "resultado": "Contrato integral assinado recuperado do PNCP; pendência de existência do contrato resolvida. Marco no DOE ainda requer conciliação.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      }
+    ],
+    "historico_atos": [
+      {
+        "ato": "Comissão gestora do contrato 002/2026",
+        "data_ato": "2026-06-16",
+        "publicacao": "2026-06-17",
+        "vencimento": null,
+        "observacao": "Documento anterior preservado; não define vigência."
+      },
+      {
+        "ato": "Contrato 002/2026 — datas do PNCP",
+        "publicacao": "2026-06-10",
+        "inicio_contagem": "2026-06-10",
+        "vencimento": "2028-06-10",
+        "observacao": "Datas declaradas no registro oficial PNCP; a publicação aqui é PNCP, não DOE."
+      }
+    ],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Contrato de credenciamento 002/2026 — processo 2026-CCR5X",
+      "dispositivo": "Contrato PDF p. 9 — cláusula 13.1; p. 10 — assinaturas; registro PNCP 28162105000166-2-000053/2026",
+      "marco_inicial": null,
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 24,
+      "data_final_expressa": "2028-06-10",
+      "calculo": "Contrato, cláusula 13.1 (p. 9): início no dia subsequente à publicação do resumo no DOE/ES e 24 meses. PNCP contrato 53/2026 informa fim em 10/06/2028; adotado como data expressa com ressalva, sem recalcular por comissão gestora.",
+      "arquivo_pagina": "ES-contrato-1.pdf · Contrato PDF p. 9 — cláusula 13.1; p. 10 — assinaturas; registro PNCP 28162105000166-2-000053/2026",
+      "documento_id": "docm_hd_es_revisao20261123_es_contrato_1"
+    }
   },
   {
     "uf": "MG",
@@ -322,7 +588,7 @@
     "fundamento_calculo": "Art. 3º: 12 meses do vencimento anterior em 10/02/2026.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Prazo documentado em curso — situação operacional não certificada",
+    "status_documental": "Renovação concedida",
     "divergencias": "",
     "proxima_acao": "Priorizar preparação da renovação e confirmar antecedência formal.",
     "notas": "",
@@ -336,31 +602,31 @@
       {
         "antecedencia_dias": 180,
         "data": "2026-08-14",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Alcançado na referência"
       },
       {
         "antecedencia_dias": 120,
         "data": "2026-10-13",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Alcançado na referência"
       },
       {
         "antecedencia_dias": 90,
         "data": "2026-11-12",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Alcançado na referência"
       },
       {
         "antecedencia_dias": 60,
         "data": "2026-12-12",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 30,
         "data": "2027-01-11",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       }
     ],
@@ -369,7 +635,39 @@
     "prioridade": "P1",
     "documento_id": "docm_hd_mg_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "renovado",
+    "situacao_credenciamento": "Renovação concedida",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Priorizar preparação da renovação e confirmar antecedência formal.",
+    "fontes_consultadas": [
+      {
+        "documento": "Portaria CET 0224/2026",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_MG_PORTARIA_0224_2026.pdf",
+        "documento_id": "docm_hd_mg_20260909",
+        "url": null,
+        "pagina": "PDF p. 1, jornal p. 14 — Portaria CET 0224, art. 3º",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Portaria CET 0224/2026",
+      "dispositivo": "PDF p. 1, jornal p. 14 — Portaria CET 0224, art. 3º",
+      "marco_inicial": "2026-02-10",
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 12,
+      "data_final_expressa": null,
+      "calculo": "Art. 3º: 12 meses do vencimento anterior em 10/02/2026.",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_MG_PORTARIA_0224_2026.pdf · PDF p. 1, jornal p. 14 — Portaria CET 0224, art. 3º",
+      "documento_id": "docm_hd_mg_20260909"
+    }
   },
   {
     "uf": "MS",
@@ -381,12 +679,12 @@
     "inicio_contagem": null,
     "duracao_meses": 24,
     "vencimento": null,
-    "fundamento_calculo": "Prazo de 24 meses sem marco inicial explícito no extrato.",
+    "fundamento_calculo": "Portaria N 159/2023, art. 3º §2º: 24 meses e pedido até 30 dias antes. Anexo, cláusula terceira: publicação e 60 dias. Sem marco individual comprovado, não calcular vencimento ou protocolo.",
     "antecedencia_formal_dias": 30,
     "limite_protocolo": null,
-    "status_documental": "Vigência não determinável",
-    "divergencias": "",
-    "proxima_acao": "Obter termo integral para confirmar início, vencimento e limite de protocolo.",
+    "status_documental": "Credenciamento concedido",
+    "divergencias": "Divergência interna da norma: corpo (30 dias) versus modelo de termo (60 dias). Não converter nenhum alerta interno em prazo legal definitivo.",
+    "proxima_acao": "Obter Termo 021/2026 assinado e confirmação administrativa sobre antecedência. Somente então calcular o vencimento e o limite de 30 dias requerido para controle.",
     "notas": "",
     "pagina_secao": "PDF p. 1 — Termo 021/2026",
     "data_referencia": "2026-11-23",
@@ -400,25 +698,67 @@
     "prioridade": "P1",
     "documento_id": "docm_hd_ms_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "Extrato individual não define início. A cláusula terceira do modelo anexo conta da publicação, mas não substitui o termo assinado da HD.",
+    "pendencia_documental": "Termo 021/2026 integral e assinado: confirmar marco inicial e conciliar art. 3º §2º (30 dias) com modelo anexo (60 dias).",
+    "fontes_consultadas": [
+      {
+        "documento": "Termo 021/2026/DETRAN-MS",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_MS_TERMO_CREDENCIAMENTO_2026.pdf",
+        "documento_id": "docm_hd_ms_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — Termo 021/2026",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      },
+      {
+        "documento": "Portaria DETRAN/MS N 159/2023 — DOE 04/12/2023",
+        "arquivo": "MS-norma.pdf",
+        "documento_id": "docm_hd_ms_revisao20261123_ms_norma",
+        "url": "https://assets.imprensaoficial.ms.gov.br/public/prd/Diario%20Oficial/2023/12/04/DO11339_04_12_2023.pdf",
+        "acesso_em": "23/11/2026",
+        "pagina": "DOE pp. 49 e seguintes; anexo — cláusula terceira",
+        "resultado": "Art. 3º §2º e cláusula terceira do modelo consultados; divergência 30/60 dias preservada.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Termo 021/2026/DETRAN-MS",
+      "dispositivo": "PDF p. 1 — Termo 021/2026",
+      "marco_inicial": null,
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 24,
+      "data_final_expressa": null,
+      "calculo": "Portaria N 159/2023, art. 3º §2º: 24 meses e pedido até 30 dias antes. Anexo, cláusula terceira: publicação e 60 dias. Sem marco individual comprovado, não calcular vencimento ou protocolo.",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_MS_TERMO_CREDENCIAMENTO_2026.pdf · PDF p. 1 — Termo 021/2026",
+      "documento_id": "docm_hd_ms_20260909"
+    }
   },
   {
     "uf": "MT",
-    "ato": "Portaria 138/2026/GP/DETRAN-MT",
+    "ato": "Portaria 138/2026 e Portaria 189/2026/GP/DETRAN-MT",
     "natureza_documento": "Portaria condicionada",
     "data_ato": "2026-03-10",
     "assinatura_contratual": null,
     "publicacao": "2026-03-11",
     "inicio_contagem": null,
-    "duracao_meses": null,
+    "duracao_meses": 24,
     "vencimento": null,
-    "fundamento_calculo": "",
-    "antecedencia_formal_dias": null,
+    "fundamento_calculo": "Portaria 080/2026, arts. 7º e 24: duração 24 meses e regras de renovação; Portaria 189/2026, arts. 1º–2º: POC da HD aprovada, efeitos a partir de 14/04/2026. Falta ciclo individual para vencimento.",
+    "antecedencia_formal_dias": 30,
     "limite_protocolo": null,
-    "status_documental": "Condicionado à POC — comprovação pendente",
-    "divergencias": "",
-    "proxima_acao": "Obter comprovação de aprovação da HD na POC e regra de duração.",
-    "notas": "Credenciamento e DETRANNET condicionados à aprovação; não presumir aprovação.",
+    "status_documental": "Credenciamento concedido — POC aprovada",
+    "divergencias": "Avaliação anterior de POC pendente superada pela Portaria 189/2026. Art. 2º revoga 178/2026 e atribui efeitos a 14/04/2026. Regra atual do portal sobre 31/03 não foi automaticamente aplicada para fixar ciclo individual.",
+    "proxima_acao": "Obter termo e confirmação do ciclo de renovação da HD no Portal de Credenciamento. Não presumir biênio a partir da data da portaria.",
+    "notas": "POC aprovada é fato documental; não representa certificação permanente de regularidade operacional.",
     "pagina_secao": "PDF p. 1 — Portaria 138/2026",
     "data_referencia": "2026-11-23",
     "fonte_dados": "Levantamento fornecido pelo usuário em 23/11/2026; conferência documental indicada separadamente",
@@ -431,7 +771,75 @@
     "prioridade": "P1",
     "documento_id": "docm_hd_mt_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido — POC aprovada",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "Portaria 080/2026 prevê 24 meses e padronização em março; falta documento do ciclo individual da HD. Não fixar fim apenas somando meses à aprovação da POC.",
+    "pendencia_documental": "Termo/publicação de vigência e ciclo individual de renovação da HD; a aprovação da POC já foi localizada.",
+    "fontes_consultadas": [
+      {
+        "documento": "Portaria 138/2026/GP/DETRAN-MT",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_MT_PORTARIA_138_2026.pdf",
+        "documento_id": "docm_hd_mt_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — Portaria 138/2026",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      },
+      {
+        "documento": "Portaria 189/2026 — aprovação POC da HD",
+        "arquivo": "MT-189.pdf",
+        "documento_id": "docm_hd_mt_revisao20261123_mt_189",
+        "url": "https://intranet.detran.mt.gov.br/documents/10349724/78804406/Port.%2BN%C2%BA%2B189-2026-GP-DETRAN-MT.pdf/fc0a6400-90c9-8f4c-4411-68c33c38a75a?t=1776690810177",
+        "acesso_em": "23/11/2026",
+        "pagina": "PDF p. 1 — arts. 1º–2º",
+        "resultado": "HD, CNPJ 07.077.276/0001-17, declarada habilitada; condição POC resolvida.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      },
+      {
+        "documento": "Portaria 080/2026 — credenciamento de registradoras",
+        "arquivo": "MT-norma.pdf",
+        "documento_id": "docm_hd_mt_revisao20261123_mt_norma",
+        "url": "https://intranet.detran.mt.gov.br/documents/10349724/77119097/Port.%2BN%C2%BA%2B080-2026-GP-DETRAN-MT.pdf/925e9d4e-0dd9-da57-7983-7d0f181c59db?download=false&version=1.0",
+        "acesso_em": "23/11/2026",
+        "pagina": "Arts. 7º e 24",
+        "resultado": "24 meses e padronização de renovação conferidos; termo do ciclo HD ainda necessário.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      }
+    ],
+    "historico_atos": [
+      {
+        "ato": "Portaria 138/2026",
+        "data_ato": "2026-03-10",
+        "publicacao": "2026-03-11",
+        "vencimento": null,
+        "observacao": "Credenciamento condicionado à POC, condição posteriormente comprovada."
+      },
+      {
+        "ato": "Portaria 189/2026",
+        "data_ato": "2026-04-17",
+        "publicacao": "2026-04-20",
+        "inicio_contagem": "2026-04-14",
+        "vencimento": null,
+        "observacao": "Declara HD habilitada após POC; efeitos desde 14/04/2026, sem fixar aqui o vencimento individual."
+      }
+    ],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Portaria 138/2026 e Portaria 189/2026/GP/DETRAN-MT",
+      "dispositivo": "PDF p. 1 — Portaria 138/2026",
+      "marco_inicial": null,
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 24,
+      "data_final_expressa": null,
+      "calculo": "Portaria 080/2026, arts. 7º e 24: duração 24 meses e regras de renovação; Portaria 189/2026, arts. 1º–2º: POC da HD aprovada, efeitos a partir de 14/04/2026. Falta ciclo individual para vencimento.",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_MT_PORTARIA_138_2026.pdf · PDF p. 1 — Portaria 138/2026",
+      "documento_id": "docm_hd_mt_20260909"
+    }
   },
   {
     "uf": "PB",
@@ -446,7 +854,7 @@
     "fundamento_calculo": "Contrato com intervalo expresso 17/04/2023 a 17/04/2028; controle com ressalva.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Prazo documentado em curso — situação operacional não certificada",
+    "status_documental": "Credenciamento concedido",
     "divergencias": "Ratificação 0098/2022 menciona 12 meses da assinatura. Portaria 163/2023/DS de 16/05/2023, publicada em 18/05/2023, conta da publicação e remete à Portaria 444/2022.",
     "proxima_acao": "Conciliar contrato, ratificação e portarias antes de certificar vigência.",
     "notas": "",
@@ -460,31 +868,31 @@
       {
         "antecedencia_dias": 180,
         "data": "2027-10-20",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 120,
         "data": "2027-12-19",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 90,
         "data": "2028-01-18",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 60,
         "data": "2028-02-17",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 30,
         "data": "2028-03-18",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       }
     ],
@@ -504,47 +912,143 @@
         "ato": "Ratificação 0098/2022",
         "duracao_meses": 12
       }
-    ]
+    ],
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Conciliar contrato, ratificação e portarias antes de certificar vigência.",
+    "fontes_consultadas": [
+      {
+        "documento": "Contrato 0030/2023; Portaria 163/2023/DS; Ratificação 0098/2022",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_PB_CREDENCIAMENTO_2023.pdf",
+        "documento_id": "docm_hd_pb_20260909",
+        "url": null,
+        "pagina": "PDF p. 2 — Extrato contrato 0030/2023; demais páginas: ratificação e portaria",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Contrato 0030/2023; Portaria 163/2023/DS; Ratificação 0098/2022",
+      "dispositivo": "PDF p. 2 — Extrato contrato 0030/2023; demais páginas: ratificação e portaria",
+      "marco_inicial": "2023-04-17",
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 60,
+      "data_final_expressa": "2028-04-17",
+      "calculo": "Contrato com intervalo expresso 17/04/2023 a 17/04/2028; controle com ressalva.",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_PB_CREDENCIAMENTO_2023.pdf · PDF p. 2 — Extrato contrato 0030/2023; demais páginas: ratificação e portaria",
+      "documento_id": "docm_hd_pb_20260909"
+    }
   },
   {
     "uf": "PE",
     "ato": "Termo de Credenciamento 039/2018",
-    "natureza_documento": "Termo informado no levantamento",
+    "natureza_documento": "Termo de credenciamento / extrato",
     "data_ato": null,
     "assinatura_contratual": null,
-    "publicacao": null,
-    "inicio_contagem": null,
+    "publicacao": "2018-08-23",
+    "inicio_contagem": "2018-08-23",
     "duracao_meses": 60,
-    "vencimento": null,
-    "fundamento_calculo": "60 meses da publicação, conforme levantamento; PDF correspondente ainda não recuperado.",
+    "vencimento": "2023-08-23",
+    "fundamento_calculo": "DOE/PE de 23/08/2018, TC 039/2018: 60 meses a partir da data do DOE/PE. 23/08/2018 + 60 meses = 23/08/2023.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Conflito de fonte — continuidade e termo de 2018 pendentes de conferência",
-    "divergencias": "O PDF existente é habilitação de 15/08/2026, Parecer 62/2026, e não o Termo 039/2018 citado. Não substitui a comprovação de vigência.",
-    "proxima_acao": "Obter Termo 039/2018 e renovação ou novo ato; preservar habilitação de 2026.",
+    "status_documental": "Prazo documentado encerrado — verificar renovação posterior",
+    "divergencias": "A habilitação de 2026 é documento distinto do TC 039/2018. Não foi apagada nem reclassificada como termo de 2018.",
+    "proxima_acao": "Obter eventual renovação ou novo termo. Conferir a contratação PNCP 10572022000180-1-000648/2026 sem tratar habilitação como termo concedido.",
     "notas": "",
-    "pagina_secao": "Levantamento: Termo 039/2018, fonte pendente; PDF existente: aviso de habilitação",
+    "pagina_secao": "PDF p. 1 / DOE-PE p. 11 — TC 039/2018",
     "data_referencia": "2026-11-23",
     "fonte_dados": "Levantamento fornecido pelo usuário em 23/11/2026; conferência documental indicada separadamente",
     "conferencia": "Conflito de fonte; substituição de dados suspensa",
-    "fonte": "SIGCR_HD_REGISTROS_DETRAN_PE_HABILITACAO_2026.pdf",
-    "sha256": "2481a9aced1faab8a3510fce45915083d1cc6eb3b2822f4aa2323895242868e0",
-    "alertas_preventivos": [],
-    "vencimento_tipo": null,
-    "dias_restantes_referencia": null,
+    "fonte": "PE-termo.pdf",
+    "sha256": "022dcc3a60d1f9aeb6b219a3dee46784c16c09824e69dd19217fa09c19303cf9",
+    "alertas_preventivos": [
+      {
+        "antecedencia_dias": 180,
+        "data": "2023-02-24",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Alcançado na referência"
+      },
+      {
+        "antecedencia_dias": 120,
+        "data": "2023-04-25",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Alcançado na referência"
+      },
+      {
+        "antecedencia_dias": 90,
+        "data": "2023-05-25",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Alcançado na referência"
+      },
+      {
+        "antecedencia_dias": 60,
+        "data": "2023-06-24",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Alcançado na referência"
+      },
+      {
+        "antecedencia_dias": 30,
+        "data": "2023-07-24",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Alcançado na referência"
+      }
+    ],
+    "vencimento_tipo": "calculado — prazo documentado encerrado",
+    "dias_restantes_referencia": -1188,
     "prioridade": "P1",
-    "documento_id": "docm_hd_pe_20260909",
-    "dados_propostos_aguardando_fonte": {
-      "ato": "Termo de Credenciamento 039/2018",
-      "data_ato": null,
-      "publicacao": "2018-08-23",
-      "inicio_contagem": "2018-08-23",
+    "documento_id": "docm_hd_pe_revisao20261123_pe_termo",
+    "substituicao_suspensa": false,
+    "assinatura_ato": null,
+    "situacao_codigo": "prazo_encerrado",
+    "situacao_credenciamento": "Prazo documentado encerrado — verificar renovação posterior",
+    "vencimento_escopo": "prazo_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Renovação ou novo termo posterior a 23/08/2023; habilitação de 2026 preservada separadamente.",
+    "fontes_consultadas": [
+      {
+        "documento": "Termo de Credenciamento 039/2018",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_PE_HABILITACAO_2026.pdf",
+        "documento_id": "docm_hd_pe_20260909",
+        "url": null,
+        "pagina": "Levantamento: Termo 039/2018, fonte pendente; PDF existente: aviso de habilitação",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      },
+      {
+        "documento": "TC 039/2018 — extrato DOE/PE 23/08/2018",
+        "arquivo": "PE-termo.pdf",
+        "documento_id": "docm_hd_pe_revisao20261123_pe_termo",
+        "url": null,
+        "acesso_em": "23/11/2026",
+        "pagina": "",
+        "resultado": "Documento integral consultado; preservado no acervo da HD.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Termo de Credenciamento 039/2018",
+      "dispositivo": "PDF p. 1 / DOE-PE p. 11 — TC 039/2018",
+      "marco_inicial": "2018-08-23",
+      "marco_descricao": "Marco documental adotado",
       "duracao_meses": 60,
-      "vencimento": "2023-08-23",
-      "fundamento_calculo": "60 meses da publicação, conforme levantamento; PDF correspondente ainda não recuperado."
-    },
-    "substituicao_suspensa": true,
-    "assinatura_ato": null
+      "data_final_expressa": null,
+      "calculo": "DOE/PE de 23/08/2018, TC 039/2018: 60 meses a partir da data do DOE/PE. 23/08/2018 + 60 meses = 23/08/2023.",
+      "arquivo_pagina": "PE-termo.pdf · PDF p. 1 / DOE-PE p. 11 — TC 039/2018",
+      "documento_id": "docm_hd_pe_revisao20261123_pe_termo"
+    }
   },
   {
     "uf": "PI",
@@ -559,7 +1063,7 @@
     "fundamento_calculo": "Termo: cinco anos da publicação, não da impressão.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Prazo documentado em curso — situação operacional não certificada",
+    "status_documental": "Credenciamento concedido",
     "divergencias": "Portaria datada de 05/11/2022 cita POC de 18/11/2022. Impressão de 28/12/2022 não é publicação.",
     "proxima_acao": "Conciliar inconsistência de datas e confirmar antecedência formal.",
     "notas": "",
@@ -573,31 +1077,31 @@
       {
         "antecedencia_dias": 180,
         "data": "2027-06-26",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 120,
         "data": "2027-08-25",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 90,
         "data": "2027-09-24",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 60,
         "data": "2027-10-24",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 30,
         "data": "2027-11-23",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       }
     ],
@@ -606,7 +1110,39 @@
     "prioridade": "P2",
     "documento_id": "docm_hd_pi_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Conciliar inconsistência de datas e confirmar antecedência formal.",
+    "fontes_consultadas": [
+      {
+        "documento": "Portaria 332/2022 e extrato de termo",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_PI_PORTARIA_332_2022.pdf",
+        "documento_id": "docm_hd_pi_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — Portaria 332/2022 e extrato do termo",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Portaria 332/2022 e extrato de termo",
+      "dispositivo": "PDF p. 1 — Portaria 332/2022 e extrato do termo",
+      "marco_inicial": "2022-12-23",
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 60,
+      "data_final_expressa": null,
+      "calculo": "Termo: cinco anos da publicação, não da impressão.",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_PI_PORTARIA_332_2022.pdf · PDF p. 1 — Portaria 332/2022 e extrato do termo",
+      "documento_id": "docm_hd_pi_20260909"
+    }
   },
   {
     "uf": "PR",
@@ -618,12 +1154,12 @@
     "inicio_contagem": null,
     "duracao_meses": null,
     "vencimento": null,
-    "fundamento_calculo": "",
+    "fundamento_calculo": "Contrato 001/2023, cláusula décima (PDF p. 8): início com publicação e término condicionado às decisões enumeradas; sem cálculo de data final.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Vigência condicionada — sem vencimento fixo",
+    "status_documental": "Credenciamento concedido — vinculado às decisões indicadas no ato",
     "divergencias": "Aviso de 20/07/2023 torna sem efeito apenas o primeiro aditivo de preço e suas publicações; preserva demais disposições. Não cancela o credenciamento inteiro.",
-    "proxima_acao": "Confirmar processos TCE 775680/21 e 302399/23 e atos posteriores.",
+    "proxima_acao": "Conferir decisões atuais nos processos e seus apensos. Manter aviso de 20/07/2023 restrito ao aditivo de preço; não cancelar o credenciamento inteiro.",
     "notas": "Portaria publicada em 20/01/2023; contrato em 27/01/2023. Condicionado à cautelar e decisões TCE, judiciais ou administrativas.",
     "pagina_secao": "PDF — contrato 001/2023, Portaria 087/2023-DP e aviso de 20/07/2023",
     "data_referencia": "2026-11-23",
@@ -637,7 +1173,65 @@
     "prioridade": "P1",
     "documento_id": "docm_hd_pr_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido — vinculado às decisões indicadas no ato",
+    "vencimento_escopo": "sem_data_fixa",
+    "vencimento_exibicao": "Sem data fixa — vinculado às decisões indicadas no ato",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "Cláusula décima fixa hipóteses de término por decisões, sem dia final predeterminado.",
+    "pendencia_documental": "Inteiro teor e decisões posteriores dos processos TCE 775680/21, 302399/23 e vinculados, para confirmar efeitos sobre o contrato.",
+    "fontes_consultadas": [
+      {
+        "documento": "Contrato 001/2023; Portaria 087/2023-DP",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_PR_AVISO_SEM_EFEITO_ADITIVO_PRECO_2023.pdf",
+        "documento_id": "docm_hd_pr_20260909",
+        "url": null,
+        "pagina": "PDF — contrato 001/2023, Portaria 087/2023-DP e aviso de 20/07/2023",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      },
+      {
+        "documento": "Contrato HD 001/2023 — instrumento integral",
+        "arquivo": "PR-contrato.pdf",
+        "documento_id": "docm_hd_pr_revisao20261123_pr_contrato",
+        "url": "https://www.detran.pr.gov.br/sites/default/arquivos_restritos/files/documento/2023-03/contrato001_2023credenciamentohdsolucoesesistemasltda_4.pdf",
+        "acesso_em": "23/11/2026",
+        "pagina": "PDF p. 8 — cláusula décima",
+        "resultado": "Ausência de término fixo confirmada no contrato; não equivale a documento sem prazo analisado.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      },
+      {
+        "documento": "Consulta TCE-PR 775680/21",
+        "url": "https://servicos.tce.pr.gov.br/servicos/srv_consultaprocesso.aspx?processo=2021775680",
+        "pagina": null,
+        "acesso_em": "23/11/2026",
+        "resultado": "Consulta oficial acessada; íntegra da cadeia decisória e efeito atual específico no contrato ainda não concluídos.",
+        "aplicabilidade": "Sem declarar revogação, continuidade automática ou termo final."
+      },
+      {
+        "documento": "Consulta TCE-PR 302399/23",
+        "url": "https://servicos.tce.pr.gov.br/servicos/srv_consultaprocesso.aspx?processo=2023302399",
+        "pagina": null,
+        "acesso_em": "23/11/2026",
+        "resultado": "Consulta oficial acessada; íntegra da cadeia decisória e efeito atual específico no contrato ainda não concluídos.",
+        "aplicabilidade": "Sem declarar revogação, continuidade automática ou termo final."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Contrato 001/2023; Portaria 087/2023-DP",
+      "dispositivo": "PDF — contrato 001/2023, Portaria 087/2023-DP e aviso de 20/07/2023",
+      "marco_inicial": null,
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": null,
+      "data_final_expressa": null,
+      "calculo": "Contrato 001/2023, cláusula décima (PDF p. 8): início com publicação e término condicionado às decisões enumeradas; sem cálculo de data final.",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_PR_AVISO_SEM_EFEITO_ADITIVO_PRECO_2023.pdf · PDF — contrato 001/2023, Portaria 087/2023-DP e aviso de 20/07/2023",
+      "documento_id": "docm_hd_pr_20260909"
+    }
   },
   {
     "uf": "RJ",
@@ -652,7 +1246,7 @@
     "fundamento_calculo": "24 meses da publicação do extrato.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Prazo documentado em curso — situação operacional não certificada",
+    "status_documental": "Credenciamento concedido",
     "divergencias": "",
     "proxima_acao": "Confirmar antecedência formal de renovação.",
     "notas": "",
@@ -666,31 +1260,31 @@
       {
         "antecedencia_dias": 180,
         "data": "2027-09-15",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 120,
         "data": "2027-11-14",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 90,
         "data": "2027-12-14",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 60,
         "data": "2028-01-13",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 30,
         "data": "2028-02-12",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       }
     ],
@@ -699,7 +1293,39 @@
     "prioridade": "P3",
     "documento_id": "docm_hd_rj_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Confirmar antecedência formal de renovação.",
+    "fontes_consultadas": [
+      {
+        "documento": "Termo de Credenciamento 065/2026",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_RJ_TERMO_CREDENCIAMENTO_065_2026.pdf",
+        "documento_id": "docm_hd_rj_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — Termo 065/2026",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Termo de Credenciamento 065/2026",
+      "dispositivo": "PDF p. 1 — Termo 065/2026",
+      "marco_inicial": "2026-03-13",
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 24,
+      "data_final_expressa": null,
+      "calculo": "24 meses da publicação do extrato.",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_RJ_TERMO_CREDENCIAMENTO_065_2026.pdf · PDF p. 1 — Termo 065/2026",
+      "documento_id": "docm_hd_rj_20260909"
+    }
   },
   {
     "uf": "RN",
@@ -714,9 +1340,9 @@
     "fundamento_calculo": "Portaria: dois anos da publicação.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Prazo encerrado — continuidade não comprovada pelos documentos disponíveis",
+    "status_documental": "Prazo documentado encerrado — verificar renovação posterior",
     "divergencias": "",
-    "proxima_acao": "Obter renovação ou novo ato; conferir dossiê SEI já existente sem presumir concessão.",
+    "proxima_acao": "Consultar renovação ou novo ato e o dossiê SEI já existente, sem presumir continuidade.",
     "notas": "Termo histórico 02/2018 cita cinco anos, sem comprovar continuidade atual.",
     "pagina_secao": "PDF p. 1 — Portaria 425/2022; p. 2 — termo histórico",
     "data_referencia": "2026-11-23",
@@ -728,31 +1354,31 @@
       {
         "antecedencia_dias": 180,
         "data": "2024-02-05",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Alcançado na referência"
       },
       {
         "antecedencia_dias": 120,
         "data": "2024-04-05",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Alcançado na referência"
       },
       {
         "antecedencia_dias": 90,
         "data": "2024-05-05",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Alcançado na referência"
       },
       {
         "antecedencia_dias": 60,
         "data": "2024-06-04",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Alcançado na referência"
       },
       {
         "antecedencia_dias": 30,
         "data": "2024-07-04",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Alcançado na referência"
       }
     ],
@@ -761,7 +1387,39 @@
     "prioridade": "P1",
     "documento_id": "docm_hd_rn_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "prazo_encerrado",
+    "situacao_credenciamento": "Prazo documentado encerrado — verificar renovação posterior",
+    "vencimento_escopo": "prazo_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Renovação ou novo ato posterior a 03/08/2024. Protocolo SEI existente não comprova concessão.",
+    "fontes_consultadas": [
+      {
+        "documento": "Portaria 425/2022-GADIR; termo histórico 02/2018",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_RN_CREDENCIAMENTO_2022.pdf",
+        "documento_id": "docm_hd_rn_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — Portaria 425/2022; p. 2 — termo histórico",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Portaria 425/2022-GADIR; termo histórico 02/2018",
+      "dispositivo": "PDF p. 1 — Portaria 425/2022; p. 2 — termo histórico",
+      "marco_inicial": "2022-08-03",
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 24,
+      "data_final_expressa": null,
+      "calculo": "Portaria: dois anos da publicação.",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_RN_CREDENCIAMENTO_2022.pdf · PDF p. 1 — Portaria 425/2022; p. 2 — termo histórico",
+      "documento_id": "docm_hd_rn_20260909"
+    }
   },
   {
     "uf": "RO",
@@ -776,7 +1434,7 @@
     "fundamento_calculo": "Cinco anos; entrada em vigor na publicação.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Prazo documentado em curso — situação operacional não certificada",
+    "status_documental": "Credenciamento concedido",
     "divergencias": "",
     "proxima_acao": "Controlar taxa anual de vistoria e confirmar antecedência formal.",
     "notas": "",
@@ -790,31 +1448,31 @@
       {
         "antecedencia_dias": 180,
         "data": "2030-09-18",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 120,
         "data": "2030-11-17",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 90,
         "data": "2030-12-17",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 60,
         "data": "2031-01-16",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 30,
         "data": "2031-02-15",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       }
     ],
@@ -823,7 +1481,39 @@
     "prioridade": "P3",
     "documento_id": "docm_hd_ro_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Controlar taxa anual de vistoria e confirmar antecedência formal.",
+    "fontes_consultadas": [
+      {
+        "documento": "Portaria 560/2026",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_RO_PORTARIA_560_2026.pdf",
+        "documento_id": "docm_hd_ro_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — Portaria 560/2026, art. 1º e parágrafo único",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Portaria 560/2026",
+      "dispositivo": "PDF p. 1 — Portaria 560/2026, art. 1º e parágrafo único",
+      "marco_inicial": "2026-03-17",
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 60,
+      "data_final_expressa": null,
+      "calculo": "Cinco anos; entrada em vigor na publicação.",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_RO_PORTARIA_560_2026.pdf · PDF p. 1 — Portaria 560/2026, art. 1º e parágrafo único",
+      "documento_id": "docm_hd_ro_20260909"
+    }
   },
   {
     "uf": "RR",
@@ -838,7 +1528,7 @@
     "fundamento_calculo": "60 meses da publicação.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Prazo documentado em curso — situação operacional não certificada",
+    "status_documental": "Credenciamento concedido",
     "divergencias": "",
     "proxima_acao": "Confirmar antecedência formal de renovação.",
     "notas": "",
@@ -852,31 +1542,31 @@
       {
         "antecedencia_dias": 180,
         "data": "2029-09-13",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 120,
         "data": "2029-11-12",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 90,
         "data": "2029-12-12",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 60,
         "data": "2030-01-11",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 30,
         "data": "2030-02-10",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       }
     ],
@@ -885,38 +1575,167 @@
     "prioridade": "P3",
     "documento_id": "docm_hd_rr_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Confirmar antecedência formal de renovação.",
+    "fontes_consultadas": [
+      {
+        "documento": "Termo de Credenciamento 007/2025",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_RR_TERMO_CREDENCIAMENTO_007_2025.pdf",
+        "documento_id": "docm_hd_rr_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — Termo 007/2025",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Termo de Credenciamento 007/2025",
+      "dispositivo": "PDF p. 1 — Termo 007/2025",
+      "marco_inicial": "2025-03-12",
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 60,
+      "data_final_expressa": null,
+      "calculo": "60 meses da publicação.",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_RR_TERMO_CREDENCIAMENTO_007_2025.pdf · PDF p. 1 — Termo 007/2025",
+      "documento_id": "docm_hd_rr_20260909"
+    }
   },
   {
     "uf": "RS",
-    "ato": "REG00017",
-    "natureza_documento": "Lista de registradoras",
+    "ato": "REG00017 — Termo de Adesão 225688 / PNCP 2025018103",
+    "natureza_documento": "Termo de adesão e registro oficial PNCP",
     "data_ato": null,
-    "assinatura_contratual": null,
+    "assinatura_contratual": "2026-03-26",
     "publicacao": null,
-    "inicio_contagem": null,
-    "duracao_meses": null,
-    "vencimento": null,
-    "fundamento_calculo": "",
+    "inicio_contagem": "2025-12-22",
+    "duracao_meses": 120,
+    "vencimento": "2035-12-22",
+    "fundamento_calculo": "Edital 002/2025, item 7.1: limite de dez anos da publicação do edital em 22/12/2025, portanto 22/12/2035. Registro PNCP 01935819000103-2-000025/2026 confirma fim expresso em 22/12/2035. Termo, cláusula primeira: início da adesão vinculado à homologação.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Vigência não comprovada no documento disponível",
-    "divergencias": "",
-    "proxima_acao": "Obter ato, assinatura e regra de vigência.",
-    "notas": "13/05/2026 aparece apenas no nome do arquivo: não é data comprovada de publicação ou início.",
-    "pagina_secao": "PDF p. 1 — linha REG00017",
+    "status_documental": "Credenciamento concedido",
+    "divergencias": "Lista REG00017 não informava prazo. Novo termo e edital recuperados; PNCP informa início 26/03/2026 e fim 22/12/2035. Assinatura da representante em 29/12/2025 e do órgão em 26/03/2026 não foram confundidas com homologação. O marco 22/12/2025 controla o limite do edital, não a abertura da atividade individual.",
+    "proxima_acao": "Obter comprovação da homologação individual e acompanhar alterações. Item 7.2 veda renovação automática.",
+    "notas": "Data de 13/05/2026 do arquivo da lista continua sem valor de publicação. Limite máximo documental não certifica regularidade até 2035.",
+    "pagina_secao": "Edital 002/2025, item 7.1; Termo 225688, p. 1, cláusula primeira; PNCP contrato 25/2026",
     "data_referencia": "2026-11-23",
     "fonte_dados": "Levantamento fornecido pelo usuário em 23/11/2026; conferência documental indicada separadamente",
     "conferencia": "PDF recuperado da conversa Prazo de vencimento; SHA-256 idêntico ao acervo local",
-    "fonte": "SIGCR_HD_REGISTROS_DETRAN_RS_LISTA_REGISTRADORAS_2026_05_13.pdf",
-    "sha256": "1de9d8ab699e555a720939315cd2645015ca45b2bd86d533ff052b80f01158ab",
-    "alertas_preventivos": [],
-    "vencimento_tipo": null,
-    "dias_restantes_referencia": null,
-    "prioridade": "P1",
-    "documento_id": "docm_hd_rs_20260909",
+    "fonte": "RS-pncp.pdf",
+    "sha256": "34008447659555067e8f285d80e2cf2e9324d2e69e9b0924ef2e3ecb1d9d287f",
+    "alertas_preventivos": [
+      {
+        "antecedencia_dias": 180,
+        "data": "2035-06-25",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Programado"
+      },
+      {
+        "antecedencia_dias": 120,
+        "data": "2035-08-24",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Programado"
+      },
+      {
+        "antecedencia_dias": 90,
+        "data": "2035-09-23",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Programado"
+      },
+      {
+        "antecedencia_dias": 60,
+        "data": "2035-10-23",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Programado"
+      },
+      {
+        "antecedencia_dias": 30,
+        "data": "2035-11-22",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Programado"
+      }
+    ],
+    "vencimento_tipo": "data final expressa PNCP e limite do edital",
+    "dias_restantes_referencia": 3316,
+    "prioridade": "P3",
+    "documento_id": "docm_hd_rs_revisao20261123_rs_pncp",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "Limite máximo do edital, sem renovação automática.",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Comprovação da homologação individual no sistema, marco da adesão; não confundir com o limite máximo do edital.",
+    "fontes_consultadas": [
+      {
+        "documento": "REG00017",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_RS_LISTA_REGISTRADORAS_2026_05_13.pdf",
+        "documento_id": "docm_hd_rs_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — linha REG00017",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      },
+      {
+        "documento": "Termo de Adesão HD 225688 — PNCP",
+        "arquivo": "RS-pncp.pdf",
+        "documento_id": "docm_hd_rs_revisao20261123_rs_pncp",
+        "url": "https://pncp.gov.br/pncp-api/v1/orgaos/01935819000103/contratos/2026/25/arquivos/1",
+        "acesso_em": "23/11/2026",
+        "pagina": "PDF p. 1, cláusula primeira; pp. 2–3, assinaturas",
+        "resultado": "Termo individual localizado e CNPJ confirmado; homologação individual ainda sem comprovante.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      },
+      {
+        "documento": "Edital DETRAN/RS 002/2025 — publicação oficial",
+        "arquivo": "RS-edital.pdf",
+        "documento_id": "docm_hd_rs_revisao20261123_rs_edital",
+        "url": "https://www.diariooficial.rs.gov.br/materia?id=1360682",
+        "acesso_em": "23/11/2026",
+        "pagina": "Item 7.1–7.3",
+        "resultado": "Publicação oficial de 22/12/2025 e limite de dez anos conferidos; item 7.2 sem renovação automática.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      }
+    ],
+    "historico_atos": [
+      {
+        "ato": "Lista REG00017",
+        "publicacao": null,
+        "vencimento": null,
+        "observacao": "Arquivo histórico sem início/duração; nome do arquivo não foi tratado como data de publicação."
+      },
+      {
+        "ato": "Termo 225688 / PNCP 2025018103",
+        "publicacao": "2026-04-16",
+        "inicio_contagem": "2026-03-26",
+        "vencimento": "2035-12-22",
+        "observacao": "Publicação e datas declaradas no PNCP; início individual por homologação depende de comprovante."
+      }
+    ],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "REG00017 — Termo de Adesão 225688 / PNCP 2025018103",
+      "dispositivo": "Edital 002/2025, item 7.1; Termo 225688, p. 1, cláusula primeira; PNCP contrato 25/2026",
+      "marco_inicial": "2025-12-22",
+      "marco_descricao": "Publicação do edital — limite máximo, não início da adesão individual",
+      "duracao_meses": 120,
+      "data_final_expressa": "2035-12-22",
+      "calculo": "Edital 002/2025, item 7.1: limite de dez anos da publicação do edital em 22/12/2025, portanto 22/12/2035. Registro PNCP 01935819000103-2-000025/2026 confirma fim expresso em 22/12/2035. Termo, cláusula primeira: início da adesão vinculado à homologação.",
+      "arquivo_pagina": "RS-pncp.pdf · Edital 002/2025, item 7.1; Termo 225688, p. 1, cláusula primeira; PNCP contrato 25/2026",
+      "documento_id": "docm_hd_rs_revisao20261123_rs_pncp"
+    }
   },
   {
     "uf": "SC",
@@ -926,28 +1745,121 @@
     "assinatura_contratual": null,
     "publicacao": "2024-05-17",
     "inicio_contagem": "2024-05-10",
-    "duracao_meses": null,
-    "vencimento": null,
-    "fundamento_calculo": "",
-    "antecedencia_formal_dias": null,
-    "limite_protocolo": null,
-    "status_documental": "Vigência não determinável — duração não informada",
-    "divergencias": "",
-    "proxima_acao": "Solicitar regra de validade e renovação.",
-    "notas": "Efeitos retroativos ao pagamento da taxa em 10/05/2024. Torna sem efeito Portaria 0657/2021 e concede novo credenciamento.",
+    "duracao_meses": 60,
+    "vencimento": "2029-05-10",
+    "fundamento_calculo": "Portaria 076/2018, art. 24 parágrafo único: 60 meses. Portaria 0301/2024, art. 3º: efeitos retroativos ao pagamento em 10/05/2024. Controle: 10/05/2024 + 60 meses = 10/05/2029. Arts. 24 e 26: antecedência 90 dias, sem ajuste automático de calendário.",
+    "antecedencia_formal_dias": 90,
+    "limite_protocolo": "2029-02-09",
+    "status_documental": "Credenciamento concedido",
+    "divergencias": "A duração não estava expressa na Portaria 0301/2024, mas consta na norma de 2018 já aplicável. 007/2024 é delegação de competência, não fixação de validade. Pagamento usado somente porque art. 3º atribui expressamente efeitos retroativos.",
+    "proxima_acao": "Preservar comprovante da taxa referida no ato e conferir eventual alteração posterior; controlar renovação de 90 dias.",
+    "notas": "Portaria 0301/2024 substitui o ato 0657/2021, sem apagar o histórico. Prazo calculado de controle, não garantia de regularidade futura.",
     "pagina_secao": "PDF p. 1 — arts. 1º a 3º",
     "data_referencia": "2026-11-23",
     "fonte_dados": "Levantamento fornecido pelo usuário em 23/11/2026; conferência documental indicada separadamente",
     "conferencia": "Acervo local; correspondência com anexos originais não confirmada",
     "fonte": "SIGCR_HD_REGISTROS_DETRAN_SC_PORTARIA_0301_2024.pdf",
     "sha256": "712eec6a5142ff9fc5f1f2f6190dcaf808ccee3187d797afa052f8bc83b8c3aa",
-    "alertas_preventivos": [],
-    "vencimento_tipo": null,
-    "dias_restantes_referencia": null,
-    "prioridade": "P1",
+    "alertas_preventivos": [
+      {
+        "antecedencia_dias": 180,
+        "data": "2028-11-11",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Programado"
+      },
+      {
+        "antecedencia_dias": 120,
+        "data": "2029-01-10",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Programado"
+      },
+      {
+        "antecedencia_dias": 90,
+        "data": "2029-02-09",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Programado"
+      },
+      {
+        "antecedencia_dias": 60,
+        "data": "2029-03-11",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Programado"
+      },
+      {
+        "antecedencia_dias": 30,
+        "data": "2029-04-10",
+        "natureza": "Preventivo interno — não é prazo formal",
+        "situacao_referencia": "Programado"
+      }
+    ],
+    "vencimento_tipo": "calculado — norma de 2018 e efeitos do ato de 2024",
+    "dias_restantes_referencia": 899,
+    "prioridade": "P3",
     "documento_id": "docm_hd_sc_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Confirmar eventuais atos posteriores; conservar comprovante do pagamento de 10/05/2024 citado no ato.",
+    "fontes_consultadas": [
+      {
+        "documento": "Portaria 0301/DETRAN/PROJUR/2024",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_SC_PORTARIA_0301_2024.pdf",
+        "documento_id": "docm_hd_sc_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — arts. 1º a 3º",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      },
+      {
+        "documento": "Portaria 076/2018 — regra de credenciamento",
+        "arquivo": "SC-076.pdf",
+        "documento_id": "docm_hd_sc_revisao20261123_sc_076",
+        "url": "https://www.detran.sc.gov.br/download/credenciamento-4/",
+        "acesso_em": "23/11/2026",
+        "pagina": "076: PDF p. 8, art. 24, parágrafo único; art. 26. 149: arts. 1º–7º. 007: arts. 1º–2º.",
+        "resultado": "Inteiro teor recuperado no portal oficial. Regra de duração de 2018 aplicada ao ato de 2024; não houve uso retroativo de texto posterior.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      },
+      {
+        "documento": "Portaria 149/2018 — alterações da 076/2018",
+        "arquivo": "SC-149.pdf",
+        "documento_id": "docm_hd_sc_revisao20261123_sc_149",
+        "url": "https://www.detran.sc.gov.br/download/credenciamento-5/",
+        "acesso_em": "23/11/2026",
+        "pagina": "076: PDF p. 8, art. 24, parágrafo único; art. 26. 149: arts. 1º–7º. 007: arts. 1º–2º.",
+        "resultado": "Inteiro teor recuperado no portal oficial. Regra de duração de 2018 aplicada ao ato de 2024; não houve uso retroativo de texto posterior.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      },
+      {
+        "documento": "Portaria 007/2024 — delegação de competência",
+        "arquivo": "SC-007.pdf",
+        "documento_id": "docm_hd_sc_revisao20261123_sc_007",
+        "url": "https://www.detran.sc.gov.br/download/portaria-007_24-delegar-thael-nogueira-da-gama-rosa-as-atividades-de-analise-e-credenciamento-das-empresas-registradoras-de-contratos/",
+        "acesso_em": "23/11/2026",
+        "pagina": "076: PDF p. 8, art. 24, parágrafo único; art. 26. 149: arts. 1º–7º. 007: arts. 1º–2º.",
+        "resultado": "Inteiro teor recuperado no portal oficial. Regra de duração de 2018 aplicada ao ato de 2024; não houve uso retroativo de texto posterior.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Portaria 0301/DETRAN/PROJUR/2024",
+      "dispositivo": "PDF p. 1 — arts. 1º a 3º",
+      "marco_inicial": "2024-05-10",
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 60,
+      "data_final_expressa": null,
+      "calculo": "Portaria 076/2018, art. 24 parágrafo único: 60 meses. Portaria 0301/2024, art. 3º: efeitos retroativos ao pagamento em 10/05/2024. Controle: 10/05/2024 + 60 meses = 10/05/2029. Arts. 24 e 26: antecedência 90 dias, sem ajuste automático de calendário.",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_SC_PORTARIA_0301_2024.pdf · PDF p. 1 — arts. 1º a 3º",
+      "documento_id": "docm_hd_sc_20260909"
+    }
   },
   {
     "uf": "SP",
@@ -962,9 +1874,9 @@
     "fundamento_calculo": "Art. 3º: cinco anos da assinatura do Termo de Adesão. Art. 4º: entrada em vigor na publicação não define o marco de contagem.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Credenciamento documentado — início e vencimento dependem do Termo de Adesão",
-    "divergencias": "Levantamento inicial citava Portaria 2192/2025 e vencimento em 13/03/2030, sem fonte recuperada. Cadastro anterior adotava 17/08/2031. Documento recebido em 23/11/2026 comprova Portaria 14530, de 18/08/2026, publicada em 20/08/2026, contando cinco anos da assinatura do Termo de Adesão. Datas anteriores preservadas no histórico, sem adoção.",
-    "proxima_acao": "Obter Termo de Adesão assinado e conciliar a Portaria 2192/2025 mencionada no levantamento.",
+    "status_documental": "Credenciamento concedido — atos de 2025 e 2026 em conciliação",
+    "divergencias": "Portaria 2192/2025 agora recuperada no acervo local. Ambos os atos e seus documentos permanecem no histórico. Não foi identificado instrumento que demonstre se 14530/2026 substitui, renova ou altera 2192/2025. O antigo 17/08/2031 não tem marco comprovado e não é adotado.",
+    "proxima_acao": "Obter Termo de Adesão e decisão dos processos SEI 140.00103404/2025-25 e 140.00402208/2026-11 antes de definir o vencimento atual.",
     "notas": "Publicação comprovada no cabeçalho em 20/08/2026. Assinatura do Termo de Adesão não consta neste PDF; não usar data do ato ou da publicação como assinatura.",
     "pagina_secao": "PDF p. 1 — cabeçalho DOE, arts. 1º, 3º e 4º",
     "data_referencia": "2026-11-23",
@@ -977,17 +1889,69 @@
     "dias_restantes_referencia": null,
     "prioridade": "P1",
     "documento_id": "docm_hd_sp_20261123",
-    "dados_propostos_aguardando_fonte": {
-      "ato": "Portaria 2192/2025 — informada no levantamento",
-      "data_ato": "2025-03-12",
-      "publicacao": "2025-03-13",
-      "inicio_contagem": "2025-03-13",
-      "duracao_meses": 60,
-      "vencimento": "2030-03-13",
-      "fundamento_calculo": "Cinco anos da publicação conforme levantamento; fonte não corresponde ao PDF disponível."
-    },
     "substituicao_suspensa": false,
-    "assinatura_ato": null
+    "assinatura_ato": null,
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido — atos de 2025 e 2026 em conciliação",
+    "vencimento_escopo": "conciliacao_atos",
+    "vencimento_exibicao": "Em conciliação entre os atos",
+    "vencimento_observacao": "Ato de 2025: controle histórico em 13/03/2030.",
+    "motivo_sem_vencimento": "A Portaria 14530/2026 não explicita no PDF sua relação com a 2192/2025 e conta cinco anos da assinatura do Termo de Adesão, não apresentado.",
+    "pendencia_documental": "Termo de Adesão da Portaria 14530/2026 e ato/decisão que esclareça sua relação com a Portaria 2192/2025.",
+    "fontes_consultadas": [
+      {
+        "documento": "Portaria DETRAN-SP 14530/2026",
+        "arquivo": "HD-SP-Portaria-14530-2026-DOE-20260820.pdf",
+        "documento_id": "docm_hd_sp_20261123",
+        "url": null,
+        "pagina": "PDF p. 1 — cabeçalho DOE, arts. 1º, 3º e 4º",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      },
+      {
+        "documento": "Portaria DETRAN-SP 2192/2025 — DOE 13/03/2025",
+        "arquivo": "SP-2192.pdf",
+        "documento_id": "docm_hd_sp_revisao20261123_sp_2192",
+        "url": null,
+        "acesso_em": "23/11/2026",
+        "pagina": "",
+        "resultado": "Documento integral consultado; preservado no acervo da HD.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      }
+    ],
+    "historico_atos": [
+      {
+        "ato": "Portaria 2192/2025",
+        "data_ato": "2025-03-12",
+        "publicacao": "2025-03-13",
+        "inicio_contagem": "2025-03-13",
+        "duracao_meses": 60,
+        "vencimento": "2030-03-13",
+        "observacao": "Data de controle do levantamento anterior preservada; não adotada como vencimento atual sem conciliar o ato posterior."
+      },
+      {
+        "ato": "Portaria 14530/2026",
+        "data_ato": "2026-08-18",
+        "publicacao": "2026-08-20",
+        "inicio_contagem": null,
+        "duracao_meses": 60,
+        "vencimento": null,
+        "observacao": "Art. 3º: cinco anos da assinatura do Termo de Adesão. Sem cláusula expressa de substituição/renovação no documento examinado."
+      }
+    ],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Portaria DETRAN-SP 14530/2026",
+      "dispositivo": "PDF p. 1 — cabeçalho DOE, arts. 1º, 3º e 4º",
+      "marco_inicial": null,
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 60,
+      "data_final_expressa": null,
+      "calculo": "Art. 3º: cinco anos da assinatura do Termo de Adesão. Art. 4º: entrada em vigor na publicação não define o marco de contagem.",
+      "arquivo_pagina": "HD-SP-Portaria-14530-2026-DOE-20260820.pdf · PDF p. 1 — cabeçalho DOE, arts. 1º, 3º e 4º",
+      "documento_id": "docm_hd_sp_20261123"
+    }
   },
   {
     "uf": "TO",
@@ -1002,7 +1966,7 @@
     "fundamento_calculo": "Art. 2º: 24 meses da assinatura do ato, não da publicação.",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Prazo documentado em curso — situação operacional não certificada",
+    "status_documental": "Credenciamento concedido",
     "divergencias": "",
     "proxima_acao": "Confirmar antecedência formal no Edital 4/2025/GABPRES.",
     "notas": "Assinatura do ato em 01/10/2025; não confundir com assinatura contratual.",
@@ -1016,31 +1980,31 @@
       {
         "antecedencia_dias": 180,
         "data": "2027-04-04",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 120,
         "data": "2027-06-03",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 90,
         "data": "2027-07-03",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 60,
         "data": "2027-08-02",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       },
       {
         "antecedencia_dias": 30,
         "data": "2027-09-01",
-        "natureza": "Preventivo interno — não é prazo legal",
+        "natureza": "Preventivo interno — não é prazo formal",
         "situacao_referencia": "Programado"
       }
     ],
@@ -1049,12 +2013,44 @@
     "prioridade": "P3",
     "documento_id": "docm_hd_to_20260909",
     "substituicao_suspensa": false,
-    "assinatura_ato": "2025-10-01"
+    "assinatura_ato": "2025-10-01",
+    "situacao_codigo": "concedido",
+    "situacao_credenciamento": "Credenciamento concedido",
+    "vencimento_escopo": "controle_documentado",
+    "vencimento_exibicao": "A calcular — marco documental pendente",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "",
+    "pendencia_documental": "Confirmar antecedência formal no Edital 4/2025/GABPRES.",
+    "fontes_consultadas": [
+      {
+        "documento": "Portaria 1117/2025/GABPRES",
+        "arquivo": "SIGCR_HD_REGISTROS_DETRAN_TO_PORTARIA_1117_2025.pdf",
+        "documento_id": "docm_hd_to_20260909",
+        "url": null,
+        "pagina": "PDF p. 1 — arts. 2º e 3º e assinatura",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      }
+    ],
+    "historico_atos": [],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "fundamentacao_vencimento": {
+      "documento": "Portaria 1117/2025/GABPRES",
+      "dispositivo": "PDF p. 1 — arts. 2º e 3º e assinatura",
+      "marco_inicial": "2025-10-01",
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": 24,
+      "data_final_expressa": null,
+      "calculo": "Art. 2º: 24 meses da assinatura do ato, não da publicação.",
+      "arquivo_pagina": "SIGCR_HD_REGISTROS_DETRAN_TO_PORTARIA_1117_2025.pdf · PDF p. 1 — arts. 2º e 3º e assinatura",
+      "documento_id": "docm_hd_to_20260909"
+    }
   },
   {
     "uf": "MA",
     "ato": null,
-    "natureza_documento": "Informação da empresa",
+    "natureza_documento": "Processo de credenciamento — checklist, requerimento, e-mails e anexos",
     "data_ato": null,
     "assinatura_contratual": null,
     "publicacao": null,
@@ -1064,16 +2060,16 @@
     "fundamento_calculo": "",
     "antecedencia_formal_dias": null,
     "limite_protocolo": null,
-    "status_documental": "Em processo de credenciamento — documentos do checklist enviados, conforme informação da empresa",
-    "divergencias": "",
-    "proxima_acao": "Aguardar PDF 2026.19201.44273-Registro de Contrato-HD Soluções e Sistemas LTDA (3).pdf e comprovação de envio/protocolo.",
-    "notas": "Envio, protocolo, aprovação, início e vencimento sem comprovação; campos vazios. Nome do arquivo não comprova protocolo ou concessão.",
-    "pagina_secao": "",
+    "status_documental": "Em processo de credenciamento — checklist enviado, conforme informação da empresa",
+    "divergencias": "Checklist de 05/11 contém campos sem marcação de atendimento; não foram tratados como indeferimento. Complementos de 10/11 e resposta da Controladoria comprovam diligência, não regularização já aprovada. Data do requerimento 28/10 não foi tratada como protocolo.",
+    "proxima_acao": "Solicitar confirmação de conferência dos complementos enviados em 10/11; aguardar guia após regularização, conforme e-mail da Controladoria. Acompanhar SEI sem presumir aprovação.",
+    "notas": "Requerimento datado/assinado em 28/10/2026; SEI público gerado em 04/11/2026 às 12:34. Complementação eletrônica informada no comprovante de 10/11/2026 às 08:00. Resposta às 09:06 condiciona a guia à regularização documental.",
+    "pagina_secao": "Checklist pp. 1–2; e-mail Controladoria p. 1; requerimento p. 1; consulta SEI pública em 23/11/2026",
     "data_referencia": "2026-11-23",
     "fonte_dados": "Levantamento fornecido pelo usuário em 23/11/2026; conferência documental indicada separadamente",
     "conferencia": "Acervo local; correspondência com anexos originais não confirmada",
-    "fonte": null,
-    "sha256": null,
+    "fonte": "MA-processo.pdf",
+    "sha256": "e0940a1741fbef4872c74f5155f399fc77740b295db41a0c588ab5a64071c91f",
     "alertas_preventivos": [],
     "vencimento_tipo": null,
     "dias_restantes_referencia": null,
@@ -1081,7 +2077,178 @@
     "substituicao_suspensa": false,
     "assinatura_ato": null,
     "data_envio": null,
-    "protocolo": null,
-    "data_aprovacao": null
+    "protocolo": "2026.19201.44273",
+    "data_aprovacao": null,
+    "situacao_codigo": "em_processo",
+    "situacao_credenciamento": "Em processo de credenciamento — checklist enviado, conforme informação da empresa",
+    "vencimento_escopo": "nao_aplicavel",
+    "vencimento_exibicao": "Ainda não aplicável",
+    "vencimento_observacao": "",
+    "motivo_sem_vencimento": "Não há ato de concessão apresentado ou identificado na consulta pública; pedido ainda em análise.",
+    "pendencia_documental": "Conferência oficial dos complementos; depois, emissão da guia e comprovação de pagamento. POC e ato de concessão ainda não comprovados.",
+    "fontes_consultadas": [
+      {
+        "documento": "Informação da empresa",
+        "arquivo": null,
+        "documento_id": null,
+        "url": null,
+        "pagina": "",
+        "acesso_em": "23/11/2026",
+        "resultado": "Fonte e dados preservados do levantamento anterior.",
+        "aplicabilidade": "Mantido sem nova hipótese de regularidade operacional."
+      },
+      {
+        "documento": "Checklist Controladoria — processo 2026.19201.44273",
+        "arquivo": "MA-processo.pdf",
+        "documento_id": "docm_hd_ma_revisao20261123_ma_processo",
+        "url": null,
+        "acesso_em": "23/11/2026",
+        "pagina": "",
+        "resultado": "Documento integral consultado; preservado no acervo da HD.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      },
+      {
+        "documento": "Resposta Controladoria — guia condicionada à regularização",
+        "arquivo": "MA-email.pdf",
+        "documento_id": "docm_hd_ma_revisao20261123_ma_email",
+        "url": null,
+        "acesso_em": "23/11/2026",
+        "pagina": "",
+        "resultado": "Documento integral consultado; preservado no acervo da HD.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      },
+      {
+        "documento": "Documentação complementar fornecida — 42 páginas",
+        "arquivo": "MA-anexos.pdf",
+        "documento_id": "docm_hd_ma_revisao20261123_ma_anexos",
+        "url": null,
+        "acesso_em": "23/11/2026",
+        "pagina": "",
+        "resultado": "Documento integral consultado; preservado no acervo da HD.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      },
+      {
+        "documento": "Requerimento de credenciamento HD — 28/10/2026",
+        "arquivo": "MA-checklist.pdf",
+        "documento_id": "docm_hd_ma_revisao20261123_ma_checklist",
+        "url": null,
+        "acesso_em": "23/11/2026",
+        "pagina": "",
+        "resultado": "Documento integral consultado; preservado no acervo da HD.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      },
+      {
+        "documento": "Comprovante de envio de complementos — 10/11/2026",
+        "arquivo": "MA-email-comprovante.jpg",
+        "documento_id": "docm_hd_ma_revisao20261123_ma_email_comprovante",
+        "url": null,
+        "acesso_em": "23/11/2026",
+        "pagina": "",
+        "resultado": "Documento integral consultado; preservado no acervo da HD.",
+        "aplicabilidade": "Documento existente até a referência; sem aplicação retroativa de texto atual."
+      },
+      {
+        "documento": "SEI-MA — consulta processual pública",
+        "url": "https://sei.ma.gov.br/sei/modulos/pesquisa/md_pesq_processo_exibir.php?uBdZ6bYO4ST9qtMbI9X2MPbAOS3gadwXb3425sCUsY7cE2mj0sdJzR5Y_7hkR2EBk1fYXjZqkcVIUDLsY-xi9vHEsKoa_noVm9eQO57V9pwMaQcDSl__ZxxgIcQh0Jte",
+        "pagina": "Cabeçalho, lista de protocolos e andamentos",
+        "acesso_em": "23/11/2026",
+        "resultado": "Consulta aberta no navegador: autuação em 04/11; remessa/recebimento em 05/11; e-mail incluído em 10/11. Nenhuma concessão exibida.",
+        "aplicabilidade": "Retrato documental na referência de 23/11/2026."
+      }
+    ],
+    "historico_atos": [
+      {
+        "ato": "Requerimento de credenciamento",
+        "data_ato": "2026-10-28",
+        "publicacao": null,
+        "vencimento": null,
+        "observacao": "Pedido da empresa, não concessão."
+      },
+      {
+        "ato": "Checklist da Controladoria",
+        "data_ato": "2026-11-05",
+        "publicacao": null,
+        "vencimento": null,
+        "observacao": "Análise documental com campos sem marcação e providências pendentes."
+      },
+      {
+        "ato": "Complementos e resposta da Controladoria",
+        "data_ato": "2026-11-10",
+        "publicacao": null,
+        "vencimento": null,
+        "observacao": "Guia condicionada à regularização e conferência dos documentos."
+      }
+    ],
+    "revisao": "correcao-situacao-vencimento-pendencia-20261123",
+    "data_autuacao": "2026-11-04",
+    "data_envio_complementos": "2026-11-10",
+    "andamentos": [
+      {
+        "data": "2026-11-04",
+        "hora": "12:34",
+        "unidade": "PTCL/DETRAN",
+        "descricao": "Processo público gerado"
+      },
+      {
+        "data": "2026-11-05",
+        "hora": "09:30",
+        "unidade": "CONTROL/DETRAN",
+        "descricao": "Processo remetido pela unidade PTCL/DETRAN"
+      },
+      {
+        "data": "2026-11-05",
+        "hora": "10:54",
+        "unidade": "CONTROL/DETRAN",
+        "descricao": "Processo recebido na unidade"
+      },
+      {
+        "data": "2026-11-10",
+        "hora": null,
+        "unidade": "CONTROL/DETRAN",
+        "descricao": "E-mail 018515407 incluído no processo"
+      }
+    ],
+    "protocolos_documentos": [
+      {
+        "numero": "018395471",
+        "tipo": "Anexo",
+        "data": "2026-11-04",
+        "unidade": "PTCL/DETRAN"
+      },
+      {
+        "numero": "018395645",
+        "tipo": "Anexo",
+        "data": "2026-11-04",
+        "unidade": "PTCL/DETRAN"
+      },
+      {
+        "numero": "018515407",
+        "tipo": "E-mail",
+        "data": "2026-11-10",
+        "unidade": "CONTROL/DETRAN"
+      }
+    ],
+    "links_consulta": [
+      {
+        "titulo": "Andamento público do processo",
+        "url": "https://sei.ma.gov.br/sei/modulos/pesquisa/md_pesq_processo_exibir.php?uBdZ6bYO4ST9qtMbI9X2MPbAOS3gadwXb3425sCUsY7cE2mj0sdJzR5Y_7hkR2EBk1fYXjZqkcVIUDLsY-xi9vHEsKoa_noVm9eQO57V9pwMaQcDSl__ZxxgIcQh0Jte"
+      },
+      {
+        "titulo": "Pesquisar no SEI-MA",
+        "url": "https://sei.ma.gov.br/sei/modulos/pesquisa/md_pesq_processo_pesquisar.php?acao_externa=protocolo_pesquisar&acao_origem_externa=protocolo_pesquisar&id_orgao_acesso_externo=0"
+      }
+    ],
+    "documento_id": "docm_hd_ma_revisao20261123_ma_processo",
+    "fundamentacao_vencimento": {
+      "documento": "Processo em curso",
+      "dispositivo": "Checklist pp. 1–2; e-mail Controladoria p. 1; requerimento p. 1; consulta SEI pública em 23/11/2026",
+      "marco_inicial": null,
+      "marco_descricao": "Marco documental adotado",
+      "duracao_meses": null,
+      "data_final_expressa": null,
+      "calculo": "Não há ato de concessão apresentado ou identificado na consulta pública; pedido ainda em análise.",
+      "arquivo_pagina": "MA-processo.pdf · Checklist pp. 1–2; e-mail Controladoria p. 1; requerimento p. 1; consulta SEI pública em 23/11/2026",
+      "documento_id": "docm_hd_ma_revisao20261123_ma_processo"
+    }
   }
 ]

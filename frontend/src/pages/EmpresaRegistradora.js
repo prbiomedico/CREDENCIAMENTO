@@ -672,7 +672,9 @@ const EmpresaRegistradora = () => {
                   </div>
 
                   </>}
+                  {temControle && <Button type="button" size="sm" variant="outline" className="mt-4" onClick={() => setConsultaSei({ companyId: company.company_id, nome: company.nome_fantasia || company.name, uf: '' })}><Search className="h-4 w-4" /> Consultar processo SEI</Button>}
                   <ControleCredenciamentos creds={creds} docs={docs} companyId={company.company_id} onDownload={handleDownloadDocumento} baixando={baixandoDocumento} />
+                  {!temControle && (
                   <div className="mt-4 overflow-hidden rounded-lg border border-border bg-white" data-testid={`homologation-documents-${company.company_id}`}>
                     <div className="flex flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-center lg:justify-between">
                       <div>
@@ -722,6 +724,7 @@ const EmpresaRegistradora = () => {
                     </Table>
                     <div className="border-t border-border px-4 py-3 text-xs text-slate-500">Exibindo {linhas.length} de {creds.length} estados acompanhados.</div>
                   </div>
+                  )}
                   <div className="text-xs text-slate-400 mt-4">
                     Cadastrado em: {new Date(company.created_at).toLocaleDateString('pt-BR')}
                 </div>

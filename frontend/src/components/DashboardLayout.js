@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { buildNavStructure } from '../config/navMenus';
 import axios from 'axios';
 import BrandLogo from './BrandLogo';
+import ThemeToggle from './ThemeToggle';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'https://api.sigcr.com.br';
 const API = `${BACKEND_URL}/api`;
@@ -337,13 +338,14 @@ const DashboardLayout = ({ children }) => {
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col lg:ml-64">
-        <header className="sticky top-0 z-30 hidden h-16 items-center justify-between border-b border-border bg-white/95 px-6 lg:flex">
+        <header className="sticky top-0 z-30 hidden h-16 items-center justify-between border-b border-border bg-card/95 px-6 lg:flex">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">SIGCR · {cfg.label}</p>
             <h1 className="mt-0.5 text-sm font-semibold text-foreground">{activeNavItem?.label || 'Visão operacional'}</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Link to="/notificacoes" data-testid="desktop-notif-link" className="relative grid h-9 w-9 place-items-center rounded-md border border-border bg-white text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Notificações">
+            <ThemeToggle />
+            <Link to="/notificacoes" data-testid="desktop-notif-link" className="relative grid h-9 w-9 place-items-center rounded-md border border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Notificações">
               <Bell className="h-4 w-4" />
               {notifCount > 0 && <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-primary-400 px-1 text-[9px] font-bold text-slate-950">{notifCount > 9 ? '9+' : notifCount}</span>}
             </Link>
@@ -355,7 +357,7 @@ const DashboardLayout = ({ children }) => {
             <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
               {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </Button>
-            <BrandLogo variant="horizontal" className="h-9 w-auto" alt="SIGCR" />
+            <div className="sigcr-brand-surface rounded bg-white px-1"><BrandLogo variant="horizontal" className="h-8 w-auto" alt="SIGCR" /></div><ThemeToggle />
             <Link to="/notificacoes" data-testid="mobile-notif-link" className="relative">
               <Bell className="h-5 w-5 text-zinc-400" />
               {notifCount > 0 && <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary-400 text-[9px] font-bold text-slate-950">{notifCount}</span>}

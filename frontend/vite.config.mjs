@@ -35,7 +35,6 @@ export default defineConfig(({ mode }) => {
         NODE_ENV: mode === 'production' ? 'production' : 'development',
       }),
     },
-    esbuild: { loader: 'jsx', include: /src\/.*\.jsx?$/ },
     optimizeDeps: { esbuildOptions: { loader: { '.js': 'jsx' } } },
     build: { outDir: 'build', emptyOutDir: true },
   };

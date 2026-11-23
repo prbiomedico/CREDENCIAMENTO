@@ -1,3 +1,4 @@
+import { ThemeProvider } from 'next-themes';
 import AcompanhamentoRegistradora from './pages/AcompanhamentoRegistradora';
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
@@ -62,7 +63,7 @@ function AppRoutes() {
     || location.pathname.startsWith('/selo/')
     || location.pathname.startsWith('/portarias/publico/');
   return (
-    <>
+    <div className={publicPath ? "sigcr-public-surface" : undefined}>
       {publicPath && <PublicHeader />}
       <Routes>
         <Route path="/" element={b(<Landing />)} />
@@ -109,12 +110,13 @@ function AppRoutes() {
       <Route path="/configuracoes" element={b(<RotaProtegida perfilPermitido="sigcr_admin"><GestaoUsuarios /></RotaProtegida>)} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
-    </>
+    </div>
   );
 }
 
 function App() {
   return (
+    <ThemeProvider attribute="class" storageKey="sigcr-theme" defaultTheme="system" enableSystem disableTransitionOnChange>
     <BrowserRouter>
       <AuthProvider>
         <ViewProvider>
@@ -127,6 +129,7 @@ function App() {
         </ViewProvider>
       </AuthProvider>
     </BrowserRouter>
+    </ThemeProvider>
   );
 }
 

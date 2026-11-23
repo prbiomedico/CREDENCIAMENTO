@@ -1,43 +1,62 @@
-import React, { useState } from 'react';
-
-const data = value => value ? String(value).slice(0,10).split('-').reverse().join('/') : '—';
+import React, { useEffect, useRef, useState } from 'react';
+import { Building2, Files, CalendarClock } from 'lucide-react';
+import RuixenFeaturedImageSection from './ui/ruixen-featured-image-section';
+const data = v => v ? String(v).slice(0,10).split('-').reverse().join('/') : '—';
+export const vencimentoExibido = r => r.vencimento ? data(r.vencimento) : (r.vencimento_exibicao || 'A calcular — marco documental pendente');
 const campos = [
- ['data_ato','Data do ato',true], ['assinatura_ato','Assinatura do ato',true], ['assinatura_contratual','Assinatura contratual',true], ['publicacao','Publicação',true],
- ['inicio_contagem','Início da contagem',true], ['duracao_meses','Duração (meses)'], ['vencimento','Vencimento de controle',true],
- ['vencimento_tipo','Tipo do vencimento'], ['fundamento_calculo','Fundamento do cálculo'], ['antecedencia_formal_dias','Antecedência formal (dias)'],
- ['limite_protocolo','Limite formal calculado',true], ['pagina_secao','Página / seção'], ['conferencia','Proveniência'], ['sha256','SHA-256'],
+ ['data_ato','Data do ato',true], ['assinatura_ato','Assinatura do ato',true], ['assinatura_contratual','Assinatura contratual',true],
+ ['publicacao','Publicação',true], ['inicio_contagem','Marco inicial da contagem',true], ['duracao_meses','Duração (meses)'],
+ ['vencimento_tipo','Natureza do vencimento'], ['fundamento_calculo','Fundamento / cálculo'],
+ ['antecedencia_formal_dias','Antecedência formal identificada (dias)'], ['limite_protocolo','Limite de protocolo adotado',true], ['pagina_secao','Página / seção'],
 ];
 export default function ControleCredenciamentos({creds,docs,companyId,onDownload,baixando}) {
  const [filtro,setFiltro]=useState('');
+ const [aberto,setAberto]=useState(null);
+ const [aba,setAba]=useState(0);
+ const detalhes=useRef(null);
+ useEffect(()=>{if(aberto&&detalhes.current){detalhes.current.focus();detalhes.current.scrollIntoView?.({behavior:'smooth',block:'start'});}},[aberto]);
  const rows=creds.filter(c=>c.controle_documental).map(c=>({...c.controle_documental,id:c.credenciamento_id}));
  if(!rows.length)return null;
- const list=rows.filter(r=>(r.uf+' '+r.ato+' '+r.status_documental+' '+r.prioridade).toLocaleLowerCase().includes(filtro.toLocaleLowerCase()));
- const p1=rows.filter(r=>r.prioridade==='P1').length;
- const p2=rows.filter(r=>r.prioridade==='P2').length;
- return <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4 sm:p-6" data-testid={`controle-documental-${companyId}`}>
-  <h3 className="text-lg font-semibold text-slate-950">Controle documental de credenciamentos</h3>
-  <p className="mt-1 text-sm text-slate-600">Referência: 23/11/2026 · {rows.length} UFs acompanhadas · {p1} prioridade P1 · {p2} prioridade P2</p>
-  <p className="mt-2 text-xs leading-5 text-slate-600">Este levantamento não certifica regularidade operacional, renovação, aprovação de POC ou ausência de atos posteriores. Alertas são preventivos internos; os prazos formais aparecem em campo próprio.</p>
-  <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-xs leading-5 text-amber-950">SP: portaria conferida, aguardando Termo de Adesão para calcular vencimento. PE: fonte divergente, data proposta aguardando conferência. MA: em processo, aguardando documentos. Planilha consolidada atual ainda pendente de recebimento.</div>
-  <p className="mt-3 text-xs text-slate-600">AL, AM, GO, PA e SE: <strong>Sem informação neste levantamento</strong>. Isso não significa descredenciamento.</p>
-  <p className="mt-2 text-xs text-slate-500">Proveniência: 10 PDFs recuperados da conversa e idênticos ao acervo; 11 do acervo local sem confirmação direta dos anexos originais no levantamento inicial; novo PDF de SP recebido em 23/11/2026 e vinculado sem apagar o anterior. Documentos anteriores e de outras categorias foram preservados.</p>
-  <label className="mt-4 block text-sm font-medium">Filtrar controle por UF, ato ou prioridade<input className="mt-1 block w-full rounded-md border border-slate-300 p-2 text-sm" value={filtro} onChange={e=>setFiltro(e.target.value)} placeholder="Ex.: MG, P1, portaria..." /></label>
-  <div className="mt-4 space-y-2">{list.sort((a,b)=>a.prioridade.localeCompare(b.prioridade)||a.uf.localeCompare(b.uf)).map(r=>{
-   const doc=docs.find(d=>d.documento_id===r.documento_id);
-   return <details key={r.id} className="rounded-md border border-slate-200 p-3">
-    <summary className="cursor-pointer text-sm"><strong>{r.uf} · {r.prioridade}</strong><span className="ml-2">{r.status_documental}</span><span className="mt-1 block text-xs text-slate-600">{r.ato||'Ato ainda não comprovado'} · Vencimento: {data(r.vencimento)}{r.dias_restantes_referencia!=null?` · ${r.dias_restantes_referencia} dias na referência`:''}</span></summary>
-    <p className="mt-3 text-xs text-slate-500">{r.natureza_documento}</p>
-    <dl className="mt-3 grid gap-3 text-xs sm:grid-cols-2 lg:grid-cols-3">{campos.map(([k,label,isDate])=><div key={k} className="min-w-0"><dt className="font-semibold text-slate-600">{label}</dt><dd className="mt-1 break-words text-slate-900">{isDate?data(r[k]):(r[k]??'—')}</dd></div>)}</dl>
-    {r.divergencias&&<p className="mt-4 rounded bg-amber-50 p-3 text-xs leading-5 text-amber-950"><strong>Divergências preservadas: </strong>{r.divergencias}</p>}
-    {r.uf==='MA'&&<p className="mt-3 text-xs">Envio: {data(r.data_envio)} · Protocolo: {r.protocolo||'—'} · Aprovação: {data(r.data_aprovacao)}</p>}
-    <p className="mt-3 text-sm"><strong>Próxima ação: </strong>{r.proxima_acao}</p>
-    {r.notas&&<p className="mt-2 text-xs leading-5 text-slate-600">{r.notas}</p>}
-    {r.dados_propostos_aguardando_fonte&&<div className="mt-3 rounded border border-amber-200 p-3 text-xs"><strong>Dados informados, sem adoção até conferir a fonte</strong><p className="mt-1">{r.dados_propostos_aguardando_fonte.ato} · vencimento proposto: {data(r.dados_propostos_aguardando_fonte.vencimento)}</p></div>}
-    <p className="mt-3 text-xs text-slate-500">Fonte: {r.fonte||'Documento ainda não recebido'} · {r.fonte_dados}</p>
-    {doc&&<button type="button" className="mt-3 rounded border border-slate-300 px-3 py-2 text-xs font-medium" disabled={baixando===doc.documento_id} onClick={()=>onDownload(companyId,doc)}>Baixar documento vinculado{r.substituicao_suspensa?' (fonte divergente)':''}</button>}
-    <div className="mt-4 text-xs"><strong>Calendário preventivo interno</strong>{r.alertas_preventivos?.length?<ul className="mt-2 space-y-1">{r.alertas_preventivos.map(a=><li key={a.antecedencia_dias}>{a.antecedencia_dias} dias antes: {data(a.data)} · {a.situacao_referencia}</li>)}</ul>:<p className="mt-1 text-slate-500">Sem alertas datados: falta vencimento documental adotado.</p>}</div>
-   </details>;
-  })}</div>
-  {!list.length&&<p className="mt-4 text-sm">Nenhum registro corresponde ao filtro.</p>}
+ const list=rows.filter(r=>`${r.uf} ${r.ato} ${r.situacao_credenciamento} ${r.prioridade} ${r.pendencia_documental}`.toLocaleLowerCase().includes(filtro.toLocaleLowerCase())).sort((a,b)=>a.uf.localeCompare(b.uf));
+ const r=rows.find(row=>row.uf===aberto);
+ const docsUF=r?docs.filter(d=>d.estado_sigla===r.uf):[];
+ const baixar=doc=><button type="button" className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs font-medium hover:bg-slate-50 disabled:opacity-50" disabled={baixando===doc.documento_id} onClick={()=>onDownload(companyId,doc)}>Baixar {doc.tipo||'documento'}</button>;
+ return <section className="mt-5 space-y-4" data-testid={`controle-documental-${companyId}`}>
+  <RuixenFeaturedImageSection tabs={[
+   {id:'credenciamentos',title:'Credenciamentos',description:'Situação e validade por UF',icon:Building2,count:rows.length},
+   {id:'documentos',title:'Documentos',description:'Acervo e comprovantes da empresa',icon:Files,count:docs.length},
+   {id:'prazos',title:'Prazos e pendências',description:'O que precisa de providência',icon:CalendarClock,count:rows.filter(x=>x.prioridade==='P1'||x.prioridade==='P2').length},
+  ]} selectedTab={aba} onSelect={i=>{setAba(i);setAberto(null);}}>
+  {aba===0&&<div className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5">
+   <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="text-lg font-semibold text-slate-950">Credenciamentos da HD Registros</h3><p className="mt-1 text-xs text-slate-500">Referência documental: 23/11/2026 · {rows.length} UFs acompanhadas</p></div><span className="text-xs text-slate-500">Situação, vencimento e pendência são informações distintas.</span></div>
+   <label className="mt-4 block max-w-lg text-xs font-medium text-slate-600">Buscar UF, ato ou pendência<input className="mt-1 block w-full rounded-md border border-slate-300 p-2 text-sm" value={filtro} onChange={e=>setFiltro(e.target.value)} placeholder="Ex.: PE, renovação, termo de adesão..." /></label>
+   <div className="mt-4 overflow-x-auto"><table className="w-full min-w-[880px] text-left text-sm"><thead className="border-y border-slate-200 bg-slate-50 text-xs text-slate-600"><tr>{['UF','Situação do credenciamento','Vencimento','Pendência documental','Detalhes'].map(h=><th key={h} className="p-3 font-semibold">{h}</th>)}</tr></thead><tbody>{list.map(item=><tr key={item.id} data-testid={`controle-row-${item.uf}`} className="border-b border-slate-100 align-top">
+    <td className="p-3"><strong>{item.uf}</strong><span className="mt-1 block text-xs text-slate-500">{item.prioridade}</span></td>
+    <td className="max-w-xs p-3"><span className={`inline-block rounded-md border px-2 py-1 text-xs leading-5 ${item.situacao_codigo==='prazo_encerrado'?'border-red-200 bg-red-50 text-red-800':item.situacao_codigo==='em_processo'?'border-amber-200 bg-amber-50 text-amber-900':'border-slate-200 bg-slate-50 text-slate-800'}`}>{item.situacao_credenciamento}</span><p className="mt-2 text-xs leading-5 text-slate-500">{item.ato||'Ato de concessão ainda não apresentado'}</p></td>
+    <td className="max-w-[230px] p-3 text-xs leading-5"><span className={item.situacao_codigo==='prazo_encerrado'?'font-semibold text-red-800':'font-medium text-slate-900'}>{vencimentoExibido(item)}</span>{item.vencimento_escopo==='prazo_documentado'&&<span className="block text-slate-500">Prazo documentado; não comprova situação atual.</span>}{item.vencimento_observacao&&<span className="mt-1 block text-slate-500">{item.vencimento_observacao}</span>}</td>
+    <td className="max-w-xs p-3 text-xs leading-5 text-slate-700">{item.pendencia_documental||'Nenhuma pendência específica identificada neste levantamento.'}</td>
+    <td className="p-3"><button type="button" aria-expanded={aberto===item.uf} aria-controls={`controle-detalhes-${companyId}`} className="rounded-md border border-slate-300 px-3 py-2 text-xs font-medium hover:bg-slate-50" onClick={()=>setAberto(item.uf)}>Ver controle documental<span className="sr-only"> de {item.uf}</span></button></td>
+   </tr>)}</tbody></table></div>
+   {!list.length&&<p className="p-4 text-sm text-slate-500">Nenhum registro corresponde à busca.</p>}
+   <p className="mt-4 text-xs text-slate-500">AL, AM, GO, PA e SE: <strong>Sem informação neste levantamento</strong>. Não significa descredenciamento.</p>
+  </div>
+  }
+  {aba===1&&<div className="rounded-lg border border-border bg-card p-4 sm:p-5"><h3 className="font-semibold">Acervo da empresa</h3><p className="mt-1 text-xs text-muted-foreground">Documentos recebidos, históricos e normas de referência. A presença do arquivo não representa aprovação.</p><ul className="mt-4 divide-y divide-border">{docs.map(doc=><li key={doc.documento_id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-xs"><div className="min-w-0 flex-1"><strong>{doc.estado_sigla||'Cadastro'} · {doc.tipo}</strong><p className="mt-1 break-words text-muted-foreground">{doc.file_name}</p></div>{baixar(doc)}</li>)}</ul></div>}
+  {aba===2&&<div className="rounded-lg border border-border bg-card p-4 sm:p-5"><h3 className="font-semibold">Prazos e próximas ações</h3><p className="mt-1 text-xs text-muted-foreground">Prioridades na referência de 23/11/2026. Alertas internos não substituem prazos formais.</p><ul className="mt-4 divide-y divide-border">{rows.filter(x=>x.prioridade==='P1'||x.prioridade==='P2').sort((a,b)=>a.prioridade.localeCompare(b.prioridade)||a.uf.localeCompare(b.uf)).map(item=><li key={item.id} className="flex flex-wrap items-start justify-between gap-3 py-3"><div className="min-w-0 flex-1"><strong className="text-sm">{item.uf} · {item.prioridade}</strong><p className="mt-1 text-xs leading-5 text-muted-foreground">{item.pendencia_documental}</p><p className="mt-1 text-xs">Vencimento: {vencimentoExibido(item)}{item.limite_protocolo?` · Protocolo: ${data(item.limite_protocolo)}`:''}</p></div><button type="button" className="rounded border border-border px-3 py-2 text-xs" onClick={()=>setAberto(item.uf)}>Ver controle documental<span className="sr-only"> de {item.uf}</span></button></li>)}</ul></div>}
+  </RuixenFeaturedImageSection>
+  {r&&<div ref={detalhes} tabIndex={-1} id={`controle-detalhes-${companyId}`} className="scroll-mt-5 rounded-lg border border-slate-300 bg-white p-4 sm:p-6 outline-none">
+   <div className="flex items-start justify-between gap-4"><div><h4 className="text-lg font-semibold">Controle documental · {r.uf}</h4><p className="mt-1 text-sm">{r.situacao_credenciamento}</p></div><button type="button" className="rounded border px-3 py-1 text-xs" onClick={()=>setAberto(null)}>Fechar detalhes</button></div>
+   <div className="mt-4 grid gap-3 sm:grid-cols-2"><div className="rounded bg-slate-50 p-3"><p className="text-xs text-slate-500">Vencimento</p><p className="mt-1 text-sm font-semibold">{vencimentoExibido(r)}</p>{r.motivo_sem_vencimento&&<p className="mt-1 text-xs leading-5">{r.motivo_sem_vencimento}</p>}</div><div className="rounded bg-slate-50 p-3"><p className="text-xs text-slate-500">Pendência documental</p><p className="mt-1 text-sm">{r.pendencia_documental||'Nenhuma específica identificada.'}</p></div></div>
+   <dl className="mt-5 grid gap-4 text-xs sm:grid-cols-2 lg:grid-cols-3">{campos.map(([k,label,isDate])=><div key={k} className="min-w-0"><dt className="font-semibold text-slate-600">{label}</dt><dd className="mt-1 break-words text-slate-900">{isDate?data(r[k]):(r[k]??'—')}</dd></div>)}</dl>
+   {r.fundamentacao_vencimento&&<div className="mt-4 rounded border border-slate-200 p-3 text-xs leading-5"><strong>Rastreabilidade do vencimento</strong><p>{r.fundamentacao_vencimento.documento} · {r.fundamentacao_vencimento.dispositivo}</p><p>Marco: {r.fundamentacao_vencimento.marco_descricao} {data(r.fundamentacao_vencimento.marco_inicial)}</p><p>Cálculo: {r.fundamentacao_vencimento.calculo}</p><p>Fonte: {r.fundamentacao_vencimento.arquivo_pagina}</p></div>}
+   {r.divergencias&&<p className="mt-4 rounded bg-amber-50 p-3 text-xs leading-5 text-amber-950"><strong>Divergências preservadas: </strong>{r.divergencias}</p>}
+   {r.uf==='MA'&&<div className="mt-4 space-y-3 rounded border border-border p-3 text-xs"><strong>Processo do Maranhão</strong><p>Protocolo: {r.protocolo||'—'} · Autuação: {data(r.data_autuacao)} · Aprovação: {data(r.data_aprovacao)}</p><p>Envio inicial comprovado: {data(r.data_envio)} · Complementos por e-mail: {data(r.data_envio_complementos)}</p><p className="text-muted-foreground">Autuação, envio de complementos e aprovação são eventos diferentes.</p><ul className="space-y-2">{(r.andamentos||[]).map((a,i)=><li key={i}>{data(a.data)} {a.hora||''} · {a.unidade}: {a.descricao}</li>)}</ul><p className="font-semibold">Documentos na consulta pública</p><ul>{(r.protocolos_documentos||[]).map(a=><li key={a.numero}>{a.numero} · {a.tipo} · {data(a.data)} · {a.unidade}</li>)}</ul><div className="flex flex-wrap gap-3">{(r.links_consulta||[]).filter(a=>a.url?.startsWith('https://')).map(a=><a key={a.url} href={a.url} target="_blank" rel="noopener noreferrer" className="underline">{a.titulo}</a>)}</div></div>}
+   <p className="mt-4 text-sm"><strong>Próxima ação: </strong>{r.proxima_acao}</p>
+   {r.notas&&<p className="mt-2 text-xs leading-5 text-slate-600">{r.notas}</p>}
+   {!!r.historico_atos?.length&&<details className="mt-4 rounded border p-3 text-xs"><summary className="cursor-pointer font-semibold">Atos e vencimentos históricos</summary><ul className="mt-3 space-y-3">{r.historico_atos.map((a,i)=><li key={i}><strong>{a.ato}</strong><p>Publicação: {data(a.publicacao)} · Vencimento do ato: {data(a.vencimento)}</p><p>{a.observacao}</p></li>)}</ul></details>}
+   <details className="mt-4 rounded border p-3 text-xs"><summary className="cursor-pointer font-semibold">Fontes consultadas e pendências da pesquisa</summary><ul className="mt-3 space-y-3">{(r.fontes_consultadas||[]).map((f,i)=><li key={i}><strong>{f.documento}</strong><p>{f.resultado}</p><p className="text-slate-500">{f.pagina||''} · {f.acesso_em||'23/11/2026'} · {f.aplicabilidade||''}</p>{f.url?.startsWith('https://')&&<a className="break-all underline" href={f.url} target="_blank" rel="noopener noreferrer">Consultar fonte</a>}</li>)}</ul><p className="mt-3 text-slate-500">{r.conferencia}</p><p className="mt-2 text-slate-500">Proveniência inicial preservada: 10 PDFs recuperados da conversa e idênticos ao acervo; outros 11 obtidos do acervo local, sem confirmação direta dos anexos originais. Novas fontes têm identificação própria.</p></details>
+   <details className="mt-4 rounded border p-3 text-xs"><summary className="cursor-pointer font-semibold">Documentos vinculados à UF ({docsUF.length})</summary><ul className="mt-3 space-y-3">{docsUF.map(doc=><li key={doc.documento_id} className="flex flex-wrap items-center justify-between gap-2"><span className="min-w-0 break-words">{doc.file_name} {doc.documento_id===r.documento_id?'· fonte principal':''}</span>{baixar(doc)}</li>)}</ul></details>
+   <details className="mt-4 rounded border p-3 text-xs"><summary className="cursor-pointer font-semibold">Alertas preventivos internos</summary>{r.alertas_preventivos?.length?<ul className="mt-3 space-y-1">{r.alertas_preventivos.map(a=><li key={a.antecedencia_dias}>{a.antecedencia_dias} dias: {data(a.data)} · {a.situacao_referencia}</li>)}</ul>:<p className="mt-2 text-slate-500">Sem calendário datado para esta situação.</p>}<p className="mt-2 text-slate-500">São avisos gerenciais, separados dos prazos formais. Não implicam renovação automática.</p></details>
+  </div>}
  </section>;
 }
