@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import ProcessoSeiTab from '../components/ProcessoSeiTab';
+import ControleCredenciamentos from '../components/ControleCredenciamentos';
 import { Plus, Building2, CheckCircle, XCircle, Clock, Download, FileText, MapPinned, ShieldCheck, Search, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -567,6 +568,7 @@ const EmpresaRegistradora = () => {
               const creds = credenciamentos[company.company_id] || [];
               const cobertura = coberturaDocumental(creds, docs);
               const docsPorUf = Object.fromEntries(docs.map((doc) => [doc.estado_sigla, doc]));
+              const temControle = creds.some(c => c.controle_documental);
               const ativos = creds.filter((cred) => cred.status === 'ativo').length;
               const revisao = creds.filter((cred) => cred.status === 'sem_efeito').length;
               const pendentes = creds.filter((cred) => cred.status === 'pendente').length;
@@ -610,6 +612,7 @@ const EmpresaRegistradora = () => {
                       <p className="text-slate-700">{company.gestor_contrato}</p>
                     </div>
                   </div>
+                  {!temControle && <>
                   <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     {[
                       { label: 'Estados acompanhados', value: creds.length, detail: 'Cobertura cadastrada', icon: MapPinned },
@@ -668,11 +671,13 @@ const EmpresaRegistradora = () => {
                     </div>
                   </div>
 
+                  </>}
+                  <ControleCredenciamentos creds={creds} docs={docs} companyId={company.company_id} onDownload={handleDownloadDocumento} baixando={baixandoDocumento} />
                   <div className="mt-4 overflow-hidden rounded-lg border border-border bg-white" data-testid={`homologation-documents-${company.company_id}`}>
                     <div className="flex flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-center lg:justify-between">
                       <div>
-                        <p className="text-sm font-semibold text-slate-900">Credenciamentos por estado</p>
-                        <p className="mt-1 text-xs text-slate-500">Status, validade e documento oficial em uma única visão operacional.</p>
+                        <p className="text-sm font-semibold text-slate-900">{temControle ? "Acervo e cadastro anterior (histórico preservado)" : "Credenciamentos por estado"}</p>
+                        <p className="mt-1 text-xs text-slate-500">{temControle ? "Cadastro operacional anterior e demais documentos. Consulte o controle documental acima para datas e ressalvas atualizadas." : "Status, validade e documento oficial em uma única visão operacional."}</p>
                         <Button type="button" size="sm" variant="outline" className="mt-3"
                           onClick={() => setConsultaSei({ companyId: company.company_id, nome: company.nome_fantasia || company.name, uf: '' })}>
                           <Search className="h-4 w-4" /> Consultar processo SEI
@@ -700,9 +705,9 @@ const EmpresaRegistradora = () => {
                           return (
                             <TableRow key={cred.credenciamento_id}>
                               <TableCell><Badge variant="outline" className="font-mono">{cred.estado_sigla}</Badge></TableCell>
-                              <TableCell><Badge variant="outline" className={status.className}>{status.label}</Badge></TableCell>
-                              <TableCell className="max-w-sm"><p className="line-clamp-2 text-xs leading-5 text-slate-600">{cred.extrato_contrato}</p></TableCell>
-                              <TableCell className="whitespace-nowrap text-xs text-slate-600">{formatarValidade(cred.validade)}</TableCell>
+                              <TableCell><Badge variant="outline" className={status.className}>{cred.controle_documental ? "Ver controle documental" : status.label}</Badge></TableCell>
+                              <TableCell className="max-w-sm"><p className="line-clamp-2 text-xs leading-5 text-slate-600">{cred.controle_documental ? cred.controle_documental.ato || "Em processo" : cred.extrato_contrato}</p></TableCell>
+                              <TableCell className="whitespace-nowrap text-xs text-slate-600">{formatarValidade(cred.controle_documental ? cred.controle_documental.vencimento : cred.validade)}</TableCell>
                               <TableCell><p className="max-w-48 truncate text-xs text-slate-600">{documento?.tipo || 'Não disponível'}</p></TableCell>
                               <TableCell className="text-right">
                                 <Button type="button" size="sm" variant="outline" disabled={!documento || baixandoDocumento === documento.documento_id} onClick={() => documento && handleDownloadDocumento(company.company_id, documento)} className="gap-2">
