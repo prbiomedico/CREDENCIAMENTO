@@ -13,7 +13,7 @@ def dates(value):
 
 def main():
  p=argparse.ArgumentParser();p.add_argument('source');p.add_argument('--apply',action='store_true');p.add_argument('--backup-dir');a=p.parse_args()
- db=MongoClient(os.environ['MONGO_URL'])[os.environ['DB_NAME']]
+ db=MongoClient(os.environ['MONGO_URL'],tz_aware=True)[os.environ['DB_NAME']]
  comp=db.companies.find_one({'company_id':COMPANY,'deleted_at':None})
  assert comp and ''.join(c for c in comp['cnpj']if c.isdigit())=='07077276000117'
  owner=db.users.find_one({'user_id':comp['user_id']},{'email':1,'perfil':1});assert owner and owner['email']=='hdregistros@sigcr.com.br' and owner['perfil']=='registradora'
