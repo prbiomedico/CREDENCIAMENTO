@@ -6858,6 +6858,7 @@ async def listar_credenciamentos_resumo_empresa(
             "validade": 1,
             "termo_credenciamento_path": 1,
             "updated_at": 1,
+            "controle_documental": 1,
         },
     ).sort("estado_sigla", 1).to_list(100)
 

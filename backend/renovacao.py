@@ -6,7 +6,8 @@ from zoneinfo import ZoneInfo
 def janela_renovacao(credenciamento, hoje=None):
     hoje = hoje or datetime.now(ZoneInfo('America/Sao_Paulo')).date()
     try:
-        valor = credenciamento.get('validade')
+        controle = credenciamento.get('controle_documental')
+        valor = controle.get('vencimento') if controle is not None else credenciamento.get('validade')
         validade = valor.date() if isinstance(valor, datetime) else date.fromisoformat(str(valor)[:10])
     except (ValueError, TypeError):
         return {'disponivel': False, 'abre_em': None, 'validade': None, 'motivo': 'Validade não informada; solicite a conferência do cadastro.'}
